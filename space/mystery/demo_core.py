@@ -294,7 +294,9 @@ PROBE_SCRIPTS: tuple[tuple[str, str], ...] = (
     ("meta_optimize_phi_probe.py", "Meta-optimizer κ lock"),
 )
 
-MATRIX_RAIN_CHARS = "φπe01アイウエオカキ369░▒▓█"
+# ASCII-only — CJK/katakana render double-width in monospace and only fill ~half the panel.
+MATRIX_RAIN_CHARS = "0123456789ABCDEF|/\\-+=%#"
+MATRIX_RAIN_FILL = "."
 
 TERM_KEY_ACTIONS: dict[int, tuple[str, str]] = {
     1: ("home", "Return to selection menu"),
@@ -465,26 +467,26 @@ def terminal_keypad_map() -> str:
 def matrix_screensaver_frame(
     tick: int,
     *,
-    cols: int = 152,
-    rows: int = 26,
+    cols: int = 160,
+    rows: int = 28,
     seed: int = 0,
 ) -> str:
-    """Dense edge-to-edge φ-e-π matrix rain — grid only, no chrome."""
+    """Dense edge-to-edge matrix rain — single-width ASCII grid, no chrome."""
     rng = np.random.default_rng(seed + tick)
     drops = rng.integers(0, cols, size=cols)
     speeds = rng.integers(1, 4, size=cols)
-    grid = [[" "] * cols for _ in range(rows)]
-    dim_chars = "·:;.,"
+    dim_chars = ":;,'`"
+    grid = [[MATRIX_RAIN_FILL for _ in range(cols)] for _ in range(rows)]
     for col in range(cols):
         head = (drops[col] + tick * speeds[col]) % (rows + 8)
         for row in range(rows):
             dist = head - row
             if dist == 0:
-                grid[row][col] = "█"
+                grid[row][col] = "@"
             elif 0 < dist < 8:
                 grid[row][col] = MATRIX_RAIN_CHARS[int(rng.integers(0, len(MATRIX_RAIN_CHARS)))]
             elif 0 < dist < 14:
                 grid[row][col] = dim_chars[int(rng.integers(0, len(dim_chars)))]
-            elif rng.random() < 0.06:
+            elif rng.random() < 0.12:
                 grid[row][col] = MATRIX_RAIN_CHARS[int(rng.integers(0, len(MATRIX_RAIN_CHARS)))]
     return "\n".join("".join(row) for row in grid)

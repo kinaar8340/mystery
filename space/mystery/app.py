@@ -159,8 +159,8 @@ TERM_MENU_ACTIONS: tuple[str, ...] = (
 )
 MATRIX_SCREENSAVER_FRAME_DELAY_S = 0.07
 # Single wide terminal canvas — matrix rain fills the panel width (not 3 panes).
-MATRIX_SCREENSAVER_COLS = 152
-MATRIX_SCREENSAVER_ROWS = 26
+MATRIX_SCREENSAVER_COLS = 160
+MATRIX_SCREENSAVER_ROWS = 28
 TERM_UI_MENU = "menu"
 TERM_UI_PAGE = "page"
 TERM_NAV_KEYS: tuple[str, ...] = (
@@ -1411,38 +1411,47 @@ footer {{
     white-space: pre !important;
     overflow-x: hidden !important;
 }}
-.gradio-container .vqc-optics-panel .vqc-optics-terminal-matrix .label-wrap {{
+.gradio-container .vqc-optics-panel .vqc-optics-terminal-matrix .label-wrap,
+.gradio-container .vqc-optics-panel .vqc-optics-terminal-matrix label {{
     display: none !important;
 }}
 .gradio-container .vqc-optics-panel .vqc-optics-terminal-matrix.vqc-optics-terminal-wrap {{
+    container-type: inline-size !important;
     padding: 0 !important;
     margin: 0.35rem 0 0.55rem 0 !important;
     border: none !important;
     border-radius: 0 !important;
     background: transparent !important;
     width: 100% !important;
+    max-width: 100% !important;
 }}
 .gradio-container .vqc-optics-panel .vqc-optics-terminal-matrix textarea {{
-    min-height: 32rem !important;
-    height: clamp(28rem, 46vh, 40rem) !important;
-    max-height: none !important;
+    display: block !important;
     width: 100% !important;
+    max-width: 100% !important;
+    min-height: unset !important;
+    height: calc({MATRIX_SCREENSAVER_ROWS} * 1em) !important;
+    max-height: none !important;
     padding: 0 !important;
     margin: 0 !important;
     border: none !important;
     border-radius: 0 !important;
-    font-size: 0.58rem !important;
-    line-height: 1.12 !important;
+    font-family: "Courier New", Courier, "Liberation Mono", monospace !important;
+    font-size: calc(100cqw / {MATRIX_SCREENSAVER_COLS}) !important;
+    line-height: 1em !important;
     letter-spacing: 0 !important;
     overflow: hidden !important;
     box-shadow: none !important;
     background: rgba(2, 10, 4, 0.35) !important;
+    resize: none !important;
 }}
 .gradio-container .vqc-optics-panel .vqc-optics-terminal-matrix .block,
-.gradio-container .vqc-optics-panel .vqc-optics-terminal-matrix .form {{
+.gradio-container .vqc-optics-panel .vqc-optics-terminal-matrix .form,
+.gradio-container .vqc-optics-panel .vqc-optics-terminal-matrix .wrap {{
     padding: 0 !important;
     margin: 0 !important;
     width: 100% !important;
+    max-width: 100% !important;
 }}
 .gradio-container .vqc-optics-keypad {{
     background: linear-gradient(180deg, #16120c 0%, #0a0806 100%) !important;
