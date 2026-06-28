@@ -158,6 +158,9 @@ TERM_MENU_ACTIONS: tuple[str, ...] = (
     "matrix",
 )
 MATRIX_SCREENSAVER_FRAME_DELAY_S = 0.07
+# Single wide terminal canvas — matrix rain fills the panel width (not 3 panes).
+MATRIX_SCREENSAVER_COLS = 104
+MATRIX_SCREENSAVER_ROWS = 17
 TERM_UI_MENU = "menu"
 TERM_UI_PAGE = "page"
 TERM_NAV_KEYS: tuple[str, ...] = (
@@ -413,6 +416,16 @@ def _stream_optics_terminal_figures() -> Iterator[str]:
     yield from _optics_terminal_stream(_optics_terminal_figures, mode="figures")
 
 
+def _matrix_screensaver_terminal_text(tick: int) -> str:
+    """Full-width screensaver frame — no narrow 48-char menu bar."""
+    return matrix_screensaver_frame(
+        tick,
+        cols=MATRIX_SCREENSAVER_COLS,
+        rows=MATRIX_SCREENSAVER_ROWS,
+        seed=42,
+    )
+
+
 def _stream_matrix_screensaver() -> Iterator[str]:
     """Animated matrix rain — loops until another keypad event cancels it."""
     banner = _optics_terminal_uplink_banner("matrix")
@@ -420,11 +433,7 @@ def _stream_matrix_screensaver() -> Iterator[str]:
     time.sleep(_OPTICS_TERM_UPLINK_DELAY_S)
     tick = 0
     while True:
-        frame = _optics_terminal_frame(
-            "MATRIX SCREENSAVER",
-            matrix_screensaver_frame(tick, seed=42),
-        )
-        yield banner + frame
+        yield banner + _matrix_screensaver_terminal_text(tick)
         tick += 1
         time.sleep(MATRIX_SCREENSAVER_FRAME_DELAY_S)
 
@@ -508,9 +517,21 @@ def _term_keypad_btn_updates(active: str) -> tuple:
     )
 
 
+def _term_terminal_classes(terminal_text: str) -> list[str]:
+    classes = ["vqc-optics-terminal-wrap", "vqc-optics-terminal"]
+    if "MATRIX SCREENSAVER — φ e π rain" in (terminal_text or ""):
+        classes.append("vqc-optics-terminal-matrix")
+    return classes
+
+
 def _term_keypad_outputs(terminal_text: str, active: str, ui_state: dict | None = None) -> tuple:
     state = _default_term_ui_state() if ui_state is None else ui_state
-    return (terminal_text, *_term_keypad_btn_updates(active), active, state)
+    return (
+        gr.update(value=terminal_text, elem_classes=_term_terminal_classes(terminal_text)),
+        *_term_keypad_btn_updates(active),
+        active,
+        state,
+    )
 
 
 def _term_yield_stream_then_release(
@@ -1379,6 +1400,19 @@ footer {{
 }}
 .gradio-container .vqc-optics-panel .vqc-optics-terminal textarea {{
     min-height: 13.5rem !important;
+    white-space: pre !important;
+    overflow-x: hidden !important;
+}}
+.gradio-container .vqc-optics-panel .vqc-optics-terminal-matrix textarea {{
+    min-height: 26rem !important;
+    max-height: 42vh !important;
+    font-size: 0.68rem !important;
+    line-height: 1.32 !important;
+    letter-spacing: 0.02em !important;
+}}
+.gradio-container .vqc-optics-panel .vqc-optics-terminal-matrix .vqc-optics-terminal-wrap,
+.gradio-container .vqc-optics-panel .vqc-optics-terminal-matrix {{
+    width: 100% !important;
 }}
 .gradio-container .vqc-optics-keypad {{
     background: linear-gradient(180deg, #16120c 0%, #0a0806 100%) !important;
@@ -1801,8 +1835,8 @@ def build_app() -> gr.Blocks:
                 optics_terminal = gr.Textbox(
                     label="Matrix status display — selection menu · d-pad nav",
                     value=_optics_terminal_menu(0),
-                    lines=12,
-                    max_lines=16,
+                    lines=14,
+                    max_lines=24,
                     interactive=False,
                     elem_classes=["vqc-optics-terminal-wrap", "vqc-optics-terminal"],
                 )

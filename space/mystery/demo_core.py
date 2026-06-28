@@ -465,11 +465,11 @@ def terminal_keypad_map() -> str:
 def matrix_screensaver_frame(
     tick: int,
     *,
-    cols: int = 44,
-    rows: int = 9,
+    cols: int = 104,
+    rows: int = 17,
     seed: int = 0,
 ) -> str:
-    """One frame of φ-e-π matrix rain."""
+    """One frame of φ-e-π matrix rain sized to fill the terminal width."""
     rng = np.random.default_rng(seed + tick)
     drops = rng.integers(0, cols, size=cols)
     speeds = rng.integers(1, 4, size=cols)
@@ -481,13 +481,14 @@ def matrix_screensaver_frame(
             if 0 <= dist < 4:
                 ch = MATRIX_RAIN_CHARS[int(rng.integers(0, len(MATRIX_RAIN_CHARS)))]
                 grid[row][col] = ch if dist else "█"
-    body = "\n".join("".join(row).rstrip() for row in grid)
+    body = "\n".join("".join(row) for row in grid)
+    bar = "─" * cols
     return "\n".join(
         [
             "MATRIX SCREENSAVER — φ e π rain",
-            "─" * min(cols, 44),
+            bar,
             body,
-            "─" * min(cols, 44),
+            bar,
             f"frame {tick + 1:04d} · press any key to exit",
         ]
     )
