@@ -20,21 +20,17 @@
 
 ## Prioritized next moves
 
-### 1. Structured PDE initial conditions (highest priority)
+### 1. Extend structured PDE (in progress)
 
-Seed localized twists, Hopfions, or two-gyro counter-rotating helicities (flux flywheels). Hunt FFT peaks and correlation lengths near φ, e, π scales.
+`pde_structured_ic_probe.py` seeds hopfion blobs and two-gyro helices — retains σ>0 and finite-k FFT vs uniform IC. Next: longer nt, finer grid, φ/e/π wavelength ratio tracking.
 
-```bash
-# Extend pde_relaxation_probe.py or toe/scripts/pde_relaxation.py
-```
+### 2. Formal residual bound (in progress)
 
-### 2. Formal residual bound
+`residual_kappa_sweep.py` shows **κ* = e/π − R/π² ≈ 0.8513** (0.15% from κ_doc). See `notes/residual_scaling.md`. Need variational derivation from Skyrme + holonomy.
 
-Treat R ≈ π²(e/π − κ) in the effective Skyrme + global holonomy reduction. Potentially paper-worthy if derived cleanly from the low-energy action.
+### 3. Rodin cycle ↔ S³ fiber phase (scaffolded)
 
-### 3. Rodin cycle ↔ S³ fiber phase
-
-Map discrete mod-9 doubling (1-2-4-8-7-5) onto continuous phase increments on Hopf S¹ fibers.
+`rodin_hopf_fiber_map.py` maps 1-2-4-8-7-5 to tens_degrees / ninth_turn / hopf_weighted increments. Open: falsify against lattice burst-reset ΔΘ.
 
 ### 4. Longer conduit + island-bake runs
 

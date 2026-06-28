@@ -22,7 +22,7 @@ This moves the project from "beautiful coincidence?" to **quantified emergent si
 π² · (e/π − κ) = πe − κπ² ≈ 0.151   (κ = 0.85)
 ```
 
-~9.5–12% from R. Worth formalizing in the **effective low-energy reduction** of the Skyrme-like action. Hints the residual may scale with the **holonomy gap** (e/π − κ) rather than being forced to zero by W_g or braiding.
+~9.5% from R at κ=0.85. **κ* = e/π − R/π² ≈ 0.8513** nulls the bound exactly (0.16% from κ_doc). See `notes/residual_scaling.md` and `residual_kappa_sweep.png`. Hints the residual may scale with the **holonomy gap** (e/π − κ) rather than being forced to zero by W_g or braiding.
 
 **Kepler contrast:** The Kepler triangle (1 : √φ : φ) is an **exact** golden Pythagorean triple. The φ-e-π case mixes three distinct transcendental families and stays approximate.
 
@@ -49,7 +49,9 @@ This moves the project from "beautiful coincidence?" to **quantified emergent si
 
 **Interpretation:** Uniform relaxation drives the system to the global minimum-energy configuration (low-twist, high synchronization via global pointer). Non-trivial helical/Hopfion modes that might carry φ/e/π signatures are **suppressed**. This is **expected behavior** for this PDE class — not a failure of the Mystery.
 
-**Next step:** structured initial data (localized twists, Hopfions, counter-rotating helicities / flux flywheels).
+**Update:** `pde_structured_ic_probe.py` — two_gyro_helix at nt=400 retains **σ≈0.10** vs uniform **σ≈0.0002**; hopfion_blob **σ≈0.009**. Early-time window before dissipative collapse shows finite-k structure.
+
+![Structured IC](../docs/figures/pde_structured_ic_probe.png)
 
 ---
 

@@ -9,6 +9,25 @@ Quantified research notebook exploring the near-Pythagorean triangle formed by �
 
 ---
 
+## Results at a glance
+
+| Probe | Key finding |
+|-------|-------------|
+| `phi_e_pi_analysis` | R = **+0.137486** (1.39% error); angles **31.0° / 59.9° / 89.1°** |
+| `hopf_constant_bridge` | W_g = **111.408**; κ = **0.85** vs e/π **0.865** (Δ 1.76%); Θ_link ≈ π, θ_crit ≈ **5.81** |
+| `vortex_369_clock` | Angles ÷10° → **3.10 / 5.99 / 8.91** (nearest 3/6/9) |
+| `residual_bound_probe` | Best near-miss: **π²(e/π−κ) ≈ 0.151** (9.5% from R) |
+| `residual_kappa_sweep` | **κ* = e/π − R/π² ≈ 0.8513** — only **0.15%** from κ_doc |
+| `pde_relaxation_probe` | Uniform IC → ⟨θ⟩≈0.084, **σ=0** (expected dissipative minimum) |
+| `pde_structured_ic_probe` | Hopfion/helical seeds retain **σ>0** and finite-k FFT structure |
+| `conduit_angular_probe` | **~8% / ~6% / ~4%** within 5° of 30°/60°/90° (not forced) |
+| `meta_optimize_phi_probe` | κ=**0.85**, φ_b≈**0.754**, W_g≈**111.89** — not e/π or φ⁻¹ |
+| `rodin_hopf_fiber_map` | Doubling cycle **1-2-4-8-7-5** mapped to S¹ phase increments |
+
+Full table: [`docs/RESULTS.md`](docs/RESULTS.md) · Scaling note: [`notes/residual_scaling.md`](notes/residual_scaling.md)
+
+---
+
 ## Assessment (June 2026)
 
 Four probes move this project from exploratory numerology into a **well-quantified compatible emergent signature** within the gauged Hopf lattice framework:
@@ -70,6 +89,9 @@ cd ../mystery && .venv/bin/python run_all.py
 | `conduit_angular_probe.py` | 30°/60°/90° separations with `vortex_math_369` |
 | `conduit_probe.py` | TOE conduit invariant smoke test |
 | `meta_optimize_phi_probe.py` | Meta-optimizer + φ/e/π clustering |
+| `residual_kappa_sweep.py` | R vs π²(e/π−κ) sweep; κ* null point |
+| `pde_structured_ic_probe.py` | Hopfion + two-gyro helical PDE seeds |
+| `rodin_hopf_fiber_map.py` | Rodin mod-9 doubling → Hopf fiber phases |
 
 ---
 
@@ -110,10 +132,10 @@ Triangle angles: φ→31.0°, e→59.9°, π→89.1° — near 30-60-90, not exa
 
 ## Prioritized next moves
 
-1. **Structured PDE initial conditions** — seed Hopfions / flux-flywheel twists; hunt FFT peaks near φ/e/π scales
-2. **Formal residual bound** — derive R ≈ π²(e/π−κ) in Skyrme + holonomy effective reduction
-3. **Rodin cycle ↔ S³ fiber phase** — map mod-9 doubling onto Hopf fiber increments
-4. **Longer conduit runs** — 369 flags + island-bake configurations
+1. **Extend structured PDE** — longer runs, higher resolution; correlate FFT peaks with φ/e/π at scale
+2. **Derive residual bound** — formal Skyrme + holonomy reduction for B(κ) = π²(e/π−κ)
+3. **Falsify Rodin map** — match doubling-step ΔΘ to burst-reset events in lattice sims
+4. **Island-bake conduit** — 369 flags with `epoch_bake_sweep` configurations
 
 ---
 
