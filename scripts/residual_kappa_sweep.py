@@ -45,18 +45,37 @@ def sweep(kappas: np.ndarray) -> list[dict]:
 
 
 def plot_sweep(rows: list[dict], k_star: float, path: Path) -> None:
-    k = [r["kappa"] for r in rows]
-    b = [r["bound_B"] for r in rows]
-    fig, ax = plt.subplots(figsize=(9, 5))
+    k = np.array([r["kappa"] for r in rows])
+    b = np.array([r["bound_B"] for r in rows])
+    gap = b - R
+
+    fig, axes = plt.subplots(1, 2, figsize=(12, 4.5))
+
+    ax = axes[0]
     ax.plot(k, b, label="B(κ) = π²(e/π − κ)", color="#2a6f97", lw=2)
-    ax.axhline(R, color="#c9a227", ls="--", label=f"R = φ²+e²−π² = {R:.5f}")
+    ax.axhline(R, color="#c9a227", ls="--", label=f"R = {R:.5f}")
     ax.axvline(KAPPA_DOC, color="#e63946", ls=":", label=f"κ_doc = {KAPPA_DOC}")
     ax.axvline(k_star, color="#457b9d", ls="-.", label=f"κ* = {k_star:.5f}")
     ax.set_xlabel("κ")
     ax.set_ylabel("Value")
-    ax.legend()
+    ax.legend(fontsize=8)
     ax.grid(alpha=0.3)
-    ax.set_title("Residual scaling: R vs π²(e/π−κ)")
+    ax.set_title("B(κ) vs residual R")
+
+    ax2 = axes[1]
+    ax2.plot(k, gap, color="#6a4c93", lw=2)
+    ax2.axhline(0, color="#333", ls="-", lw=0.8)
+    ax2.axvline(KAPPA_DOC, color="#e63946", ls=":", label=f"κ_doc (|gap|={abs(bound(KAPPA_DOC)-R):.4f})")
+    ax2.axvline(k_star, color="#457b9d", ls="-.", label="κ* (exact null)")
+    ax2.scatter([KAPPA_DOC], [bound(KAPPA_DOC) - R], color="#e63946", zorder=5, s=40)
+    ax2.scatter([k_star], [0.0], color="#457b9d", zorder=5, s=40)
+    ax2.set_xlabel("κ")
+    ax2.set_ylabel("B(κ) − R")
+    ax2.legend(fontsize=8)
+    ax2.grid(alpha=0.3)
+    ax2.set_title("Holonomy-gap scaling error")
+
+    fig.suptitle("κ* = e/π − R/π² sits 0.16% from documented κ = 0.85", fontsize=11)
     fig.tight_layout()
     fig.savefig(path, dpi=150, bbox_inches="tight")
     plt.close(fig)

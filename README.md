@@ -26,6 +26,12 @@ Quantified research notebook exploring the near-Pythagorean triangle formed by �
 
 Full table: [`docs/RESULTS.md`](docs/RESULTS.md) · Scaling note: [`notes/residual_scaling.md`](notes/residual_scaling.md)
 
+### Holonomy-gap scaling (standout)
+
+At **κ* = e/π − R/π² ≈ 0.8513**, the scaling B(κ) = π²(e/π−κ) exactly nulls R. Documented **κ = 0.85** is only **0.16%** away — but B(κ_doc) is still **9.5%** above R. κ* is not claimed as the physical value; its proximity to the locked invariant is the observation.
+
+![κ sweep](docs/figures/residual_kappa_sweep.png)
+
 ---
 
 ## Assessment (June 2026)

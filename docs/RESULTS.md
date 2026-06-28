@@ -28,7 +28,8 @@ Regenerate JSON: `python run_all.py` → `outputs/`.
 | Quantity | Value |
 |----------|-------|
 | π²(e/π − κ) at κ=0.85 | **≈ 0.15057** (9.5% from R) |
-| κ* nulling bound exactly | **e/π − R/π² ≈ 0.8513** (0.15% from κ_doc) |
+| κ* nulling B(κ)=R exactly | **e/π − R/π² ≈ 0.8513** (0.16% from κ_doc) |
+| B(κ_doc) − R | **+0.0131** (9.5% of R) — identity not claimed |
 
 ## Simulation probes
 

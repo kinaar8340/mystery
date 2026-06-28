@@ -22,7 +22,9 @@ This moves the project from "beautiful coincidence?" to **quantified emergent si
 π² · (e/π − κ) = πe − κπ² ≈ 0.151   (κ = 0.85)
 ```
 
-~9.5% from R at κ=0.85. **κ* = e/π − R/π² ≈ 0.8513** nulls the bound exactly (0.16% from κ_doc). See `notes/residual_scaling.md` and `residual_kappa_sweep.png`. Hints the residual may scale with the **holonomy gap** (e/π − κ) rather than being forced to zero by W_g or braiding.
+~9.5% from R at κ=0.85. **κ* = e/π − R/π² ≈ 0.8513** nulls B(κ)=R exactly (0.16% from κ_doc). κ* is **not** the claimed physical value — proximity to locked κ is the observation. See [`residual_scaling.md`](residual_scaling.md).
+
+![κ sweep](../docs/figures/residual_kappa_sweep.png) Hints the residual may scale with the **holonomy gap** (e/π − κ) rather than being forced to zero by W_g or braiding.
 
 **Kepler contrast:** The Kepler triangle (1 : √φ : φ) is an **exact** golden Pythagorean triple. The φ-e-π case mixes three distinct transcendental families and stays approximate.
 
