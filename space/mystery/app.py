@@ -159,8 +159,8 @@ TERM_MENU_ACTIONS: tuple[str, ...] = (
 )
 MATRIX_SCREENSAVER_FRAME_DELAY_S = 0.07
 # Single wide terminal canvas — matrix rain fills the panel width (not 3 panes).
-MATRIX_SCREENSAVER_COLS = 104
-MATRIX_SCREENSAVER_ROWS = 17
+MATRIX_SCREENSAVER_COLS = 152
+MATRIX_SCREENSAVER_ROWS = 26
 TERM_UI_MENU = "menu"
 TERM_UI_PAGE = "page"
 TERM_NAV_KEYS: tuple[str, ...] = (
@@ -210,7 +210,7 @@ def _optics_terminal_home() -> str:
 
 
 def _default_term_ui_state() -> dict:
-    return {"mode": TERM_UI_MENU, "index": 0}
+    return {"mode": TERM_UI_MENU, "index": 0, "matrix": False}
 
 
 def _optics_terminal_menu(menu_index: int) -> str:
@@ -427,13 +427,10 @@ def _matrix_screensaver_terminal_text(tick: int) -> str:
 
 
 def _stream_matrix_screensaver() -> Iterator[str]:
-    """Animated matrix rain — loops until another keypad event cancels it."""
-    banner = _optics_terminal_uplink_banner("matrix")
-    yield banner + _OPTICS_TERM_CURSOR
-    time.sleep(_OPTICS_TERM_UPLINK_DELAY_S)
+    """Animated matrix rain — edge-to-edge grid, loops until keypad cancels."""
     tick = 0
     while True:
-        yield banner + _matrix_screensaver_terminal_text(tick)
+        yield _matrix_screensaver_terminal_text(tick)
         tick += 1
         time.sleep(MATRIX_SCREENSAVER_FRAME_DELAY_S)
 
@@ -517,9 +514,9 @@ def _term_keypad_btn_updates(active: str) -> tuple:
     )
 
 
-def _term_terminal_classes(terminal_text: str) -> list[str]:
+def _term_terminal_classes(ui_state: dict | None) -> list[str]:
     classes = ["vqc-optics-terminal-wrap", "vqc-optics-terminal"]
-    if "MATRIX SCREENSAVER — φ e π rain" in (terminal_text or ""):
+    if ui_state and ui_state.get("matrix"):
         classes.append("vqc-optics-terminal-matrix")
     return classes
 
@@ -527,7 +524,7 @@ def _term_terminal_classes(terminal_text: str) -> list[str]:
 def _term_keypad_outputs(terminal_text: str, active: str, ui_state: dict | None = None) -> tuple:
     state = _default_term_ui_state() if ui_state is None else ui_state
     return (
-        gr.update(value=terminal_text, elem_classes=_term_terminal_classes(terminal_text)),
+        gr.update(value=terminal_text, elem_classes=_term_terminal_classes(state)),
         *_term_keypad_btn_updates(active),
         active,
         state,
@@ -570,10 +567,15 @@ def _make_term_stream_click(
     def handler(ui_state: dict) -> Iterator[tuple]:
         state = dict(ui_state) if ui_state else _default_term_ui_state()
         if menu_action is not None:
-            state = {
-                "mode": TERM_UI_PAGE,
-                "index": _term_menu_index_for_action(menu_action),
-            }
+            state.update(
+                {
+                    "mode": TERM_UI_PAGE,
+                    "index": _term_menu_index_for_action(menu_action),
+                    "matrix": menu_action == "matrix",
+                }
+            )
+        else:
+            state["matrix"] = False
         yield from _term_stream_with_latch(stream_fn, active=active_key, ui_state=state)
 
     return handler
@@ -582,6 +584,7 @@ def _make_term_stream_click(
 def _make_term_clear_click(active_key: str):
     def handler(current: str, ui_state: dict) -> Iterator[tuple]:
         state = dict(ui_state) if ui_state else _default_term_ui_state()
+        state["matrix"] = False
         yield from _term_yield_stream_then_release(
             _stream_optics_terminal_clear(current),
             active=active_key,
@@ -619,11 +622,11 @@ def _make_term_dpad_click(active_key: str):
 
         if active_key in nav_delta:
             if mode == TERM_UI_PAGE:
-                menu_state = {"mode": TERM_UI_MENU, "index": menu_index}
+                menu_state = {"mode": TERM_UI_MENU, "index": menu_index, "matrix": False}
                 text = _optics_terminal_menu(menu_index)
             else:
                 new_index = _term_menu_step(menu_index, nav_delta[active_key])
-                menu_state = {"mode": TERM_UI_MENU, "index": new_index}
+                menu_state = {"mode": TERM_UI_MENU, "index": new_index, "matrix": False}
                 text = _optics_terminal_menu(new_index)
             yield _term_keypad_outputs(text, active_key, menu_state)
             time.sleep(_OPTICS_TERM_RELEASE_DELAY_S)
@@ -632,15 +635,19 @@ def _make_term_dpad_click(active_key: str):
 
         if active_key == "dpad_select":
             if mode == TERM_UI_MENU:
-                _action, _keypad, _label, stream_fn = _term_menu_items()[menu_index]
-                page_state = {"mode": TERM_UI_PAGE, "index": menu_index}
+                action, _keypad, _label, stream_fn = _term_menu_items()[menu_index]
+                page_state = {
+                    "mode": TERM_UI_PAGE,
+                    "index": menu_index,
+                    "matrix": action == "matrix",
+                }
                 yield from _term_yield_stream_then_release(
                     stream_fn(),
                     active="dpad_select",
                     ui_state=page_state,
                 )
                 return
-            menu_state = {"mode": TERM_UI_MENU, "index": menu_index}
+            menu_state = {"mode": TERM_UI_MENU, "index": menu_index, "matrix": False}
             text = _optics_terminal_menu(menu_index)
             yield _term_keypad_outputs(text, active_key, menu_state)
             time.sleep(_OPTICS_TERM_RELEASE_DELAY_S)
@@ -654,6 +661,7 @@ def _make_term_latch_click(active_key: str):
 
     def handler(current: str, ui_state: dict) -> tuple:
         state = dict(ui_state) if ui_state else _default_term_ui_state()
+        state["matrix"] = False
         return _term_keypad_outputs(current, active_key, state)
 
     return handler
@@ -663,7 +671,7 @@ def _make_term_home_momentary():
     """Home — momentary return to the selection menu."""
 
     def handler(current_active: str, ui_state: dict) -> Iterator[tuple]:
-        menu_state = {"mode": TERM_UI_MENU, "index": 0}
+        menu_state = {"mode": TERM_UI_MENU, "index": 0, "matrix": False}
         menu_text = _optics_terminal_menu(0)
         yield _term_keypad_outputs(menu_text, current_active, menu_state)
         time.sleep(_OPTICS_TERM_RELEASE_DELAY_S)
@@ -1403,15 +1411,37 @@ footer {{
     white-space: pre !important;
     overflow-x: hidden !important;
 }}
-.gradio-container .vqc-optics-panel .vqc-optics-terminal-matrix textarea {{
-    min-height: 26rem !important;
-    max-height: 42vh !important;
-    font-size: 0.68rem !important;
-    line-height: 1.32 !important;
-    letter-spacing: 0.02em !important;
+.gradio-container .vqc-optics-panel .vqc-optics-terminal-matrix .label-wrap {{
+    display: none !important;
 }}
-.gradio-container .vqc-optics-panel .vqc-optics-terminal-matrix .vqc-optics-terminal-wrap,
-.gradio-container .vqc-optics-panel .vqc-optics-terminal-matrix {{
+.gradio-container .vqc-optics-panel .vqc-optics-terminal-matrix.vqc-optics-terminal-wrap {{
+    padding: 0 !important;
+    margin: 0.35rem 0 0.55rem 0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    width: 100% !important;
+}}
+.gradio-container .vqc-optics-panel .vqc-optics-terminal-matrix textarea {{
+    min-height: 32rem !important;
+    height: clamp(28rem, 46vh, 40rem) !important;
+    max-height: none !important;
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    font-size: 0.58rem !important;
+    line-height: 1.12 !important;
+    letter-spacing: 0 !important;
+    overflow: hidden !important;
+    box-shadow: none !important;
+    background: rgba(2, 10, 4, 0.35) !important;
+}}
+.gradio-container .vqc-optics-panel .vqc-optics-terminal-matrix .block,
+.gradio-container .vqc-optics-panel .vqc-optics-terminal-matrix .form {{
+    padding: 0 !important;
+    margin: 0 !important;
     width: 100% !important;
 }}
 .gradio-container .vqc-optics-keypad {{

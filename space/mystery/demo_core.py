@@ -465,30 +465,26 @@ def terminal_keypad_map() -> str:
 def matrix_screensaver_frame(
     tick: int,
     *,
-    cols: int = 104,
-    rows: int = 17,
+    cols: int = 152,
+    rows: int = 26,
     seed: int = 0,
 ) -> str:
-    """One frame of φ-e-π matrix rain sized to fill the terminal width."""
+    """Dense edge-to-edge φ-e-π matrix rain — grid only, no chrome."""
     rng = np.random.default_rng(seed + tick)
     drops = rng.integers(0, cols, size=cols)
     speeds = rng.integers(1, 4, size=cols)
     grid = [[" "] * cols for _ in range(rows)]
+    dim_chars = "·:;.,"
     for col in range(cols):
-        head = (drops[col] + tick * speeds[col]) % (rows + 4)
+        head = (drops[col] + tick * speeds[col]) % (rows + 8)
         for row in range(rows):
             dist = head - row
-            if 0 <= dist < 4:
-                ch = MATRIX_RAIN_CHARS[int(rng.integers(0, len(MATRIX_RAIN_CHARS)))]
-                grid[row][col] = ch if dist else "█"
-    body = "\n".join("".join(row) for row in grid)
-    bar = "─" * cols
-    return "\n".join(
-        [
-            "MATRIX SCREENSAVER — φ e π rain",
-            bar,
-            body,
-            bar,
-            f"frame {tick + 1:04d} · press any key to exit",
-        ]
-    )
+            if dist == 0:
+                grid[row][col] = "█"
+            elif 0 < dist < 8:
+                grid[row][col] = MATRIX_RAIN_CHARS[int(rng.integers(0, len(MATRIX_RAIN_CHARS)))]
+            elif 0 < dist < 14:
+                grid[row][col] = dim_chars[int(rng.integers(0, len(dim_chars)))]
+            elif rng.random() < 0.06:
+                grid[row][col] = MATRIX_RAIN_CHARS[int(rng.integers(0, len(MATRIX_RAIN_CHARS)))]
+    return "\n".join("".join(row) for row in grid)
