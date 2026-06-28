@@ -278,3 +278,216 @@ def run_analysis(kappa: float) -> tuple[str, str | None, str | None]:
     tri_path = plot_triangle_comparison(tri, out_dir)
     sweep_path = plot_kappa_sweep(float(kappa), out_dir)
     return format_metrics(float(kappa)), tri_path, sweep_path
+
+
+PROBE_SCRIPTS: tuple[tuple[str, str], ...] = (
+    ("phi_e_pi_analysis.py", "φ²+e²≈π² triangle & 30-60-90"),
+    ("hopf_constant_bridge.py", "κ, W_g, θ_crit vs e/π"),
+    ("vortex_369_clock.py", "3-6-9 clock & Rodin mod-9"),
+    ("residual_bound_probe.py", "Bound R via W_g, κ"),
+    ("residual_kappa_sweep.py", "B(κ) sweep; κ* null"),
+    ("pde_relaxation_probe.py", "Meta-seeded PDE + FFT"),
+    ("pde_structured_ic_probe.py", "Hopfion / two-gyro IC"),
+    ("rodin_hopf_fiber_map.py", "Rodin doubling → Hopf S¹"),
+    ("conduit_probe.py", "TOE conduit smoke (local toe venv)"),
+    ("conduit_angular_probe.py", "30°/60°/90° angular histogram"),
+    ("meta_optimize_phi_probe.py", "Meta-optimizer κ lock"),
+)
+
+MATRIX_RAIN_CHARS = "φπe01アイウエオカキ369░▒▓█"
+
+TERM_KEY_ACTIONS: dict[int, tuple[str, str]] = {
+    1: ("home", "Return to selection menu"),
+    2: ("status", "Live constants & environment"),
+    3: ("scope", "What this Space runs vs local suite"),
+    4: ("directory", "Repo layout & paths"),
+    5: ("results", "φ-e-π results snapshot"),
+    6: ("build", "Build stamp & deploy info"),
+    7: ("help", "D-pad / keypad navigation"),
+    8: ("matrix", "Matrix ASCII screensaver"),
+    9: ("probes", "11-script probe catalog"),
+    10: ("vortex369", "3-6-9 tens & vortex clock"),
+    11: ("toe", "TOE parent linkage"),
+    12: ("figures", "Reference figure index"),
+}
+
+
+def terminal_results_snapshot() -> str:
+    tri = phi_e_pi_triangle()
+    k_star = kappa_star()
+    tens = tri["angles_369_tens"]
+    b_doc = bound(KAPPA_DOC)
+    return "\n".join(
+        [
+            "Confirmed emergent signature (June 2026 probes):",
+            "",
+            f"R = φ²+e²−π²   {tri['pythagorean_residual']:+.6f}",
+            f"Rel. error     {tri['pythagorean_relative_error_pct']:.2f}%",
+            "",
+            f"Angles         {tri['angles_deg']['opposite_phi']:.1f}° / "
+            f"{tri['angles_deg']['opposite_e']:.1f}° / "
+            f"{tri['angles_deg']['opposite_pi']:.1f}°",
+            f"369 tens       {tens['phi_angle_tens']:.2f} / "
+            f"{tens['e_angle_tens']:.2f} / "
+            f"{tens['pi_angle_tens']:.2f}",
+            "",
+            f"κ_doc          {KAPPA_DOC}",
+            f"κ*             {k_star:.5f}  ({100 * abs(k_star - KAPPA_DOC) / KAPPA_DOC:.2f}% from κ_doc)",
+            f"B(κ_doc)−R     {b_doc - tri['pythagorean_residual']:+.5f}  "
+            f"({100 * abs(b_doc - tri['pythagorean_residual']) / abs(tri['pythagorean_residual']):.1f}% gap)",
+            "",
+            "Not a derived identity — compatible with gauged Hopf lattice TOE.",
+        ]
+    )
+
+
+def terminal_directory_help() -> str:
+    return "\n".join(
+        [
+            "mystery/  (github.com/kinaar8340/mystery)",
+            "├── scripts/          11 probe scripts",
+            "├── notes/            emergent_signatures, synthesis, …",
+            "├── docs/             RESULTS.md, figures/",
+            "├── outputs/          JSON + PNG (gitignored)",
+            "├── run_all.py        full local suite runner",
+            "├── space/mystery/    HF Gradio bundle (this UI)",
+            "│   ├── app.py        terminal + keypad + analysis",
+            "│   └── demo_core.py  φ-e-π math & plots",
+            "",
+            "Local:  python run_all.py",
+            "HF:     Run analysis (κ slider) · Figures tab",
+            f"TOE:    {TOE_URL}",
+        ]
+    )
+
+
+def terminal_probe_scope() -> str:
+    return "\n".join(
+        [
+            "THIS SPACE (browser):",
+            "  · φ-e-π triangle angles & side ratios",
+            "  · B(κ) = π²(e/π−κ) holonomy-gap scaling",
+            "  · κ slider + triangle + κ-sweep plots",
+            "  · Matrix terminal + keypad (you are here)",
+            "",
+            "LOCAL ONLY (run_all.py — 11 probes):",
+            "  · PDE relaxation & structured IC",
+            "  · Conduit angular + TOE conduit smoke",
+            "  · Meta-optimizer κ lock, Rodin-Hopf map",
+            "  · Full JSON reports → outputs/",
+            "",
+            "Press 09 for script catalog · Run analysis below.",
+        ]
+    )
+
+
+def terminal_probe_catalog() -> str:
+    lines = ["11 probes in scripts/ (run_all.py order):", ""]
+    for idx, (name, blurb) in enumerate(PROBE_SCRIPTS, start=1):
+        lines.append(f"  {idx:02d}. {name}")
+        lines.append(f"      {blurb}")
+    lines.extend(["", "TOE-linked: conduit_*, meta_optimize_* need toe venv."])
+    return "\n".join(lines)
+
+
+def terminal_vortex369_readout() -> str:
+    tri = phi_e_pi_triangle()
+    tens = tri["angles_369_tens"]
+    return "\n".join(
+        [
+            "Vortex 3-6-9 positional geometry (angle ÷ 10°):",
+            "",
+            f"  φ leg → {tens['phi_angle_tens']:.3f}  (nearest 3)",
+            f"  e leg → {tens['e_angle_tens']:.3f}  (nearest 6)",
+            f"  π leg → {tens['pi_angle_tens']:.3f}  (nearest 9)",
+            "",
+            "Rodin doubling cycle 1-2-4-8-7-5 maps to Hopf S¹ phases",
+            "(see rodin_hopf_fiber_map.py + vortex_369_clock.py).",
+            "",
+            "Echo is numerical — not a forced 3-6-9 lock.",
+        ]
+    )
+
+
+def terminal_toe_linkage() -> str:
+    w_g = 350.0 / PI
+    theta_crit = PI * (1.0 + KAPPA_DOC)
+    return "\n".join(
+        [
+            "Gauged Hopf lattice TOE (parent repo):",
+            "",
+            f"  κ_doc         {KAPPA_DOC}",
+            f"  e/π           {E_OVER_PI:.5f}",
+            f"  W_g ≈ 350/π   {w_g:.3f}",
+            f"  θ_crit ≈ π(1+κ)  {theta_crit:.3f}",
+            f"  Θ_link ≈ π    (not 5.8 — see toe papers)",
+            "",
+            f"Repo: {TOE_URL}",
+            "Burst threshold reconciliation:",
+            "  notes/theta_crit_reconciliation.md",
+        ]
+    )
+
+
+def terminal_figures_index() -> str:
+    labels = (
+        "phi_e_pi_triangle.png",
+        "residual_kappa_sweep.png",
+        "vortex_369_clock.png",
+        "conduit_angular_histogram.png",
+    )
+    lines = ["docs/figures/ (Figures tab + GitHub raw):", ""]
+    for idx, (url, name) in enumerate(zip(FIGURE_URLS, labels, strict=True), start=1):
+        lines.append(f"  {idx}. {name}")
+        lines.append(f"     {url}")
+    lines.append("")
+    lines.append("Regenerate: python run_all.py → outputs/")
+    return "\n".join(lines)
+
+
+def terminal_keypad_map() -> str:
+    lines = ["Assigned prog keys (01–12):", ""]
+    for index in sorted(TERM_KEY_ACTIONS):
+        _action, desc = TERM_KEY_ACTIONS[index]
+        tag = "01 Home" if index == 1 else f"{index:02d}"
+        lines.append(f"  [{tag}]  {desc}")
+    lines.extend(
+        [
+            "",
+            "D-pad: ▲▼◀▶ move menu · enter confirm · clear blank",
+            "Keys 13–24: reserved (latch only)",
+            "Menu items 01–08 mirror d-pad selection.",
+        ]
+    )
+    return "\n".join(lines)
+
+
+def matrix_screensaver_frame(
+    tick: int,
+    *,
+    cols: int = 44,
+    rows: int = 9,
+    seed: int = 0,
+) -> str:
+    """One frame of φ-e-π matrix rain."""
+    rng = np.random.default_rng(seed + tick)
+    drops = rng.integers(0, cols, size=cols)
+    speeds = rng.integers(1, 4, size=cols)
+    grid = [[" "] * cols for _ in range(rows)]
+    for col in range(cols):
+        head = (drops[col] + tick * speeds[col]) % (rows + 4)
+        for row in range(rows):
+            dist = head - row
+            if 0 <= dist < 4:
+                ch = MATRIX_RAIN_CHARS[int(rng.integers(0, len(MATRIX_RAIN_CHARS)))]
+                grid[row][col] = ch if dist else "█"
+    body = "\n".join("".join(row).rstrip() for row in grid)
+    return "\n".join(
+        [
+            "MATRIX SCREENSAVER — φ e π rain",
+            "─" * min(cols, 44),
+            body,
+            "─" * min(cols, 44),
+            f"frame {tick + 1:02d} · 01 Home or clear to exit",
+        ]
+    )

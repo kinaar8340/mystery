@@ -20,13 +20,25 @@ from demo_core import (
     GITHUB_URL,
     HF_SPACE_URL,
     KAPPA_DOC,
+    R,
     ONBOARDING_MD,
+    kappa_star,
     SIMULATION_BANNER_MD,
+    TERM_KEY_ACTIONS,
     TOE_URL,
     WALLPAPER_URL,
     get_build_label,
     is_hf_space,
+    matrix_screensaver_frame,
     run_analysis,
+    terminal_directory_help,
+    terminal_figures_index,
+    terminal_keypad_map,
+    terminal_probe_catalog,
+    terminal_probe_scope,
+    terminal_results_snapshot,
+    terminal_toe_linkage,
+    terminal_vortex369_readout,
 )
 
 
@@ -129,20 +141,24 @@ TERM_KEYPAD_PROG_COLS = 12
 TERM_KEYPAD_PROG_ROWS = 2
 TERM_KEYPAD_COUNT = TERM_KEYPAD_PROG_COLS * TERM_KEYPAD_PROG_ROWS
 TERM_KEYPAD_DEFINED: dict[int, str] = {
-    1: "home",
-    2: "status",
-    3: "demo",
-    4: "build",
-    5: "help",
+    index: action for index, (action, _desc) in TERM_KEY_ACTIONS.items()
 }
 TERM_KEYPAD_HOME_KEY = "key01"
 TERM_KEYPAD_DESCRIPTIONS: dict[int, str] = {
-    1: "Return to selection menu — momentary",
-    2: "Status — probe suite & environment",
-    3: "Demo — numerical scope (φ-e-π)",
-    4: "Build — last updated / commit",
-    5: "Help — keypad reference",
+    index: desc for index, (_action, desc) in TERM_KEY_ACTIONS.items()
 }
+TERM_MENU_ACTIONS: tuple[str, ...] = (
+    "home",
+    "status",
+    "scope",
+    "directory",
+    "results",
+    "build",
+    "help",
+    "matrix",
+)
+MATRIX_SCREENSAVER_FRAMES = 24
+MATRIX_SCREENSAVER_FRAME_DELAY_S = 0.07
 TERM_UI_MENU = "menu"
 TERM_UI_PAGE = "page"
 TERM_NAV_KEYS: tuple[str, ...] = (
@@ -188,7 +204,7 @@ def _optics_assigned_keypad_lines() -> str:
 
 
 def _optics_terminal_home() -> str:
-    return _optics_terminal_frame("PROGRAMMABLE KEYPAD", _optics_assigned_keypad_lines())
+    return _optics_terminal_frame("PROGRAMMABLE KEYPAD", terminal_keypad_map())
 
 
 def _default_term_ui_state() -> dict:
@@ -206,14 +222,42 @@ def _optics_terminal_menu(menu_index: int) -> str:
     return _optics_terminal_frame("SELECTION MENU", "\n".join(lines))
 
 
+def _term_menu_label(action: str) -> str:
+    labels = {
+        "home": "Home — Keypad Map",
+        "status": "Status — Live Constants",
+        "scope": "Scope — Space vs Local Suite",
+        "directory": "Directory — Repo Layout",
+        "results": "Results — φ-e-π Snapshot",
+        "build": "Build — Deploy Stamp",
+        "help": "Help — D-pad Navigation",
+        "matrix": "Matrix — ASCII Screensaver",
+    }
+    return labels.get(action, action)
+
+
+def _term_menu_keypad_index(action: str) -> int:
+    for index, (key, _desc) in TERM_KEY_ACTIONS.items():
+        if key == action:
+            return index
+    return 1
+
+
 def _term_menu_items() -> tuple[tuple[str, int, str, Callable[[], Iterator[str]]], ...]:
-    return (
-        ("home", 1, "Home Keypad Legend", _stream_optics_terminal_home),
-        ("status", 2, "Status Probe Suite & Environment", _stream_optics_terminal_status),
-        ("demo", 3, "Demo Numerical Scope (φ-e-π)", _stream_optics_terminal_demo),
-        ("build", 4, "Build Last Updated / Commit", _stream_optics_terminal_build),
-        ("help", 5, "Help Keypad Reference", _stream_optics_terminal_help),
-    )
+    items = []
+    for action in TERM_MENU_ACTIONS:
+        stream_fn = TERM_KEYPAD_STREAMERS.get(action)
+        if stream_fn is None:
+            continue
+        items.append(
+            (
+                action,
+                _term_menu_keypad_index(action),
+                _term_menu_label(action),
+                stream_fn,
+            )
+        )
+    return tuple(items)
 
 
 def _term_menu_index_for_action(action: str) -> int:
@@ -231,24 +275,51 @@ def _term_menu_step(menu_index: int, delta: int) -> int:
 def _optics_terminal_status() -> str:
     on_hf = is_hf_space()
     env = "Hugging Face Space" if on_hf else "Local Gradio"
+    k_star = kappa_star()
     return _optics_terminal_frame(
         "SYSTEM STATUS",
         "\n".join(
             [
                 f"Environment : {env}",
                 f"κ default   : {KAPPA_DOC} (documented invariant)",
+                f"R residual  : {R:+.6f}  (~1.39% Pythagorean error)",
+                f"κ*          : {k_star:.5f}  (0.16% from κ_doc)",
                 "Pipeline    : φ-e-π triangle → B(κ) scaling → figures",
                 "Full suite  : run_all.py (11 probes) — local only",
                 f"TOE parent  : {TOE_URL}",
                 "",
-                "Controls ready. Tune κ slider, or RUN ANALYSIS.",
+                "05 Results · 09 Probes · 08 Matrix · Run analysis below.",
             ]
         ),
     )
 
 
-def _optics_terminal_demo() -> str:
-    return _optics_terminal_frame("SIMULATION DEMO", _strip_md_plain(SIMULATION_BANNER_MD))
+def _optics_terminal_scope() -> str:
+    return _optics_terminal_frame("PROBE SCOPE", terminal_probe_scope())
+
+
+def _optics_terminal_directory() -> str:
+    return _optics_terminal_frame("REPO DIRECTORY", terminal_directory_help())
+
+
+def _optics_terminal_results() -> str:
+    return _optics_terminal_frame("RESULTS SNAPSHOT", terminal_results_snapshot())
+
+
+def _optics_terminal_probes() -> str:
+    return _optics_terminal_frame("PROBE CATALOG", terminal_probe_catalog())
+
+
+def _optics_terminal_vortex369() -> str:
+    return _optics_terminal_frame("3-6-9 VORTEX", terminal_vortex369_readout())
+
+
+def _optics_terminal_toe() -> str:
+    return _optics_terminal_frame("TOE LINKAGE", terminal_toe_linkage())
+
+
+def _optics_terminal_figures() -> str:
+    return _optics_terminal_frame("FIGURES INDEX", terminal_figures_index())
 
 
 def _optics_terminal_build() -> str:
@@ -272,10 +343,13 @@ def _optics_terminal_help() -> str:
         "KEYPAD REFERENCE",
         "\n".join(
             [
-                "D-pad TUI — ▲▼ ◀▶ move · enter opens highlighted item",
-                "Prog keys 02–05 mirror menu items · 01 Home → menu",
+                "D-pad — ▲▼ ◀▶ move highlight · enter opens item",
+                "01 Home → selection menu (momentary)",
+                "02–08 mirror menu · 09–12 direct shortcuts",
+                "08 / menu item 08 → matrix ASCII screensaver",
+                "clear → blank display",
                 "",
-                _optics_assigned_keypad_lines(),
+                "Press 01 Home for full keypad map.",
             ]
         ),
     )
@@ -312,8 +386,50 @@ def _stream_optics_terminal_status() -> Iterator[str]:
     yield from _optics_terminal_stream(_optics_terminal_status, mode="status")
 
 
-def _stream_optics_terminal_demo() -> Iterator[str]:
-    yield from _optics_terminal_stream(_optics_terminal_demo, mode="demo")
+def _stream_optics_terminal_scope() -> Iterator[str]:
+    yield from _optics_terminal_stream(_optics_terminal_scope, mode="scope")
+
+
+def _stream_optics_terminal_directory() -> Iterator[str]:
+    yield from _optics_terminal_stream(_optics_terminal_directory, mode="directory")
+
+
+def _stream_optics_terminal_results() -> Iterator[str]:
+    yield from _optics_terminal_stream(_optics_terminal_results, mode="results")
+
+
+def _stream_optics_terminal_probes() -> Iterator[str]:
+    yield from _optics_terminal_stream(_optics_terminal_probes, mode="probes")
+
+
+def _stream_optics_terminal_vortex369() -> Iterator[str]:
+    yield from _optics_terminal_stream(_optics_terminal_vortex369, mode="vortex369")
+
+
+def _stream_optics_terminal_toe() -> Iterator[str]:
+    yield from _optics_terminal_stream(_optics_terminal_toe, mode="toe")
+
+
+def _stream_optics_terminal_figures() -> Iterator[str]:
+    yield from _optics_terminal_stream(_optics_terminal_figures, mode="figures")
+
+
+def _stream_matrix_screensaver() -> Iterator[str]:
+    """Animated matrix rain — full-frame updates, no typewriter."""
+    banner = _optics_terminal_uplink_banner("matrix")
+    yield banner + _OPTICS_TERM_CURSOR
+    time.sleep(_OPTICS_TERM_UPLINK_DELAY_S)
+    for tick in range(MATRIX_SCREENSAVER_FRAMES):
+        frame = _optics_terminal_frame(
+            "MATRIX SCREENSAVER",
+            matrix_screensaver_frame(tick, seed=42),
+        )
+        yield banner + frame
+        time.sleep(MATRIX_SCREENSAVER_FRAME_DELAY_S)
+    yield banner + _optics_terminal_frame(
+        "MATRIX SCREENSAVER",
+        "Screensaver ended.\n01 Home → menu · clear → blank",
+    )
 
 
 def _stream_optics_terminal_build() -> Iterator[str]:
@@ -352,9 +468,11 @@ def _term_key_id(index: int) -> str:
 
 
 def _term_keypad_label(index: int) -> str:
-    """Home key is '01 Home'; other prog keys are zero-padded."""
+    """Home key is '01 Home'; 08 shows matrix glyph hint."""
     if index == 1:
         return "01 Home"
+    if index == 8:
+        return "08▓"
     return f"{index:02d}"
 
 
@@ -547,9 +665,16 @@ def _register_term_keypad_streamers() -> None:
         {
             "home": _stream_optics_terminal_home,
             "status": _stream_optics_terminal_status,
-            "demo": _stream_optics_terminal_demo,
+            "scope": _stream_optics_terminal_scope,
+            "directory": _stream_optics_terminal_directory,
+            "results": _stream_optics_terminal_results,
             "build": _stream_optics_terminal_build,
             "help": _stream_optics_terminal_help,
+            "matrix": _stream_matrix_screensaver,
+            "probes": _stream_optics_terminal_probes,
+            "vortex369": _stream_optics_terminal_vortex369,
+            "toe": _stream_optics_terminal_toe,
+            "figures": _stream_optics_terminal_figures,
         }
     )
 
