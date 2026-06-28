@@ -13,6 +13,7 @@
 
 | # | Item | Status |
 |---|------|--------|
+| 0 | Triangle angle derivation | **Documented** — [angle_derivation.md](angle_derivation.md); 3-6-9 mapping still interpretive |
 | 1 | Closed form for φ, e, π | Best near-miss: π²(e/π−κ) ≈ 0.151 vs R ≈ 0.137 (9.5% off) |
 | 4 | κ vs e/π | κ = 0.85 is attractor; e/π is independent ~1.8% near-miss |
 | 7 | φ_b | Meta best ≈ 0.754 (3/4 anyonic); not φ⁻¹ |

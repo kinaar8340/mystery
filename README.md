@@ -11,6 +11,8 @@ Quantified research notebook exploring the near-Pythagorean triangle formed by �
 
 **Status:** Compatible emergent signature — not an exact identity, not forced by invariants, not contradicted by simulation.
 
+**Project stage:** Early research notebook (June 2026) — low visibility so far. The [Hugging Face demo](https://huggingface.co/spaces/kinaar111/mystery) is browser-oriented (κ slider, triangle plots, CLI terminal); full probe depth, derivations, and JSON outputs live in this repo.
+
 ---
 
 ## Results at a glance
@@ -121,6 +123,7 @@ Triangle angles: φ→31.0°, e→59.9°, π→89.1° — near 30-60-90, not exa
 
 | Doc | Contents |
 |-----|----------|
+| [`notes/angle_derivation.md`](notes/angle_derivation.md) | Step-by-step law-of-cosines angles; 369 tens; interpretive vs computed |
 | [`notes/emergent_signatures.md`](notes/emergent_signatures.md) | Probe results and overall assessment |
 | [`notes/synthesis.md`](notes/synthesis.md) | Original thought-experiment synthesis |
 | [`notes/open_questions.md`](notes/open_questions.md) | Resolved items + prioritized next moves |

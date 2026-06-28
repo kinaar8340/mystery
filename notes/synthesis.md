@@ -26,6 +26,8 @@ Relative error on the Pythagorean check: **~1.39%**.
 | φ | ≈ 30.996° |
 | e | ≈ 59.900° |
 
+**Full derivation:** [angle_derivation.md](angle_derivation.md) — law of cosines, intermediate arithmetic, 369 tens step, and what is interpretive vs computed.
+
 Side ratios normalized to φ: **(1 : 1.6795 : 1.941)** vs exact 30-60-90 of **(1 : √3 ≈ 1.732 : 2)** — deviation ~3% consistently.
 
 This is close enough for the "special triangle" intuition but **not exact**. No known closed-form identity makes φ² + e² = π² hold precisely.

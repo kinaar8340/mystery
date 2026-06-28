@@ -72,7 +72,9 @@ This moves the project from "beautiful coincidence?" to **quantified emergent si
 
 ![φ-e-π triangle](../docs/figures/phi_e_pi_triangle.png)
 
-Angles map to 3-6-9 tens-of-degrees: **3.10, 5.99, 8.91** — near but not on axis.
+Angles **31.0° / 59.9° / 89.1°** from law of cosines on sides φ, e, π — see [angle_derivation.md](angle_derivation.md) for step-by-step arithmetic.
+
+Angles map to 3-6-9 tens-of-degrees: **3.10, 5.99, 8.91** — near but not on axis (interpretive ÷10° step documented in that note).
 
 ![369 clock](../docs/figures/vortex_369_clock.png)
 

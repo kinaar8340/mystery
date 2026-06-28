@@ -29,16 +29,19 @@ TOE_URL = "https://github.com/kinaar8340/toe"
 WALLPAPER_URL = f"{GITHUB_URL}/raw/main/mystery_image.png"
 
 SIMULATION_BANNER_MD = """
-> **Numerical probe** — browser-based φ²+e²≈π² analysis, κ holonomy-gap scaling, and
-> 30-60-90 comparison. Outputs are reproducible numpy/matplotlib figures — not live PDE or
-> conduit simulation. Full probe suite: `python run_all.py` locally.
+> **Demo-oriented Space** — browser κ slider, φ-e-π triangle plots, and CLI terminal.
+> Not live PDE/conduit simulation. Full 11-probe suite, step-by-step notes, and JSON outputs:
+> [github.com/kinaar8340/mystery](https://github.com/kinaar8340/mystery) (`run_all.py` locally).
 """
 
 ONBOARDING_MD = """
 ### φ, e, π — emergent signature, not forced identity
 The near-Pythagorean residual **R = φ²+e²−π² ≈ +0.137** (~1.4% relative error) defines a
 triangle whose angles land near **31° / 60° / 90°** — and whose tens digits echo **3-6-9**
-vortex geometry. This Space runs the core numerical checks interactively.
+vortex geometry. This Space runs the **core numerical checks** interactively.
+
+**Early-stage project** — full derivations and probe depth live on
+[GitHub](https://github.com/kinaar8340/mystery) ([angle steps](https://github.com/kinaar8340/mystery/blob/main/notes/angle_derivation.md)).
 
 ### Three steps (60 seconds)
 1. **Adjust κ** on the slider (documented κ = 0.85 is marked).
@@ -364,19 +367,18 @@ def terminal_directory_help() -> str:
 def terminal_probe_scope() -> str:
     return "\n".join(
         [
-            "THIS SPACE (browser):",
+            "THIS SPACE — demo-oriented (browser):",
             "  · φ-e-π triangle angles & side ratios",
             "  · B(κ) = π²(e/π−κ) holonomy-gap scaling",
             "  · κ slider + triangle + κ-sweep plots",
-            "  · Matrix terminal + keypad (you are here)",
+            "  · CLI terminal + keypad (you are here)",
             "",
-            "LOCAL ONLY (run_all.py — 11 probes):",
-            "  · PDE relaxation & structured IC",
-            "  · Conduit angular + TOE conduit smoke",
-            "  · Meta-optimizer κ lock, Rodin-Hopf map",
-            "  · Full JSON reports → outputs/",
+            "GITHUB REPO — full depth:",
+            "  · notes/angle_derivation.md — step-by-step angles",
+            "  · 11 probes: PDE, conduit, meta-opt, Rodin map",
+            "  · JSON reports → outputs/ (run_all.py)",
             "",
-            "Press 09 for script catalog · Run analysis below.",
+            "Early-stage project · Press 09 for catalog.",
         ]
     )
 
