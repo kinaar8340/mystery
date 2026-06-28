@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="mystery_image.png" alt="Mystery — maple leaf on a Roman-numeral clock with glowing green geometric overlay, autumn leaves, and cosmic background; nature, time, and topology" width="100%" style="max-width: 820px; border-radius: 12px;" />
+</p>
+
 # Mystery — φ, e, π Emergent Signature
 
 [![Repository](https://img.shields.io/badge/GitHub-mystery-blue)](https://github.com/kinaar8340/mystery)
