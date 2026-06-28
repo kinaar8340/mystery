@@ -14,6 +14,7 @@ import gradio as gr
 
 from demo_core import (
     CLAIMS_MD,
+    E_OVER_PI,
     FIGURE_URLS,
     FIGURES_INTRO_MD,
     GITHUB_URL,
@@ -1824,7 +1825,7 @@ def build_app() -> gr.Blocks:
             preset_kappa_star.click(load_kappa_star, outputs=[kappa]).then(
                 run_probe, inputs=[kappa], outputs=run_outputs
             )
-            preset_e_over_pi.click(lambda: float(__import__("demo_core").E_OVER_PI), outputs=[kappa]).then(
+            preset_e_over_pi.click(lambda: float(E_OVER_PI), outputs=[kappa]).then(
                 run_probe, inputs=[kappa], outputs=run_outputs
             )
 
