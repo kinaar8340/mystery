@@ -13,6 +13,7 @@ from collections.abc import Callable, Iterator
 import gradio as gr
 
 from demo_core import (
+    BOOT_QUOTE_STRING,
     CLAIMS_MD,
     E_OVER_PI,
     FIGURE_URLS,
@@ -142,6 +143,12 @@ _OPTICS_TERM_NEWLINE_DELAY_S = 0.048
 _OPTICS_TERM_UPLINK_DELAY_S = 0.22
 _OPTICS_TERM_CURSOR = "▌"
 _OPTICS_TERM_RELEASE_DELAY_S = 0.25
+_BOOT_QUOTE_CHAR_DELAY_S = 0.1
+_BOOT_POST_QUOTE_DELAY_S = 3.0
+_BOOT_DOT_INTERVAL_S = 0.5
+_BOOT_DOT_COUNT = 6
+_BOOT_TERM_LINES = 14
+_BOOT_TERM_COLS = 56
 
 
 def _strip_md_plain(text: str) -> str:
@@ -709,10 +716,34 @@ def _make_term_home_momentary():
     return handler
 
 
-def _term_boot_home() -> tuple:
-    """Initial boot — show selection menu immediately (no typewriter delay)."""
+def _boot_quote_prefix() -> str:
+    """Pad so the quote types out near the middle of the terminal panel."""
+    v_pad = max(0, (_BOOT_TERM_LINES - 1) // 2)
+    h_pad = max(0, (_BOOT_TERM_COLS - len(BOOT_QUOTE_STRING)) // 2)
+    return "\n" * v_pad + (" " * h_pad)
+
+
+def _stream_term_boot() -> Iterator[tuple]:
+    """One-shot startup: centered quote, dot countdown, then selection menu."""
     boot_state = _default_term_ui_state()
-    return _term_keypad_outputs(_optics_terminal_menu(0), "", boot_state)
+    shown = _boot_quote_prefix()
+    yield _term_keypad_outputs(shown, "", boot_state)
+
+    for ch in BOOT_QUOTE_STRING:
+        shown += ch
+        yield _term_keypad_outputs(shown + _OPTICS_TERM_CURSOR, "", boot_state)
+        time.sleep(_BOOT_QUOTE_CHAR_DELAY_S)
+
+    yield _term_keypad_outputs(shown, "", boot_state)
+    time.sleep(_BOOT_POST_QUOTE_DELAY_S)
+
+    for _ in range(_BOOT_DOT_COUNT):
+        shown += "."
+        yield _term_keypad_outputs(shown, "", boot_state)
+        time.sleep(_BOOT_DOT_INTERVAL_S)
+
+    menu_text = _optics_terminal_menu(0)
+    yield _term_keypad_outputs(menu_text, "", boot_state)
 
 
 def _register_term_keypad_streamers() -> None:
@@ -1927,7 +1958,7 @@ def build_app() -> gr.Blocks:
                                 gr.HTML('<span class="vqc-nav-cell-empty" aria-hidden="true">&nbsp;</span>')
                 optics_terminal = gr.Textbox(
                     label="Matrix status display — selection menu · d-pad nav",
-                    value=_optics_terminal_menu(0),
+                    value="",
                     lines=14,
                     max_lines=24,
                     interactive=False,
@@ -2145,7 +2176,7 @@ def build_app() -> gr.Blocks:
         tab_claims_btn.click(_toggle_claims, inputs=[claims_open], outputs=claims_outputs)
         newhere_minimize_btn.click(_minimize_newhere, outputs=newhere_outputs[:3])
         claims_minimize_btn.click(_minimize_claims, outputs=claims_outputs[:3])
-        demo.load(_term_boot_home, outputs=term_keypad_outputs)
+        demo.load(_stream_term_boot, outputs=term_keypad_outputs)
 
         gr.Markdown(
             "Research notebook — emergent signature, not forced identity · "

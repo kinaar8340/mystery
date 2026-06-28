@@ -21,6 +21,8 @@ R = PHI**2 + E**2 - PI**2
 E_OVER_PI = E / PI
 KAPPA_DOC = 0.85
 
+BOOT_QUOTE_STRING = "TEST EVERYTHING, HOLD FAST WHAT IS GOOD AND KNOW YOUR GOD"
+
 HF_SPACE_URL = "https://huggingface.co/spaces/kinaar111/mystery"
 GITHUB_URL = "https://github.com/kinaar8340/mystery"
 TOE_URL = "https://github.com/kinaar8340/toe"
