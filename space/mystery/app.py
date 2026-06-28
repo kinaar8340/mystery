@@ -29,7 +29,6 @@ from demo_core import (
     WALLPAPER_URL,
     get_build_label,
     is_hf_space,
-    matrix_screensaver_frame,
     run_analysis,
     terminal_directory_help,
     terminal_figures_index,
@@ -117,6 +116,26 @@ OPTICS_LOGO_HTML = """
 </div>
 """
 
+# Client-side CSS phosphor scan — no server streaming loop (HF-safe).
+SIGNAL_SCANNER_HTML = f"""
+<div class="myst-signal-scan" role="img" aria-label="Phosphor signal scan">
+  <div class="myst-signal-scanlines" aria-hidden="true"></div>
+  <div class="myst-signal-beam" aria-hidden="true"></div>
+  <pre class="myst-signal-body">PHOSPHOR SIGNAL SCAN — φ · e · π
+{'─' * 72}
+R = φ²+e²−π²     {R:+.6f}
+κ_doc = {KAPPA_DOC}    κ* ≈ {kappa_star():.5f}
+angles ≈ 31.0° / 59.9° / 89.1°
+369 tens ≈ 3.10 / 5.99 / 8.91
+{'─' * 72}
+▸ holonomy-gap B(κ) = π²(e/π−κ)
+▸ emergent signature — not forced identity
+▸ {GITHUB_URL}
+{'─' * 72}
+press any keypad to exit</pre>
+</div>
+"""
+
 _OPTICS_TERM_BAR = "─" * 48
 _OPTICS_TERM_CHAR_DELAY_S = 0.014
 _OPTICS_TERM_NEWLINE_DELAY_S = 0.048
@@ -155,12 +174,8 @@ TERM_MENU_ACTIONS: tuple[str, ...] = (
     "results",
     "build",
     "help",
-    "matrix",
+    "scan",
 )
-MATRIX_SCREENSAVER_FRAME_DELAY_S = 0.07
-# Single wide terminal canvas — matrix rain fills the panel width (not 3 panes).
-MATRIX_SCREENSAVER_COLS = 160
-MATRIX_SCREENSAVER_ROWS = 28
 TERM_UI_MENU = "menu"
 TERM_UI_PAGE = "page"
 TERM_NAV_KEYS: tuple[str, ...] = (
@@ -210,7 +225,7 @@ def _optics_terminal_home() -> str:
 
 
 def _default_term_ui_state() -> dict:
-    return {"mode": TERM_UI_MENU, "index": 0, "matrix": False}
+    return {"mode": TERM_UI_MENU, "index": 0, "scan": False}
 
 
 def _optics_terminal_menu(menu_index: int) -> str:
@@ -233,7 +248,7 @@ def _term_menu_label(action: str) -> str:
         "results": "Results — φ-e-π Snapshot",
         "build": "Build — Deploy Stamp",
         "help": "Help — D-pad Navigation",
-        "matrix": "Matrix — Rain (any key stops)",
+        "scan": "Scan — Phosphor Display",
     }
     return labels.get(action, action)
 
@@ -348,7 +363,7 @@ def _optics_terminal_help() -> str:
                 "D-pad — ▲▼ ◀▶ move highlight · enter opens item",
                 "01 Home → selection menu (momentary)",
                 "02–08 mirror menu · 09–12 direct shortcuts",
-                "08 / menu item 08 → matrix rain (any key stops)",
+                "08 / menu item 08 → phosphor scan (any key stops)",
                 "clear → blank display",
                 "",
                 "Press 01 Home for full keypad map.",
@@ -416,23 +431,9 @@ def _stream_optics_terminal_figures() -> Iterator[str]:
     yield from _optics_terminal_stream(_optics_terminal_figures, mode="figures")
 
 
-def _matrix_screensaver_terminal_text(tick: int) -> str:
-    """Full-width screensaver frame — no narrow 48-char menu bar."""
-    return matrix_screensaver_frame(
-        tick,
-        cols=MATRIX_SCREENSAVER_COLS,
-        rows=MATRIX_SCREENSAVER_ROWS,
-        seed=42,
-    )
-
-
-def _stream_matrix_screensaver() -> Iterator[str]:
-    """Animated matrix rain — edge-to-edge grid, loops until keypad cancels."""
-    tick = 0
-    while True:
-        yield _matrix_screensaver_terminal_text(tick)
-        tick += 1
-        time.sleep(MATRIX_SCREENSAVER_FRAME_DELAY_S)
+def _stream_scan_stub() -> Iterator[str]:
+    """Menu placeholder — real scan uses CSS toggle via key 08 / d-pad."""
+    return iter(())
 
 
 def _stream_optics_terminal_build() -> Iterator[str]:
@@ -475,7 +476,7 @@ def _term_keypad_label(index: int) -> str:
     if index == 1:
         return "01 Home"
     if index == 8:
-        return "08▓"
+        return "08~"
     return f"{index:02d}"
 
 
@@ -514,17 +515,16 @@ def _term_keypad_btn_updates(active: str) -> tuple:
     )
 
 
-def _term_terminal_classes(ui_state: dict | None) -> list[str]:
-    classes = ["vqc-optics-terminal-wrap", "vqc-optics-terminal"]
-    if ui_state and ui_state.get("matrix"):
-        classes.append("vqc-optics-terminal-matrix")
-    return classes
-
-
 def _term_keypad_outputs(terminal_text: str, active: str, ui_state: dict | None = None) -> tuple:
     state = _default_term_ui_state() if ui_state is None else ui_state
+    scanning = bool(state.get("scan"))
     return (
-        gr.update(value=terminal_text, elem_classes=_term_terminal_classes(state)),
+        gr.update(
+            value=terminal_text,
+            visible=not scanning,
+            elem_classes=["vqc-optics-terminal-wrap", "vqc-optics-terminal"],
+        ),
+        gr.update(visible=scanning),
         *_term_keypad_btn_updates(active),
         active,
         state,
@@ -571,11 +571,11 @@ def _make_term_stream_click(
                 {
                     "mode": TERM_UI_PAGE,
                     "index": _term_menu_index_for_action(menu_action),
-                    "matrix": menu_action == "matrix",
+                    "scan": menu_action == "scan",
                 }
             )
         else:
-            state["matrix"] = False
+            state["scan"] = False
         yield from _term_stream_with_latch(stream_fn, active=active_key, ui_state=state)
 
     return handler
@@ -584,7 +584,7 @@ def _make_term_stream_click(
 def _make_term_clear_click(active_key: str):
     def handler(current: str, ui_state: dict) -> Iterator[tuple]:
         state = dict(ui_state) if ui_state else _default_term_ui_state()
-        state["matrix"] = False
+        state["scan"] = False
         yield from _term_yield_stream_then_release(
             _stream_optics_terminal_clear(current),
             active=active_key,
@@ -622,11 +622,11 @@ def _make_term_dpad_click(active_key: str):
 
         if active_key in nav_delta:
             if mode == TERM_UI_PAGE:
-                menu_state = {"mode": TERM_UI_MENU, "index": menu_index, "matrix": False}
+                menu_state = {"mode": TERM_UI_MENU, "index": menu_index, "scan": False}
                 text = _optics_terminal_menu(menu_index)
             else:
                 new_index = _term_menu_step(menu_index, nav_delta[active_key])
-                menu_state = {"mode": TERM_UI_MENU, "index": new_index, "matrix": False}
+                menu_state = {"mode": TERM_UI_MENU, "index": new_index, "scan": False}
                 text = _optics_terminal_menu(new_index)
             yield _term_keypad_outputs(text, active_key, menu_state)
             time.sleep(_OPTICS_TERM_RELEASE_DELAY_S)
@@ -636,10 +636,20 @@ def _make_term_dpad_click(active_key: str):
         if active_key == "dpad_select":
             if mode == TERM_UI_MENU:
                 action, _keypad, _label, stream_fn = _term_menu_items()[menu_index]
+                if action == "scan":
+                    page_state = {
+                        "mode": TERM_UI_PAGE,
+                        "index": menu_index,
+                        "scan": True,
+                    }
+                    yield _term_keypad_outputs("", "dpad_select", page_state)
+                    time.sleep(_OPTICS_TERM_RELEASE_DELAY_S)
+                    yield _term_keypad_outputs("", "", page_state)
+                    return
                 page_state = {
                     "mode": TERM_UI_PAGE,
                     "index": menu_index,
-                    "matrix": action == "matrix",
+                    "scan": False,
                 }
                 yield from _term_yield_stream_then_release(
                     stream_fn(),
@@ -647,7 +657,7 @@ def _make_term_dpad_click(active_key: str):
                     ui_state=page_state,
                 )
                 return
-            menu_state = {"mode": TERM_UI_MENU, "index": menu_index, "matrix": False}
+            menu_state = {"mode": TERM_UI_MENU, "index": menu_index, "scan": False}
             text = _optics_terminal_menu(menu_index)
             yield _term_keypad_outputs(text, active_key, menu_state)
             time.sleep(_OPTICS_TERM_RELEASE_DELAY_S)
@@ -661,8 +671,27 @@ def _make_term_latch_click(active_key: str):
 
     def handler(current: str, ui_state: dict) -> tuple:
         state = dict(ui_state) if ui_state else _default_term_ui_state()
-        state["matrix"] = False
+        state["scan"] = False
         return _term_keypad_outputs(current, active_key, state)
+
+    return handler
+
+
+def _make_activate_signal_scan(active_key: str, *, menu_action: str = "scan"):
+    """Toggle CSS phosphor scan — one yield, no server animation loop."""
+
+    def handler(ui_state: dict) -> Iterator[tuple]:
+        state = dict(ui_state) if ui_state else _default_term_ui_state()
+        state.update(
+            {
+                "mode": TERM_UI_PAGE,
+                "index": _term_menu_index_for_action(menu_action),
+                "scan": True,
+            }
+        )
+        yield _term_keypad_outputs("", active_key, state)
+        time.sleep(_OPTICS_TERM_RELEASE_DELAY_S)
+        yield _term_keypad_outputs("", "", state)
 
     return handler
 
@@ -671,7 +700,7 @@ def _make_term_home_momentary():
     """Home — momentary return to the selection menu."""
 
     def handler(current_active: str, ui_state: dict) -> Iterator[tuple]:
-        menu_state = {"mode": TERM_UI_MENU, "index": 0, "matrix": False}
+        menu_state = {"mode": TERM_UI_MENU, "index": 0, "scan": False}
         menu_text = _optics_terminal_menu(0)
         yield _term_keypad_outputs(menu_text, current_active, menu_state)
         time.sleep(_OPTICS_TERM_RELEASE_DELAY_S)
@@ -696,7 +725,7 @@ def _register_term_keypad_streamers() -> None:
             "results": _stream_optics_terminal_results,
             "build": _stream_optics_terminal_build,
             "help": _stream_optics_terminal_help,
-            "matrix": _stream_matrix_screensaver,
+            "scan": _stream_scan_stub,
             "probes": _stream_optics_terminal_probes,
             "vortex369": _stream_optics_terminal_vortex369,
             "toe": _stream_optics_terminal_toe,
@@ -1411,47 +1440,72 @@ footer {{
     white-space: pre !important;
     overflow-x: hidden !important;
 }}
-.gradio-container .vqc-optics-panel .vqc-optics-terminal-matrix .label-wrap,
-.gradio-container .vqc-optics-panel .vqc-optics-terminal-matrix label {{
-    display: none !important;
-}}
-.gradio-container .vqc-optics-panel .vqc-optics-terminal-matrix.vqc-optics-terminal-wrap {{
-    container-type: inline-size !important;
-    padding: 0 !important;
-    margin: 0.35rem 0 0.55rem 0 !important;
-    border: none !important;
-    border-radius: 0 !important;
-    background: transparent !important;
+.gradio-container .myst-signal-scan {{
+    position: relative !important;
     width: 100% !important;
-    max-width: 100% !important;
-}}
-.gradio-container .vqc-optics-panel .vqc-optics-terminal-matrix textarea {{
-    display: block !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    min-height: unset !important;
-    height: calc({MATRIX_SCREENSAVER_ROWS} * 1em) !important;
-    max-height: none !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    border: none !important;
-    border-radius: 0 !important;
-    font-family: "Courier New", Courier, "Liberation Mono", monospace !important;
-    font-size: calc(100cqw / {MATRIX_SCREENSAVER_COLS}) !important;
-    line-height: 1em !important;
-    letter-spacing: 0 !important;
+    min-height: 14rem !important;
+    margin: 0.55rem 0 !important;
+    padding: 0.65rem 0.75rem !important;
+    background: rgba(2, 10, 4, 0.45) !important;
+    border: 2px inset #1a4d2a !important;
+    border-radius: 6px !important;
     overflow: hidden !important;
-    box-shadow: none !important;
-    background: rgba(2, 10, 4, 0.35) !important;
-    resize: none !important;
+    box-sizing: border-box !important;
 }}
-.gradio-container .vqc-optics-panel .vqc-optics-terminal-matrix .block,
-.gradio-container .vqc-optics-panel .vqc-optics-terminal-matrix .form,
-.gradio-container .vqc-optics-panel .vqc-optics-terminal-matrix .wrap {{
-    padding: 0 !important;
+.gradio-container .myst-signal-scanlines {{
+    position: absolute !important;
+    inset: 0 !important;
+    pointer-events: none !important;
+    background: repeating-linear-gradient(
+        0deg,
+        transparent 0px,
+        transparent 2px,
+        rgba(51, 255, 102, 0.04) 2px,
+        rgba(51, 255, 102, 0.04) 4px
+    ) !important;
+    animation: myst-scan-drift 12s linear infinite !important;
+}}
+.gradio-container .myst-signal-beam {{
+    position: absolute !important;
+    left: 0 !important;
+    right: 0 !important;
+    height: 18% !important;
+    pointer-events: none !important;
+    background: linear-gradient(
+        180deg,
+        transparent 0%,
+        rgba(51, 255, 102, 0.12) 45%,
+        rgba(51, 255, 102, 0.22) 50%,
+        rgba(51, 255, 102, 0.12) 55%,
+        transparent 100%
+    ) !important;
+    animation: myst-scan-beam 4s ease-in-out infinite !important;
+}}
+.gradio-container .myst-signal-body {{
+    position: relative !important;
+    z-index: 1 !important;
     margin: 0 !important;
-    width: 100% !important;
-    max-width: 100% !important;
+    color: #33ff66 !important;
+    font-family: "Courier New", Courier, monospace !important;
+    font-size: 0.78rem !important;
+    line-height: 1.45 !important;
+    text-shadow: 0 0 6px rgba(51, 255, 102, 0.35) !important;
+    white-space: pre-wrap !important;
+    animation: myst-phosphor-flicker 3.5s ease-in-out infinite !important;
+}}
+@keyframes myst-scan-drift {{
+    0% {{ transform: translateY(-8%); }}
+    100% {{ transform: translateY(8%); }}
+}}
+@keyframes myst-scan-beam {{
+    0%, 100% {{ top: -20%; }}
+    50% {{ top: 85%; }}
+}}
+@keyframes myst-phosphor-flicker {{
+    0%, 100% {{ opacity: 1; }}
+    48% {{ opacity: 0.92; }}
+    50% {{ opacity: 0.78; }}
+    52% {{ opacity: 0.95; }}
 }}
 .gradio-container .vqc-optics-keypad {{
     background: linear-gradient(180deg, #16120c 0%, #0a0806 100%) !important;
@@ -1879,6 +1933,7 @@ def build_app() -> gr.Blocks:
                     interactive=False,
                     elem_classes=["vqc-optics-terminal-wrap", "vqc-optics-terminal"],
                 )
+                term_signal_scan = gr.HTML(SIGNAL_SCANNER_HTML, visible=False, elem_classes=["myst-signal-host"])
                 term_active_key = gr.State("")
                 term_ui_state = gr.State(_default_term_ui_state())
                 term_all_btns: dict[str, gr.Button] = {}
@@ -1920,6 +1975,7 @@ def build_app() -> gr.Blocks:
                             )
                 term_keypad_outputs = [
                     optics_terminal,
+                    term_signal_scan,
                     *[term_all_btns[key_id] for key_id in TERM_KEYPAD_CONTROL_ORDER],
                     term_active_key,
                     term_ui_state,
@@ -1958,9 +2014,7 @@ def build_app() -> gr.Blocks:
                         size="sm",
                         elem_classes=["vqc-receiver-preset"],
                     )
-            # Shared cancels list: every keypad event can stop the matrix loop (and
-            # any other in-flight terminal stream). Matrix is registered first so
-            # it is included once other handlers are bound.
+            # Shared cancels list — stops in-flight terminal streams on new keypress.
             term_cancels: list = []
 
             def _bind_term_event(btn: gr.Button, fn, *, inputs: list) -> None:
@@ -1973,14 +2027,10 @@ def build_app() -> gr.Blocks:
                     )
                 )
 
-            matrix_key = _term_key_id(8)
+            scan_key = _term_key_id(8)
             _bind_term_event(
-                term_all_btns[matrix_key],
-                _make_term_stream_click(
-                    matrix_key,
-                    TERM_KEYPAD_STREAMERS["matrix"],
-                    menu_action="matrix",
-                ),
+                term_all_btns[scan_key],
+                _make_activate_signal_scan(scan_key),
                 inputs=[term_ui_state],
             )
             _bind_term_event(
