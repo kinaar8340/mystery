@@ -1885,48 +1885,67 @@ def build_app() -> gr.Blocks:
                         size="sm",
                         elem_classes=["vqc-receiver-preset"],
                     )
-            _term_click_kw = {"can_cancel": True}
-            term_all_btns["clear"].click(
+            # Shared cancels list: every keypad event can stop the matrix loop (and
+            # any other in-flight terminal stream). Matrix is registered first so
+            # it is included once other handlers are bound.
+            term_cancels: list = []
+
+            def _bind_term_event(btn: gr.Button, fn, *, inputs: list) -> None:
+                term_cancels.append(
+                    btn.click(
+                        fn,
+                        inputs=inputs,
+                        outputs=term_keypad_outputs,
+                        cancels=term_cancels,
+                    )
+                )
+
+            matrix_key = _term_key_id(8)
+            _bind_term_event(
+                term_all_btns[matrix_key],
+                _make_term_stream_click(
+                    matrix_key,
+                    TERM_KEYPAD_STREAMERS["matrix"],
+                    menu_action="matrix",
+                ),
+                inputs=[term_ui_state],
+            )
+            _bind_term_event(
+                term_all_btns["clear"],
                 _make_term_clear_click("clear"),
                 inputs=[optics_terminal, term_ui_state],
-                outputs=term_keypad_outputs,
-                **_term_click_kw,
             )
             for hold_key in TERM_DPAD_HOLD_KEYS:
-                term_all_btns[hold_key].click(
+                _bind_term_event(
+                    term_all_btns[hold_key],
                     _make_term_dpad_click(hold_key),
                     inputs=[optics_terminal, term_ui_state],
-                    outputs=term_keypad_outputs,
-                    **_term_click_kw,
                 )
-            term_all_btns[TERM_KEYPAD_HOME_KEY].click(
+            _bind_term_event(
+                term_all_btns[TERM_KEYPAD_HOME_KEY],
                 _make_term_home_momentary(),
                 inputs=[term_active_key, term_ui_state],
-                outputs=term_keypad_outputs,
-                **_term_click_kw,
             )
             for index in range(1, TERM_KEYPAD_COUNT + 1):
                 key_id = _term_key_id(index)
-                if index == 1:
+                if index == 1 or index == 8:
                     continue
                 if index in TERM_KEYPAD_DEFINED:
                     action = TERM_KEYPAD_DEFINED[index]
-                    term_all_btns[key_id].click(
+                    _bind_term_event(
+                        term_all_btns[key_id],
                         _make_term_stream_click(
                             key_id,
                             TERM_KEYPAD_STREAMERS[action],
                             menu_action=action,
                         ),
                         inputs=[term_ui_state],
-                        outputs=term_keypad_outputs,
-                        **_term_click_kw,
                     )
                 else:
-                    term_all_btns[key_id].click(
+                    _bind_term_event(
+                        term_all_btns[key_id],
                         _make_term_latch_click(key_id),
                         inputs=[optics_terminal, term_ui_state],
-                        outputs=term_keypad_outputs,
-                        **_term_click_kw,
                     )
 
             run_btn = gr.Button("Run analysis", variant="primary", elem_classes=["vqc-full-width"])
