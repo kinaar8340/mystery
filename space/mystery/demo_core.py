@@ -304,7 +304,7 @@ TERM_KEY_ACTIONS: dict[int, tuple[str, str]] = {
     5: ("results", "φ-e-π results snapshot"),
     6: ("build", "Build stamp & deploy info"),
     7: ("help", "D-pad / keypad navigation"),
-    8: ("matrix", "Matrix ASCII screensaver"),
+    8: ("matrix", "Matrix rain — loops until any key"),
     9: ("probes", "11-script probe catalog"),
     10: ("vortex369", "3-6-9 tens & vortex clock"),
     11: ("toe", "TOE parent linkage"),
@@ -488,6 +488,6 @@ def matrix_screensaver_frame(
             "─" * min(cols, 44),
             body,
             "─" * min(cols, 44),
-            f"frame {tick + 1:02d} · 01 Home or clear to exit",
+            f"frame {tick + 1:04d} · press any key to exit",
         ]
     )

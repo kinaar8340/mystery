@@ -157,7 +157,6 @@ TERM_MENU_ACTIONS: tuple[str, ...] = (
     "help",
     "matrix",
 )
-MATRIX_SCREENSAVER_FRAMES = 24
 MATRIX_SCREENSAVER_FRAME_DELAY_S = 0.07
 TERM_UI_MENU = "menu"
 TERM_UI_PAGE = "page"
@@ -231,7 +230,7 @@ def _term_menu_label(action: str) -> str:
         "results": "Results — φ-e-π Snapshot",
         "build": "Build — Deploy Stamp",
         "help": "Help — D-pad Navigation",
-        "matrix": "Matrix — ASCII Screensaver",
+        "matrix": "Matrix — Rain (any key stops)",
     }
     return labels.get(action, action)
 
@@ -346,7 +345,7 @@ def _optics_terminal_help() -> str:
                 "D-pad — ▲▼ ◀▶ move highlight · enter opens item",
                 "01 Home → selection menu (momentary)",
                 "02–08 mirror menu · 09–12 direct shortcuts",
-                "08 / menu item 08 → matrix ASCII screensaver",
+                "08 / menu item 08 → matrix rain (any key stops)",
                 "clear → blank display",
                 "",
                 "Press 01 Home for full keypad map.",
@@ -415,21 +414,19 @@ def _stream_optics_terminal_figures() -> Iterator[str]:
 
 
 def _stream_matrix_screensaver() -> Iterator[str]:
-    """Animated matrix rain — full-frame updates, no typewriter."""
+    """Animated matrix rain — loops until another keypad event cancels it."""
     banner = _optics_terminal_uplink_banner("matrix")
     yield banner + _OPTICS_TERM_CURSOR
     time.sleep(_OPTICS_TERM_UPLINK_DELAY_S)
-    for tick in range(MATRIX_SCREENSAVER_FRAMES):
+    tick = 0
+    while True:
         frame = _optics_terminal_frame(
             "MATRIX SCREENSAVER",
             matrix_screensaver_frame(tick, seed=42),
         )
         yield banner + frame
+        tick += 1
         time.sleep(MATRIX_SCREENSAVER_FRAME_DELAY_S)
-    yield banner + _optics_terminal_frame(
-        "MATRIX SCREENSAVER",
-        "Screensaver ended.\n01 Home → menu · clear → blank",
-    )
 
 
 def _stream_optics_terminal_build() -> Iterator[str]:
@@ -1888,21 +1885,25 @@ def build_app() -> gr.Blocks:
                         size="sm",
                         elem_classes=["vqc-receiver-preset"],
                     )
+            _term_click_kw = {"can_cancel": True}
             term_all_btns["clear"].click(
                 _make_term_clear_click("clear"),
                 inputs=[optics_terminal, term_ui_state],
                 outputs=term_keypad_outputs,
+                **_term_click_kw,
             )
             for hold_key in TERM_DPAD_HOLD_KEYS:
                 term_all_btns[hold_key].click(
                     _make_term_dpad_click(hold_key),
                     inputs=[optics_terminal, term_ui_state],
                     outputs=term_keypad_outputs,
+                    **_term_click_kw,
                 )
             term_all_btns[TERM_KEYPAD_HOME_KEY].click(
                 _make_term_home_momentary(),
                 inputs=[term_active_key, term_ui_state],
                 outputs=term_keypad_outputs,
+                **_term_click_kw,
             )
             for index in range(1, TERM_KEYPAD_COUNT + 1):
                 key_id = _term_key_id(index)
@@ -1918,12 +1919,14 @@ def build_app() -> gr.Blocks:
                         ),
                         inputs=[term_ui_state],
                         outputs=term_keypad_outputs,
+                        **_term_click_kw,
                     )
                 else:
                     term_all_btns[key_id].click(
                         _make_term_latch_click(key_id),
                         inputs=[optics_terminal, term_ui_state],
                         outputs=term_keypad_outputs,
+                        **_term_click_kw,
                     )
 
             run_btn = gr.Button("Run analysis", variant="primary", elem_classes=["vqc-full-width"])
