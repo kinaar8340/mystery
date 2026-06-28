@@ -42,6 +42,7 @@ rsync -av --delete \
   --exclude='.venv' \
   --exclude='__pycache__' \
   --exclude='*.pyc' \
+  --exclude='mystery_image.png' \
   "$ROOT/space/mystery/" "$HF_DIR/"
 cd "$HF_DIR"
 git add -A

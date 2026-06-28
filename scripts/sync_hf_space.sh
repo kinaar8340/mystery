@@ -16,7 +16,8 @@ BUILD_COMMIT = "$COMMIT"
 BUILD_UPDATED_UTC = "$UPDATED"
 EOF
 
-cp "$ROOT/mystery_image.png" "$DST/mystery_image.png"
+# Wallpaper/cover served from GitHub raw (HF git rejects bare binary blobs without Xet).
+rm -f "$DST/mystery_image.png"
 
 cat > "$DST/requirements.txt" <<'EOF'
 numpy>=1.24.0,<3.0.0
