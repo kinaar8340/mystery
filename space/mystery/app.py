@@ -2370,12 +2370,16 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-gravity-page button.myst-gravity-quick-preset,
 .gradio-container .myst-gravity-page button.myst-gravity-quick-preset span,
 .gradio-container .myst-gravity-presets-panel button.myst-gravity-quick-preset,
-.gradio-container .myst-gravity-presets-panel button.myst-gravity-quick-preset span {{
+.gradio-container .myst-gravity-presets-panel button.myst-gravity-quick-preset span,
+.gradio-container #gravity-preset-btn-1 {{
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
     visibility: visible !important;
     opacity: 1 !important;
+    pointer-events: auto !important;
+    position: relative !important;
+    z-index: 12 !important;
     width: 100% !important;
     min-height: var(--myst-control-bar-height, 2.05rem) !important;
     height: var(--myst-control-bar-height, 2.05rem) !important;
@@ -4215,6 +4219,8 @@ def _gravity_quick_preset_apply(
 
 
 def _make_gravity_quick_preset_click(slot: int):
+    """Single-step preset handler — updates buttons, sliders, metrics, image, TUI."""
+
     def handler(
         phi_sq_scale: float,
         e_sq_scale: float,
@@ -4229,8 +4235,12 @@ def _make_gravity_quick_preset_click(slot: int):
         _active_preset: int,
         edit_params_enabled: bool,
     ):
-        print(f"[DEBUG] preset_click handler: slot={slot}", flush=True)
-        print(f"[DEBUG] preset_click handler: type(slot)={type(slot)}", flush=True)
+        print(f"[DEBUG] preset_click_unified ENTER slot={slot}", flush=True)
+        print(
+            f"[DEBUG] preset_click_unified inputs: elev={view_elev} azim={view_azim} "
+            f"active_preset={_active_preset}",
+            flush=True,
+        )
         try:
             dials, metrics, header, fig, tui, active_slot = _gravity_quick_preset_apply(
                 slot,
@@ -4245,9 +4255,9 @@ def _make_gravity_quick_preset_click(slot: int):
                 view_elev,
                 view_azim,
             )
-            print("[DEBUG] preset_click handler: run_residual_explorer ok", flush=True)
+            print("[DEBUG] preset_click_unified: run_residual_explorer ok", flush=True)
         except Exception as exc:
-            print(f"[ERROR] preset_click handler: apply failed: {exc}", flush=True)
+            print(f"[ERROR] preset_click_unified: apply failed: {exc}", flush=True)
             traceback.print_exc()
             logger.exception("gravity preset apply failed for slot=%s", slot)
             dials = dict(_GRAVITY_HOME_DIALS)
@@ -4274,14 +4284,15 @@ def _make_gravity_quick_preset_click(slot: int):
         image_out = outputs[21]
         if hasattr(image_out, "shape"):
             print(
-                f"[DEBUG] preset_click handler: image shape={image_out.shape}",
+                f"[DEBUG] preset_click_unified: image shape={image_out.shape}",
                 flush=True,
             )
         else:
             print(
-                f"[DEBUG] preset_click handler: image_out={image_out!r}",
+                f"[DEBUG] preset_click_unified: image_out={image_out!r}",
                 flush=True,
             )
+        print(f"[DEBUG] preset_click_unified EXIT slot={slot}", flush=True)
         return tuple(outputs)
 
     return handler
@@ -4869,13 +4880,15 @@ def build_app() -> gr.Blocks:
                                         ]
                                         if slot == 0:
                                             preset_classes.append("active")
+                                        btn_kwargs: dict = {
+                                            "variant": "secondary",
+                                            "size": "sm",
+                                            "elem_classes": preset_classes,
+                                        }
+                                        if slot == 0:
+                                            btn_kwargs["elem_id"] = "gravity-preset-btn-1"
                                         re_quick_presets.append(
-                                            gr.Button(
-                                                str(slot + 1),
-                                                variant="secondary",
-                                                size="sm",
-                                                elem_classes=preset_classes,
-                                            )
+                                            gr.Button(str(slot + 1), **btn_kwargs)
                                         )
                         re_active_preset = gr.State(0)
                         animate_deform_btn = gr.Button(
@@ -4996,17 +5009,19 @@ def build_app() -> gr.Blocks:
                 outputs=gravity_preset_outputs,
                 show_progress="hidden",
             )
+            # Unified single-step preset clicks — no immediate/.then() split.
             for slot, preset_btn in enumerate(re_quick_presets):
                 preset_btn.click(
-                    lambda s=slot: _gravity_preset_click_immediate(s),
-                    outputs=gravity_immediate_outputs,
-                ).then(
                     _make_gravity_quick_preset_click(slot),
                     inputs=gravity_preset_inputs,
                     outputs=gravity_preset_outputs,
                     show_progress="hidden",
                     cancels=[animate_event],
                 )
+            print(
+                f"[DEBUG] wired {len(re_quick_presets)} unified preset handlers",
+                flush=True,
+            )
 
         newhere_outputs = [panel_newhere, tab_newhere_btn, newhere_open, panel_claims, tab_claims_btn, claims_open]
         claims_outputs = [panel_claims, tab_claims_btn, claims_open, panel_newhere, tab_newhere_btn, newhere_open]
