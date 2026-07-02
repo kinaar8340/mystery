@@ -3424,44 +3424,25 @@ footer {{ visibility: hidden; }}
     opacity: 1 !important;
     background: #000000 !important;
 }}
-/* === EXTREME ISOLATE: fade wrappers, show raw matplotlib img (temporary debug) === */
-.gradio-container #unit-cell-viewport {{
-    height: 100% !important;
-    min-height: 950px !important;
-    width: 100% !important;
-    background-color: #000000 !important;
-    border: 2px dashed orange !important;
-    box-sizing: border-box !important;
-}}
+/* === TARGETED FIX: tall figsize + height chain (last wins) === */
+.gradio-container #unit-cell-viewport,
 .gradio-container #unit-cell-viewport .wrap,
-.gradio-container #unit-cell-viewport > div,
 .gradio-container #unit-cell-viewport .gr-plot,
 .gradio-container #unit-cell-viewport .gradio-plot,
-.gradio-container #unit-cell-viewport .plot-container,
-.gradio-container #unit-cell-viewport .plot-container > div,
-.gradio-container #unit-cell-viewport .plot-container .matplotlib {{
+.gradio-container #unit-cell-viewport .plot-container {{
     height: 100% !important;
     min-height: 950px !important;
     width: 100% !important;
     max-height: none !important;
-    opacity: 0.06 !important;
-    background-color: rgba(255, 0, 0, 0.08) !important;
-    border: 1px dotted rgba(255, 80, 80, 0.5) !important;
+    background-color: #000000 !important;
     box-sizing: border-box !important;
-    pointer-events: none !important;
 }}
 .gradio-container #unit-cell-viewport .plot-container img {{
-    opacity: 1 !important;
     width: 100% !important;
     height: auto !important;
-    max-width: 100% !important;
     max-height: none !important;
     object-fit: contain !important;
     display: block !important;
-    border: 3px solid lime !important;
-    box-sizing: border-box !important;
-    pointer-events: auto !important;
-    background-color: #000000 !important;
 }}
 @media (max-width: 768px) {{
     .gradio-container .myst-gravity-split {{

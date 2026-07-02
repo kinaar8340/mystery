@@ -1065,7 +1065,7 @@ def build_unit_cell_figure(
     font_axis = 12
     caption_neutral = _UNIT_CELL_LABEL_TEXT
 
-    fig = plt.figure(figsize=(15.0, 12.0), dpi=dpi, facecolor=bg)
+    fig = plt.figure(figsize=(14.0, 13.0), dpi=dpi, facecolor=bg)
     ax = fig.add_subplot(111, projection="3d", facecolor=bg)
 
     triangles, tri_colors = _deformed_cube_surface(s, p, delta_z, side)
