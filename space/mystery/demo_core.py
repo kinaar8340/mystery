@@ -23,6 +23,7 @@ R = PHI**2 + E**2 - PI**2
 E_OVER_PI = E / PI
 KAPPA_DOC = 0.85
 UNIT_CELL_VIEWPORT_PX = 550
+UNIT_CELL_FIGSIZE = (6.0, 6.0)
 UNIT_CELL_VIEW_ELEV = 26.0
 UNIT_CELL_VIEW_AZIM = 45.0
 UNIT_CELL_VIEW_DIST = 14.0
@@ -1007,17 +1008,19 @@ def _viewport_nonblack_count(image) -> int:
     return int(np.any(arr[:, :, :3] != 0, axis=-1).sum())
 
 
-def _save_figure_opaque_png(fig: plt.Figure, buf: io.BytesIO, *, dpi: int) -> None:
-    """Save full figure as opaque black PNG (no tight-crop transparency)."""
+def _save_figure_viewport_png(fig: plt.Figure, buf: io.BytesIO, *, dpi: int) -> None:
+    """Save viewport figure as opaque PNG sized for display."""
+    face = fig.get_facecolor()
+    if not face or str(face).lower() in {"none", "auto"}:
+        face = "#000000"
     fig.savefig(
         buf,
         format="png",
         dpi=dpi,
-        facecolor="#000000",
-        edgecolor="#000000",
-        transparent=False,
-        bbox_inches=None,
-        pad_inches=0,
+        facecolor=face,
+        edgecolor="none",
+        bbox_inches="tight",
+        pad_inches=0.05,
     )
     plt.close(fig)
 
@@ -1065,11 +1068,11 @@ def figure_to_viewport_numpy(fig: plt.Figure, *, dpi: int = 100) -> np.ndarray:
     print(f"[DEBUG] figure_to_viewport_numpy: dpi={dpi}", flush=True)
     try:
         buf = io.BytesIO()
-        _save_figure_opaque_png(fig, buf, dpi=dpi)
+        _save_figure_viewport_png(fig, buf, dpi=dpi)
         buf.seek(0)
         from PIL import Image as PILImage
 
-        pil_img = _fit_on_black_canvas(PILImage.open(buf))
+        pil_img = _fit_on_black_canvas(PILImage.open(buf).convert("RGB"))
         arr = np.asarray(pil_img, dtype=np.uint8)
         nonblack = _viewport_nonblack_count(arr)
         print(
@@ -1084,14 +1087,13 @@ def figure_to_viewport_numpy(fig: plt.Figure, *, dpi: int = 100) -> np.ndarray:
 
 
 _VIEWPORT_WRAP_STYLE = (
-    "width:100%;max-width:min(550px,100%);height:550px;min-height:550px;"
-    "min-width:0;display:block;position:relative;z-index:20;margin:0 auto;"
-    "overflow:visible;background:#000000;box-sizing:border-box;"
+    "width:100%;max-width:550px;height:550px;background:#000;"
+    "display:flex;align-items:center;justify-content:center;"
+    "overflow:hidden;margin:0 auto;box-sizing:border-box;"
 )
 _VIEWPORT_IMG_STYLE = (
-    "width:100%;max-width:100%;min-width:0;height:550px;min-height:0;"
-    "display:block;position:relative;z-index:21;opacity:1;visibility:visible;"
-    "object-fit:contain;object-position:center center;background:#000000;"
+    "max-width:100%;max-height:100%;width:auto;height:auto;"
+    "object-fit:contain;display:block;background:#000;"
 )
 
 
@@ -1200,7 +1202,7 @@ def figure_to_viewport_pil(fig: plt.Figure, *, dpi: int = 100):
         from PIL import Image as PILImage
 
         buf = io.BytesIO()
-        _save_figure_opaque_png(fig, buf, dpi=dpi)
+        _save_figure_viewport_png(fig, buf, dpi=dpi)
         buf.seek(0)
         pil_img = _fit_on_black_canvas(PILImage.open(buf))
         nonblack = _viewport_nonblack_count(pil_img)
@@ -1499,7 +1501,7 @@ def build_unit_cell_figure(
     font_axis = 12
     caption_neutral = _UNIT_CELL_LABEL_TEXT
 
-    fig = plt.figure(figsize=(14.0, 14.0), dpi=dpi, facecolor=bg)
+    fig = plt.figure(figsize=UNIT_CELL_FIGSIZE, dpi=dpi, facecolor=bg)
     ax = fig.add_subplot(111, projection="3d", facecolor=bg)
 
     triangles, tri_colors = _deformed_cube_surface(s, p, delta_z, side)

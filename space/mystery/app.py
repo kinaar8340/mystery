@@ -1036,164 +1036,6 @@ WALLPAPER_HEAD = f"""
     document.addEventListener('DOMContentLoaded', mountWallpaper);
     window.addEventListener('load', mountWallpaper);
 }})();
-(function() {{
-    function mystSetViewportBox(el, heightPx, isImg) {{
-        isImg = !!isImg;
-        el.style.setProperty('display', 'block', 'important');
-        el.style.setProperty('visibility', 'visible', 'important');
-        el.style.setProperty('opacity', '1', 'important');
-        el.style.setProperty('overflow', 'visible', 'important');
-        el.style.setProperty('min-width', '0', 'important');
-        el.style.setProperty('width', '100%', 'important');
-        el.style.setProperty('max-width', '100%', 'important');
-        el.style.setProperty('flex', 'none', 'important');
-        el.style.setProperty('box-sizing', 'border-box', 'important');
-        if (isImg) {{
-            el.style.setProperty('height', heightPx, 'important');
-            el.style.setProperty('min-height', '0', 'important');
-            el.style.setProperty('max-height', heightPx, 'important');
-            el.style.setProperty('object-fit', 'contain', 'important');
-            el.style.setProperty('object-position', 'center center', 'important');
-        }} else {{
-            el.style.setProperty('height', heightPx, 'important');
-            el.style.setProperty('min-height', heightPx, 'important');
-            el.style.setProperty('max-height', heightPx, 'important');
-        }}
-    }}
-    function mystFixViewportAncestors(root) {{
-        var node = root;
-        while (node) {{
-            if (
-                node.classList &&
-                (
-                    node.classList.contains('myst-gravity-visuals-col') ||
-                    node.classList.contains('myst-unit-cell-image-row') ||
-                    node.classList.contains('myst-unit-cell-viewport-html') ||
-                    node.classList.contains('myst-unit-cell-viewport-image')
-                )
-            ) {{
-                node.style.setProperty('width', '100%', 'important');
-                node.style.setProperty('max-width', '100%', 'important');
-                node.style.setProperty('min-width', '0', 'important');
-                node.style.setProperty('overflow', 'visible', 'important');
-            }}
-            if (node.classList && node.classList.contains('myst-gravity-visuals-col')) break;
-            node = node.parentElement;
-        }}
-    }}
-    function paintViewportBackground(img) {{
-        var wrap = document.getElementById('unit-cell-main-view');
-        if (!wrap || !img || !img.src) return;
-        if (img.naturalWidth < 1) return;
-        wrap.style.setProperty('background-image', 'url(\"' + img.src + '\")', 'important');
-        wrap.style.setProperty('background-size', 'contain', 'important');
-        wrap.style.setProperty('background-repeat', 'no-repeat', 'important');
-        wrap.style.setProperty('background-position', 'center center', 'important');
-        wrap.style.setProperty('background-color', '#000000', 'important');
-    }}
-    function fixUnitCellViewportLayout() {{
-        var root = document.getElementById('unit-cell-main-view');
-        if (root) {{
-            mystFixViewportAncestors(root);
-            mystSetViewportBox(root, '550px', false);
-            root.style.setProperty('position', 'relative', 'important');
-            root.style.setProperty('margin', '0 auto', 'important');
-            root.querySelectorAll(
-                '.html-container, .prose, .wrap, .image-container, .image-container button, .image-frame, .gr-image'
-            ).forEach(function(el) {{
-                mystSetViewportBox(el, '550px', false);
-                if (el.tagName === 'BUTTON') {{
-                    el.style.setProperty('padding', '0', 'important');
-                    el.style.setProperty('margin', '0', 'important');
-                    el.style.setProperty('border', 'none', 'important');
-                    el.style.setProperty('background', 'transparent', 'important');
-                    el.style.setProperty('cursor', 'default', 'important');
-                }}
-            }});
-            root.querySelectorAll('img').forEach(function(img) {{
-                mystSetViewportBox(img, '550px', true);
-                img.style.setProperty('position', 'relative', 'important');
-                img.style.setProperty('z-index', '2', 'important');
-                img.loading = 'eager';
-                if (img.__mystViewportWired) return;
-                img.__mystViewportWired = true;
-                img.addEventListener('load', function() {{ paintViewportBackground(img); }});
-                if (img.complete) paintViewportBackground(img);
-            }});
-            root.querySelectorAll('.empty, .icon-wrap').forEach(function(el) {{
-                el.style.setProperty('display', 'none', 'important');
-            }});
-        }}
-        document.querySelectorAll(
-            '.myst-unit-cell-viewport-img-wrap, .myst-unit-cell-viewport-img'
-        ).forEach(function(el) {{
-            mystSetViewportBox(el, '550px', el.tagName === 'IMG');
-        }});
-        document.querySelectorAll('.myst-unit-cell-image-row, .myst-unit-cell-video-row').forEach(function(slot) {{
-            slot.style.setProperty('overflow', 'visible', 'important');
-            slot.style.setProperty('height', 'auto', 'important');
-        }});
-        if (!window.mystOnHf) {{
-            var vidRoot = document.getElementById('unit-cell-animation');
-            if (vidRoot) {{
-                vidRoot.style.setProperty('display', 'block', 'important');
-                vidRoot.style.setProperty('visibility', 'visible', 'important');
-                vidRoot.style.setProperty('height', '320px', 'important');
-                vidRoot.style.setProperty('min-height', '320px', 'important');
-                vidRoot.style.setProperty('width', '100%', 'important');
-                vidRoot.style.setProperty('overflow', 'visible', 'important');
-                vidRoot.querySelectorAll('.wrap, .video-container, .gr-video, video').forEach(function(el) {{
-                    el.style.setProperty('display', 'block', 'important');
-                    el.style.setProperty('height', '320px', 'important');
-                    el.style.setProperty('min-height', '320px', 'important');
-                    el.style.setProperty('width', '100%', 'important');
-                }});
-            }}
-        }}
-    }}
-    function fixUnitCellImageUrls() {{
-        fixUnitCellViewportLayout();
-        if (window.mystOnHf) return;
-        var origin = window.location.origin;
-        var root = document.getElementById('unit-cell-main-view');
-        if (!root) return;
-        root.querySelectorAll('img').forEach(function(img) {{
-            var src = (img.getAttribute('src') || '').trim();
-            if (!src || src.indexOf('data:') === 0 || src.indexOf('blob:') === 0) return;
-            /* Leave HF Space /gradio_api/file= paths alone — browser resolves them. */
-            if (src.indexOf('/gradio_api/file=') === 0 || src.indexOf('/file=') === 0) return;
-            if (src.indexOf(origin) === 0) return;
-            var needsFix = (
-                src.indexOf('0.0.0.0') >= 0 ||
-                src.indexOf('127.0.0.1') >= 0 ||
-                src.indexOf('localhost') >= 0
-            );
-            if (!needsFix) return;
-            try {{
-                img.src = new URL(src, origin).href;
-            }} catch (e) {{
-                /* drop corrupted double-origin URLs */
-                if (src.indexOf(origin + origin) >= 0 || src.indexOf(origin + 'http') === 0) {{
-                    img.removeAttribute('src');
-                }}
-            }}
-        }});
-        var forced = document.getElementById('myst-unit-cell-forced-img');
-        if (forced) forced.remove();
-    }}
-    function bootImageFix() {{
-        fixUnitCellImageUrls();
-        if (window.__mystUnitCellImgObs) return;
-        window.__mystUnitCellImgObs = new MutationObserver(fixUnitCellImageUrls);
-        window.__mystUnitCellImgObs.observe(document.body, {{
-            subtree: true, childList: true, attributes: true, attributeFilter: ['src', 'style', 'class']
-        }});
-    }}
-    if (document.body) bootImageFix();
-    document.addEventListener('DOMContentLoaded', bootImageFix);
-    window.addEventListener('load', bootImageFix);
-}})();
-
 </script>
 """
 
@@ -3568,135 +3410,59 @@ footer {{ visibility: hidden; }}
     font-size: 0.94rem !important;
     line-height: 1.5 !important;
 }}
-/* === UNIT CELL VIEWPORT — gr.Image numpy (websocket RGB, Brave-safe, 100% zoom) === */
-.gradio-container .myst-gravity-image-viewport,
-.gradio-container .myst-gravity-image-viewport.myst-gravity-right-panel,
-.gradio-container .myst-gravity-image-viewport.myst-gravity-right-stack {{
-    display: flex !important;
-    flex-direction: column !important;
-    flex: 1 1 0 !important;
-    min-height: 0 !important;
-    overflow-y: auto !important;
-    padding: 4px !important;
-    background-color: #000000 !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
+/* === UNIT CELL VIEWPORT — minimal CSS (no JS overrides) === */
+.gradio-container .myst-gravity-split > .column.myst-gravity-visuals-col {{
+    min-width: 0 !important;
+    width: 100% !important;
+    overflow: visible !important;
 }}
-.gradio-container .myst-gravity-image-viewport > .block:has(#unit-cell-main-view),
-.gradio-container .myst-gravity-image-viewport > .form:has(#unit-cell-main-view),
-.gradio-container .myst-gravity-image-viewport .block:has(#unit-cell-main-view) {{
-    flex: 0 0 550px !important;
-    height: 550px !important;
-    min-height: 550px !important;
-    max-height: 550px !important;
-    background: #000000 !important;
-    background-color: #000000 !important;
-    overflow: hidden !important;
-    isolation: isolate !important;
-    z-index: 8 !important;
-    position: relative !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
+.gradio-container .myst-gravity-visuals-col,
+.gradio-container .myst-unit-cell-image-row,
+.gradio-container .myst-unit-cell-image-row > .form {{
+    min-width: 0 !important;
+    width: 100% !important;
+    overflow: visible !important;
 }}
 .gradio-container #unit-cell-main-view,
 .gradio-container #unit-cell-main-view.block,
-.gradio-container #unit-cell-main-view.gradio-image,
-.gradio-container #unit-cell-main-view .gr-image,
-.gradio-container #unit-cell-main-view .image-container,
 .gradio-container #unit-cell-main-view .wrap,
-.gradio-container #unit-cell-main-view .wrap.center,
-.gradio-container #unit-cell-main-view .wrap.center.full,
-.gradio-container #unit-cell-main-view .wrap.full {{
+.gradio-container #unit-cell-main-view .image-container,
+.gradio-container #unit-cell-main-view .image-frame,
+.gradio-container .myst-unit-cell-viewport-img-wrap {{
     height: 550px !important;
     min-height: 550px !important;
     max-height: 550px !important;
     width: 100% !important;
+    max-width: 550px !important;
+    min-width: 0 !important;
+    margin: 0 auto !important;
     background: #000000 !important;
-    background-color: #000000 !important;
+    box-sizing: border-box !important;
+}}
+.gradio-container #unit-cell-main-view .image-container button {{
+    width: 100% !important;
+    height: 100% !important;
     padding: 0 !important;
     margin: 0 !important;
-    overflow: hidden !important;
-    opacity: 1 !important;
-    position: relative !important;
-    inset: auto !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
+    border: none !important;
+    background: transparent !important;
 }}
-.gradio-container #unit-cell-main-view img {{
+.gradio-container #unit-cell-main-view img,
+.gradio-container #unit-cell-main-view .image-frame img,
+.gradio-container .myst-unit-cell-viewport-img {{
     width: 100% !important;
-    min-width: 0 !important;
+    height: 100% !important;
     max-width: 100% !important;
-    height: 550px !important;
-    min-height: 0 !important;
-    max-height: 550px !important;
+    min-width: 0 !important;
     object-fit: contain !important;
     object-position: center center !important;
     display: block !important;
     background: #000000 !important;
-    background-color: #000000 !important;
-    opacity: 1 !important;
-    visibility: visible !important;
 }}
-.gradio-container #unit-cell-main-view .gr-image:has(img[src]:not([src=""])) .empty,
-.gradio-container #unit-cell-main-view .gr-image:has(img[src]:not([src=""])) .icon-wrap {{
+.gradio-container #unit-cell-main-view .empty,
+.gradio-container #unit-cell-main-view .icon-wrap {{
     display: none !important;
 }}
-/* Lower animation video — #unit-cell-animation */
-.gradio-container #unit-cell-animation,
-.gradio-container #unit-cell-animation.block,
-.gradio-container #unit-cell-animation .gradio-video,
-.gradio-container #unit-cell-animation .gr-video,
-.gradio-container #unit-cell-animation .video-container,
-.gradio-container #unit-cell-animation video {{
-    height: 100% !important;
-    min-height: 320px !important;
-    width: 100% !important;
-    padding: 4px !important;
-    background-color: rgba(20, 20, 20, 0.65) !important;
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-    box-sizing: border-box !important;
-}}
-.gradio-container #unit-cell-animation .wrap,
-.gradio-container #unit-cell-animation .wrap.center,
-.gradio-container #unit-cell-animation .wrap.center.full,
-.gradio-container #unit-cell-animation .wrap.full {{
-    position: relative !important;
-    inset: auto !important;
-    height: 100% !important;
-    min-height: 320px !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    display: block !important;
-    padding: 0 !important;
-    margin: 0 !important;
-}}
-/* General safety rules — never collapse viewport cube (exclude #unit-cell-main-view block) */
-.gradio-container .gradio-image:not(#unit-cell-main-view) img,
-.gradio-container .gradio-video video,
-.gradio-container .gr-image img,
-.gradio-container .gr-video video {{
-    width: 100% !important;
-    height: auto !important;
-    max-height: 100% !important;
-    object-fit: contain !important;
-    display: block !important;
-    background-color: transparent !important;
-}}
-/* Semi-transparent foreground panels — wallpaper shows through */
-.gradio-container .gradio-row,
-.gradio-container .gradio-column:not(.myst-gravity-image-viewport),
-.gradio-container .block:not(#unit-cell-main-view):not(:has(#unit-cell-main-view)),
-.gradio-container .gr-panel,
-.gradio-container .myst-gravity-right-panel:not(.myst-gravity-image-viewport),
-.gradio-container .myst-gravity-right-stack:not(.myst-gravity-image-viewport) {{
-    background-color: rgba(30, 30, 30, 0.5) !important;
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-}}
-/* Viewport + video: solid opaque — wallpaper must not bleed through */
 .gradio-container #unit-cell-main-view,
 .gradio-container #unit-cell-main-view.block,
 .gradio-container #unit-cell-main-view .image-container,
@@ -3707,6 +3473,21 @@ footer {{ visibility: hidden; }}
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
 }}
+.gradio-container #unit-cell-animation,
+.gradio-container #unit-cell-animation .wrap,
+.gradio-container #unit-cell-animation .video-container,
+.gradio-container #unit-cell-animation video {{
+    width: 100% !important;
+    height: 320px !important;
+    min-height: 320px !important;
+    object-fit: contain !important;
+}}
+.gradio-container .gradio-image:not(#unit-cell-main-view) img {{
+    width: 100% !important;
+    height: auto !important;
+    max-height: 100% !important;
+    object-fit: contain !important;
+}}
 @media (max-width: 768px) {{
     .gradio-container .myst-gravity-split {{
         grid-template-columns: 1fr !important;
@@ -3716,383 +3497,19 @@ footer {{ visibility: hidden; }}
         min-height: auto !important;
     }}
 }}
-@media (max-width: 640px) {{
-    .gradio-container .vqc-nav-spreadsheet-row {{
-        grid-template-columns: 3.5rem repeat(6, minmax(2.8rem, 1fr)) !important;
-        gap: 0.15rem 0.25rem !important;
-    }}
-    .gradio-container .vqc-source-tab,
-    .gradio-container .vqc-source-tabs-row button.vqc-source-tab {{
-        font-size: 0.78rem !important;
-    }}
-    .gradio-container .myst-gravity-page .myst-cube-viewport-frame {{
-        max-width: 100% !important;
-    }}
-    .gradio-container .myst-gravity-split {{
-        min-height: auto !important;
-    }}
-    .gradio-container .myst-gravity-page .myst-cube-viewport-frame .plot-container {{
-        height: min(70vh, var(--myst-viewport-plot-height, calc(100dvh - 12.5rem))) !important;
-        min-height: min(70vh, var(--myst-viewport-plot-height, calc(100dvh - 12.5rem))) !important;
-    }}
-}}
-/* === HF SPACE VIEWPORT — inline HTML img + simple rows (no gr.Image) === */
-.gradio-container .myst-gravity-visuals-col {{
-    flex: 1 1 auto !important;
-    height: auto !important;
-    min-height: 0 !important;
-    max-height: none !important;
-    overflow: visible !important;
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: stretch !important;
-    gap: 0.5rem !important;
-    padding: 4px !important;
-    background: #000000 !important;
-}}
-.gradio-container .myst-unit-cell-image-row,
-.gradio-container .myst-unit-cell-image-row.block,
-.gradio-container .myst-unit-cell-image-row > .form,
-.gradio-container .myst-unit-cell-image-row > .form > .block,
-.gradio-container .myst-unit-cell-video-row,
-.gradio-container .myst-unit-cell-video-row.block,
-.gradio-container .myst-unit-cell-video-row > .form {{
-    flex: 0 0 auto !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    min-width: 0 !important;
-    height: auto !important;
-    min-height: 0 !important;
-    overflow: visible !important;
-    display: block !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    border: none !important;
-    background: transparent !important;
-    box-shadow: none !important;
-}}
-.gradio-container .myst-unit-cell-viewport-html,
-.gradio-container .myst-unit-cell-viewport-html.block,
-.gradio-container .myst-unit-cell-viewport-html .html-container,
-.gradio-container .myst-unit-cell-viewport-html .prose,
-.gradio-container .myst-unit-cell-image-row .html-container,
-.gradio-container .myst-unit-cell-image-row .prose {{
-    width: 100% !important;
-    max-width: 100% !important;
-    min-width: 0 !important;
-    height: auto !important;
-    min-height: 550px !important;
-    margin: 0 auto !important;
-    padding: 0 !important;
-    border: none !important;
-    background: #000000 !important;
-    box-shadow: none !important;
-    overflow: visible !important;
-    display: block !important;
-    opacity: 1 !important;
-}}
-.gradio-container .myst-unit-cell-viewport-html .html-container.pending,
-.gradio-container .myst-unit-cell-image-row .html-container.pending {{
-    opacity: 1 !important;
-}}
-.gradio-container #unit-cell-main-view,
-.gradio-container .myst-unit-cell-viewport-img-wrap,
-.gradio-container .myst-unit-cell-viewport-html img,
-.gradio-container .myst-unit-cell-viewport-img {{
-    width: 100% !important;
-    max-width: 100% !important;
-    min-width: 0 !important;
-    height: 550px !important;
-    min-height: 550px !important;
-    max-height: 550px !important;
-    margin: 0 auto !important;
-    padding: 0 !important;
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    object-fit: contain !important;
-    object-position: center center !important;
-    background: #000000 !important;
-    border: none !important;
-    box-shadow: none !important;
-}}
-.gradio-container #unit-cell-animation,
-.gradio-container .myst-unit-cell-animation,
-.gradio-container .block.myst-unit-cell-animation,
-.gradio-container .myst-unit-cell-video-row #unit-cell-animation {{
-    flex: 0 0 auto !important;
-    width: 100% !important;
-    height: 320px !important;
-    min-height: 320px !important;
-    overflow: visible !important;
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    border: none !important;
-    background: rgba(20, 20, 20, 0.85) !important;
-    box-shadow: none !important;
-}}
-.gradio-container #unit-cell-animation .wrap,
-.gradio-container #unit-cell-animation .video-container,
-.gradio-container #unit-cell-animation .gr-video,
-.gradio-container .myst-unit-cell-animation .wrap,
-.gradio-container .myst-unit-cell-animation .video-container,
-.gradio-container .myst-unit-cell-animation video,
-.gradio-container #unit-cell-animation video {{
-    width: 100% !important;
-    height: 320px !important;
-    min-height: 320px !important;
-    max-height: none !important;
-    overflow: visible !important;
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    object-fit: contain !important;
-}}
-.gradio-container .myst-gravity-visuals-col .myst-cube-viewport-header-slot {{
-    flex: 0 0 auto !important;
-    height: auto !important;
-    overflow: visible !important;
-}}
-/* HF Space: gr.Image file URL (data: base64 blocked in HF iframe) */
-.gradio-container .myst-unit-cell-viewport-image,
-.gradio-container .myst-unit-cell-viewport-image.block,
-.gradio-container #unit-cell-main-view.gradio-image,
-.gradio-container #unit-cell-main-view.myst-unit-cell-viewport-image {{
-    flex: 0 0 auto !important;
-    width: 100% !important;
-    max-width: 550px !important;
-    height: 550px !important;
-    min-height: 550px !important;
-    max-height: 550px !important;
-    margin: 0 auto !important;
-    padding: 0 !important;
-    overflow: visible !important;
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    background: #000000 !important;
-    border: none !important;
-    box-shadow: none !important;
-}}
-.gradio-container #unit-cell-main-view .empty,
-.gradio-container #unit-cell-main-view .icon-wrap,
-.gradio-container .myst-unit-cell-viewport-image .empty,
-.gradio-container .myst-unit-cell-viewport-image .icon-wrap {{
-    display: none !important;
-}}
-.gradio-container #unit-cell-main-view .wrap,
-.gradio-container #unit-cell-main-view .image-container,
-.gradio-container #unit-cell-main-view .gr-image,
-.gradio-container .myst-unit-cell-viewport-image .wrap,
-.gradio-container .myst-unit-cell-viewport-image .image-container,
-.gradio-container .myst-unit-cell-viewport-image .gr-image {{
-    width: 100% !important;
-    height: 550px !important;
-    min-height: 550px !important;
-    max-height: 550px !important;
-    overflow: visible !important;
-    display: block !important;
-    background: #000000 !important;
-}}
-.gradio-container #unit-cell-main-view img,
-.gradio-container .myst-unit-cell-viewport-image img,
-.gradio-container .myst-unit-cell-viewport-image .gr-image img {{
-    width: 100% !important;
-    height: 550px !important;
-    min-height: 550px !important;
-    max-height: 550px !important;
-    object-fit: contain !important;
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    background: #000000 !important;
-}}
-/* Gradio 5.12 — gr.Plot / gr.Image DOM (image-container, matplotlib layout) */
-.gradio-container .myst-unit-cell-image-row,
-.gradio-container .myst-unit-cell-image-row.block,
-.gradio-container .myst-unit-cell-image-row > .form,
-.gradio-container .myst-unit-cell-image-row > .form > .block {{
-    flex: 0 0 550px !important;
-    height: 550px !important;
-    min-height: 550px !important;
-    max-height: 550px !important;
-    overflow: visible !important;
-}}
-.gradio-container #unit-cell-main-view.myst-unit-cell-viewport-plot,
-.gradio-container #unit-cell-main-view.myst-unit-cell-viewport-plot.block,
-.gradio-container #unit-cell-main-view .matplotlib,
-.gradio-container #unit-cell-main-view .matplotlib.layout,
-.gradio-container #unit-cell-main-view .image-container,
-.gradio-container #unit-cell-main-view .image-container button,
-.gradio-container #unit-cell-main-view .image-frame {{
-    width: 100% !important;
-    max-width: 550px !important;
-    height: 550px !important;
-    min-height: 550px !important;
-    max-height: 550px !important;
-    margin: 0 auto !important;
-    padding: 0 !important;
-    display: block !important;
-    overflow: visible !important;
-    background: #000000 !important;
-    box-sizing: border-box !important;
-}}
-.gradio-container #unit-cell-main-view .matplotlib img,
-.gradio-container #unit-cell-main-view .image-container img,
-.gradio-container #unit-cell-main-view .image-frame img,
-.gradio-container #unit-cell-main-view img.myst-unit-cell-viewport-img {{
-    width: 100% !important;
-    max-width: 550px !important;
-    height: 550px !important;
-    min-height: 550px !important;
-    max-height: 550px !important;
-    object-fit: contain !important;
-    object-position: center center !important;
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    position: relative !important;
-    z-index: 2 !important;
-    background: #000000 !important;
-}}
-.gradio-container #unit-cell-main-view .empty,
-.gradio-container #unit-cell-main-view .icon-wrap {{
-    display: none !important;
-    height: 0 !important;
-    min-height: 0 !important;
-    opacity: 0 !important;
-    pointer-events: none !important;
-    z-index: 0 !important;
-}}
-/* Override global height:auto on generic image rules inside viewport */
-.gradio-container #unit-cell-main-view .gradio-image img,
-.gradio-container #unit-cell-main-view .gr-image img,
-.gradio-container #unit-cell-main-view .image-container img,
-.gradio-container #unit-cell-main-view .matplotlib img {{
-    height: 550px !important;
-    min-height: 550px !important;
-    max-height: 550px !important;
-}}
+
 """
 
 _HF_VIEWPORT_CSS = ""
 if is_hf_space():
     _HF_VIEWPORT_CSS = """
-/* HF Space — gr.Image 5.12 chain: .image-container > button > .image-frame > img */
+/* HF Space — no wallpaper; body fallback only */
 body::before,
 #vqc-wallpaper {{
     display: none !important;
 }}
 body {{
     background: #0a0818 !important;
-}}
-.gradio-container .myst-gravity-split > .column,
-.gradio-container .myst-gravity-split > .column.myst-gravity-visuals-col {{
-    overflow: visible !important;
-    background: transparent !important;
-}}
-.gradio-container .myst-gravity-visuals-col {{
-    background: transparent !important;
-}}
-.gradio-container .myst-unit-cell-image-row,
-.gradio-container .myst-unit-cell-image-row > .form,
-.gradio-container .myst-unit-cell-image-row > .form > .block {{
-    overflow: visible !important;
-    min-height: 550px !important;
-    min-width: 0 !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    height: auto !important;
-}}
-.gradio-container #unit-cell-main-view,
-.gradio-container #unit-cell-main-view.block,
-.gradio-container #unit-cell-main-view.myst-unit-cell-viewport-image {{
-    min-height: 550px !important;
-    min-width: 0 !important;
-    width: 100% !important;
-    max-width: min(550px, 100%) !important;
-    height: 550px !important;
-    max-height: 550px !important;
-    overflow: visible !important;
-    background: #000000 !important;
-    background-color: #000000 !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-    position: relative !important;
-    margin: 0 auto !important;
-}}
-.gradio-container #unit-cell-main-view .empty,
-.gradio-container #unit-cell-main-view .icon-wrap {{
-    display: none !important;
-    height: 0 !important;
-    min-height: 0 !important;
-    opacity: 0 !important;
-    pointer-events: none !important;
-}}
-.gradio-container #unit-cell-main-view .wrap,
-.gradio-container #unit-cell-main-view .image-container,
-.gradio-container #unit-cell-main-view .gr-image {{
-    height: 550px !important;
-    min-height: 550px !important;
-    max-height: 550px !important;
-    min-width: 0 !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    overflow: visible !important;
-    display: block !important;
-    flex: none !important;
-    background: transparent !important;
-}}
-.gradio-container #unit-cell-main-view .image-container button {{
-    height: 550px !important;
-    min-height: 550px !important;
-    max-height: 550px !important;
-    min-width: 0 !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    border: none !important;
-    overflow: visible !important;
-    display: block !important;
-    flex: none !important;
-    background: transparent !important;
-    box-shadow: none !important;
-}}
-.gradio-container #unit-cell-main-view .image-frame {{
-    height: 550px !important;
-    min-height: 550px !important;
-    max-height: 550px !important;
-    min-width: 0 !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    overflow: visible !important;
-    display: block !important;
-    flex: none !important;
-    background: transparent !important;
-}}
-.gradio-container #unit-cell-main-view img,
-.gradio-container #unit-cell-main-view .image-frame img,
-.gradio-container #unit-cell-main-view .image-container img,
-.gradio-container #unit-cell-main-view .gr-image img,
-.gradio-container #unit-cell-main-view.gradio-image img {{
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    min-width: 0 !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    height: 550px !important;
-    min-height: 0 !important;
-    max-height: 550px !important;
-    object-fit: contain !important;
-    object-position: center center !important;
-    background: #000000 !important;
-    position: relative !important;
-    z-index: 2 !important;
 }}
 """
 
@@ -5593,7 +5010,6 @@ def build_app() -> gr.Blocks:
                                 interactive=False,
                                 container=False,
                                 height=550,
-                                width=550,
                                 show_download_button=False,
                                 show_share_button=False,
                                 show_fullscreen_button=False,
