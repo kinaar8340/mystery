@@ -814,20 +814,23 @@ def _nav_to_page(page: str) -> tuple:
     on_anim = page == "animations"
     on_gravity = page == "gravity"
     closed = _close_links_panels()
+    tab_gravity = _source_tab_btn_update(active=on_gravity)
+    tab_demo = _home_tab_update(on_demo_page=on_demo)
+    tab_anim = _source_tab_btn_update(active=on_anim)
     return (
         gr.update(visible=on_demo),
         gr.update(visible=on_anim),
         gr.update(visible=on_gravity),
-        _home_tab_update(on_demo_page=on_demo),
-        _source_tab_btn_update(active=on_anim),
-        _source_tab_btn_update(active=on_gravity),
+        tab_gravity,
+        tab_demo,
+        tab_anim,
         *closed,
-        _home_tab_update(on_demo_page=on_demo),
-        _source_tab_btn_update(active=on_anim),
-        _source_tab_btn_update(active=on_gravity),
-        _home_tab_update(on_demo_page=on_demo),
-        _source_tab_btn_update(active=on_anim),
-        _source_tab_btn_update(active=on_gravity),
+        tab_gravity,
+        tab_demo,
+        tab_anim,
+        tab_gravity,
+        tab_demo,
+        tab_anim,
         page,
     )
 
@@ -1932,7 +1935,7 @@ def build_app() -> gr.Blocks:
         css=HFB_CSS,
         fill_width=True,
     ) as demo:
-        current_page = gr.State("demo")
+        current_page = gr.State("gravity")
         newhere_open = gr.State(False)
         claims_open = gr.State(False)
         with gr.Column(visible=False, elem_classes=["vqc-links-panel"]) as panel_claims:
@@ -1955,7 +1958,7 @@ def build_app() -> gr.Blocks:
                     variant="secondary",
                 )
             gr.Markdown(ONBOARDING_MD)
-        with gr.Column(visible=True) as page_demo:
+        with gr.Column(visible=False) as page_demo:
             with gr.Group(elem_classes=["vqc-optics-panel"]):
                 with gr.Row(elem_classes=["vqc-optics-panel-header"]):
                     gr.HTML(OPTICS_LOGO_HTML)
@@ -1963,10 +1966,17 @@ def build_app() -> gr.Blocks:
                         with gr.Row(elem_classes=["vqc-nav-spreadsheet-row"]):
                             gr.HTML('<span class="vqc-source-label vqc-nav-row-label">Source:</span>')
                             with gr.Column(elem_classes=["vqc-nav-cell"], scale=1, min_width=72):
-                                tab_demo_btn = gr.Button(
-                                    "Live Probe",
+                                tab_gravity_btn = gr.Button(
+                                    "Gravity",
                                     elem_classes=["vqc-source-tab", "active"],
                                     interactive=False,
+                                    scale=0,
+                                    variant="secondary",
+                                )
+                            with gr.Column(elem_classes=["vqc-nav-cell"], scale=1, min_width=72):
+                                tab_demo_btn = gr.Button(
+                                    "Live Probe",
+                                    elem_classes=["vqc-source-tab"],
                                     scale=0,
                                     variant="secondary",
                                 )
@@ -1987,13 +1997,6 @@ def build_app() -> gr.Blocks:
                             with gr.Column(elem_classes=["vqc-nav-cell"], scale=1, min_width=72):
                                 tab_newhere_btn = gr.Button(
                                     "New here?",
-                                    elem_classes=["vqc-source-tab"],
-                                    scale=0,
-                                    variant="secondary",
-                                )
-                            with gr.Column(elem_classes=["vqc-nav-cell"], scale=1, min_width=72):
-                                tab_gravity_btn = gr.Button(
-                                    "Gravity",
                                     elem_classes=["vqc-source-tab"],
                                     scale=0,
                                     variant="secondary",
@@ -2187,6 +2190,12 @@ def build_app() -> gr.Blocks:
         with gr.Column(visible=False, elem_classes=["vqc-animations-page"]) as page_animations:
             with gr.Row(elem_classes=["vqc-source-tabs-row", "vqc-animations-nav-row"]):
                 gr.HTML('<span class="vqc-source-label">Source:</span>')
+                anim_tab_gravity_btn = gr.Button(
+                    "Gravity",
+                    elem_classes=["vqc-source-tab"],
+                    scale=0,
+                    variant="secondary",
+                )
                 anim_tab_demo_btn = gr.Button(
                     "Live Probe",
                     elem_classes=["vqc-source-tab"],
@@ -2200,12 +2209,6 @@ def build_app() -> gr.Blocks:
                     scale=0,
                     variant="secondary",
                 )
-                anim_tab_gravity_btn = gr.Button(
-                    "Gravity",
-                    elem_classes=["vqc-source-tab"],
-                    scale=0,
-                    variant="secondary",
-                )
             gr.Markdown("## Reference figures")
             gr.Markdown(FIGURES_INTRO_MD_LOCAL)
             gr.HTML(_figures_grid_html())
@@ -2215,9 +2218,16 @@ def build_app() -> gr.Blocks:
             1.0, 1.0, 1.0, KAPPA_DOC, 0.1, 1.0, 1.0
         )
 
-        with gr.Column(visible=False, elem_classes=["myst-gravity-page"]) as page_gravity:
+        with gr.Column(visible=True, elem_classes=["myst-gravity-page"]) as page_gravity:
             with gr.Row(elem_classes=["vqc-source-tabs-row", "vqc-animations-nav-row"]):
                 gr.HTML('<span class="vqc-source-label">Source:</span>')
+                grav_tab_gravity_btn = gr.Button(
+                    "Gravity",
+                    elem_classes=["vqc-source-tab", "active"],
+                    interactive=False,
+                    scale=0,
+                    variant="secondary",
+                )
                 grav_tab_demo_btn = gr.Button(
                     "Live Probe",
                     elem_classes=["vqc-source-tab"],
@@ -2227,13 +2237,6 @@ def build_app() -> gr.Blocks:
                 grav_tab_anim_btn = gr.Button(
                     "Figures",
                     elem_classes=["vqc-source-tab"],
-                    scale=0,
-                    variant="secondary",
-                )
-                grav_tab_gravity_btn = gr.Button(
-                    "Gravity",
-                    elem_classes=["vqc-source-tab", "active"],
-                    interactive=False,
                     scale=0,
                     variant="secondary",
                 )
@@ -2304,21 +2307,21 @@ def build_app() -> gr.Blocks:
             page_demo,
             page_animations,
             page_gravity,
+            tab_gravity_btn,
             tab_demo_btn,
             tab_anim_btn,
-            tab_gravity_btn,
             panel_newhere,
             tab_newhere_btn,
             newhere_open,
             panel_claims,
             tab_claims_btn,
             claims_open,
+            anim_tab_gravity_btn,
             anim_tab_demo_btn,
             anim_tab_anim_btn,
-            anim_tab_gravity_btn,
+            grav_tab_gravity_btn,
             grav_tab_demo_btn,
             grav_tab_anim_btn,
-            grav_tab_gravity_btn,
             current_page,
         ]
         tab_demo_btn.click(lambda: _nav_to_page("demo"), outputs=nav_outputs)

@@ -494,6 +494,39 @@ _UNIT_CELL_GREEN = "#22c55e"
 _UNIT_CELL_BLUE = "#2563eb"
 
 
+def _draw_leader_label(
+    ax,
+    anchor: tuple[float, float, float],
+    label_pos: tuple[float, float, float],
+    text: str,
+    color: str,
+    *,
+    fontsize: float = 10,
+) -> None:
+    """Leader line from cube anchor to offset label (color-matched)."""
+    ax.plot(
+        [anchor[0], label_pos[0]],
+        [anchor[1], label_pos[1]],
+        [anchor[2], label_pos[2]],
+        color=color,
+        linewidth=1.5,
+        linestyle="-",
+        solid_capstyle="round",
+        zorder=8,
+    )
+    ax.text(
+        label_pos[0],
+        label_pos[1],
+        label_pos[2],
+        text,
+        color=color,
+        fontsize=fontsize,
+        ha="center",
+        va="center",
+        zorder=9,
+    )
+
+
 def build_unit_cell_figure(
     delta_z: float = 0.15,
     delta_side: float = 0.08,
@@ -561,11 +594,31 @@ def build_unit_cell_figure(
     ax.quiver(-s - 0.1, 0, 0, side * 2.0, 0, 0, color=eq_red, **arrow_kw)
     ax.quiver(s + 0.1, 0, 0, -side * 2.0, 0, 0, color=eq_green, **arrow_kw)
 
-    ax.text(1.55, 0, 0, r"$T_\phi \propto \phi^2$", color=eq_red, fontsize=10, ha="center")
-    ax.text(0, 1.55, 0, r"$T_e \propto e^2$", color=eq_green, fontsize=10, ha="center")
-    ax.text(0, 0, 1.55, r"$T_\pi \propto \pi^2$", color=eq_blue, fontsize=10, ha="center")
-    ax.text(0, 0, -0.35, r"$\delta_\mathrm{side}$ (inward)", color=eq_green, fontsize=9, ha="center")
-    ax.text(0, -1.35, 0, r"$\delta_z$ (push)", color=eq_blue, fontsize=9, ha="center")
+    _draw_leader_label(
+        ax, (s, 0.0, 0.0), (2.35, 0.45, 0.25), r"$T_\phi \propto \phi^2$", eq_red
+    )
+    _draw_leader_label(
+        ax, (0.0, s, 0.0), (0.45, 2.35, 0.25), r"$T_e \propto e^2$", eq_green
+    )
+    _draw_leader_label(
+        ax, (0.0, 0.0, s), (0.45, 0.25, 2.35), r"$T_\pi \propto \pi^2$", eq_blue
+    )
+    _draw_leader_label(
+        ax,
+        (-s, 0.0, 0.0),
+        (-2.35, -0.55, 0.35),
+        r"$\delta_\mathrm{side}$ (inward)",
+        eq_green,
+        fontsize=9,
+    )
+    _draw_leader_label(
+        ax,
+        (0.0, 0.0, s),
+        (-0.55, -2.25, 2.35),
+        r"$\delta_z$ (push)",
+        eq_blue,
+        fontsize=9,
+    )
 
     from matplotlib.patches import FancyBboxPatch
 
@@ -607,9 +660,9 @@ def build_unit_cell_figure(
             zorder=6,
         )
 
-    ax.set_xlim(-2, 2)
-    ax.set_ylim(-2, 2)
-    ax.set_zlim(-2, 2.2)
+    ax.set_xlim(-2.6, 2.6)
+    ax.set_ylim(-2.6, 2.6)
+    ax.set_zlim(-2.6, 2.6)
     ax.set_xlabel("φ-face", color="#a89ec8", labelpad=8)
     ax.set_ylabel("e-face", color="#a89ec8", labelpad=8)
     ax.set_zlabel("π-face", color="#a89ec8", labelpad=8)
