@@ -3441,7 +3441,7 @@ footer {{ visibility: hidden; }}
     width: 100% !important;
     height: 100% !important;
     max-height: none !important;
-    object-fit: contain !important;
+    object-fit: fill !important;
     display: block !important;
 }}
 @media (max-width: 768px) {{
