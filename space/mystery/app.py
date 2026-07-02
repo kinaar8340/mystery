@@ -1950,7 +1950,7 @@ footer {{ visibility: hidden; }}
 }}
 .gradio-container .myst-gravity-split {{
     display: grid !important;
-    grid-template-columns: 38% 62% !important;
+    grid-template-columns: minmax(280px, 36%) minmax(0, 1fr) !important;
     grid-template-rows: 1fr !important;
     align-items: stretch !important;
     gap: 0.65rem !important;
@@ -1970,6 +1970,14 @@ footer {{ visibility: hidden; }}
 }}
 .gradio-container .myst-gravity-right-stack {{
     gap: 0 !important;
+    flex: 1 1 0 !important;
+    min-height: 0 !important;
+    height: 100% !important;
+}}
+.gradio-container .myst-gravity-visuals-col .myst-gravity-cube-panel {{
+    flex: 1 1 0 !important;
+    min-height: 0 !important;
+    height: 100% !important;
 }}
 .gradio-container .myst-gravity-left-stack {{
     flex: 1 1 0 !important;
@@ -1978,7 +1986,7 @@ footer {{ visibility: hidden; }}
     gap: 0.55rem !important;
     overflow: hidden !important;
     display: grid !important;
-    grid-template-rows: minmax(0, 1fr) auto 0.85rem auto !important;
+    grid-template-rows: auto auto 0.85rem auto !important;
     grid-template-columns: minmax(0, 1fr) !important;
     align-content: start !important;
 }}
@@ -2039,10 +2047,18 @@ footer {{ visibility: hidden; }}
     flex: 0 1 auto !important;
     height: auto !important;
     min-height: 0 !important;
-    max-height: none !important;
+    max-height: min(42vh, 24rem) !important;
     width: 100% !important;
     display: flex !important;
     flex-direction: column !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+}}
+.gradio-container .myst-gravity-control-panel .myst-cube-viewport-header {{
+    flex: 0 0 auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
 }}
 .gradio-container .myst-gravity-left-presets-slot,
 .gradio-container .myst-gravity-presets-panel.myst-gravity-left-frame {{
@@ -2126,21 +2142,25 @@ footer {{ visibility: hidden; }}
 }}
 .gradio-container .myst-gravity-cube-panel > .block:not(.myst-cube-plot-inner) {{
     flex: 0 0 auto !important;
-    overflow: hidden !important;
+    overflow: visible !important;
+    min-height: 0 !important;
+    max-height: none !important;
 }}
 .gradio-container .myst-gravity-cube-panel .myst-cube-viewport-header {{
     flex: 0 0 auto !important;
-    min-height: 9.75rem !important;
-    max-height: 9.75rem !important;
-    overflow: hidden !important;
+    min-height: 12.5rem !important;
+    max-height: none !important;
+    height: auto !important;
+    overflow: visible !important;
     box-sizing: border-box !important;
+    padding-bottom: 0.85rem !important;
 }}
 .gradio-container .myst-gravity-cube-panel .myst-cube-viewport-status {{
     display: block !important;
-    min-height: 2.35rem !important;
-    max-height: 2.35rem !important;
-    overflow: hidden !important;
-    line-height: 1.15 !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    line-height: 1.25 !important;
 }}
 .gradio-container .myst-gravity-cube-panel > .column.myst-cube-viewport-media,
 .gradio-container .myst-gravity-cube-panel .myst-cube-viewport-media {{
@@ -2415,6 +2435,18 @@ footer {{ visibility: hidden; }}
     flex: 1 1 auto !important;
     min-height: clamp(18rem, 42vh, 28rem) !important;
 }}
+.gradio-container .myst-gravity-page .myst-cube-viewport-frame .myst-cube-viewport-header {{
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.08rem !important;
+    width: 100% !important;
+    margin: 0 0 0.55rem 0 !important;
+    padding: 0.65rem 0.75rem 0.85rem !important;
+    min-height: 12.5rem !important;
+    max-height: none !important;
+    overflow: visible !important;
+}}
 .gradio-container .myst-gravity-page .myst-cube-viewport-header {{
     display: flex !important;
     flex-direction: column !important;
@@ -2483,7 +2515,8 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-cube-viewport-equation {{
     width: 100% !important;
     margin-top: 0.42rem !important;
-    padding: 0.34rem 0.55rem !important;
+    margin-bottom: 0.15rem !important;
+    padding: 0.42rem 0.55rem !important;
     border: 1px solid #c9a227 !important;
     border-radius: 6px !important;
     background: rgba(0, 0, 0, 0.45) !important;
@@ -2492,6 +2525,12 @@ footer {{ visibility: hidden; }}
     letter-spacing: 0.03em !important;
     font-weight: 600 !important;
     text-align: center !important;
+    line-height: 1.35 !important;
+    overflow: visible !important;
+    box-sizing: border-box !important;
+}}
+.gradio-container .myst-gravity-cube-panel .myst-cube-viewport-equation {{
+    flex: 0 0 auto !important;
 }}
 .gradio-container .myst-gravity-page .myst-cube-viewport-frame .myst-cube-plot-inner .label-wrap {{
     display: none !important;
@@ -3477,7 +3516,7 @@ def build_app() -> gr.Blocks:
                     scale=0,
                     variant="secondary",
                 )
-            with gr.Row(elem_classes=["myst-gravity-split"], equal_height=False):
+            with gr.Row(elem_classes=["myst-gravity-split"], equal_height=True):
                 with gr.Column(
                     scale=5,
                     min_width=280,
@@ -3608,7 +3647,7 @@ def build_app() -> gr.Blocks:
                                 )
                                 re_metrics = gr.Textbox(
                                     label="Residual explorer",
-                                    lines=12,
+                                    lines=9,
                                     interactive=False,
                                     value=_init_re_metrics,
                                 )
