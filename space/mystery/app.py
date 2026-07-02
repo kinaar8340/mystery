@@ -1050,7 +1050,10 @@ WALLPAPER_HEAD = f"""
                 el.style.setProperty('max-width', '550px', 'important');
             }}
         }});
-        document.querySelectorAll('.myst-unit-cell-viewport-img, #unit-cell-main-view img').forEach(function(img) {{
+        document.querySelectorAll('#unit-cell-main-view .empty, .myst-unit-cell-viewport-image .empty').forEach(function(el) {{
+            el.style.setProperty('display', 'none', 'important');
+        }});
+        document.querySelectorAll('.myst-unit-cell-viewport-img, #unit-cell-main-view img, .myst-unit-cell-viewport-image img').forEach(function(img) {{
             img.style.setProperty('display', 'block', 'important');
             img.style.setProperty('visibility', 'visible', 'important');
             img.style.setProperty('opacity', '1', 'important');
@@ -3062,9 +3065,9 @@ footer {{ visibility: hidden; }}
     align-self: stretch !important;
     display: flex !important;
     flex-direction: column !important;
-    height: 100% !important;
+    height: auto !important;
     min-height: 0 !important;
-    overflow: hidden !important;
+    overflow: visible !important;
 }}
 .gradio-container .myst-gravity-visuals-col .myst-cube-viewport-frame,
 .gradio-container .myst-gravity-visuals-col .gr-group.myst-cube-viewport-frame {{
@@ -3773,6 +3776,60 @@ footer {{ visibility: hidden; }}
     height: auto !important;
     overflow: visible !important;
 }}
+/* HF Space: gr.Image file URL (data: base64 blocked in HF iframe) */
+.gradio-container .myst-unit-cell-viewport-image,
+.gradio-container .myst-unit-cell-viewport-image.block,
+.gradio-container #unit-cell-main-view.gradio-image,
+.gradio-container #unit-cell-main-view.myst-unit-cell-viewport-image {{
+    flex: 0 0 auto !important;
+    width: 100% !important;
+    max-width: 550px !important;
+    height: 550px !important;
+    min-height: 550px !important;
+    max-height: 550px !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    background: #000000 !important;
+    border: none !important;
+    box-shadow: none !important;
+}}
+.gradio-container #unit-cell-main-view .empty,
+.gradio-container #unit-cell-main-view .icon-wrap,
+.gradio-container .myst-unit-cell-viewport-image .empty,
+.gradio-container .myst-unit-cell-viewport-image .icon-wrap {{
+    display: none !important;
+}}
+.gradio-container #unit-cell-main-view .wrap,
+.gradio-container #unit-cell-main-view .image-container,
+.gradio-container #unit-cell-main-view .gr-image,
+.gradio-container .myst-unit-cell-viewport-image .wrap,
+.gradio-container .myst-unit-cell-viewport-image .image-container,
+.gradio-container .myst-unit-cell-viewport-image .gr-image {{
+    width: 100% !important;
+    height: 550px !important;
+    min-height: 550px !important;
+    max-height: 550px !important;
+    overflow: visible !important;
+    display: block !important;
+    background: #000000 !important;
+}}
+.gradio-container #unit-cell-main-view img,
+.gradio-container .myst-unit-cell-viewport-image img,
+.gradio-container .myst-unit-cell-viewport-image .gr-image img {{
+    width: 100% !important;
+    height: 550px !important;
+    min-height: 550px !important;
+    max-height: 550px !important;
+    object-fit: contain !important;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    background: #000000 !important;
+}}
 """
 
 
@@ -4175,16 +4232,29 @@ def _gravity_tui_for_preset(
 
 
 def _gravity_static_image_update(fig: object) -> object:
-    """Inline base64 HTML img — bypasses gr.Image layout issues on HF Spaces."""
+    """HF Space: gr.Image numpy (file URL). Local: inline base64 gr.HTML."""
     if fig is gr.skip():
         print("[DEBUG] _gravity_static_image_update: gr.skip()", flush=True)
         return gr.skip()
+    if is_hf_space():
+        arr = figure_to_viewport_numpy(fig, dpi=_UNIT_CELL_IMAGE_DPI)
+        print(
+            f"[DEBUG] _gravity_static_image_update: returning numpy shape={arr.shape}",
+            flush=True,
+        )
+        return arr
     html = figure_to_viewport_html(fig, dpi=_UNIT_CELL_IMAGE_DPI)
     print(
         f"[DEBUG] _gravity_static_image_update: returning html len={len(html)}",
         flush=True,
     )
     return html
+
+
+def _gravity_viewport_error_placeholder() -> object:
+    if is_hf_space():
+        return unit_cell_error_placeholder_numpy()
+    return unit_cell_error_placeholder_html()
 
 
 def _gravity_clear_video_update() -> dict:
@@ -4582,7 +4652,7 @@ def _make_gravity_quick_preset_click(slot: int):
         )
         if fig is None:
             outputs = list(outputs)
-            outputs[21] = unit_cell_error_placeholder_html()
+            outputs[21] = _gravity_viewport_error_placeholder()
         image_out = outputs[21]
         if hasattr(image_out, "shape"):
             print(
@@ -4920,14 +4990,25 @@ def build_app() -> gr.Blocks:
         _init_re_metrics, _init_unit_cell_header, _init_unit_cell_fig = run_residual_explorer(
             1.0, 1.0, 1.0, KAPPA_DOC, 0.1, 1.0, 1.0, 0.35, 22.0, 45.0
         )
+        _init_unit_cell_numpy = figure_to_viewport_numpy(
+            _init_unit_cell_fig,
+            dpi=_UNIT_CELL_IMAGE_DPI,
+        )
         _init_unit_cell_html = figure_to_viewport_html(
             _init_unit_cell_fig,
             dpi=_UNIT_CELL_IMAGE_DPI,
         )
-        print(
-            f"[DEBUG] init unit cell html len={len(_init_unit_cell_html)}",
-            flush=True,
-        )
+        _use_image_viewport = is_hf_space()
+        if _use_image_viewport:
+            print(
+                f"[DEBUG] init unit cell numpy shape={_init_unit_cell_numpy.shape} (HF gr.Image)",
+                flush=True,
+            )
+        else:
+            print(
+                f"[DEBUG] init unit cell html len={len(_init_unit_cell_html)} (local gr.HTML)",
+                flush=True,
+            )
         _init_preset_tui = _format_gravity_menu_tui_html()
         _init_control_levels = _format_gravity_control_panel_html(_GRAVITY_HOME_DIALS, 0)
 
@@ -5228,11 +5309,30 @@ def build_app() -> gr.Blocks:
                         elem_classes=["myst-cube-viewport-header-slot"],
                     )
                     with gr.Row(elem_classes=["myst-unit-cell-image-row"]):
-                        unit_cell_image = gr.HTML(
-                            _init_unit_cell_html,
-                            elem_classes=["myst-unit-cell-viewport-html"],
-                            container=False,
-                        )
+                        if _use_image_viewport:
+                            unit_cell_image = gr.Image(
+                                value=_init_unit_cell_numpy,
+                                label=None,
+                                show_label=False,
+                                type="numpy",
+                                image_mode="RGB",
+                                format="png",
+                                interactive=False,
+                                container=False,
+                                height=550,
+                                width=550,
+                                show_download_button=False,
+                                show_share_button=False,
+                                show_fullscreen_button=False,
+                                elem_id="unit-cell-main-view",
+                                elem_classes=["myst-unit-cell-viewport-image"],
+                            )
+                        else:
+                            unit_cell_image = gr.HTML(
+                                _init_unit_cell_html,
+                                elem_classes=["myst-unit-cell-viewport-html"],
+                                container=False,
+                            )
                     with gr.Row(elem_classes=["myst-unit-cell-video-row"]):
                         unit_cell_video = gr.Video(
                             label="Deformation Animation",
@@ -5375,7 +5475,9 @@ def build_app() -> gr.Blocks:
         claims_minimize_btn.click(_minimize_claims, outputs=claims_outputs[:3])
         demo.load(_stream_term_boot, outputs=term_keypad_outputs)
         demo.load(
-            lambda: _init_unit_cell_html,
+            lambda: (
+                _init_unit_cell_numpy if _use_image_viewport else _init_unit_cell_html
+            ),
             outputs=[unit_cell_image],
             show_progress=False,
         )
