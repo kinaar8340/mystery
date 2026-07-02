@@ -1023,7 +1023,9 @@ WALLPAPER_HEAD = f"""
 </style>
 <script>
 (function() {{
+    window.mystOnHf = {'true' if is_hf_space() else 'false'};
     function mountWallpaper() {{
+        if (window.mystOnHf) return;
         if (document.getElementById('vqc-wallpaper')) return;
         var wp = document.createElement('div');
         wp.id = 'vqc-wallpaper';
@@ -1035,95 +1037,122 @@ WALLPAPER_HEAD = f"""
     window.addEventListener('load', mountWallpaper);
 }})();
 (function() {{
+    function mystSetViewportBox(el, heightPx) {{
+        el.style.setProperty('display', 'block', 'important');
+        el.style.setProperty('visibility', 'visible', 'important');
+        el.style.setProperty('opacity', '1', 'important');
+        el.style.setProperty('overflow', 'visible', 'important');
+        el.style.setProperty('height', heightPx, 'important');
+        el.style.setProperty('min-height', heightPx, 'important');
+        el.style.setProperty('max-height', heightPx, 'important');
+        el.style.setProperty('width', '100%', 'important');
+        el.style.setProperty('max-width', '550px', 'important');
+        el.style.setProperty('flex', 'none', 'important');
+    }}
+    function paintViewportBackground(img) {{
+        var wrap = document.getElementById('unit-cell-main-view');
+        if (!wrap || !img || !img.src) return;
+        if (img.naturalWidth < 1) return;
+        wrap.style.setProperty('background-image', 'url(\"' + img.src + '\")', 'important');
+        wrap.style.setProperty('background-size', 'contain', 'important');
+        wrap.style.setProperty('background-repeat', 'no-repeat', 'important');
+        wrap.style.setProperty('background-position', 'center center', 'important');
+        wrap.style.setProperty('background-color', '#000000', 'important');
+    }}
     function fixUnitCellViewportLayout() {{
-        document.querySelectorAll(
-            '#unit-cell-main-view, .myst-unit-cell-viewport-img-wrap, .myst-unit-cell-viewport-img'
-        ).forEach(function(el) {{
-            el.style.setProperty('display', 'block', 'important');
-            el.style.setProperty('visibility', 'visible', 'important');
-            el.style.setProperty('opacity', '1', 'important');
-            el.style.setProperty('overflow', 'visible', 'important');
-            if (el.tagName === 'IMG' || el.classList.contains('myst-unit-cell-viewport-img-wrap')) {{
-                el.style.setProperty('height', '550px', 'important');
-                el.style.setProperty('min-height', '550px', 'important');
-                el.style.setProperty('width', '100%', 'important');
-                el.style.setProperty('max-width', '550px', 'important');
-            }}
-        }});
-        document.querySelectorAll('#unit-cell-main-view .empty, .myst-unit-cell-viewport-image .empty').forEach(function(el) {{
-            el.style.setProperty('display', 'none', 'important');
-        }});
-        document.querySelectorAll('.myst-unit-cell-viewport-img, #unit-cell-main-view img, .myst-unit-cell-viewport-image img').forEach(function(img) {{
-            img.style.setProperty('display', 'block', 'important');
-            img.style.setProperty('visibility', 'visible', 'important');
-            img.style.setProperty('opacity', '1', 'important');
-            img.style.setProperty('height', '550px', 'important');
-            img.style.setProperty('min-height', '550px', 'important');
-            img.style.setProperty('width', '100%', 'important');
-            img.style.setProperty('object-fit', 'contain', 'important');
-        }});
-        var vidRoot = document.getElementById('unit-cell-animation');
-        if (vidRoot) {{
-            vidRoot.style.setProperty('display', 'block', 'important');
-            vidRoot.style.setProperty('visibility', 'visible', 'important');
-            vidRoot.style.setProperty('height', '320px', 'important');
-            vidRoot.style.setProperty('min-height', '320px', 'important');
-            vidRoot.style.setProperty('width', '100%', 'important');
-            vidRoot.style.setProperty('overflow', 'visible', 'important');
-            vidRoot.querySelectorAll('.wrap, .video-container, .gr-video, video').forEach(function(el) {{
-                el.style.setProperty('display', 'block', 'important');
-                el.style.setProperty('height', '320px', 'important');
-                el.style.setProperty('min-height', '320px', 'important');
-                el.style.setProperty('width', '100%', 'important');
+        var root = document.getElementById('unit-cell-main-view');
+        if (root) {{
+            mystSetViewportBox(root, '550px');
+            root.style.setProperty('position', 'relative', 'important');
+            root.querySelectorAll(
+                '.wrap, .image-container, .image-container button, .image-frame, .gr-image'
+            ).forEach(function(el) {{
+                mystSetViewportBox(el, '550px');
+                if (el.tagName === 'BUTTON') {{
+                    el.style.setProperty('padding', '0', 'important');
+                    el.style.setProperty('margin', '0', 'important');
+                    el.style.setProperty('border', 'none', 'important');
+                    el.style.setProperty('background', 'transparent', 'important');
+                    el.style.setProperty('cursor', 'default', 'important');
+                }}
+            }});
+            root.querySelectorAll('img').forEach(function(img) {{
+                mystSetViewportBox(img, '550px');
+                img.style.setProperty('object-fit', 'contain', 'important');
+                img.style.setProperty('object-position', 'center center', 'important');
+                img.style.setProperty('position', 'relative', 'important');
+                img.style.setProperty('z-index', '2', 'important');
+                img.loading = 'eager';
+                if (img.__mystViewportWired) return;
+                img.__mystViewportWired = true;
+                img.addEventListener('load', function() {{ paintViewportBackground(img); }});
+                if (img.complete) paintViewportBackground(img);
+            }});
+            root.querySelectorAll('.empty, .icon-wrap').forEach(function(el) {{
+                el.style.setProperty('display', 'none', 'important');
             }});
         }}
+        document.querySelectorAll(
+            '.myst-unit-cell-viewport-img-wrap, .myst-unit-cell-viewport-img'
+        ).forEach(function(el) {{
+            mystSetViewportBox(el, '550px');
+        }});
         document.querySelectorAll('.myst-unit-cell-image-row, .myst-unit-cell-video-row').forEach(function(slot) {{
             slot.style.setProperty('overflow', 'visible', 'important');
             slot.style.setProperty('height', 'auto', 'important');
         }});
+        if (!window.mystOnHf) {{
+            var vidRoot = document.getElementById('unit-cell-animation');
+            if (vidRoot) {{
+                vidRoot.style.setProperty('display', 'block', 'important');
+                vidRoot.style.setProperty('visibility', 'visible', 'important');
+                vidRoot.style.setProperty('height', '320px', 'important');
+                vidRoot.style.setProperty('min-height', '320px', 'important');
+                vidRoot.style.setProperty('width', '100%', 'important');
+                vidRoot.style.setProperty('overflow', 'visible', 'important');
+                vidRoot.querySelectorAll('.wrap, .video-container, .gr-video, video').forEach(function(el) {{
+                    el.style.setProperty('display', 'block', 'important');
+                    el.style.setProperty('height', '320px', 'important');
+                    el.style.setProperty('min-height', '320px', 'important');
+                    el.style.setProperty('width', '100%', 'important');
+                }});
+            }}
+        }}
     }}
     function fixUnitCellImageUrls() {{
-        var origin = window.location.origin;
-        var gradioRoot = (window.gradio_config && window.gradio_config.root) || '';
         fixUnitCellViewportLayout();
+        if (window.mystOnHf) return;
+        var origin = window.location.origin;
         var root = document.getElementById('unit-cell-main-view');
         if (!root) return;
         root.querySelectorAll('img').forEach(function(img) {{
-            var src = img.getAttribute('src') || '';
+            var src = (img.getAttribute('src') || '').trim();
             if (!src || src.indexOf('data:') === 0 || src.indexOf('blob:') === 0) return;
+            /* Leave HF Space /gradio_api/file= paths alone — browser resolves them. */
+            if (src.indexOf('/gradio_api/file=') === 0 || src.indexOf('/file=') === 0) return;
+            if (src.indexOf(origin) === 0) return;
             var needsFix = (
                 src.indexOf('0.0.0.0') >= 0 ||
                 src.indexOf('127.0.0.1') >= 0 ||
                 src.indexOf('localhost') >= 0
             );
-            if (!needsFix && gradioRoot && src.charAt(0) === '/' && src.indexOf(gradioRoot) !== 0) {{
-                needsFix = src.indexOf('/file') === 0 || src.indexOf('/gradio_api/file') === 0;
-            }}
             if (!needsFix) return;
             try {{
-                var u = new URL(src, origin);
-                var path = u.pathname + u.search;
-                if (gradioRoot && path.indexOf(gradioRoot) !== 0) {{
-                    path = gradioRoot.replace(/\\/$/, '') + path;
-                }}
-                img.src = origin + path;
+                img.src = new URL(src, origin).href;
             }} catch (e) {{
-                var path = src.replace(/^https?:\\/\\/[^/]+/, '');
-                if (gradioRoot && path.indexOf(gradioRoot) !== 0) {{
-                    path = gradioRoot.replace(/\\/$/, '') + (path.charAt(0) === '/' ? path : '/' + path);
+                /* drop corrupted double-origin URLs */
+                if (src.indexOf(origin + origin) >= 0 || src.indexOf(origin + 'http') === 0) {{
+                    img.removeAttribute('src');
                 }}
-                img.src = origin + (path.charAt(0) === '/' ? path : '/' + path);
             }}
         }});
+        var forced = document.getElementById('myst-unit-cell-forced-img');
+        if (forced) forced.remove();
     }}
     function bootImageFix() {{
         fixUnitCellImageUrls();
-        fixUnitCellViewportLayout();
         if (window.__mystUnitCellImgObs) return;
-        window.__mystUnitCellImgObs = new MutationObserver(function() {{
-            fixUnitCellImageUrls();
-            fixUnitCellViewportLayout();
-        }});
+        window.__mystUnitCellImgObs = new MutationObserver(fixUnitCellImageUrls);
         window.__mystUnitCellImgObs.observe(document.body, {{
             subtree: true, childList: true, attributes: true, attributeFilter: ['src', 'style', 'class']
         }});
@@ -3607,8 +3636,8 @@ footer {{ visibility: hidden; }}
     padding: 0 !important;
     margin: 0 !important;
 }}
-/* General safety rules — never collapse viewport cube */
-.gradio-container .gradio-image img,
+/* General safety rules — never collapse viewport cube (exclude #unit-cell-main-view block) */
+.gradio-container .gradio-image:not(#unit-cell-main-view) img,
 .gradio-container .gradio-video video,
 .gradio-container .gr-image img,
 .gradio-container .gr-video video {{
@@ -3705,9 +3734,13 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-unit-cell-viewport-html,
 .gradio-container .myst-unit-cell-viewport-html.block,
 .gradio-container .myst-unit-cell-viewport-html .html-container,
-.gradio-container .myst-unit-cell-viewport-html .prose {{
+.gradio-container .myst-unit-cell-viewport-html .prose,
+.gradio-container .myst-unit-cell-image-row .html-container,
+.gradio-container .myst-unit-cell-image-row .prose {{
     width: 100% !important;
     max-width: 550px !important;
+    height: auto !important;
+    min-height: 550px !important;
     margin: 0 auto !important;
     padding: 0 !important;
     border: none !important;
@@ -3715,6 +3748,11 @@ footer {{ visibility: hidden; }}
     box-shadow: none !important;
     overflow: visible !important;
     display: block !important;
+    opacity: 1 !important;
+}}
+.gradio-container .myst-unit-cell-viewport-html .html-container.pending,
+.gradio-container .myst-unit-cell-image-row .html-container.pending {{
+    opacity: 1 !important;
 }}
 .gradio-container #unit-cell-main-view,
 .gradio-container .myst-unit-cell-viewport-img-wrap,
@@ -3830,7 +3868,182 @@ footer {{ visibility: hidden; }}
     opacity: 1 !important;
     background: #000000 !important;
 }}
+/* Gradio 5.12 — gr.Plot / gr.Image DOM (image-container, matplotlib layout) */
+.gradio-container .myst-unit-cell-image-row,
+.gradio-container .myst-unit-cell-image-row.block,
+.gradio-container .myst-unit-cell-image-row > .form,
+.gradio-container .myst-unit-cell-image-row > .form > .block {{
+    flex: 0 0 550px !important;
+    height: 550px !important;
+    min-height: 550px !important;
+    max-height: 550px !important;
+    overflow: visible !important;
+}}
+.gradio-container #unit-cell-main-view.myst-unit-cell-viewport-plot,
+.gradio-container #unit-cell-main-view.myst-unit-cell-viewport-plot.block,
+.gradio-container #unit-cell-main-view .matplotlib,
+.gradio-container #unit-cell-main-view .matplotlib.layout,
+.gradio-container #unit-cell-main-view .image-container,
+.gradio-container #unit-cell-main-view .image-container button,
+.gradio-container #unit-cell-main-view .image-frame {{
+    width: 100% !important;
+    max-width: 550px !important;
+    height: 550px !important;
+    min-height: 550px !important;
+    max-height: 550px !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    display: block !important;
+    overflow: visible !important;
+    background: #000000 !important;
+    box-sizing: border-box !important;
+}}
+.gradio-container #unit-cell-main-view .matplotlib img,
+.gradio-container #unit-cell-main-view .image-container img,
+.gradio-container #unit-cell-main-view .image-frame img,
+.gradio-container #unit-cell-main-view img.myst-unit-cell-viewport-img {{
+    width: 100% !important;
+    max-width: 550px !important;
+    height: 550px !important;
+    min-height: 550px !important;
+    max-height: 550px !important;
+    object-fit: contain !important;
+    object-position: center center !important;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    position: relative !important;
+    z-index: 2 !important;
+    background: #000000 !important;
+}}
+.gradio-container #unit-cell-main-view .empty,
+.gradio-container #unit-cell-main-view .icon-wrap {{
+    display: none !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    z-index: 0 !important;
+}}
+/* Override global height:auto on generic image rules inside viewport */
+.gradio-container #unit-cell-main-view .gradio-image img,
+.gradio-container #unit-cell-main-view .gr-image img,
+.gradio-container #unit-cell-main-view .image-container img,
+.gradio-container #unit-cell-main-view .matplotlib img {{
+    height: 550px !important;
+    min-height: 550px !important;
+    max-height: 550px !important;
+}}
 """
+
+_HF_VIEWPORT_CSS = ""
+if is_hf_space():
+    _HF_VIEWPORT_CSS = """
+/* HF Space — gr.Image 5.12 chain: .image-container > button > .image-frame > img */
+body::before,
+#vqc-wallpaper {{
+    display: none !important;
+}}
+body {{
+    background: #0a0818 !important;
+}}
+.gradio-container .myst-gravity-split > .column,
+.gradio-container .myst-gravity-split > .column.myst-gravity-visuals-col {{
+    overflow: visible !important;
+    background: transparent !important;
+}}
+.gradio-container .myst-gravity-visuals-col {{
+    background: transparent !important;
+}}
+.gradio-container .myst-unit-cell-image-row,
+.gradio-container .myst-unit-cell-image-row > .form,
+.gradio-container .myst-unit-cell-image-row > .form > .block {{
+    overflow: visible !important;
+    min-height: 550px !important;
+    height: auto !important;
+}}
+.gradio-container #unit-cell-main-view,
+.gradio-container #unit-cell-main-view.block,
+.gradio-container #unit-cell-main-view.myst-unit-cell-viewport-image {{
+    min-height: 550px !important;
+    height: 550px !important;
+    max-height: 550px !important;
+    overflow: visible !important;
+    background: #000000 !important;
+    background-color: #000000 !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    position: relative !important;
+}}
+.gradio-container #unit-cell-main-view .empty,
+.gradio-container #unit-cell-main-view .icon-wrap {{
+    display: none !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}}
+.gradio-container #unit-cell-main-view .wrap,
+.gradio-container #unit-cell-main-view .image-container,
+.gradio-container #unit-cell-main-view .gr-image {{
+    height: 550px !important;
+    min-height: 550px !important;
+    max-height: 550px !important;
+    width: 100% !important;
+    max-width: 550px !important;
+    overflow: visible !important;
+    display: block !important;
+    flex: none !important;
+    background: transparent !important;
+}}
+.gradio-container #unit-cell-main-view .image-container button {{
+    height: 550px !important;
+    min-height: 550px !important;
+    max-height: 550px !important;
+    width: 100% !important;
+    max-width: 550px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    overflow: visible !important;
+    display: block !important;
+    flex: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}}
+.gradio-container #unit-cell-main-view .image-frame {{
+    height: 550px !important;
+    min-height: 550px !important;
+    max-height: 550px !important;
+    width: 100% !important;
+    max-width: 550px !important;
+    overflow: visible !important;
+    display: block !important;
+    flex: none !important;
+    background: transparent !important;
+}}
+.gradio-container #unit-cell-main-view img,
+.gradio-container #unit-cell-main-view .image-frame img,
+.gradio-container #unit-cell-main-view .image-container img,
+.gradio-container #unit-cell-main-view .gr-image img,
+.gradio-container #unit-cell-main-view.gradio-image img {{
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    width: 100% !important;
+    max-width: 550px !important;
+    height: 550px !important;
+    min-height: 550px !important;
+    max-height: 550px !important;
+    object-fit: contain !important;
+    object-position: center center !important;
+    background: #000000 !important;
+    position: relative !important;
+    z-index: 2 !important;
+}}
+"""
+
+HFB_CSS = HFB_CSS + _HF_VIEWPORT_CSS
 
 
 def run_probe(
@@ -3861,7 +4074,7 @@ _GRAVITY_HOME_DIALS = {
     "alpha": 1.0,
     "beta": 1.0,
     "pressure": 0.35,
-    "elev": 22.0,
+    "elev": 26.0,
     "azim": 45.0,
 }
 _GRAVITY_PRESET_SLOT_LABELS = {
@@ -3983,8 +4196,8 @@ _GRAVITY_PRESET_PROFILES: dict[int, dict[str, float]] = {
         "alpha": 1.0,
         "beta": 1.0,
         "pressure": 0.0,
-        "elev": 18.0,
-        "azim": 36.0,
+        "elev": 26.0,
+        "azim": 45.0,
     },
     2: {
         "phi": 0.962,
@@ -3995,8 +4208,8 @@ _GRAVITY_PRESET_PROFILES: dict[int, dict[str, float]] = {
         "alpha": 1.38,
         "beta": 1.48,
         "pressure": 1.0,
-        "elev": 30.0,
-        "azim": 52.0,
+        "elev": 26.0,
+        "azim": 45.0,
     },
     3: {
         **_GRAVITY_HOME_DIALS,
@@ -4232,14 +4445,14 @@ def _gravity_tui_for_preset(
 
 
 def _gravity_static_image_update(fig: object) -> object:
-    """HF Space: gr.Image numpy (file URL). Local: inline base64 gr.HTML."""
+    """HF: gr.Image numpy. Local: gr.HTML inline base64."""
     if fig is gr.skip():
         print("[DEBUG] _gravity_static_image_update: gr.skip()", flush=True)
         return gr.skip()
     if is_hf_space():
         arr = figure_to_viewport_numpy(fig, dpi=_UNIT_CELL_IMAGE_DPI)
         print(
-            f"[DEBUG] _gravity_static_image_update: returning numpy shape={arr.shape}",
+            f"[DEBUG] _gravity_static_image_update: HF numpy shape={arr.shape}",
             flush=True,
         )
         return arr
@@ -4664,6 +4877,11 @@ def _make_gravity_quick_preset_click(slot: int):
                 f"[DEBUG] preset_click_unified: Returning PIL size={image_out.size}",
                 flush=True,
             )
+        elif isinstance(image_out, str):
+            print(
+                f"[DEBUG] preset_click_unified: Returning html len={len(image_out)}",
+                flush=True,
+            )
         else:
             print(
                 f"[DEBUG] preset_click_unified: image_out={image_out!r}",
@@ -4990,21 +5208,23 @@ def build_app() -> gr.Blocks:
         _init_re_metrics, _init_unit_cell_header, _init_unit_cell_fig = run_residual_explorer(
             1.0, 1.0, 1.0, KAPPA_DOC, 0.1, 1.0, 1.0, 0.35, 22.0, 45.0
         )
-        _init_unit_cell_numpy = figure_to_viewport_numpy(
-            _init_unit_cell_fig,
-            dpi=_UNIT_CELL_IMAGE_DPI,
-        )
-        _init_unit_cell_html = figure_to_viewport_html(
-            _init_unit_cell_fig,
-            dpi=_UNIT_CELL_IMAGE_DPI,
-        )
         _use_image_viewport = is_hf_space()
         if _use_image_viewport:
+            _init_unit_cell_numpy = figure_to_viewport_numpy(
+                _init_unit_cell_fig,
+                dpi=_UNIT_CELL_IMAGE_DPI,
+            )
+            _init_unit_cell_html = ""
             print(
                 f"[DEBUG] init unit cell numpy shape={_init_unit_cell_numpy.shape} (HF gr.Image)",
                 flush=True,
             )
         else:
+            _init_unit_cell_numpy = None
+            _init_unit_cell_html = figure_to_viewport_html(
+                _init_unit_cell_fig,
+                dpi=_UNIT_CELL_IMAGE_DPI,
+            )
             print(
                 f"[DEBUG] init unit cell html len={len(_init_unit_cell_html)} (local gr.HTML)",
                 flush=True,
@@ -5332,6 +5552,7 @@ def build_app() -> gr.Blocks:
                                 _init_unit_cell_html,
                                 elem_classes=["myst-unit-cell-viewport-html"],
                                 container=False,
+                                min_height=550,
                             )
                     with gr.Row(elem_classes=["myst-unit-cell-video-row"]):
                         unit_cell_video = gr.Video(

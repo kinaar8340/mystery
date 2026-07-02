@@ -23,6 +23,10 @@ R = PHI**2 + E**2 - PI**2
 E_OVER_PI = E / PI
 KAPPA_DOC = 0.85
 UNIT_CELL_VIEWPORT_PX = 550
+UNIT_CELL_VIEW_ELEV = 26.0
+UNIT_CELL_VIEW_AZIM = 45.0
+UNIT_CELL_VIEW_DIST = 14.0
+UNIT_CELL_AXIS_HALF = 2.35
 
 BOOT_QUOTE_STRING = "TEST EVERYTHING, HOLD FAST WHAT IS GOOD AND KNOW YOUR GOD"
 
@@ -1079,20 +1083,39 @@ def figure_to_viewport_numpy(fig: plt.Figure, *, dpi: int = 100) -> np.ndarray:
         return unit_cell_error_placeholder_numpy()
 
 
+_VIEWPORT_WRAP_STYLE = (
+    "width:100%;max-width:550px;height:550px;min-height:550px;"
+    "display:block;position:relative;z-index:20;margin:0 auto;"
+    "overflow:visible;background:#000000;box-sizing:border-box;"
+)
+_VIEWPORT_IMG_STYLE = (
+    "width:100%;max-width:550px;height:550px;min-height:550px;"
+    "display:block;position:relative;z-index:21;opacity:1;visibility:visible;"
+    "object-fit:contain;object-position:center center;background:#000000;"
+)
+
+
+def _viewport_img_wrap_html(src: str, *, error: bool = False) -> str:
+    """Shared viewport wrapper — same DOM for local base64 and HF file URLs."""
+    error_cls = " myst-unit-cell-viewport-error" if error else ""
+    return (
+        '<div id="unit-cell-main-view" class="myst-unit-cell-viewport-img-wrap '
+        f'myst-unit-cell-viewport-html{error_cls}" style="{_VIEWPORT_WRAP_STYLE}">'
+        f'<img src="{src}" alt="Unit cell viewport" '
+        f'class="myst-unit-cell-viewport-img" style="{_VIEWPORT_IMG_STYLE}" '
+        'loading="eager" decoding="sync" />'
+        "</div>"
+    )
+
+
 def numpy_viewport_to_html(arr: np.ndarray) -> str:
-    """RGB numpy → inline base64 <img> for gr.HTML (HF Spaces-safe)."""
+    """RGB numpy → inline base64 <img> for gr.HTML (local dev)."""
     from PIL import Image as PILImage
 
     buf = io.BytesIO()
     PILImage.fromarray(np.asarray(arr, dtype=np.uint8)).save(buf, format="PNG")
     b64 = base64.b64encode(buf.getvalue()).decode("ascii")
-    return (
-        '<div id="unit-cell-main-view" class="myst-unit-cell-viewport-img-wrap '
-        'myst-unit-cell-viewport-html">'
-        f'<img src="data:image/png;base64,{b64}" '
-        'alt="Unit cell viewport" class="myst-unit-cell-viewport-img" />'
-        "</div>"
-    )
+    return _viewport_img_wrap_html(f"data:image/png;base64,{b64}")
 
 
 def figure_to_viewport_html(fig: plt.Figure, *, dpi: int = 100) -> str:
@@ -1112,6 +1135,46 @@ def figure_to_viewport_html(fig: plt.Figure, *, dpi: int = 100) -> str:
         return unit_cell_error_placeholder_html()
 
 
+def _gradio_upload_cache_dir() -> str:
+    from gradio.utils import get_upload_folder
+
+    return get_upload_folder()
+
+
+def numpy_viewport_to_cached_html(arr: np.ndarray) -> str:
+    """RGB numpy → gr.HTML img via Gradio upload cache (HF Spaces-safe file URL)."""
+    from gradio.processing_utils import save_img_array_to_cache
+
+    cached_path = save_img_array_to_cache(
+        np.asarray(arr, dtype=np.uint8),
+        _gradio_upload_cache_dir(),
+        format="png",
+    )
+    return _viewport_img_wrap_html(f"/gradio_api/file={cached_path}")
+
+
+def figure_to_viewport_cached_html(fig: plt.Figure, *, dpi: int = 100) -> str:
+    """Matplotlib figure → gr.HTML with Gradio cache file URL; never raises."""
+    print(f"[DEBUG] figure_to_viewport_cached_html: dpi={dpi}", flush=True)
+    try:
+        arr = figure_to_viewport_numpy(fig, dpi=dpi)
+        html = numpy_viewport_to_cached_html(arr)
+        print(
+            f"[DEBUG] figure_to_viewport_cached_html: shape={arr.shape} bytes={len(html)}",
+            flush=True,
+        )
+        return html
+    except Exception as exc:
+        print(f"[ERROR] figure_to_viewport_cached_html failed: {exc}", flush=True)
+        traceback.print_exc()
+        return unit_cell_error_placeholder_cached_html()
+
+
+def unit_cell_error_placeholder_cached_html() -> str:
+    """Red placeholder via Gradio cache file URL when viewport conversion fails."""
+    return numpy_viewport_to_cached_html(unit_cell_error_placeholder_numpy())
+
+
 def unit_cell_error_placeholder_html() -> str:
     """Red placeholder <img> when viewport conversion fails."""
     placeholder = unit_cell_error_placeholder_numpy()
@@ -1120,13 +1183,7 @@ def unit_cell_error_placeholder_html() -> str:
 
     PILImage.fromarray(placeholder).save(buf, format="PNG")
     b64 = base64.b64encode(buf.getvalue()).decode("ascii")
-    return (
-        '<div id="unit-cell-main-view" class="myst-unit-cell-viewport-img-wrap '
-        'myst-unit-cell-viewport-error myst-unit-cell-viewport-html">'
-        f'<img src="data:image/png;base64,{b64}" '
-        'alt="Viewport error placeholder" class="myst-unit-cell-viewport-img" />'
-        "</div>"
-    )
+    return _viewport_img_wrap_html(f"data:image/png;base64,{b64}", error=True)
 
 
 def unit_cell_error_placeholder_pil():
@@ -1291,8 +1348,8 @@ def get_unit_cell_viewport_pil_image(
     alpha: float,
     beta: float,
     deform_pressure: float = 0.35,
-    view_elev: float = 22.0,
-    view_azim: float = 45.0,
+    view_elev: float = UNIT_CELL_VIEW_ELEV,
+    view_azim: float = UNIT_CELL_VIEW_AZIM,
     *,
     dpi: int = 150,
 ):
@@ -1416,10 +1473,10 @@ def build_unit_cell_figure(
     *,
     r_val: float | None = None,
     pressure: float = 1.0,
-    view_elev: float = 22.0,
-    view_azim: float = 45.0,
-    view_dist: float = 17.5,
-    axis_half: float = 2.4,
+    view_elev: float = UNIT_CELL_VIEW_ELEV,
+    view_azim: float = UNIT_CELL_VIEW_AZIM,
+    view_dist: float = UNIT_CELL_VIEW_DIST,
+    axis_half: float = UNIT_CELL_AXIS_HALF,
     show_curvature_grid: bool = True,
     dpi: int = 150,
 ) -> plt.Figure:
@@ -1595,8 +1652,8 @@ def run_residual_explorer(
     alpha: float,
     beta: float,
     deform_pressure: float = 0.35,
-    view_elev: float = 22.0,
-    view_azim: float = 45.0,
+    view_elev: float = UNIT_CELL_VIEW_ELEV,
+    view_azim: float = UNIT_CELL_VIEW_AZIM,
 ) -> tuple[str, str, plt.Figure]:
     """Return explorer metrics, viewport header HTML, and unit-cell figure."""
     r_val = residual_from_scales(phi_sq_scale, e_sq_scale, pi_sq_scale)
@@ -1640,8 +1697,8 @@ def stream_unit_cell_deformation(
     alpha: float,
     beta: float,
     deform_pressure: float = 0.35,
-    view_elev: float = 22.0,
-    view_azim: float = 45.0,
+    view_elev: float = UNIT_CELL_VIEW_ELEV,
+    view_azim: float = UNIT_CELL_VIEW_AZIM,
 ):
     """Yield frames sweeping deformation pressure 0 → 1 → hold (animation)."""
     import time
@@ -1793,8 +1850,8 @@ def render_unit_cell_deformation_video(
     alpha: float,
     beta: float,
     deform_pressure: float = 0.35,
-    view_elev: float = 22.0,
-    view_azim: float = 45.0,
+    view_elev: float = UNIT_CELL_VIEW_ELEV,
+    view_azim: float = UNIT_CELL_VIEW_AZIM,
     *,
     fps: int = 12,
     dpi: int = 96,
