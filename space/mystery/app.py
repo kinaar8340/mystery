@@ -2053,6 +2053,23 @@ footer {{ visibility: hidden; }}
     text-decoration: underline !important;
     text-underline-offset: 3px !important;
 }}
+.gradio-container .myst-preset-tui-key-label {{
+    margin: 0.35rem 0 0.2rem 0 !important;
+    font-size: 0.68rem !important;
+    letter-spacing: 0.14em !important;
+    text-transform: uppercase !important;
+    color: #33ff66 !important;
+    font-weight: 700 !important;
+}}
+.gradio-container .myst-preset-tui-key-metrics {{
+    margin: 0 0 0.45rem 0 !important;
+    white-space: pre !important;
+    color: #33ff66 !important;
+    text-shadow: 0 0 6px rgba(51, 255, 102, 0.25) !important;
+    font-family: inherit !important;
+    font-size: inherit !important;
+    line-height: inherit !important;
+}}
 .gradio-container .myst-preset-tui-lines {{
     margin: 0 !important;
     white-space: pre !important;
@@ -2523,16 +2540,24 @@ def _format_gravity_preset_tui_html(
     dials: dict[str, float],
     *,
     status_label: str | None = None,
+    key_metrics: dict[str, float | int | str | None] | None = None,
 ) -> str:
     preset_num = active_slot + 1
     profile = _GRAVITY_PRESET_SLOT_LABELS.get(active_slot)
-    if status_label:
+    if key_metrics:
+        frame_idx = key_metrics.get("frame_idx")
+        total_frames = key_metrics.get("total_frames")
+        if frame_idx is not None and total_frames:
+            status = f"ANIMATE — FRAME {int(frame_idx)}/{int(total_frames)}"
+        else:
+            status = status_label or "ANIMATE"
+    elif status_label:
         status = status_label
     elif profile:
         status = f"PRESET {preset_num} — {profile}"
     else:
         status = f"PRESET {preset_num}"
-    lines = (
+    dial_lines = (
         f"φ² scale                  {dials['phi']:.3f}",
         f"e² scale                  {dials['e']:.3f}",
         f"π² scale                  {dials['pi']:.3f}",
@@ -2544,11 +2569,30 @@ def _format_gravity_preset_tui_html(
         f"view elevation            {dials['elev']:.0f}°",
         f"view azimuth              {dials['azim']:.0f}°",
     )
-    body = "\n".join(lines)
+    dial_body = "\n".join(dial_lines)
+    key_section = ""
+    if key_metrics:
+        km = key_metrics
+        key_body = "\n".join(
+            (
+                f"pressure (live)           {float(km['pressure_pct']):.1f}%",
+                f"R (residual)              {float(km['r']):+.6f}",
+                f"δ_side (contraction)      {float(km['delta_side']):.6f}",
+                f"B(κ) − R                  {float(km['b_minus_r']):+.6f}",
+                f"W_g (350/π gravity)       {float(km['w_g']):.4f}",
+                f"deform mode               {km['deform_hint']}",
+            )
+        )
+        key_section = (
+            '<div class="myst-preset-tui-key-label">Key metrics — live frame</div>'
+            f'<pre class="myst-preset-tui-key-metrics">{key_body}</pre>'
+            '<div class="myst-preset-tui-key-label">Control panel snapshot</div>'
+        )
     return (
         '<div class="myst-preset-tui-serial">'
         f'<div class="myst-preset-tui-status"><u>ACTIVE STATUS: {status}</u></div>'
-        f'<pre class="myst-preset-tui-lines">{body}</pre>'
+        f"{key_section}"
+        f'<pre class="myst-preset-tui-lines">{dial_body}</pre>'
         "</div>"
     )
 
@@ -2745,8 +2789,8 @@ def _gravity_animate_click(
         view_elev,
         view_azim,
     )
-    last_pack: tuple[str, str, object, str] | None = None
-    for metrics, header, fig in stream_unit_cell_deformation(
+    last_pack: tuple[str, str, object, str, dict[str, float | int | str | None]] | None = None
+    for metrics, header, fig, key_metrics in stream_unit_cell_deformation(
         phi_sq_scale,
         e_sq_scale,
         pi_sq_scale,
@@ -2758,12 +2802,13 @@ def _gravity_animate_click(
         view_elev,
         view_azim,
     ):
+        dials["pressure"] = float(key_metrics["pressure"])
         tui = _format_gravity_preset_tui_html(
             int(active_preset),
             dials,
-            status_label="ANIMATE",
+            key_metrics=key_metrics,
         )
-        last_pack = (metrics, header, fig, tui)
+        last_pack = (metrics, header, fig, tui, key_metrics)
         yield _gravity_explorer_outputs(
             "animate",
             dials,
@@ -2774,7 +2819,8 @@ def _gravity_animate_click(
             int(active_preset),
         )
     if last_pack is not None:
-        metrics, header, fig, tui = last_pack
+        metrics, header, fig, tui, key_metrics = last_pack
+        dials["pressure"] = float(key_metrics["pressure"])
         tui = _format_gravity_preset_tui_html(int(active_preset), dials)
         yield _gravity_explorer_outputs(
             str(int(active_preset)),

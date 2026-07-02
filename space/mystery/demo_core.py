@@ -508,15 +508,56 @@ def _deform_pressure_hint(pressure: float) -> str:
     return "full concave bowl + compensatory bottom convex bulge"
 
 
+def deformation_key_metrics(
+    phi_sq_scale: float,
+    e_sq_scale: float,
+    pi_sq_scale: float,
+    kappa: float,
+    delta_z: float,
+    alpha: float,
+    beta: float,
+    pressure: float,
+    *,
+    frame_idx: int | None = None,
+    total_frames: int | None = None,
+) -> dict[str, float | int | str | None]:
+    """Per-frame gravity/residual metrics for animation TUI readout."""
+    p = float(np.clip(pressure, 0.0, 1.0))
+    r_val = residual_from_scales(phi_sq_scale, e_sq_scale, pi_sq_scale)
+    b_k = bound(kappa)
+    d_side = delta_side_contraction(delta_z, r_val, kappa, alpha=alpha, beta=beta)
+    return {
+        "pressure": p,
+        "pressure_pct": p * 100.0,
+        "r": float(r_val),
+        "kappa": float(kappa),
+        "b_k": float(b_k),
+        "b_minus_r": float(b_k - r_val),
+        "delta_z": float(delta_z),
+        "delta_side": float(d_side),
+        "alpha": float(alpha),
+        "beta": float(beta),
+        "w_g": float(W_G_TARGET),
+        "deform_hint": _deform_pressure_hint(p),
+        "frame_idx": frame_idx,
+        "total_frames": total_frames,
+    }
+
+
 def build_unit_cell_viewport_header_html(
     *,
     pressure: float,
     r_val: float | None = None,
+    frame_idx: int | None = None,
+    total_frames: int | None = None,
 ) -> str:
     """Frame-layer header: brand, status, legend, and residual equation bar."""
     p = float(np.clip(pressure, 0.0, 1.0))
     r_show = R if r_val is None else r_val
     hint = _deform_pressure_hint(p)
+    frame_note = ""
+    if frame_idx is not None and total_frames:
+        frame_note = f" · frame {int(frame_idx)}/{int(total_frames)}"
     swatch_alpha = 0.55 + 0.45 * p
     legend_items = (
         (_UNIT_CELL_BLUE, "π bowl (concave)"),
@@ -537,7 +578,7 @@ def build_unit_cell_viewport_header_html(
   <span class="myst-cube-viewport-brand">MYSTERY</span>
   <span class="myst-cube-viewport-title">Unit Cell Viewport</span>
   <span class="myst-cube-viewport-tag">Deformable unit cell · no WebGL</span>
-  <span class="myst-cube-viewport-status">pressure {p * 100:.0f}% · {hint}</span>
+  <span class="myst-cube-viewport-status">pressure {p * 100:.0f}% · {hint}{frame_note}</span>
   <div class="myst-cube-viewport-legend" aria-label="Deformation legend">{legend_html}</div>
   <div class="myst-cube-viewport-equation" aria-label="Residual equation">
     R = φ² + e² − π² ≈ {r_show:+.3f} drives net δ<sub>side</sub> contraction
@@ -1151,8 +1192,13 @@ def stream_unit_cell_deformation(
     frame_idx = 0
     prev_fig: plt.Figure | None = None
 
-    def _yield_frame(metrics_text: str, pressure_val: float) -> tuple[str, str, plt.Figure]:
-        nonlocal prev_fig
+    def _yield_frame(
+        metrics_text: str,
+        pressure_val: float,
+        *,
+        phase: str,
+    ) -> tuple[str, str, plt.Figure, dict[str, float | int | str | None]]:
+        nonlocal prev_fig, frame_idx
         fig = build_unit_cell_figure(
             delta_z=delta_z,
             delta_side=side,
@@ -1168,37 +1214,88 @@ def stream_unit_cell_deformation(
         header = build_unit_cell_viewport_header_html(
             pressure=pressure_val,
             r_val=r_val,
+            frame_idx=frame_idx,
+            total_frames=total_frames,
         )
-        return metrics_text, header, fig
+        key_metrics = deformation_key_metrics(
+            phi_sq_scale,
+            e_sq_scale,
+            pi_sq_scale,
+            kappa,
+            delta_z,
+            alpha,
+            beta,
+            pressure_val,
+            frame_idx=frame_idx,
+            total_frames=total_frames,
+        )
+        key_metrics["phase"] = phase
+        return metrics_text, header, fig, key_metrics
 
     for pressure in eased:
         frame_idx += 1
         p = float(pressure)
+        km = deformation_key_metrics(
+            phi_sq_scale,
+            e_sq_scale,
+            pi_sq_scale,
+            kappa,
+            delta_z,
+            alpha,
+            beta,
+            p,
+            frame_idx=frame_idx,
+            total_frames=total_frames,
+        )
         metrics = (
             f"{base_metrics}\n\n"
-            f"Deformation pressure : {p * 100:.1f}%  "
-            f"▶ animating bow/concave ({frame_idx}/{total_frames})"
+            f"=== LIVE FRAME {frame_idx}/{total_frames} ===\n"
+            f"Deformation pressure : {p * 100:.1f}%\n"
+            f"R (residual)         : {km['r']:+.6f}\n"
+            f"δ_side               : {km['delta_side']:.6f}\n"
+            f"B(κ) − R             : {km['b_minus_r']:+.6f}\n"
+            f"W_g (350/π)          : {km['w_g']:.4f}\n"
+            f"Mode                 : {km['deform_hint']}\n"
+            f"▶ animating bow/concave"
         )
-        yield _yield_frame(metrics, p)
+        yield _yield_frame(metrics, p, phase="sweep")
         time.sleep(0.055)
 
     if hold < 0.995:
         for pressure in np.linspace(1.0, hold, 8):
             frame_idx += 1
             p = float(pressure)
+            km = deformation_key_metrics(
+                phi_sq_scale,
+                e_sq_scale,
+                pi_sq_scale,
+                kappa,
+                delta_z,
+                alpha,
+                beta,
+                p,
+                frame_idx=frame_idx,
+                total_frames=total_frames,
+            )
             metrics = (
                 f"{base_metrics}\n\n"
-                f"Deformation pressure : {p * 100:.1f}%  "
-                f"▶ easing to slider ({frame_idx}/{total_frames})"
+                f"=== LIVE FRAME {frame_idx}/{total_frames} ===\n"
+                f"Deformation pressure : {p * 100:.1f}%\n"
+                f"R (residual)         : {km['r']:+.6f}\n"
+                f"δ_side               : {km['delta_side']:.6f}\n"
+                f"B(κ) − R             : {km['b_minus_r']:+.6f}\n"
+                f"W_g (350/π)          : {km['w_g']:.4f}\n"
+                f"Mode                 : {km['deform_hint']}\n"
+                f"▶ easing to slider"
             )
-            yield _yield_frame(metrics, p)
+            yield _yield_frame(metrics, p, phase="ease")
             time.sleep(0.04)
 
     if prev_fig is not None:
         plt.close(prev_fig)
         prev_fig = None
 
-    yield run_residual_explorer(
+    metrics, header, fig = run_residual_explorer(
         phi_sq_scale,
         e_sq_scale,
         pi_sq_scale,
@@ -1210,6 +1307,20 @@ def stream_unit_cell_deformation(
         view_elev=view_elev,
         view_azim=view_azim,
     )
+    final_km = deformation_key_metrics(
+        phi_sq_scale,
+        e_sq_scale,
+        pi_sq_scale,
+        kappa,
+        delta_z,
+        alpha,
+        beta,
+        hold,
+        frame_idx=total_frames,
+        total_frames=total_frames,
+    )
+    final_km["phase"] = "hold"
+    yield metrics, header, fig, final_km
 
 
 PROBE_SCRIPTS: tuple[tuple[str, str], ...] = (
