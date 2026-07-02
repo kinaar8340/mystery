@@ -37,7 +37,8 @@ from demo_core import (
     get_build_label,
     is_hf_space,
     build_unit_cell_viewport_header_html,
-
+    figure_to_viewport_numpy,
+    unit_cell_error_placeholder_numpy,
     render_unit_cell_deformation_video,
     residual_from_scales,
     run_analysis,
@@ -1001,6 +1002,37 @@ WALLPAPER_HEAD = f"""
     if (document.body) mountWallpaper();
     document.addEventListener('DOMContentLoaded', mountWallpaper);
     window.addEventListener('load', mountWallpaper);
+}})();
+(function() {{
+    function fixUnitCellImageUrls() {{
+        var origin = window.location.origin;
+        var root = document.getElementById('unit-cell-main-view');
+        if (!root) return;
+        root.querySelectorAll('img').forEach(function(img) {{
+            var src = img.getAttribute('src') || '';
+            if (!src || src.indexOf('data:') === 0) return;
+            if (src.indexOf('0.0.0.0') >= 0 || src.indexOf('127.0.0.1') >= 0 || src.indexOf('localhost') >= 0) {{
+                try {{
+                    var u = new URL(src, origin);
+                    img.src = origin + u.pathname + u.search;
+                }} catch (e) {{
+                    var path = src.replace(/^https?:\\/\\/[^/]+/, '');
+                    img.src = origin + (path.charAt(0) === '/' ? path : '/' + path);
+                }}
+            }}
+        }});
+    }}
+    function bootImageFix() {{
+        fixUnitCellImageUrls();
+        if (window.__mystUnitCellImgObs) return;
+        window.__mystUnitCellImgObs = new MutationObserver(fixUnitCellImageUrls);
+        window.__mystUnitCellImgObs.observe(document.body, {{
+            subtree: true, childList: true, attributes: true, attributeFilter: ['src']
+        }});
+    }}
+    if (document.body) bootImageFix();
+    document.addEventListener('DOMContentLoaded', bootImageFix);
+    window.addEventListener('load', bootImageFix);
 }})();
 
 </script>
@@ -4330,7 +4362,7 @@ def _make_gravity_quick_preset_click(slot: int):
             outputs = list(outputs)
             outputs[21] = gr.skip()
         image_out = outputs[21]
-        if image_out is not gr.skip() and not isinstance(image_out, dict):
+        if hasattr(image_out, "get_axes"):
             print(
                 f"[DEBUG] preset_click_unified: Returning Figure to gr.Plot, "
                 f"type={type(image_out).__name__}",
