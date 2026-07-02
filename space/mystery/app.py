@@ -1897,30 +1897,46 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-gravity-page .vqc-plot3d-panel img {{
     background-color: #000000 !important;
 }}
+.gradio-container .myst-gravity-page {{
+    width: 100% !important;
+    max-width: none !important;
+    padding: 0 0.35rem 0.5rem !important;
+}}
 .gradio-container .myst-gravity-split {{
     align-items: stretch !important;
-    gap: 0.85rem !important;
+    gap: 0.75rem !important;
     width: 100% !important;
+    min-height: calc(100vh - 10.5rem) !important;
 }}
 .gradio-container .myst-gravity-split > .column,
 .gradio-container .myst-gravity-split > .block,
 .gradio-container .myst-gravity-split > .form {{
     min-width: 0 !important;
+    height: 100% !important;
 }}
 .gradio-container .myst-gravity-controls-col {{
-    flex: 1 1 22rem !important;
-    max-width: 28rem !important;
+    flex: 0 1 36% !important;
+    max-width: none !important;
+    min-width: 17.5rem !important;
+}}
+.gradio-container .myst-gravity-controls-col .vqc-gravity-panel.vqc-optics-panel {{
+    height: 100% !important;
 }}
 .gradio-container .myst-gravity-visuals-col {{
-    flex: 1 1 24rem !important;
-    max-width: 34rem !important;
-    align-items: center !important;
+    flex: 1 1 64% !important;
+    max-width: none !important;
+    align-items: stretch !important;
+    align-self: stretch !important;
 }}
 .gradio-container .myst-gravity-page .myst-cube-viewport-frame.vqc-optics-panel {{
     width: 100% !important;
-    max-width: 32rem !important;
-    margin: 0 auto !important;
+    max-width: none !important;
+    margin: 0 !important;
     padding: 0 0.75rem 0.85rem !important;
+    height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 1 auto !important;
 }}
 .gradio-container .myst-gravity-page .myst-cube-viewport-header {{
     display: flex !important;
@@ -1958,10 +1974,13 @@ footer {{ visibility: hidden; }}
     width: 100% !important;
     max-width: 100% !important;
     margin: 0 !important;
-    padding: 0.45rem 0.55rem 0.55rem !important;
+    padding: 0.4rem 0.5rem 0.5rem !important;
     background: rgba(0, 0, 0, 0.22) !important;
     border: 1px solid #4a3818 !important;
     border-radius: 10px !important;
+    flex: 1 1 auto !important;
+    display: flex !important;
+    flex-direction: column !important;
 }}
 .gradio-container .myst-gravity-page .myst-cube-viewport-frame .myst-cube-plot-inner .label-wrap span {{
     color: #e8d4a8 !important;
@@ -1971,20 +1990,26 @@ footer {{ visibility: hidden; }}
     font-weight: 700 !important;
 }}
 .gradio-container .myst-gravity-page .myst-cube-viewport-frame .plot-container {{
-    min-height: 280px !important;
-    max-height: 340px !important;
+    flex: 1 1 auto !important;
+    width: 100% !important;
+    min-height: clamp(22rem, 54vh, 38rem) !important;
+    max-height: none !important;
     border: 2px inset #5c4a1f !important;
     border-radius: 8px !important;
     background-color: #000000 !important;
-    padding: 0.25rem !important;
+    padding: 0.2rem !important;
     box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.75) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
 }}
 .gradio-container .myst-gravity-page .myst-cube-viewport-frame .plot-container img,
 .gradio-container .myst-gravity-page .myst-cube-viewport-frame .plot-container canvas {{
-    max-height: 320px !important;
-    width: auto !important;
+    width: 100% !important;
+    height: auto !important;
     max-width: 100% !important;
-    margin: 0 auto !important;
+    max-height: none !important;
+    margin: 0 !important;
     display: block !important;
     object-fit: contain !important;
 }}
@@ -2074,9 +2099,11 @@ footer {{ visibility: hidden; }}
     .gradio-container .myst-gravity-page .myst-cube-viewport-frame {{
         max-width: 100% !important;
     }}
+    .gradio-container .myst-gravity-split {{
+        min-height: auto !important;
+    }}
     .gradio-container .myst-gravity-page .myst-cube-viewport-frame .plot-container {{
-        min-height: 240px !important;
-        max-height: 300px !important;
+        min-height: clamp(16rem, 42vh, 24rem) !important;
     }}
 }}
 """
@@ -2486,10 +2513,10 @@ def build_app() -> gr.Blocks:
                     scale=0,
                     variant="secondary",
                 )
-            with gr.Row(elem_classes=["myst-gravity-split"], equal_height=False):
+            with gr.Row(elem_classes=["myst-gravity-split"], equal_height=True):
                 with gr.Column(
-                    scale=2,
-                    min_width=300,
+                    scale=5,
+                    min_width=280,
                     elem_classes=["myst-gravity-controls-col"],
                 ):
                     with gr.Group(elem_classes=["vqc-optics-panel", "vqc-gravity-panel"]):
@@ -2634,7 +2661,7 @@ def build_app() -> gr.Blocks:
                             value=_init_re_metrics,
                         )
                 with gr.Column(
-                    scale=3,
+                    scale=8,
                     elem_classes=["myst-gravity-visuals-col"],
                 ):
                     with gr.Group(
