@@ -995,6 +995,14 @@ def _fit_on_black_canvas(pil_img, *, size: int = UNIT_CELL_VIEWPORT_PX) -> "obje
     return canvas
 
 
+def _viewport_nonblack_count(image) -> int:
+    """Count non-black pixels — 0 signals headless matplotlib failed to draw."""
+    arr = np.asarray(image)
+    if arr.ndim != 3 or arr.shape[2] < 3:
+        return 0
+    return int(np.any(arr[:, :, :3] != 0, axis=-1).sum())
+
+
 def _save_figure_opaque_png(fig: plt.Figure, buf: io.BytesIO, *, dpi: int) -> None:
     """Save full figure as opaque black PNG (no tight-crop transparency)."""
     fig.savefig(
@@ -1059,7 +1067,11 @@ def figure_to_viewport_numpy(fig: plt.Figure, *, dpi: int = 100) -> np.ndarray:
 
         pil_img = _fit_on_black_canvas(PILImage.open(buf))
         arr = np.asarray(pil_img, dtype=np.uint8)
-        print(f"[DEBUG] figure_to_viewport_numpy: shape={arr.shape}", flush=True)
+        nonblack = _viewport_nonblack_count(arr)
+        print(
+            f"[DEBUG] figure_to_viewport_numpy: shape={arr.shape} nonblack={nonblack}",
+            flush=True,
+        )
         return arr
     except Exception as exc:
         print(f"[ERROR] figure_to_viewport_numpy failed: {exc}", flush=True)
@@ -1100,7 +1112,11 @@ def figure_to_viewport_pil(fig: plt.Figure, *, dpi: int = 100):
         _save_figure_opaque_png(fig, buf, dpi=dpi)
         buf.seek(0)
         pil_img = _fit_on_black_canvas(PILImage.open(buf))
-        print(f"[DEBUG] figure_to_viewport_pil: size={pil_img.size}", flush=True)
+        nonblack = _viewport_nonblack_count(pil_img)
+        print(
+            f"[DEBUG] figure_to_viewport_pil: size={pil_img.size} nonblack={nonblack}",
+            flush=True,
+        )
         return pil_img
     except Exception as exc:
         print(f"[ERROR] figure_to_viewport_pil failed: {exc}", flush=True)

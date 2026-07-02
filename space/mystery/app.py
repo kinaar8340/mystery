@@ -37,8 +37,8 @@ from demo_core import (
     get_build_label,
     is_hf_space,
     build_unit_cell_viewport_header_html,
-    figure_to_viewport_gradio_pil,
-    unit_cell_error_placeholder_pil,
+    figure_to_viewport_numpy,
+    unit_cell_error_placeholder_numpy,
     render_unit_cell_deformation_video,
     residual_from_scales,
     run_analysis,
@@ -1004,44 +1004,43 @@ WALLPAPER_HEAD = f"""
     window.addEventListener('load', mountWallpaper);
 }})();
 (function() {{
-    function shieldUnitCellViewport() {{
+    function fixUnitCellImageUrls() {{
+        var origin = window.location.origin;
+        var gradioRoot = (window.gradio_config && window.gradio_config.root) || '';
         var root = document.getElementById('unit-cell-main-view');
         if (!root) return;
-        root.style.backgroundColor = '#000000';
-        root.style.backgroundImage = 'none';
-        root.style.position = 'relative';
-        root.style.isolation = 'isolate';
-        var plate = root.querySelector('.myst-viewport-opaque-plate');
-        if (!plate) {{
-            plate = document.createElement('div');
-            plate.className = 'myst-viewport-opaque-plate';
-            plate.setAttribute('aria-hidden', 'true');
-            plate.style.cssText = 'position:absolute;inset:0;background:#000;z-index:0;pointer-events:none;';
-            root.insertBefore(plate, root.firstChild);
-        }}
         root.querySelectorAll('img').forEach(function(img) {{
-            img.style.backgroundColor = '#000000';
-            img.style.mixBlendMode = 'normal';
-            img.style.position = 'relative';
-            img.style.zIndex = '1';
             var src = img.getAttribute('src') || '';
-            if (!src || src.indexOf('data:') === 0) return;
-            var origin = window.location.origin;
-            if (src.indexOf('0.0.0.0') >= 0 || src.indexOf('127.0.0.1') >= 0 || src.indexOf('localhost') >= 0) {{
-                try {{
-                    var u = new URL(src, origin);
-                    img.src = origin + u.pathname + u.search;
-                }} catch (e) {{
-                    var path = src.replace(/^https?:\\/\\/[^/]+/, '');
-                    img.src = origin + (path.charAt(0) === '/' ? path : '/' + path);
+            if (!src || src.indexOf('data:') === 0 || src.indexOf('blob:') === 0) return;
+            var needsFix = (
+                src.indexOf('0.0.0.0') >= 0 ||
+                src.indexOf('127.0.0.1') >= 0 ||
+                src.indexOf('localhost') >= 0
+            );
+            if (!needsFix && gradioRoot && src.charAt(0) === '/' && src.indexOf(gradioRoot) !== 0) {{
+                needsFix = src.indexOf('/file') === 0 || src.indexOf('/gradio_api/file') === 0;
+            }}
+            if (!needsFix) return;
+            try {{
+                var u = new URL(src, origin);
+                var path = u.pathname + u.search;
+                if (gradioRoot && path.indexOf(gradioRoot) !== 0) {{
+                    path = gradioRoot.replace(/\\/$/, '') + path;
                 }}
+                img.src = origin + path;
+            }} catch (e) {{
+                var path = src.replace(/^https?:\\/\\/[^/]+/, '');
+                if (gradioRoot && path.indexOf(gradioRoot) !== 0) {{
+                    path = gradioRoot.replace(/\\/$/, '') + (path.charAt(0) === '/' ? path : '/' + path);
+                }}
+                img.src = origin + (path.charAt(0) === '/' ? path : '/' + path);
             }}
         }});
     }}
     function bootImageFix() {{
-        shieldUnitCellViewport();
+        fixUnitCellImageUrls();
         if (window.__mystUnitCellImgObs) return;
-        window.__mystUnitCellImgObs = new MutationObserver(shieldUnitCellViewport);
+        window.__mystUnitCellImgObs = new MutationObserver(fixUnitCellImageUrls);
         window.__mystUnitCellImgObs.observe(document.body, {{
             subtree: true, childList: true, attributes: true, attributeFilter: ['src']
         }});
@@ -3421,7 +3420,7 @@ footer {{ visibility: hidden; }}
     font-size: 0.94rem !important;
     line-height: 1.5 !important;
 }}
-/* === UNIT CELL VIEWPORT — gr.Image PNG via /file/ (Brave-safe, 100% zoom) === */
+/* === UNIT CELL VIEWPORT — gr.Image numpy (websocket RGB, Brave-safe, 100% zoom) === */
 .gradio-container .myst-gravity-image-viewport,
 .gradio-container .myst-gravity-image-viewport.myst-gravity-right-panel,
 .gradio-container .myst-gravity-image-viewport.myst-gravity-right-stack {{
@@ -3434,15 +3433,6 @@ footer {{ visibility: hidden; }}
     background-color: #000000 !important;
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
-}}
-.gradio-container #unit-cell-main-view::before {{
-    content: "" !important;
-    display: block !important;
-    position: absolute !important;
-    inset: 0 !important;
-    background: #000000 !important;
-    z-index: 0 !important;
-    pointer-events: none !important;
 }}
 .gradio-container .myst-gravity-image-viewport > .block:has(#unit-cell-main-view),
 .gradio-container .myst-gravity-image-viewport > .form:has(#unit-cell-main-view),
@@ -3488,21 +3478,20 @@ footer {{ visibility: hidden; }}
 }}
 .gradio-container #unit-cell-main-view img {{
     width: 100% !important;
+    min-width: 280px !important;
     height: 550px !important;
     min-height: 550px !important;
     max-height: 550px !important;
-    object-fit: fill !important;
+    object-fit: contain !important;
     object-position: center center !important;
     display: block !important;
     background: #000000 !important;
     background-color: #000000 !important;
     opacity: 1 !important;
     visibility: visible !important;
-    position: relative !important;
-    z-index: 1 !important;
 }}
-.gradio-container #unit-cell-main-view .empty,
-.gradio-container #unit-cell-main-view .icon-wrap {{
+.gradio-container #unit-cell-main-view .gr-image:has(img[src]:not([src=""])) .empty,
+.gradio-container #unit-cell-main-view .gr-image:has(img[src]:not([src=""])) .icon-wrap {{
     display: none !important;
 }}
 /* Lower animation video — #unit-cell-animation */
@@ -4000,16 +3989,16 @@ def _gravity_tui_for_preset(
 
 
 def _gravity_static_image_update(fig: object) -> object:
-    """Opaque PIL for gr.Image(type='pil') — websocket inline, HF-served /file/ URL."""
+    """Opaque RGB numpy on 550×550 black canvas for gr.Image(type='numpy')."""
     if fig is gr.skip():
         print("[DEBUG] _gravity_static_image_update: gr.skip()", flush=True)
         return gr.skip()
-    pil_img = figure_to_viewport_gradio_pil(fig, dpi=_UNIT_CELL_IMAGE_DPI)
+    arr = figure_to_viewport_numpy(fig, dpi=_UNIT_CELL_IMAGE_DPI)
     print(
-        f"[DEBUG] _gravity_static_image_update: returning PIL size={pil_img.size}",
+        f"[DEBUG] _gravity_static_image_update: returning numpy shape={arr.shape}",
         flush=True,
     )
-    return pil_img
+    return arr
 
 
 def _gravity_clear_video_update() -> dict:
@@ -4407,9 +4396,14 @@ def _make_gravity_quick_preset_click(slot: int):
         )
         if fig is None:
             outputs = list(outputs)
-            outputs[21] = unit_cell_error_placeholder_pil()
+            outputs[21] = unit_cell_error_placeholder_numpy()
         image_out = outputs[21]
-        if hasattr(image_out, "size"):
+        if hasattr(image_out, "shape"):
+            print(
+                f"[DEBUG] preset_click_unified: Returning numpy shape={image_out.shape}",
+                flush=True,
+            )
+        elif hasattr(image_out, "size"):
             print(
                 f"[DEBUG] preset_click_unified: Returning PIL size={image_out.size}",
                 flush=True,
@@ -4740,12 +4734,12 @@ def build_app() -> gr.Blocks:
         _init_re_metrics, _init_unit_cell_header, _init_unit_cell_fig = run_residual_explorer(
             1.0, 1.0, 1.0, KAPPA_DOC, 0.1, 1.0, 1.0, 0.35, 22.0, 45.0
         )
-        _init_unit_cell_pil = figure_to_viewport_gradio_pil(
+        _init_unit_cell_numpy = figure_to_viewport_numpy(
             _init_unit_cell_fig,
             dpi=_UNIT_CELL_IMAGE_DPI,
         )
         print(
-            f"[DEBUG] init unit cell PIL size={_init_unit_cell_pil.size}",
+            f"[DEBUG] init unit cell numpy shape={_init_unit_cell_numpy.shape}",
             flush=True,
         )
         _init_preset_tui = _format_gravity_menu_tui_html()
@@ -5053,14 +5047,14 @@ def build_app() -> gr.Blocks:
                         elem_classes=["myst-cube-viewport-header-slot"],
                     )
                     unit_cell_image = gr.Image(
-                        value=_init_unit_cell_pil,
+                        value=_init_unit_cell_numpy,
                         label=None,
                         show_label=False,
-                        type="pil",
-                        format="jpeg",
+                        type="numpy",
+                        image_mode="RGB",
                         interactive=False,
                         height=550,
-                        container=False,
+                        width=550,
                         show_download_button=False,
                         show_share_button=False,
                         show_fullscreen_button=False,
@@ -5216,7 +5210,7 @@ def build_app() -> gr.Blocks:
         claims_minimize_btn.click(_minimize_claims, outputs=claims_outputs[:3])
         demo.load(_stream_term_boot, outputs=term_keypad_outputs)
         demo.load(
-            lambda: _init_unit_cell_pil,
+            lambda: _init_unit_cell_numpy,
             outputs=[unit_cell_image],
             show_progress=False,
         )
