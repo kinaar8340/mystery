@@ -1007,8 +1007,8 @@ HFB_CSS = f"""
 :root, :root .dark {{
     --myst-control-bar-height: 1.54rem;
     --myst-button-height: 26px;
-    --myst-viewport-min-height: 18rem;
-    --myst-viewport-plot-height: 700px;
+    --myst-viewport-min-height: max(800px, calc(100dvh - 9rem));
+    --myst-viewport-plot-height: max(800px, calc(100dvh - 9rem));
     --myst-viewport-aspect: 7 / 5;
     --body-background-fill: transparent !important;
     --background-fill-primary: transparent !important;
@@ -3358,14 +3358,22 @@ footer {{ visibility: hidden; }}
     font-size: 0.94rem !important;
     line-height: 1.5 !important;
 }}
-/* === KNOWN-GOOD FULL VIEWPORT (matplotlib gr.Plot — last wins, not Plotly) === */
+/* === SINGLE FULL VIEWPORT (matplotlib gr.Plot — edge-to-edge, not Plotly) === */
+.gradio-container .myst-gravity-visuals-col,
+.gradio-container .myst-gravity-split > .column.myst-gravity-visuals-col {{
+    height: 100% !important;
+    min-height: max(800px, calc(100dvh - 9rem)) !important;
+    flex: 1 1 0 !important;
+}}
 .gradio-container .myst-gravity-viewport-full.myst-gravity-cube-panel.myst-gravity-panel-window.vqc-optics-panel {{
     display: grid !important;
-    grid-template-rows: auto minmax(var(--myst-viewport-min-height, 18rem), 1fr) !important;
+    grid-template-rows: auto minmax(max(800px, calc(100dvh - 9rem)), 1fr) !important;
     grid-template-columns: minmax(0, 1fr) !important;
+    width: 100% !important;
     height: 100% !important;
-    min-height: var(--myst-viewport-min-height, calc(100dvh - 11rem)) !important;
-    padding: 4px 6px !important;
+    min-height: max(800px, calc(100dvh - 9rem)) !important;
+    margin: 0 !important;
+    padding: 6px 8px !important;
     overflow: hidden !important;
 }}
 .gradio-container .myst-gravity-viewport-full > .block:has(.myst-cube-viewport-header-fixed),
@@ -3374,18 +3382,19 @@ footer {{ visibility: hidden; }}
     flex: 0 0 auto !important;
     max-height: 4.25rem !important;
     overflow: hidden !important;
-    margin: 0 0 4px 0 !important;
+    margin: 0 0 6px 0 !important;
     padding: 0 !important;
 }}
 .gradio-container .myst-gravity-viewport-full > .block:has(.myst-cube-viewport-media),
 .gradio-container .myst-gravity-viewport-full > .block:has(.myst-cube-viewport-media-slot),
 .gradio-container .myst-gravity-viewport-full > .column.myst-cube-viewport-media,
-.gradio-container .myst-gravity-viewport-full > .column.myst-cube-viewport-media-slot {{
+.gradio-container .myst-gravity-viewport-full > .column.myst-cube-viewport-media-slot,
+.gradio-container .column:has(#unit-cell-viewport) {{
     grid-row: 2 !important;
     flex: 1 1 0 !important;
     width: 100% !important;
-    min-height: var(--myst-viewport-min-height, 18rem) !important;
     height: 100% !important;
+    min-height: max(800px, calc(100dvh - 9rem)) !important;
     max-height: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
@@ -3398,15 +3407,9 @@ footer {{ visibility: hidden; }}
     position: relative !important;
     flex: 1 1 0 !important;
     width: 100% !important;
-    min-height: var(--myst-viewport-min-height, 18rem) !important;
     height: 100% !important;
+    min-height: max(800px, calc(100dvh - 9rem)) !important;
     overflow: hidden !important;
-}}
-.gradio-container .column:has(#unit-cell-viewport) {{
-    height: 100% !important;
-    min-height: var(--myst-viewport-min-height, 18rem) !important;
-    padding: 4px 6px !important;
-    flex: 1 1 0 !important;
 }}
 .gradio-container #unit-cell-viewport,
 .gradio-container #unit-cell-viewport.block,
@@ -3417,7 +3420,7 @@ footer {{ visibility: hidden; }}
     inset: 0 !important;
     width: 100% !important;
     height: 100% !important;
-    min-height: var(--myst-viewport-min-height, 18rem) !important;
+    min-height: max(800px, calc(100dvh - 9rem)) !important;
     max-height: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
@@ -3428,23 +3431,22 @@ footer {{ visibility: hidden; }}
     visibility: visible !important;
     opacity: 1 !important;
     background: #000000 !important;
-}}
-.gradio-container #unit-cell-viewport {{
-    min-height: var(--myst-viewport-plot-height, 700px) !important;
+    border: none !important;
+    border-radius: 0 !important;
 }}
 .gradio-container #unit-cell-viewport .wrap,
 .gradio-container #unit-cell-viewport .plot-container,
-.gradio-container #unit-cell-viewport > div,
+.gradio-container #unit-cell-viewport .form,
 .gradio-container .myst-gravity-viewport-full .myst-cube-viewport-media .myst-cube-plot-inner .plot-container {{
     display: block !important;
     width: 100% !important;
     height: 100% !important;
-    min-height: var(--myst-viewport-min-height, 18rem) !important;
-    max-height: none !important;
+    min-height: max(800px, calc(100dvh - 9rem)) !important;
+    max-height: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
     flex: none !important;
-    overflow: visible !important;
+    overflow: hidden !important;
     box-sizing: border-box !important;
     background-color: #000000 !important;
 }}
@@ -3452,10 +3454,12 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-gravity-viewport-full .myst-cube-viewport-media .myst-cube-plot-inner .plot-container img {{
     display: block !important;
     width: 100% !important;
-    height: auto !important;
-    min-height: var(--myst-viewport-min-height, 18rem) !important;
+    height: 100% !important;
+    min-height: max(800px, calc(100dvh - 9rem)) !important;
     max-width: 100% !important;
-    max-height: none !important;
+    max-height: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
     flex: none !important;
     object-fit: contain !important;
     object-position: center center !important;
