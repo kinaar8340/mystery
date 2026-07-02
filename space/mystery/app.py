@@ -37,6 +37,7 @@ from demo_core import (
     is_hf_space,
     run_analysis,
     run_residual_explorer,
+    stream_unit_cell_deformation,
     terminal_directory_help,
     terminal_figures_index,
     terminal_keypad_map,
@@ -2221,7 +2222,7 @@ def build_app() -> gr.Blocks:
             gr.Markdown(_figures_links_md())
 
         _init_re_metrics, _init_unit_cell = run_residual_explorer(
-            1.0, 1.0, 1.0, KAPPA_DOC, 0.1, 1.0, 1.0
+            1.0, 1.0, 1.0, KAPPA_DOC, 0.1, 1.0, 1.0, 0.35
         )
 
         with gr.Column(visible=True, elem_classes=["myst-gravity-page"]) as page_gravity:
@@ -2255,7 +2256,7 @@ def build_app() -> gr.Blocks:
             )
             gr.Markdown(PHYSICAL_INTERPRETATION_INTRO_MD)
             unit_cell_plot = gr.Plot(
-                label="Unit cell schematic (server-rendered — works without WebGL)",
+                label="Deformable unit cell — drag sliders or animate (no WebGL required)",
                 value=_init_unit_cell,
                 elem_classes=["vqc-plot3d-panel"],
             )
@@ -2263,8 +2264,20 @@ def build_app() -> gr.Blocks:
             gr.Markdown("### Residual explorer")
             gr.Markdown(
                 "Tweak φ², e², and π² scale factors to see how **R**, **B(κ)**, and **δ_side** respond. "
-                "Defaults recover the canonical φ, e, π values at scale 1.0."
+                "Use **deformation pressure** to bow the π-face and curve the φ/e sides; press **Animate deformation** for a full 0→100% sweep."
             )
+            with gr.Row():
+                re_pressure = gr.Slider(
+                    0.0,
+                    1.0,
+                    value=0.35,
+                    step=0.01,
+                    label="Deformation pressure (0 = rigid, 1 = full bend)",
+                )
+                animate_deform_btn = gr.Button(
+                    "Animate deformation",
+                    variant="primary",
+                )
             with gr.Row():
                 re_phi_scale = gr.Slider(
                     0.90, 1.10, value=1.0, step=0.001, label="φ² scale",
@@ -2294,11 +2307,16 @@ def build_app() -> gr.Blocks:
             )
             re_inputs = [
                 re_phi_scale, re_e_scale, re_pi_scale,
-                re_kappa, re_delta_z, re_alpha, re_beta,
+                re_kappa, re_delta_z, re_alpha, re_beta, re_pressure,
             ]
             re_outputs = [re_metrics, unit_cell_plot]
             for slider in re_inputs:
                 slider.change(run_residual_explorer, inputs=re_inputs, outputs=re_outputs)
+            animate_deform_btn.click(
+                stream_unit_cell_deformation,
+                inputs=re_inputs,
+                outputs=re_outputs,
+            )
             gr.Markdown("### Probe hooks")
             gr.Markdown(PROBE_HOOKS_TABLE_MD)
             for title, script_url, snippet in PROBE_SNIPPETS:

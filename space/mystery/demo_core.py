@@ -108,7 +108,7 @@ emergent gravity at larger scales.
 **Legend:** \\(T_\\phi, T_e, T_\\pi\\) = quadratic flux/tension · \\(\\delta_z\\) = primary π-face push ·
 \\(\\delta_\\text{side}\\) = compensatory contraction · \\(R = \\phi^2+e^2-\\pi^2\\) imbalance.
 
-The **unit cell schematic** below is server-rendered (no browser WebGL required) and updates when you move the Residual explorer sliders.
+The **deformable unit cell** below is server-rendered (no browser WebGL required). Use **deformation pressure** or **Animate deformation** to watch the π-face bow inward and the φ/e faces curve concave under rising δ_z / δ_side.
 """
 
 PHYSICAL_INTERPRETATION_MATH_MD = f"""
@@ -494,6 +494,151 @@ _UNIT_CELL_GREEN = "#22c55e"
 _UNIT_CELL_BLUE = "#2563eb"
 
 
+def _lerp3(
+    a: tuple[float, float, float],
+    b: tuple[float, float, float],
+    t: float,
+) -> tuple[float, float, float]:
+    return (
+        a[0] + t * (b[0] - a[0]),
+        a[1] + t * (b[1] - a[1]),
+        a[2] + t * (b[2] - a[2]),
+    )
+
+
+def _bilinear_face(
+    p00: tuple[float, float, float],
+    p10: tuple[float, float, float],
+    p11: tuple[float, float, float],
+    p01: tuple[float, float, float],
+    u: float,
+    v: float,
+) -> tuple[float, float, float]:
+    p0 = _lerp3(p00, p10, u)
+    p1 = _lerp3(p01, p11, u)
+    return _lerp3(p0, p1, v)
+
+
+def _displace_vertex(
+    x: float,
+    y: float,
+    z: float,
+    s: float,
+    pressure: float,
+    delta_z: float,
+    delta_side: float,
+) -> tuple[float, float, float]:
+    """π-face bowl (push), φ/e side concavity, slight bottom convex — scaled by pressure."""
+    if pressure <= 0.0:
+        return x, y, z
+
+    xn, yn, zn = x / s, y / s, z / s
+    bowl = max(0.0, 1.0 - xn**2) * max(0.0, 1.0 - yn**2)
+    equator = max(0.15, 1.0 - 0.55 * zn**2)
+
+    # π-face: center bows down (concave from above / convex downward)
+    top_w = max(0.0, zn) ** 1.6
+    z -= pressure * delta_z * 4.2 * top_w * bowl
+
+    # φ / e faces: concave inward along ±x and ±y
+    x_edge = min(1.0, abs(xn) ** 1.35)
+    y_edge = min(1.0, abs(yn) ** 1.35)
+    if abs(x) > 1e-9:
+        x -= np.sign(x) * pressure * delta_side * 3.0 * x_edge * equator * (1.0 - 0.3 * bowl)
+    if abs(y) > 1e-9:
+        y -= np.sign(y) * pressure * delta_side * 3.0 * y_edge * equator * (1.0 - 0.3 * bowl)
+
+    # Bottom face: mild compensatory convex bulge (anticlastic)
+    bottom_w = max(0.0, -zn) ** 1.6
+    z += pressure * delta_z * 0.55 * bottom_w * bowl
+
+    return float(x), float(y), float(z)
+
+
+def _cube_face_quads(s: float) -> tuple[tuple[tuple[float, float, float], ...], ...]:
+    return (
+        ((-s, -s, s), (s, -s, s), (s, s, s), (-s, s, s)),  # π top
+        ((-s, -s, -s), (s, -s, -s), (s, s, -s), (-s, s, -s)),  # bottom
+        ((-s, -s, -s), (s, -s, -s), (s, -s, s), (-s, -s, s)),  # front −y
+        ((-s, s, -s), (s, s, -s), (s, s, s), (-s, s, s)),  # back +y
+        ((-s, -s, -s), (-s, s, -s), (-s, s, s), (-s, -s, s)),  # left −x φ
+        ((s, -s, -s), (s, s, -s), (s, s, s), (s, -s, s)),  # right +x e
+    )
+
+
+def _deformed_cube_triangles(
+    s: float,
+    pressure: float,
+    delta_z: float,
+    delta_side: float,
+    *,
+    subdiv: int = 8,
+) -> list[list[tuple[float, float, float]]]:
+    """Subdivided surface triangles for a pressure-deformed unit cell."""
+    triangles: list[list[tuple[float, float, float]]] = []
+    for p00, p10, p11, p01 in _cube_face_quads(s):
+        for i in range(subdiv):
+            u0, u1 = i / subdiv, (i + 1) / subdiv
+            for j in range(subdiv):
+                v0, v1 = j / subdiv, (j + 1) / subdiv
+                corners = (
+                    _bilinear_face(p00, p10, p11, p01, u0, v0),
+                    _bilinear_face(p00, p10, p11, p01, u1, v0),
+                    _bilinear_face(p00, p10, p11, p01, u1, v1),
+                    _bilinear_face(p00, p10, p11, p01, u0, v1),
+                )
+                displaced = [
+                    _displace_vertex(*corner, s, pressure, delta_z, delta_side)
+                    for corner in corners
+                ]
+                a, b, c, d = displaced
+                triangles.append([a, b, c])
+                triangles.append([a, c, d])
+    return triangles
+
+
+def _deformed_cube_edge_polylines(
+    s: float,
+    pressure: float,
+    delta_z: float,
+    delta_side: float,
+    *,
+    samples: int = 18,
+) -> list[list[tuple[float, float, float]]]:
+    edges = (
+        ((-s, -s, -s), (s, -s, -s)),
+        ((s, -s, -s), (s, s, -s)),
+        ((s, s, -s), (-s, s, -s)),
+        ((-s, s, -s), (-s, -s, -s)),
+        ((-s, -s, s), (s, -s, s)),
+        ((s, -s, s), (s, s, s)),
+        ((s, s, s), (-s, s, s)),
+        ((-s, s, s), (-s, -s, s)),
+        ((-s, -s, -s), (-s, -s, s)),
+        ((s, -s, -s), (s, -s, s)),
+        ((s, s, -s), (s, s, s)),
+        ((-s, s, -s), (-s, s, s)),
+    )
+    polylines: list[list[tuple[float, float, float]]] = []
+    for p0, p1 in edges:
+        pts = []
+        for t in np.linspace(0.0, 1.0, samples):
+            raw = _lerp3(p0, p1, float(t))
+            pts.append(_displace_vertex(*raw, s, pressure, delta_z, delta_side))
+        polylines.append(pts)
+    return polylines
+
+
+def _anchor_point(
+    raw: tuple[float, float, float],
+    s: float,
+    pressure: float,
+    delta_z: float,
+    delta_side: float,
+) -> tuple[float, float, float]:
+    return _displace_vertex(*raw, s, pressure, delta_z, delta_side)
+
+
 def _draw_leader_label(
     ax,
     anchor: tuple[float, float, float],
@@ -534,13 +679,15 @@ def build_unit_cell_figure(
     delta_side: float = 0.08,
     *,
     r_val: float | None = None,
+    pressure: float = 1.0,
 ) -> plt.Figure:
-    """Server-rendered 3D unit cell (no client WebGL) — cube, tensions, δ_z / δ_side arrows."""
+    """Server-rendered deformable unit cell — bowing π-face, concave φ/e sides."""
     from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
     s = 1.0
     r_show = R if r_val is None else r_val
     side = abs(delta_side)
+    p = float(np.clip(pressure, 0.0, 1.0))
     matrix_green = _UNIT_CELL_MATRIX_GREEN
     eq_red = _UNIT_CELL_RED
     eq_green = _UNIT_CELL_GREEN
@@ -558,56 +705,71 @@ def build_unit_cell_figure(
     fig = plt.figure(figsize=(8, 6.5), dpi=120, facecolor=bg)
     ax = fig.add_subplot(111, projection="3d", facecolor=bg)
 
-    faces = [
-        [[-s, -s, -s], [s, -s, -s], [s, s, -s], [-s, s, -s]],
-        [[-s, -s, s], [s, -s, s], [s, s, s], [-s, s, s]],
-        [[-s, -s, -s], [s, -s, -s], [s, -s, s], [-s, -s, s]],
-        [[-s, s, -s], [s, s, -s], [s, s, s], [-s, s, s]],
-        [[-s, -s, -s], [-s, s, -s], [-s, s, s], [-s, -s, s]],
-        [[s, -s, -s], [s, s, -s], [s, s, s], [s, -s, s]],
-    ]
+    triangles = _deformed_cube_triangles(s, p, delta_z, side)
     ax.add_collection3d(
         Poly3DCollection(
-            faces,
+            triangles,
             facecolors=eq_blue,
-            edgecolors=matrix_green,
-            linewidths=2.0,
+            edgecolors=(0, 0, 0, 0),
+            linewidths=0.0,
             alpha=0.1,
         )
     )
-    cube_edges = (
-        ((-s, -s, -s), (s, -s, -s)),
-        ((s, -s, -s), (s, s, -s)),
-        ((s, s, -s), (-s, s, -s)),
-        ((-s, s, -s), (-s, -s, -s)),
-        ((-s, -s, s), (s, -s, s)),
-        ((s, -s, s), (s, s, s)),
-        ((s, s, s), (-s, s, s)),
-        ((-s, s, s), (-s, -s, s)),
-        ((-s, -s, -s), (-s, -s, s)),
-        ((s, -s, -s), (s, -s, s)),
-        ((s, s, -s), (s, s, s)),
-        ((-s, s, -s), (-s, s, s)),
-    )
-    for (x0, y0, z0), (x1, y1, z1) in cube_edges:
+    for edge_pts in _deformed_cube_edge_polylines(s, p, delta_z, side):
+        xs, ys, zs = zip(*edge_pts)
         ax.plot(
-            [x0, x1],
-            [y0, y1],
-            [z0, z1],
+            xs,
+            ys,
+            zs,
             color=matrix_green,
             linewidth=2.2,
             solid_capstyle="round",
+            alpha=1.0,
             zorder=5,
         )
 
+    arrow_scale = max(0.15, p)
     arrow_kw = dict(arrow_length_ratio=0.28, linewidth=2.2, alpha=1.0)
-    ax.quiver(0, 0, s + 0.1, 0, 0, -delta_z * 2.0, color=eq_blue, **arrow_kw)
-    ax.quiver(-s - 0.1, 0, 0, side * 2.0, 0, 0, color=eq_red, **arrow_kw)
-    ax.quiver(s + 0.1, 0, 0, -side * 2.0, 0, 0, color=eq_green, **arrow_kw)
+    top_anchor = _anchor_point((0.0, 0.0, s), s, p, delta_z, side)
+    ax.quiver(
+        top_anchor[0],
+        top_anchor[1],
+        top_anchor[2] + 0.12,
+        0,
+        0,
+        -delta_z * 2.0 * arrow_scale,
+        color=eq_blue,
+        **arrow_kw,
+    )
+    phi_anchor = _anchor_point((-s, 0.0, 0.0), s, p, delta_z, side)
+    ax.quiver(
+        phi_anchor[0] - 0.12,
+        phi_anchor[1],
+        phi_anchor[2],
+        side * 2.0 * arrow_scale,
+        0,
+        0,
+        color=eq_red,
+        **arrow_kw,
+    )
+    e_anchor = _anchor_point((s, 0.0, 0.0), s, p, delta_z, side)
+    ax.quiver(
+        e_anchor[0] + 0.12,
+        e_anchor[1],
+        e_anchor[2],
+        -side * 2.0 * arrow_scale,
+        0,
+        0,
+        color=eq_green,
+        **arrow_kw,
+    )
 
+    phi_face = _anchor_point((s, 0.0, 0.0), s, p, delta_z, side)
+    e_face = _anchor_point((0.0, s, 0.0), s, p, delta_z, side)
+    pi_face = _anchor_point((0.0, 0.0, s), s, p, delta_z, side)
     _draw_leader_label(
         ax,
-        (s, 0.0, 0.0),
+        phi_face,
         (2.35, 0.45, 0.25),
         r"$T_\phi \propto \phi^2$",
         eq_red,
@@ -615,7 +777,7 @@ def build_unit_cell_figure(
     )
     _draw_leader_label(
         ax,
-        (0.0, s, 0.0),
+        e_face,
         (0.45, 2.35, 0.25),
         r"$T_e \propto e^2$",
         eq_green,
@@ -623,7 +785,7 @@ def build_unit_cell_figure(
     )
     _draw_leader_label(
         ax,
-        (0.0, 0.0, s),
+        pi_face,
         (0.45, 0.25, 2.35),
         r"$T_\pi \propto \pi^2$",
         eq_blue,
@@ -631,7 +793,7 @@ def build_unit_cell_figure(
     )
     _draw_leader_label(
         ax,
-        (-s, 0.0, 0.0),
+        _anchor_point((-s, 0.0, 0.0), s, p, delta_z, side),
         (-2.35, -0.55, 0.35),
         r"$\delta_\mathrm{side}$ (inward)",
         eq_green,
@@ -639,7 +801,7 @@ def build_unit_cell_figure(
     )
     _draw_leader_label(
         ax,
-        (0.0, 0.0, s),
+        pi_face,
         (-0.55, -2.25, 2.35),
         r"$\delta_z$ (push)",
         eq_blue,
@@ -700,7 +862,7 @@ def build_unit_cell_figure(
     ax.grid(True, color="#505050")
     ax.view_init(elev=22, azim=45)
     ax.set_title(
-        "Unit cell — orthogonal push δ_z and compensatory δ_side",
+        f"Deformable unit cell — pressure {p * 100:.0f}% · δ_z push + δ_side concavity",
         color=caption_neutral,
         fontsize=font_title,
         pad=14,
@@ -717,19 +879,87 @@ def run_residual_explorer(
     delta_z: float,
     alpha: float,
     beta: float,
+    deform_pressure: float = 0.35,
 ) -> tuple[str, plt.Figure]:
-    """Return explorer metrics text and updated matplotlib unit-cell figure."""
+    """Return explorer metrics text and updated deformable unit-cell figure."""
     r_val = residual_from_scales(phi_sq_scale, e_sq_scale, pi_sq_scale)
     d_side = delta_side_contraction(delta_z, r_val, kappa, alpha=alpha, beta=beta)
     metrics = format_residual_explorer(
         phi_sq_scale, e_sq_scale, pi_sq_scale, kappa, delta_z, alpha, beta
     )
+    p = float(np.clip(deform_pressure, 0.0, 1.0))
+    metrics = (
+        f"{metrics}\n\n"
+        f"Deformation pressure : {p * 100:.1f}%  (0 = rigid cube, 100 = full δ_z / δ_side bend)"
+    )
     fig = build_unit_cell_figure(
         delta_z=delta_z,
         delta_side=abs(d_side) * 0.5,
         r_val=r_val,
+        pressure=p,
     )
     return metrics, fig
+
+
+def stream_unit_cell_deformation(
+    phi_sq_scale: float,
+    e_sq_scale: float,
+    pi_sq_scale: float,
+    kappa: float,
+    delta_z: float,
+    alpha: float,
+    beta: float,
+    deform_pressure: float = 0.35,
+):
+    """Yield frames sweeping deformation pressure 0 → 1 → hold (animation)."""
+    import time
+
+    r_val = residual_from_scales(phi_sq_scale, e_sq_scale, pi_sq_scale)
+    d_side = delta_side_contraction(delta_z, r_val, kappa, alpha=alpha, beta=beta)
+    base_metrics = format_residual_explorer(
+        phi_sq_scale, e_sq_scale, pi_sq_scale, kappa, delta_z, alpha, beta
+    )
+    side = abs(d_side) * 0.5
+    hold = float(np.clip(deform_pressure, 0.0, 1.0))
+
+    for pressure in np.linspace(0.0, 1.0, 26):
+        p = float(pressure)
+        metrics = (
+            f"{base_metrics}\n\n"
+            f"Deformation pressure : {p * 100:.1f}%  ▶ animating…"
+        )
+        yield metrics, build_unit_cell_figure(
+            delta_z=delta_z,
+            delta_side=side,
+            r_val=r_val,
+            pressure=p,
+        )
+        time.sleep(0.07)
+
+    for pressure in np.linspace(1.0, hold, 8):
+        p = float(pressure)
+        metrics = (
+            f"{base_metrics}\n\n"
+            f"Deformation pressure : {p * 100:.1f}%  ▶ easing to slider"
+        )
+        yield metrics, build_unit_cell_figure(
+            delta_z=delta_z,
+            delta_side=side,
+            r_val=r_val,
+            pressure=p,
+        )
+        time.sleep(0.05)
+
+    yield run_residual_explorer(
+        phi_sq_scale,
+        e_sq_scale,
+        pi_sq_scale,
+        kappa,
+        delta_z,
+        alpha,
+        beta,
+        deform_pressure=hold,
+    )
 
 
 PROBE_SCRIPTS: tuple[tuple[str, str], ...] = (
