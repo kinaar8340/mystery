@@ -1041,8 +1041,8 @@ def build_unit_cell_figure(
     pressure: float = 1.0,
     view_elev: float = 22.0,
     view_azim: float = 45.0,
-    view_dist: float = 17.5,
-    axis_half: float = 2.4,
+    view_dist: float = 13.5,
+    axis_half: float = 2.75,
     show_curvature_grid: bool = True,
     dpi: int = 120,
 ) -> plt.Figure:
@@ -1065,7 +1065,8 @@ def build_unit_cell_figure(
     font_axis = 12
     caption_neutral = _UNIT_CELL_LABEL_TEXT
 
-    fig = plt.figure(figsize=(10.0, 10.0), dpi=dpi, facecolor=bg)
+    # Landscape aspect matches the Gravity viewport panel and reduces letterboxing.
+    fig = plt.figure(figsize=(12.0, 8.0), dpi=dpi, facecolor=bg)
     ax = fig.add_subplot(111, projection="3d", facecolor=bg)
 
     triangles, tri_colors = _deformed_cube_surface(s, p, delta_z, side)
@@ -1187,10 +1188,10 @@ def build_unit_cell_figure(
     ax.set_xlim(-half, half)
     ax.set_ylim(-half, half)
     ax.set_zlim(-half, half)
-    ax.set_xlabel("φ-face", color=caption_neutral, fontsize=font_axis, labelpad=4)
-    ax.set_ylabel("e-face", color=caption_neutral, fontsize=font_axis, labelpad=4)
-    ax.set_zlabel("π-face", color=caption_neutral, fontsize=font_axis, labelpad=4)
-    ax.tick_params(colors=caption_neutral, labelsize=font_tick)
+    ax.set_xlabel("φ-face", color=caption_neutral, fontsize=font_axis, labelpad=6)
+    ax.set_ylabel("e-face", color=caption_neutral, fontsize=font_axis, labelpad=6)
+    ax.set_zlabel("π-face", color=caption_neutral, fontsize=font_axis, labelpad=6)
+    ax.tick_params(colors=caption_neutral, labelsize=font_tick, pad=2)
     for axis in (ax.xaxis, ax.yaxis, ax.zaxis):
         axis.pane.fill = False
         axis.pane.set_edgecolor("#333333")
@@ -1203,9 +1204,10 @@ def build_unit_cell_figure(
         ax.set_box_aspect((1, 1, 1))
     except (AttributeError, TypeError, ValueError):
         pass
-    ax.set_position([0.0, 0.0, 1.0, 1.0])
+    # Lift the 3D axes: matplotlib leaves dead space under the floor grid otherwise.
+    ax.set_position([0.04, 0.10, 0.92, 0.86])
 
-    fig.subplots_adjust(left=0.0, right=1.0, top=1.0, bottom=0.0, wspace=0, hspace=0)
+    fig.subplots_adjust(left=0.02, right=0.98, top=0.98, bottom=0.04, wspace=0, hspace=0)
     return fig
 
 
