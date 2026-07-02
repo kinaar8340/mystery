@@ -1016,8 +1016,8 @@ HFB_CSS = f"""
 :root, :root .dark {{
     --myst-control-bar-height: 1.54rem;
     --myst-button-height: 26px;
-    --myst-viewport-min-height: calc(100dvh - 11rem);
-    --myst-viewport-plot-height: 650px;
+    --myst-viewport-min-height: 18rem;
+    --myst-viewport-plot-height: 700px;
     --myst-viewport-aspect: 7 / 5;
     --body-background-fill: transparent !important;
     --background-fill-primary: transparent !important;
@@ -2002,45 +2002,7 @@ footer {{ visibility: hidden; }}
     min-height: 360px !important;
     background-color: #000000 !important;
 }}
-.gradio-container .myst-cube-viewport-media .plot-container,
-.gradio-container #unit-cell-viewport .plot-container {{
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    width: 100% !important;
-    height: var(--myst-viewport-plot-height, calc(100dvh - 12.5rem)) !important;
-    min-height: var(--myst-viewport-plot-height, calc(100dvh - 12.5rem)) !important;
-    max-height: var(--myst-viewport-plot-height, calc(100dvh - 12.5rem)) !important;
-    flex: none !important;
-    overflow: hidden !important;
-    box-sizing: border-box !important;
-}}
-.gradio-container #unit-cell-viewport,
-.gradio-container #unit-cell-viewport.block,
-.gradio-container #unit-cell-viewport .wrap {{
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    width: 100% !important;
-    height: 100% !important;
-    min-height: 0 !important;
-    flex: none !important;
-    box-sizing: border-box !important;
-}}
-.gradio-container #unit-cell-viewport .plot-container img,
-.gradio-container .myst-cube-viewport-media .myst-cube-plot-inner .plot-container img {{
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    width: 100% !important;
-    height: 100% !important;
-    min-height: 0 !important;
-    max-width: 100% !important;
-    max-height: 100% !important;
-    flex: none !important;
-    object-fit: contain !important;
-    object-position: center center !important;
-}}
+/* viewport plot sizing: see KNOWN-GOOD block at end of HFB_CSS */
 .gradio-container .myst-gravity-page .vqc-plot3d-panel,
 .gradio-container .myst-gravity-page .vqc-plot3d-panel .block,
 .gradio-container .myst-gravity-page .vqc-plot3d-panel img {{
@@ -2724,7 +2686,7 @@ footer {{ visibility: hidden; }}
     margin: 0 !important;
     padding: 0 0.3rem 0 !important;
     display: grid !important;
-    grid-template-rows: auto minmax(var(--myst-viewport-min-height, calc(100dvh - 11rem)), 1fr) !important;
+    grid-template-rows: auto minmax(var(--myst-viewport-min-height, 18rem), 1fr) !important;
     grid-template-columns: minmax(0, 1fr) !important;
     align-content: stretch !important;
     align-items: stretch !important;
@@ -3336,71 +3298,86 @@ footer {{ visibility: hidden; }}
     font-size: 0.94rem !important;
     line-height: 1.5 !important;
 }}
-/* === CLEAN VIEWPORT RESET + DEBUG TRANSPARENCY (matplotlib gr.Plot) === */
+/* === KNOWN-GOOD VIEWPORT (last wins — matplotlib gr.Plot, not Plotly) === */
 .gradio-container .myst-gravity-visuals-col,
+.gradio-container .myst-gravity-visuals-col > .block,
+.gradio-container .myst-gravity-visuals-col > .form,
+.gradio-container .myst-gravity-visuals-col .gr-group,
+.gradio-container .myst-gravity-cube-panel.myst-gravity-panel-window,
 .gradio-container .column:has(#unit-cell-viewport),
+.gradio-container .column:has(#unit-cell-viewport) > div,
+.gradio-container .column:has(#unit-cell-viewport) > div > div,
 .gradio-container .myst-cube-viewport-media,
-.gradio-container .myst-cube-viewport-media > .block,
 .gradio-container #unit-cell-viewport,
 .gradio-container #unit-cell-viewport > div,
 .gradio-container #unit-cell-viewport .wrap {{
-    background-color: rgba(20, 20, 20, 0.15) !important;
+    background-color: rgba(0, 0, 0, 0.08) !important;
+}}
+.gradio-container .myst-gravity-cube-panel.myst-gravity-panel-window.vqc-optics-panel {{
+    grid-template-rows: auto minmax(var(--myst-viewport-min-height, 18rem), 1fr) !important;
+    background: rgba(42, 24, 16, 0.12) !important;
 }}
 .gradio-container .myst-cube-viewport-media {{
     position: relative !important;
+    flex: 1 1 0 !important;
     width: 100% !important;
-    min-height: var(--myst-viewport-plot-height, 650px) !important;
-    height: auto !important;
+    min-height: var(--myst-viewport-min-height, 18rem) !important;
+    height: 100% !important;
+    overflow: hidden !important;
     display: block !important;
-    overflow: visible !important;
-    flex: none !important;
 }}
-.gradio-container .myst-cube-viewport-media > .block,
-.gradio-container #unit-cell-viewport,
-.gradio-container #unit-cell-viewport.block {{
-    position: relative !important;
-    inset: auto !important;
-    top: auto !important;
-    right: auto !important;
-    bottom: auto !important;
-    left: auto !important;
+.gradio-container .myst-cube-viewport-media .myst-cube-plot-inner.block,
+.gradio-container .myst-cube-viewport-media #unit-cell-viewport,
+.gradio-container .myst-cube-viewport-media #unit-cell-viewport.block {{
+    position: absolute !important;
+    inset: 0 !important;
     width: 100% !important;
-    min-height: var(--myst-viewport-plot-height, 650px) !important;
-    height: auto !important;
-    max-height: none !important;
+    height: 100% !important;
+    min-height: var(--myst-viewport-min-height, 18rem) !important;
+    max-height: 100% !important;
+    margin: 0 !important;
+    padding: 0.2rem 0.3rem 0.3rem !important;
     display: block !important;
     flex: none !important;
-    overflow: visible !important;
-    margin: 0 !important;
-    padding: 0 !important;
+    overflow: hidden !important;
+    z-index: 2 !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}}
+.gradio-container #unit-cell-viewport {{
+    min-height: var(--myst-viewport-plot-height, 700px) !important;
+    height: 100% !important;
 }}
 .gradio-container #unit-cell-viewport .wrap,
-.gradio-container #unit-cell-viewport .plot-container {{
-    width: 100% !important;
-    min-height: var(--myst-viewport-plot-height, 650px) !important;
-    height: auto !important;
-    max-height: none !important;
+.gradio-container #unit-cell-viewport .plot-container,
+.gradio-container .myst-cube-viewport-media .myst-cube-plot-inner .plot-container {{
     display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: var(--myst-viewport-min-height, 18rem) !important;
+    max-height: none !important;
     flex: none !important;
     overflow: visible !important;
-    background-color: rgba(0, 0, 0, 0.35) !important;
+    box-sizing: border-box !important;
+    background-color: rgba(0, 0, 0, 0.12) !important;
 }}
-.gradio-container #unit-cell-viewport .plot-container img {{
+.gradio-container #unit-cell-viewport .plot-container img,
+.gradio-container .myst-cube-viewport-media .myst-cube-plot-inner .plot-container img {{
+    display: block !important;
     width: 100% !important;
     height: auto !important;
-    min-height: 400px !important;
+    min-height: var(--myst-viewport-min-height, 18rem) !important;
+    max-width: 100% !important;
     max-height: none !important;
-    display: block !important;
     flex: none !important;
     object-fit: contain !important;
     object-position: center center !important;
-    background-color: rgba(0, 0, 0, 0.25) !important;
 }}
 .gradio-container .myst-cube-viewport-media .myst-cube-anim-video.block {{
     position: absolute !important;
     inset: 0 !important;
     z-index: 3 !important;
-    min-height: var(--myst-viewport-plot-height, 650px) !important;
+    min-height: var(--myst-viewport-min-height, 18rem) !important;
 }}
 @media (max-width: 768px) {{
     .gradio-container .myst-gravity-split {{
@@ -4881,6 +4858,11 @@ def build_app() -> gr.Blocks:
                                 scale=1,
                                 elem_id="unit-cell-viewport",
                                 value=_init_unit_cell,
+                                elem_classes=[
+                                    "vqc-plot3d-panel",
+                                    "myst-cube-plot-inner",
+                                    "myst-cube-plot-static",
+                                ],
                             )
                             unit_cell_video = gr.Video(
                                 label=None,
