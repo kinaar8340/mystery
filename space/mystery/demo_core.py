@@ -1029,12 +1029,13 @@ def figure_to_viewport_img_html(fig: plt.Figure, *, dpi: int = 100) -> str:
         )
         return (
             '<div class="myst-unit-cell-viewport-img-wrap" '
-            'style="width:100%;min-height:520px;display:flex;align-items:center;'
-            'justify-content:center;background:rgba(0,0,0,0.88);border-radius:6px;">'
+            'style="width:100%;height:550px;min-height:550px;max-height:550px;'
+            'display:flex;align-items:center;justify-content:center;'
+            'background:#000000;overflow:hidden;box-sizing:border-box;">'
             f'<img src="data:image/png;base64,{b64}" '
             'alt="Unit cell viewport" class="myst-unit-cell-viewport-img" '
-            'style="width:100%;height:auto;min-height:400px;max-height:550px;'
-            'object-fit:contain;display:block;" />'
+            'style="width:100%;height:100%;max-width:100%;max-height:550px;'
+            'object-fit:contain;object-position:center center;display:block;" />'
             "</div>"
         )
     except Exception as exc:

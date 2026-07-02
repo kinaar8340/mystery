@@ -3389,10 +3389,14 @@ footer {{ visibility: hidden; }}
     flex: 1 0 550px !important;
     min-height: 550px !important;
     height: 550px !important;
-    max-height: 60vh !important;
-    overflow: visible !important;
+    max-height: min(60vh, 550px) !important;
+    overflow: hidden !important;
     margin: 0 !important;
     padding: 0 !important;
+    background: #000000 !important;
+    isolation: isolate !important;
+    z-index: 6 !important;
+    position: relative !important;
 }}
 .gradio-container .myst-gravity-image-viewport .wrap {{
     padding: 0 !important;
@@ -3417,10 +3421,19 @@ footer {{ visibility: hidden; }}
     box-sizing: border-box !important;
 }}
 .gradio-container #unit-cell-main-view,
+.gradio-container #unit-cell-main-view.block,
 .gradio-container #unit-cell-main-view .myst-unit-cell-viewport-html,
-.gradio-container #unit-cell-main-view .html-container {{
+.gradio-container #unit-cell-main-view .html-container,
+.gradio-container #unit-cell-main-view .prose {{
     min-height: 550px !important;
+    height: 100% !important;
     width: 100% !important;
+    overflow: visible !important;
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    z-index: 5 !important;
+    position: relative !important;
 }}
 .gradio-container #unit-cell-main-view .myst-unit-cell-viewport-img-wrap {{
     width: 100% !important;
@@ -3514,10 +3527,19 @@ footer {{ visibility: hidden; }}
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
 }}
+/* Viewport + video: solid opaque — wallpaper must not bleed through */
 .gradio-container #unit-cell-main-view,
+.gradio-container #unit-cell-main-view.block,
+.gradio-container #unit-cell-main-view .block,
+.gradio-container #unit-cell-main-view .html-container,
+.gradio-container #unit-cell-main-view .prose,
+.gradio-container #unit-cell-main-view .myst-unit-cell-viewport-img-wrap,
 .gradio-container #unit-cell-animation,
+.gradio-container #unit-cell-animation.block,
 .gradio-container .myst-cube-viewport-header-slot {{
-    background-color: rgba(20, 20, 20, 0.65) !important;
+    background-color: #000000 !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
 }}
 @media (max-width: 768px) {{
     .gradio-container .myst-gravity-split {{
@@ -3960,7 +3982,7 @@ def _gravity_static_image_update(fig: object) -> object:
         f"[DEBUG] _gravity_static_image_update: returning HTML len={len(html)}",
         flush=True,
     )
-    return html
+    return gr.update(value=html)
 
 
 def _gravity_clear_video_update() -> dict:
