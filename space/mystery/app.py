@@ -1982,12 +1982,12 @@ footer {{ visibility: hidden; }}
     flex: 1 1 0 !important;
     min-height: 0 !important;
     height: 100% !important;
-    gap: 0.55rem !important;
+    gap: 0.35rem !important;
     overflow: hidden !important;
     display: grid !important;
-    grid-template-rows: auto auto minmax(0, 1fr) !important;
+    grid-template-rows: minmax(16rem, 1fr) auto !important;
     grid-template-columns: minmax(0, 1fr) !important;
-    align-content: start !important;
+    align-content: stretch !important;
 }}
 .gradio-container .myst-gravity-left-stack > .gap {{
     display: none !important;
@@ -2005,36 +2005,30 @@ footer {{ visibility: hidden; }}
     background: transparent !important;
     box-shadow: none !important;
 }}
-.gradio-container .myst-gravity-left-stack > .block:has(.myst-gravity-left-presets-slot),
-.gradio-container .myst-gravity-left-stack > .block:has(.myst-gravity-presets-panel),
-.gradio-container .myst-gravity-left-stack > .block:has(.myst-gravity-presets-fixed) {{
+.gradio-container .myst-gravity-left-stack > .block:has(.myst-gravity-left-presets-tui-slot),
+.gradio-container .myst-gravity-left-stack > .block:has(.myst-gravity-presets-tui-card) {{
     grid-row: 1 !important;
+    min-height: 0 !important;
     align-self: stretch !important;
-    overflow: visible !important;
-}}
-.gradio-container .myst-gravity-left-stack > .block:has(.myst-gravity-left-tui-slot),
-.gradio-container .myst-gravity-left-stack > .block:has(.myst-gravity-left-tui) {{
-    grid-row: 2 !important;
-    align-self: stretch !important;
-    overflow: visible !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
 }}
 .gradio-container .myst-gravity-left-stack > .block:has(.myst-gravity-left-control-slot),
 .gradio-container .myst-gravity-left-stack > .block:has(.myst-gravity-control-panel) {{
-    grid-row: 3 !important;
+    grid-row: 2 !important;
     min-height: 0 !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
     align-self: stretch !important;
 }}
-.gradio-container .myst-gravity-left-stack > .column.myst-gravity-left-presets-slot,
-.gradio-container .myst-gravity-left-stack > .column.myst-gravity-presets-fixed {{
+.gradio-container .myst-gravity-left-stack > .column.myst-gravity-left-presets-tui-slot {{
     grid-row: 1 !important;
-}}
-.gradio-container .myst-gravity-left-stack > .column.myst-gravity-left-tui-slot {{
-    grid-row: 2 !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
 }}
 .gradio-container .myst-gravity-left-stack > .column.myst-gravity-left-control-slot {{
-    grid-row: 3 !important;
+    grid-row: 2 !important;
     min-height: 0 !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
@@ -2061,27 +2055,54 @@ footer {{ visibility: hidden; }}
     max-height: none !important;
     overflow: visible !important;
 }}
-.gradio-container .myst-gravity-left-presets-slot,
-.gradio-container .myst-gravity-presets-panel.myst-gravity-left-frame {{
+.gradio-container .myst-gravity-presets-tui-card {{
+    flex: 1 1 0 !important;
+    min-height: 0 !important;
+    height: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 0.55rem 0.5rem !important;
+    gap: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    background: linear-gradient(180deg, #1a1008 0%, #0a0604 100%) !important;
+    box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.42) !important;
+}}
+.gradio-container .myst-gravity-presets-tui-card > .gap {{
+    display: none !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}}
+.gradio-container .myst-gravity-presets-tui-card > .block,
+.gradio-container .myst-gravity-presets-tui-card > .column,
+.gradio-container .myst-gravity-presets-tui-card > .form {{
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}}
+.gradio-container .myst-gravity-presets-tui-card .myst-gravity-presets-panel {{
     flex: 0 0 auto !important;
     height: auto !important;
     min-height: 0 !important;
-    max-height: none !important;
     width: 100% !important;
-    padding-bottom: 0.65rem !important;
+    padding: 0 !important;
     overflow: visible !important;
-    visibility: visible !important;
     display: flex !important;
     flex-direction: column !important;
 }}
-.gradio-container .myst-gravity-left-tui-slot,
-.gradio-container .myst-gravity-left-tui.myst-gravity-left-frame {{
-    flex: 0 0 auto !important;
+.gradio-container .myst-gravity-presets-tui-card .myst-gravity-left-tui-slot,
+.gradio-container .myst-gravity-presets-tui-card .myst-gravity-preset-tui-section {{
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
     height: auto !important;
     width: 100% !important;
     display: flex !important;
     flex-direction: column !important;
-    overflow: visible !important;
+    overflow: hidden !important;
 }}
 .gradio-container .myst-gravity-presets-header.myst-gravity-presets-header-compact {{
     align-items: center !important;
@@ -2091,14 +2112,18 @@ footer {{ visibility: hidden; }}
     display: flex !important;
     flex-direction: column !important;
     align-items: flex-start !important;
-    gap: 0.08rem !important;
+    gap: 0.06rem !important;
     width: 100% !important;
-    margin: 0 0 0.55rem 0 !important;
-    padding: 0.65rem 0.75rem 0.75rem !important;
-    border-bottom: 1px solid rgba(74, 56, 24, 0.65) !important;
-    border-radius: 10px 10px 0 0 !important;
-    background: linear-gradient(180deg, #1f140a 0%, #0f0a06 100%) !important;
-    box-shadow: inset 0 0 14px rgba(0, 0, 0, 0.55) !important;
+    margin: 0 !important;
+    padding: 0.5rem 0.65rem 0.55rem !important;
+    border-bottom: 1px solid rgba(74, 56, 24, 0.55) !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}}
+.gradio-container .myst-gravity-presets-tui-card .myst-gravity-presets-header.myst-gravity-presets-header-compact {{
+    align-items: center !important;
+    text-align: center !important;
 }}
 .gradio-container .myst-gravity-presets-panel .myst-gravity-preset-grid,
 .gradio-container .myst-gravity-presets-panel .myst-gravity-preset-grid-wrap {{
@@ -2113,12 +2138,12 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-gravity-presets-panel .myst-gravity-preset-row.row {{
     display: grid !important;
     grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-    gap: 0.32rem !important;
+    gap: 0.28rem !important;
     width: 100% !important;
-    margin: 0 0 0.32rem 0 !important;
-    padding: 0 !important;
+    margin: 0 0 0.24rem 0 !important;
+    padding: 0 0.45rem !important;
     visibility: visible !important;
-    min-height: 2.15rem !important;
+    min-height: 2rem !important;
 }}
 .gradio-container .myst-gravity-presets-panel .myst-gravity-preset-row > .block,
 .gradio-container .myst-gravity-presets-panel .myst-gravity-preset-row > .form,
@@ -2143,27 +2168,30 @@ footer {{ visibility: hidden; }}
     min-height: 2rem !important;
 }}
 .gradio-container .myst-gravity-presets-panel button.vqc-receiver-preset.vqc-full-width {{
-    margin: 0.15rem 0.55rem 0.55rem !important;
-    width: calc(100% - 1.1rem) !important;
-    min-height: 2.1rem !important;
+    margin: 0.1rem 0.45rem 0.35rem !important;
+    width: calc(100% - 0.9rem) !important;
+    min-height: 2rem !important;
 }}
 .gradio-container .myst-gravity-tui-gap {{
-    display: block !important;
-    width: 100% !important;
-    height: 0.85rem !important;
-    min-height: 0.85rem !important;
-    flex: 0 0 0.85rem !important;
+    display: none !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
 }}
-.gradio-container .myst-gravity-left-tui.myst-gravity-preset-tui-section {{
-    flex: 0 0 auto !important;
-    margin-top: 0 !important;
-    padding-top: 0 !important;
-    border-top: none !important;
+.gradio-container .myst-gravity-presets-tui-card .myst-gravity-preset-tui-section {{
+    flex: 1 1 auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border-top: 1px solid rgba(74, 56, 24, 0.5) !important;
+    background: transparent !important;
+    min-height: 0 !important;
+}}
+.gradio-container .myst-gravity-presets-tui-card .myst-gravity-left-tui-slot .myst-gravity-preset-tui-wrap,
+.gradio-container .myst-gravity-presets-tui-card .myst-gravity-left-tui-slot .myst-gravity-preset-tui-wrap.block {{
+    flex: 1 1 auto !important;
     min-height: 13.5rem !important;
-}}
-.gradio-container .myst-gravity-left-tui-slot .myst-gravity-preset-tui-wrap,
-.gradio-container .myst-gravity-left-tui-slot .myst-gravity-preset-tui-wrap.block {{
-    min-height: 9.25rem !important;
+    height: auto !important;
+    max-height: none !important;
     display: block !important;
     visibility: visible !important;
 }}
@@ -2241,39 +2269,44 @@ footer {{ visibility: hidden; }}
     display: block !important;
 }}
 .gradio-container .myst-gravity-preset-tui-section {{
-    flex: 0 0 auto !important;
+    flex: 1 1 auto !important;
     width: 100% !important;
-    margin-top: 0.5rem !important;
-    padding-top: 0.45rem !important;
-    border-top: 1px solid rgba(74, 56, 24, 0.75) !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border-top: none !important;
     position: relative !important;
     z-index: 4 !important;
-    background: linear-gradient(180deg, #1a1008 0%, #0c0804 100%) !important;
+    background: transparent !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
 }}
 .gradio-container .myst-gravity-preset-tui-header {{
     display: flex !important;
     flex-direction: column !important;
     align-items: flex-start !important;
-    gap: 0.08rem !important;
+    gap: 0.05rem !important;
     width: 100% !important;
-    margin: 0 0 0.45rem 0 !important;
-    padding: 0.55rem 0.65rem 0.6rem !important;
-    border-bottom: 1px solid rgba(74, 56, 24, 0.65) !important;
-    border-radius: 10px 10px 0 0 !important;
-    background: linear-gradient(180deg, #1f140a 0%, #0f0a06 100%) !important;
+    margin: 0 !important;
+    padding: 0.38rem 0.65rem 0.42rem !important;
+    border-bottom: 1px solid rgba(74, 56, 24, 0.45) !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    flex: 0 0 auto !important;
 }}
 .gradio-container .myst-gravity-preset-tui-section .myst-gravity-preset-tui-wrap,
 .gradio-container .myst-gravity-preset-tui-section .myst-gravity-preset-tui-wrap.block {{
-    flex: 0 0 auto !important;
-    width: calc(100% - 1.1rem) !important;
-    height: 9.25rem !important;
-    min-height: 9.25rem !important;
-    max-height: 9.25rem !important;
-    margin: 0 0.55rem 0.55rem !important;
-    padding: 0.55rem 0.65rem !important;
+    flex: 1 1 auto !important;
+    width: calc(100% - 0.9rem) !important;
+    height: auto !important;
+    min-height: 13.5rem !important;
+    max-height: none !important;
+    margin: 0.3rem 0.45rem 0.4rem !important;
+    padding: 0.5rem 0.6rem !important;
     border: 2px inset #5c4a1f !important;
     border-radius: 8px !important;
-    background: rgba(0, 0, 0, 0.55) !important;
+    background: rgba(0, 0, 0, 0.62) !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
     display: block !important;
@@ -2289,7 +2322,7 @@ footer {{ visibility: hidden; }}
     padding: 0 !important;
 }}
 .gradio-container .myst-preset-tui-serial {{
-    min-height: 8.5rem !important;
+    min-height: 12rem !important;
     font-family: "Courier New", Courier, monospace !important;
     font-size: 0.78rem !important;
     line-height: 1.55 !important;
@@ -2367,8 +2400,13 @@ footer {{ visibility: hidden; }}
     box-sizing: border-box !important;
     overflow: visible !important;
 }}
-.gradio-container .myst-gravity-left-tui.myst-gravity-left-frame.myst-gravity-panel-window.vqc-optics-panel {{
-    flex: 0 0 auto !important;
+.gradio-container .myst-gravity-presets-tui-card.myst-gravity-left-frame.myst-gravity-panel-window.vqc-optics-panel {{
+    flex: 1 1 0 !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
     overflow: hidden !important;
 }}
 .gradio-container .myst-gravity-cube-panel.myst-gravity-panel-window.vqc-optics-panel {{
@@ -3999,52 +4037,53 @@ def build_app() -> gr.Blocks:
                             "vqc-gravity-panel",
                             "myst-gravity-left-frame",
                             "myst-gravity-panel-window",
-                            "myst-gravity-presets-panel",
-                            "myst-gravity-left-presets-slot",
-                            "myst-gravity-presets-fixed",
-                        ]
+                            "myst-gravity-presets-tui-card",
+                            "myst-gravity-left-presets-tui-slot",
+                        ],
                     ):
-                        gr.HTML(QUICK_PRESETS_PANEL_HEADER_HTML)
-                        re_quick_presets: list[gr.Button] = []
-                        for row_start in (0, 4):
-                            with gr.Row(elem_classes=["myst-gravity-preset-row"]):
-                                for slot in range(row_start, row_start + 4):
-                                    preset_classes = [
-                                        "vqc-receiver-preset",
-                                        "myst-gravity-quick-preset",
-                                    ]
-                                    if slot == 0:
-                                        preset_classes.append("active")
-                                    re_quick_presets.append(
-                                        gr.Button(
-                                            str(slot + 1),
-                                            variant="secondary",
-                                            size="sm",
-                                            elem_classes=preset_classes,
+                        with gr.Column(
+                            elem_classes=[
+                                "myst-gravity-presets-panel",
+                                "myst-gravity-presets-fixed",
+                            ],
+                        ):
+                            gr.HTML(QUICK_PRESETS_PANEL_HEADER_HTML)
+                            re_quick_presets: list[gr.Button] = []
+                            for row_start in (0, 4):
+                                with gr.Row(elem_classes=["myst-gravity-preset-row"]):
+                                    for slot in range(row_start, row_start + 4):
+                                        preset_classes = [
+                                            "vqc-receiver-preset",
+                                            "myst-gravity-quick-preset",
+                                        ]
+                                        if slot == 0:
+                                            preset_classes.append("active")
+                                        re_quick_presets.append(
+                                            gr.Button(
+                                                str(slot + 1),
+                                                variant="secondary",
+                                                size="sm",
+                                                elem_classes=preset_classes,
+                                            )
                                         )
-                                    )
-                        re_active_preset = gr.State(0)
-                        animate_deform_btn = gr.Button(
-                            "Animate deformation",
-                            variant="secondary",
-                            elem_classes=["vqc-receiver-preset", "vqc-full-width"],
-                        )
-                    with gr.Column(
-                        elem_classes=[
-                            "vqc-optics-panel",
-                            "vqc-gravity-panel",
-                            "myst-gravity-left-frame",
-                            "myst-gravity-panel-window",
-                            "myst-gravity-preset-tui-section",
-                            "myst-gravity-left-tui",
-                            "myst-gravity-left-tui-slot",
-                        ]
-                    ):
-                        gr.HTML(GRAVITY_PRESET_TUI_HEADER_HTML)
-                        re_preset_tui = gr.HTML(
-                            _init_preset_tui,
-                            elem_classes=["myst-gravity-preset-tui-wrap"],
-                        )
+                            re_active_preset = gr.State(0)
+                            animate_deform_btn = gr.Button(
+                                "Animate deformation",
+                                variant="secondary",
+                                elem_classes=["vqc-receiver-preset", "vqc-full-width"],
+                            )
+                        with gr.Column(
+                            elem_classes=[
+                                "myst-gravity-preset-tui-section",
+                                "myst-gravity-left-tui",
+                                "myst-gravity-left-tui-slot",
+                            ],
+                        ):
+                            gr.HTML(GRAVITY_PRESET_TUI_HEADER_HTML)
+                            re_preset_tui = gr.HTML(
+                                _init_preset_tui,
+                                elem_classes=["myst-gravity-preset-tui-wrap"],
+                            )
                     with gr.Column(
                         elem_classes=[
                             "vqc-optics-panel",
