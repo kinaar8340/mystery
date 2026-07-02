@@ -37,8 +37,8 @@ from demo_core import (
     get_build_label,
     is_hf_space,
     build_unit_cell_viewport_header_html,
-    figure_to_viewport_img_html,
-    unit_cell_error_placeholder_html,
+    figure_to_viewport_pil,
+    unit_cell_error_placeholder_pil,
     render_unit_cell_deformation_video,
     residual_from_scales,
     run_analysis,
@@ -3399,14 +3399,19 @@ footer {{ visibility: hidden; }}
     font-size: 0.94rem !important;
     line-height: 1.5 !important;
 }}
-/* === UNIT CELL VIEWPORT — gr.HTML inline base64 (100% zoom safe) === */
-.gradio-container .myst-gravity-image-viewport {{
+/* === UNIT CELL VIEWPORT — gr.Image PNG via /file/ (Brave-safe, 100% zoom) === */
+.gradio-container .myst-gravity-image-viewport,
+.gradio-container .myst-gravity-image-viewport.myst-gravity-right-panel,
+.gradio-container .myst-gravity-image-viewport.myst-gravity-right-stack {{
     display: flex !important;
     flex-direction: column !important;
     flex: 1 1 0 !important;
     min-height: 0 !important;
     overflow-y: auto !important;
     padding: 4px !important;
+    background-color: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
 }}
 .gradio-container .myst-gravity-image-viewport > .block:has(#unit-cell-main-view),
 .gradio-container .myst-gravity-image-viewport > .form:has(#unit-cell-main-view),
@@ -3416,60 +3421,58 @@ footer {{ visibility: hidden; }}
     min-height: 550px !important;
     max-height: 550px !important;
     background: #000000 !important;
+    background-color: #000000 !important;
     overflow: hidden !important;
     isolation: isolate !important;
     z-index: 8 !important;
     position: relative !important;
     margin: 0 !important;
     padding: 0 !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
 }}
 .gradio-container #unit-cell-main-view,
 .gradio-container #unit-cell-main-view.block,
-.gradio-container #unit-cell-main-view.myst-unit-cell-viewport-html {{
+.gradio-container #unit-cell-main-view.gradio-image,
+.gradio-container #unit-cell-main-view .gr-image,
+.gradio-container #unit-cell-main-view .image-container,
+.gradio-container #unit-cell-main-view .wrap,
+.gradio-container #unit-cell-main-view .wrap.center,
+.gradio-container #unit-cell-main-view .wrap.center.full,
+.gradio-container #unit-cell-main-view .wrap.full {{
     height: 550px !important;
     min-height: 550px !important;
     max-height: 550px !important;
     width: 100% !important;
     background: #000000 !important;
+    background-color: #000000 !important;
     padding: 0 !important;
     margin: 0 !important;
     overflow: hidden !important;
     opacity: 1 !important;
+    position: relative !important;
+    inset: auto !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
 }}
-.gradio-container #unit-cell-main-view .html-container,
-.gradio-container #unit-cell-main-view .html-container > *,
-.gradio-container #unit-cell-main-view .prose {{
-    width: 100% !important;
-    height: 550px !important;
-    min-height: 550px !important;
-    max-height: 550px !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    overflow: hidden !important;
-    background: #000000 !important;
-}}
-.gradio-container .myst-unit-cell-viewport-img-wrap {{
-    width: 100% !important;
-    height: 550px !important;
-    min-height: 550px !important;
-    max-height: 550px !important;
-    display: block !important;
-    background: #000000 !important;
-    overflow: hidden !important;
-    box-sizing: border-box !important;
-}}
-.gradio-container .myst-unit-cell-viewport-img,
 .gradio-container #unit-cell-main-view img {{
     width: 100% !important;
     height: 550px !important;
-    min-height: 200px !important;
+    min-height: 550px !important;
     max-height: 550px !important;
     object-fit: contain !important;
     object-position: center center !important;
     display: block !important;
     background: #000000 !important;
+    background-color: #000000 !important;
     opacity: 1 !important;
     visibility: visible !important;
+    position: relative !important;
+    z-index: 1 !important;
+}}
+.gradio-container #unit-cell-main-view .empty,
+.gradio-container #unit-cell-main-view .icon-wrap {{
+    display: none !important;
 }}
 /* Lower animation video — #unit-cell-animation */
 .gradio-container #unit-cell-animation,
@@ -3513,19 +3516,13 @@ footer {{ visibility: hidden; }}
     display: block !important;
     background-color: transparent !important;
 }}
-.gradio-container #unit-cell-main-view img,
-.gradio-container .myst-unit-cell-viewport-img {{
-    height: 550px !important;
-    min-height: 200px !important;
-    max-height: 550px !important;
-}}
 /* Semi-transparent foreground panels — wallpaper shows through */
 .gradio-container .gradio-row,
-.gradio-container .gradio-column,
-.gradio-container .block:not(#unit-cell-main-view),
+.gradio-container .gradio-column:not(.myst-gravity-image-viewport),
+.gradio-container .block:not(#unit-cell-main-view):not(:has(#unit-cell-main-view)),
 .gradio-container .gr-panel,
-.gradio-container .myst-gravity-right-panel,
-.gradio-container .myst-gravity-right-stack {{
+.gradio-container .myst-gravity-right-panel:not(.myst-gravity-image-viewport),
+.gradio-container .myst-gravity-right-stack:not(.myst-gravity-image-viewport) {{
     background-color: rgba(30, 30, 30, 0.5) !important;
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
@@ -3533,7 +3530,7 @@ footer {{ visibility: hidden; }}
 /* Viewport + video: solid opaque — wallpaper must not bleed through */
 .gradio-container #unit-cell-main-view,
 .gradio-container #unit-cell-main-view.block,
-.gradio-container #unit-cell-main-view .html-container,
+.gradio-container #unit-cell-main-view .image-container,
 .gradio-container #unit-cell-animation,
 .gradio-container #unit-cell-animation.block,
 .gradio-container .myst-cube-viewport-header-slot {{
@@ -3972,16 +3969,16 @@ def _gravity_tui_for_preset(
 
 
 def _gravity_static_image_update(fig: object) -> object:
-    """Inline base64 HTML for gr.HTML — no /tmp URLs, 100% zoom safe."""
+    """PIL PNG for gr.Image — same-origin /file/ URL (Brave-safe, no data: URI)."""
     if fig is gr.skip():
         print("[DEBUG] _gravity_static_image_update: gr.skip()", flush=True)
         return gr.skip()
-    html = figure_to_viewport_img_html(fig, dpi=_UNIT_CELL_IMAGE_DPI)
+    pil_img = figure_to_viewport_pil(fig, dpi=_UNIT_CELL_IMAGE_DPI)
     print(
-        f"[DEBUG] _gravity_static_image_update: returning html_len={len(html)}",
+        f"[DEBUG] _gravity_static_image_update: returning PIL size={pil_img.size}",
         flush=True,
     )
-    return html
+    return pil_img
 
 
 def _gravity_clear_video_update() -> dict:
@@ -4379,11 +4376,11 @@ def _make_gravity_quick_preset_click(slot: int):
         )
         if fig is None:
             outputs = list(outputs)
-            outputs[21] = unit_cell_error_placeholder_html()
+            outputs[21] = unit_cell_error_placeholder_pil()
         image_out = outputs[21]
-        if isinstance(image_out, str):
+        if hasattr(image_out, "size"):
             print(
-                f"[DEBUG] preset_click_unified: Returning html_len={len(image_out)}",
+                f"[DEBUG] preset_click_unified: Returning PIL size={image_out.size}",
                 flush=True,
             )
         else:
@@ -4712,12 +4709,12 @@ def build_app() -> gr.Blocks:
         _init_re_metrics, _init_unit_cell_header, _init_unit_cell_fig = run_residual_explorer(
             1.0, 1.0, 1.0, KAPPA_DOC, 0.1, 1.0, 1.0, 0.35, 22.0, 45.0
         )
-        _init_unit_cell_html = figure_to_viewport_img_html(
+        _init_unit_cell_pil = figure_to_viewport_pil(
             _init_unit_cell_fig,
             dpi=_UNIT_CELL_IMAGE_DPI,
         )
         print(
-            f"[DEBUG] init unit cell html_len={len(_init_unit_cell_html)}",
+            f"[DEBUG] init unit cell PIL size={_init_unit_cell_pil.size}",
             flush=True,
         )
         _init_preset_tui = _format_gravity_menu_tui_html()
@@ -5024,12 +5021,20 @@ def build_app() -> gr.Blocks:
                         _init_unit_cell_header,
                         elem_classes=["myst-cube-viewport-header-slot"],
                     )
-                    unit_cell_image = gr.HTML(
-                        value=_init_unit_cell_html,
+                    unit_cell_image = gr.Image(
+                        value=_init_unit_cell_pil,
+                        label=None,
+                        show_label=False,
+                        type="pil",
+                        format="png",
+                        interactive=False,
+                        height=550,
+                        container=False,
+                        buttons=[],
                         elem_id="unit-cell-main-view",
                         elem_classes=[
-                            "myst-unit-cell-viewport-html",
                             "myst-unit-cell-viewport-image",
+                            "myst-unit-cell-main-image",
                         ],
                     )
                     gr.HTML(
@@ -5178,7 +5183,7 @@ def build_app() -> gr.Blocks:
         claims_minimize_btn.click(_minimize_claims, outputs=claims_outputs[:3])
         demo.load(_stream_term_boot, outputs=term_keypad_outputs)
         demo.load(
-            lambda: _init_unit_cell_html,
+            lambda: _init_unit_cell_pil,
             outputs=[unit_cell_image],
             show_progress=False,
         )

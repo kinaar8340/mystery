@@ -1075,7 +1075,9 @@ def figure_to_viewport_pil(fig: plt.Figure, *, dpi: int = 100):
         )
         plt.close(fig)
         buf.seek(0)
-        pil_img = PILImage.open(buf).copy().convert("RGB")
+        pil_img = _resize_pil_for_viewport(
+            PILImage.open(buf).copy().convert("RGB")
+        )
         print(f"[DEBUG] figure_to_viewport_pil: size={pil_img.size}", flush=True)
         return pil_img
     except Exception as exc:
