@@ -3368,14 +3368,37 @@ footer {{ visibility: hidden; }}
     font-size: 0.94rem !important;
     line-height: 1.5 !important;
 }}
-/* === FORCE IMAGE & VIDEO TO FILL CONTAINERS (elem_id targets — last wins) === */
-.gradio-container .myst-gravity-image-viewport,
-.gradio-container .myst-gravity-image-viewport > .block,
-.gradio-container .myst-gravity-image-viewport .wrap {{
+/* === VIEWPORT COLUMN — prevent flex collapse (image was 0px tall) === */
+.gradio-container .myst-gravity-image-viewport {{
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 1 0 !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
     padding: 4px !important;
-    background: rgba(20, 20, 20, 0.65) !important;
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
+}}
+.gradio-container .myst-gravity-image-viewport > .block,
+.gradio-container .myst-gravity-image-viewport > .form {{
+    flex: 0 0 auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+}}
+.gradio-container .myst-gravity-image-viewport > .block:has(#unit-cell-main-view),
+.gradio-container .myst-gravity-image-viewport > .form:has(#unit-cell-main-view) {{
+    flex: 1 0 550px !important;
+    min-height: 550px !important;
+    height: 550px !important;
+    max-height: 60vh !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}}
+.gradio-container .myst-gravity-image-viewport .wrap {{
+    padding: 0 !important;
+    overflow: visible !important;
+    min-height: 550px !important;
+    height: 100% !important;
 }}
 /* Upper static image — #unit-cell-main-view */
 .gradio-container #unit-cell-main-view,
@@ -4992,6 +5015,8 @@ def build_app() -> gr.Blocks:
                     unit_cell_image = gr.HTML(
                         _init_unit_cell_viewport_html,
                         elem_id="unit-cell-main-view",
+                        container=True,
+                        padding=False,
                         elem_classes=[
                             "myst-unit-cell-main-image",
                             "myst-unit-cell-viewport-html",
