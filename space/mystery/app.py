@@ -38,6 +38,8 @@ from demo_core import (
     is_hf_space,
     build_unit_cell_viewport_header_html,
     export_unit_cell_numpy_for_gradio,
+    figure_to_viewport_numpy,
+    unit_cell_error_placeholder_numpy,
     render_unit_cell_deformation_video,
     residual_from_scales,
     run_analysis,
@@ -3907,14 +3909,9 @@ def _gravity_static_image_update(fig: object) -> object:
         print("[DEBUG] _gravity_static_image_update: gr.skip()", flush=True)
         return gr.skip()
     print("[DEBUG] _gravity_static_image_update: converting figure to numpy", flush=True)
-    try:
-        arr = export_unit_cell_numpy_for_gradio(fig, dpi=_UNIT_CELL_IMAGE_DPI)
-        print(f"[DEBUG] _gravity_static_image_update: ok shape={arr.shape}", flush=True)
-        return arr
-    except Exception as exc:
-        print(f"[DEBUG] _gravity_static_image_update: FAILED {exc!r}", flush=True)
-        logger.exception("unit cell image conversion failed")
-        raise
+    arr = figure_to_viewport_numpy(fig, dpi=_UNIT_CELL_IMAGE_DPI)
+    print(f"[DEBUG] _gravity_static_image_update: returning shape={arr.shape}", flush=True)
+    return arr
 
 
 def _gravity_clear_video_update() -> dict:
@@ -4234,19 +4231,31 @@ def _make_gravity_quick_preset_click(slot: int):
     ):
         print(f"[DEBUG] preset_click handler: slot={slot}", flush=True)
         print(f"[DEBUG] preset_click handler: type(slot)={type(slot)}", flush=True)
-        dials, metrics, header, fig, tui, active_slot = _gravity_quick_preset_apply(
-            slot,
-            phi_sq_scale,
-            e_sq_scale,
-            pi_sq_scale,
-            kappa,
-            delta_z,
-            alpha,
-            beta,
-            deform_pressure,
-            view_elev,
-            view_azim,
-        )
+        try:
+            dials, metrics, header, fig, tui, active_slot = _gravity_quick_preset_apply(
+                slot,
+                phi_sq_scale,
+                e_sq_scale,
+                pi_sq_scale,
+                kappa,
+                delta_z,
+                alpha,
+                beta,
+                deform_pressure,
+                view_elev,
+                view_azim,
+            )
+            print("[DEBUG] preset_click handler: run_residual_explorer ok", flush=True)
+        except Exception as exc:
+            print(f"[ERROR] preset_click handler: apply failed: {exc}", flush=True)
+            traceback.print_exc()
+            logger.exception("gravity preset apply failed for slot=%s", slot)
+            dials = dict(_GRAVITY_HOME_DIALS)
+            metrics = f"Preset error: {exc}"
+            header = gr.skip()
+            fig = None
+            tui = _gravity_tui_for_preset(slot, dials, status_label="PRESET ERROR")
+            active_slot = slot
         outputs = _gravity_explorer_outputs(
             str(active_slot),
             dials,
@@ -4257,7 +4266,11 @@ def _make_gravity_quick_preset_click(slot: int):
             tui,
             active_slot,
             edit_params_enabled=edit_params_enabled,
+            update_image=fig is not None,
         )
+        if fig is None:
+            outputs = list(outputs)
+            outputs[21] = unit_cell_error_placeholder_numpy()
         image_out = outputs[21]
         if hasattr(image_out, "shape"):
             print(
@@ -4269,7 +4282,7 @@ def _make_gravity_quick_preset_click(slot: int):
                 f"[DEBUG] preset_click handler: image_out={image_out!r}",
                 flush=True,
             )
-        return outputs
+        return tuple(outputs)
 
     return handler
 

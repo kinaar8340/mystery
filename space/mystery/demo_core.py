@@ -5,6 +5,7 @@ from __future__ import annotations
 import io
 import os
 import tempfile
+import traceback
 from pathlib import Path
 
 import matplotlib
@@ -970,6 +971,30 @@ def export_unit_cell_pil_for_gradio(fig: plt.Figure, *, dpi: int = 150):
 def export_unit_cell_numpy_for_gradio(fig: plt.Figure, *, dpi: int = 150) -> np.ndarray:
     """RGB numpy array for gr.Image — most reliable on HF Spaces."""
     return figure_to_numpy_rgb(fig, dpi=dpi)
+
+
+def unit_cell_error_placeholder_numpy(
+    *,
+    height: int = 550,
+    width: int = 550,
+) -> np.ndarray:
+    """Red RGB placeholder when viewport conversion fails (visible error signal)."""
+    placeholder = np.zeros((height, width, 3), dtype=np.uint8)
+    placeholder[:, :, 0] = 180
+    return placeholder
+
+
+def figure_to_viewport_numpy(fig: plt.Figure, *, dpi: int = 150) -> np.ndarray:
+    """Matplotlib figure → RGB numpy for gr.Image(type='numpy'); never raises."""
+    print(f"[DEBUG] figure_to_viewport_numpy: dpi={dpi}", flush=True)
+    try:
+        arr = export_unit_cell_numpy_for_gradio(fig, dpi=dpi)
+        print(f"[DEBUG] figure_to_viewport_numpy: shape={arr.shape}", flush=True)
+        return arr
+    except Exception as exc:
+        print(f"[ERROR] figure_to_viewport_numpy failed: {exc}", flush=True)
+        traceback.print_exc()
+        return unit_cell_error_placeholder_numpy()
 
 
 def get_unit_cell_viewport_pil_image(
