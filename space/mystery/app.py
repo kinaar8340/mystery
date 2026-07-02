@@ -1883,6 +1883,12 @@ footer {{ visibility: hidden; }}
 }}
 .gradio-container .myst-gravity-page .plot-container {{
     min-height: 360px !important;
+    background-color: #000000 !important;
+}}
+.gradio-container .myst-gravity-page .vqc-plot3d-panel,
+.gradio-container .myst-gravity-page .vqc-plot3d-panel .block,
+.gradio-container .myst-gravity-page .vqc-plot3d-panel img {{
+    background-color: #000000 !important;
 }}
 @media (max-width: 640px) {{
     .gradio-container .vqc-nav-spreadsheet-row {{

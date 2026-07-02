@@ -501,17 +501,18 @@ def _draw_leader_label(
     text: str,
     color: str,
     *,
-    fontsize: float = 10,
+    fontsize: float = 12,
 ) -> None:
-    """Leader line from cube anchor to offset label (color-matched)."""
+    """Leader line from cube anchor to offset label (solid, color-matched)."""
     ax.plot(
         [anchor[0], label_pos[0]],
         [anchor[1], label_pos[1]],
         [anchor[2], label_pos[2]],
         color=color,
-        linewidth=1.5,
+        linewidth=2.0,
         linestyle="-",
         solid_capstyle="round",
+        alpha=1.0,
         zorder=8,
     )
     ax.text(
@@ -523,6 +524,7 @@ def _draw_leader_label(
         fontsize=fontsize,
         ha="center",
         va="center",
+        alpha=1.0,
         zorder=9,
     )
 
@@ -544,8 +546,17 @@ def build_unit_cell_figure(
     eq_green = _UNIT_CELL_GREEN
     eq_blue = _UNIT_CELL_BLUE
 
-    fig = plt.figure(figsize=(8, 6.5), dpi=120, facecolor="#0a0818")
-    ax = fig.add_subplot(111, projection="3d", facecolor="#120c18")
+    bg = "#000000"
+    font_main = 12
+    font_small = 11
+    font_caption = 11
+    font_tick = 10
+    font_title = 13
+    font_axis = 12
+    caption_neutral = "#ffffff"
+
+    fig = plt.figure(figsize=(8, 6.5), dpi=120, facecolor=bg)
+    ax = fig.add_subplot(111, projection="3d", facecolor=bg)
 
     faces = [
         [[-s, -s, -s], [s, -s, -s], [s, s, -s], [-s, s, -s]],
@@ -589,19 +600,34 @@ def build_unit_cell_figure(
             zorder=5,
         )
 
-    arrow_kw = dict(arrow_length_ratio=0.28, linewidth=2.2)
+    arrow_kw = dict(arrow_length_ratio=0.28, linewidth=2.2, alpha=1.0)
     ax.quiver(0, 0, s + 0.1, 0, 0, -delta_z * 2.0, color=eq_blue, **arrow_kw)
     ax.quiver(-s - 0.1, 0, 0, side * 2.0, 0, 0, color=eq_red, **arrow_kw)
     ax.quiver(s + 0.1, 0, 0, -side * 2.0, 0, 0, color=eq_green, **arrow_kw)
 
     _draw_leader_label(
-        ax, (s, 0.0, 0.0), (2.35, 0.45, 0.25), r"$T_\phi \propto \phi^2$", eq_red
+        ax,
+        (s, 0.0, 0.0),
+        (2.35, 0.45, 0.25),
+        r"$T_\phi \propto \phi^2$",
+        eq_red,
+        fontsize=font_main,
     )
     _draw_leader_label(
-        ax, (0.0, s, 0.0), (0.45, 2.35, 0.25), r"$T_e \propto e^2$", eq_green
+        ax,
+        (0.0, s, 0.0),
+        (0.45, 2.35, 0.25),
+        r"$T_e \propto e^2$",
+        eq_green,
+        fontsize=font_main,
     )
     _draw_leader_label(
-        ax, (0.0, 0.0, s), (0.45, 0.25, 2.35), r"$T_\pi \propto \pi^2$", eq_blue
+        ax,
+        (0.0, 0.0, s),
+        (0.45, 0.25, 2.35),
+        r"$T_\pi \propto \pi^2$",
+        eq_blue,
+        fontsize=font_main,
     )
     _draw_leader_label(
         ax,
@@ -609,7 +635,7 @@ def build_unit_cell_figure(
         (-2.35, -0.55, 0.35),
         r"$\delta_\mathrm{side}$ (inward)",
         eq_green,
-        fontsize=9,
+        fontsize=font_small,
     )
     _draw_leader_label(
         ax,
@@ -617,7 +643,7 @@ def build_unit_cell_figure(
         (-0.55, -2.25, 2.35),
         r"$\delta_z$ (push)",
         eq_blue,
-        fontsize=9,
+        fontsize=font_small,
     )
 
     from matplotlib.patches import FancyBboxPatch
@@ -630,23 +656,23 @@ def build_unit_cell_figure(
             0.05,
             boxstyle="round,pad=0.008",
             transform=fig.transFigure,
-            facecolor="#2a1838",
+            facecolor="#000000",
             edgecolor=matrix_green,
             linewidth=1.2,
-            alpha=0.9,
+            alpha=1.0,
             zorder=4,
         )
     )
     caption_segments = (
-        (0.17, "R = ", "#e8e0f8"),
+        (0.17, "R = ", caption_neutral),
         (0.215, r"$\phi^2$", eq_red),
-        (0.255, " + ", "#e8e0f8"),
+        (0.255, " + ", caption_neutral),
         (0.275, r"$e^2$", eq_green),
-        (0.305, " − ", "#e8e0f8"),
+        (0.305, " − ", caption_neutral),
         (0.325, r"$\pi^2$", eq_blue),
-        (0.355, f" ≈ {r_show:+.3f} drives net ", "#e8e0f8"),
+        (0.355, f" ≈ {r_show:+.3f} drives net ", caption_neutral),
         (0.545, r"$\delta_\mathrm{side}$", eq_green),
-        (0.595, " contraction", "#e8e0f8"),
+        (0.595, " contraction", caption_neutral),
     )
     for x_pos, label, label_color in caption_segments:
         fig.text(
@@ -656,26 +682,27 @@ def build_unit_cell_figure(
             transform=fig.transFigure,
             ha="left",
             color=label_color,
-            fontsize=9,
+            fontsize=font_caption,
+            alpha=1.0,
             zorder=6,
         )
 
     ax.set_xlim(-2.6, 2.6)
     ax.set_ylim(-2.6, 2.6)
     ax.set_zlim(-2.6, 2.6)
-    ax.set_xlabel("φ-face", color="#a89ec8", labelpad=8)
-    ax.set_ylabel("e-face", color="#a89ec8", labelpad=8)
-    ax.set_zlabel("π-face", color="#a89ec8", labelpad=8)
-    ax.tick_params(colors="#a89ec8", labelsize=8)
-    ax.xaxis.pane.fill = False
-    ax.yaxis.pane.fill = False
-    ax.zaxis.pane.fill = False
-    ax.grid(True, color="#3a3550")
+    ax.set_xlabel("φ-face", color=caption_neutral, fontsize=font_axis, labelpad=8)
+    ax.set_ylabel("e-face", color=caption_neutral, fontsize=font_axis, labelpad=8)
+    ax.set_zlabel("π-face", color=caption_neutral, fontsize=font_axis, labelpad=8)
+    ax.tick_params(colors=caption_neutral, labelsize=font_tick)
+    for axis in (ax.xaxis, ax.yaxis, ax.zaxis):
+        axis.pane.fill = False
+        axis.pane.set_edgecolor("#333333")
+    ax.grid(True, color="#505050")
     ax.view_init(elev=22, azim=45)
     ax.set_title(
         "Unit cell — orthogonal push δ_z and compensatory δ_side",
-        color="#e8e0f8",
-        fontsize=11,
+        color=caption_neutral,
+        fontsize=font_title,
         pad=14,
     )
     fig.tight_layout()
