@@ -22,6 +22,7 @@ PI = np.pi
 R = PHI**2 + E**2 - PI**2
 E_OVER_PI = E / PI
 KAPPA_DOC = 0.85
+UNIT_CELL_VIEWPORT_PX = 550
 
 BOOT_QUOTE_STRING = "TEST EVERYTHING, HOLD FAST WHAT IS GOOD AND KNOW YOUR GOD"
 
@@ -956,10 +957,30 @@ def figure_to_pil_image(fig: plt.Figure, *, dpi: int = 150):
     return pil_img
 
 
+def _resize_pil_for_viewport(pil_img, *, max_px: int = UNIT_CELL_VIEWPORT_PX):
+    """Downscale for Gradio viewport display (smaller websocket payload)."""
+    from PIL import Image as PILImage
+
+    if max(pil_img.size) <= max_px:
+        return pil_img
+    resized = pil_img.copy()
+    resized.thumbnail((max_px, max_px), PILImage.Resampling.LANCZOS)
+    return resized
+
+
+def _resize_rgb_for_viewport(arr: np.ndarray, *, max_px: int = UNIT_CELL_VIEWPORT_PX) -> np.ndarray:
+    from PIL import Image as PILImage
+
+    if arr.ndim != 3 or arr.shape[2] < 3:
+        return arr
+    pil_img = PILImage.fromarray(arr[:, :, :3])
+    return np.asarray(_resize_pil_for_viewport(pil_img, max_px=max_px))
+
+
 def figure_to_numpy_rgb(fig: plt.Figure, *, dpi: int = 150) -> np.ndarray:
     """Matplotlib figure → RGB numpy array for gr.Image(type='numpy')."""
-    pil_img = figure_to_pil_image(fig, dpi=dpi)
-    rgb = np.asarray(pil_img.convert("RGB"))
+    pil_img = _resize_pil_for_viewport(figure_to_pil_image(fig, dpi=dpi).convert("RGB"))
+    rgb = np.asarray(pil_img)
     print(f"[DEBUG] figure_to_numpy_rgb: shape={rgb.shape}", flush=True)
     return rgb
 
@@ -1002,8 +1023,8 @@ def figure_to_viewport_numpy(fig: plt.Figure, *, dpi: int = 100) -> np.ndarray:
         buf.seek(0)
         from PIL import Image as PILImage
 
-        pil_img = PILImage.open(buf).convert("RGB")
-        arr = np.asarray(pil_img)
+        pil_img = _resize_pil_for_viewport(PILImage.open(buf).convert("RGB"))
+        arr = np.asarray(pil_img, dtype=np.uint8)
         print(f"[DEBUG] figure_to_viewport_numpy: shape={arr.shape}", flush=True)
         return arr
     except Exception as exc:
@@ -1113,10 +1134,11 @@ def figure_to_viewport_img_html(fig: plt.Figure, *, dpi: int = 100) -> str:
     """Matplotlib figure → inline base64 PNG for gr.HTML (no /tmp file URLs on HF)."""
     print(f"[DEBUG] figure_to_viewport_img_html: dpi={dpi}", flush=True)
     try:
-        pil_img = figure_to_pil_image(fig, dpi=dpi)
+        pil_img = _resize_pil_for_viewport(figure_to_pil_image(fig, dpi=dpi))
         buf = io.BytesIO()
-        pil_img.save(buf, format="PNG")
+        pil_img.save(buf, format="PNG", optimize=True)
         b64 = base64.b64encode(buf.getvalue()).decode("ascii")
+        px = UNIT_CELL_VIEWPORT_PX
         print(
             f"[DEBUG] figure_to_viewport_img_html: b64_len={len(b64)} "
             f"pil_size={pil_img.size}",
@@ -1124,13 +1146,14 @@ def figure_to_viewport_img_html(fig: plt.Figure, *, dpi: int = 100) -> str:
         )
         return (
             '<div class="myst-unit-cell-viewport-img-wrap" '
-            'style="width:100%;height:550px;min-height:550px;max-height:550px;'
-            'display:flex;align-items:center;justify-content:center;'
-            'background:#000000;overflow:hidden;box-sizing:border-box;">'
+            f'style="width:100%;height:{px}px;min-height:{px}px;max-height:{px}px;'
+            'display:block;background:#000000;overflow:hidden;box-sizing:border-box;">'
             f'<img src="data:image/png;base64,{b64}" '
             'alt="Unit cell viewport" class="myst-unit-cell-viewport-img" '
-            'style="width:100%;height:100%;max-width:100%;max-height:550px;'
-            'object-fit:contain;object-position:center center;display:block;" />'
+            f'width="{pil_img.size[0]}" height="{pil_img.size[1]}" '
+            f'style="width:100%;height:{px}px;max-width:100%;max-height:{px}px;'
+            'object-fit:contain;object-position:center center;'
+            'display:block;visibility:visible;opacity:1;" />'
             "</div>"
         )
     except Exception as exc:
