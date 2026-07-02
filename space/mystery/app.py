@@ -1972,20 +1972,38 @@ footer {{ visibility: hidden; }}
     gap: 0 !important;
 }}
 .gradio-container .myst-gravity-left-stack {{
+    flex: 1 1 0 !important;
+    min-height: 0 !important;
     gap: 0.65rem !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
 }}
-.gradio-container .myst-gravity-control-panel.myst-gravity-left-frame {{
-    flex: 0 1 auto !important;
+.gradio-container .myst-gravity-left-stack > .block,
+.gradio-container .myst-gravity-left-stack > .form,
+.gradio-container .myst-gravity-left-stack > .group {{
+    flex: 0 0 auto !important;
     height: auto !important;
     min-height: 0 !important;
+    width: 100% !important;
+}}
+.gradio-container .myst-gravity-control-panel.myst-gravity-left-frame {{
+    flex: 0 0 auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
 }}
 .gradio-container .myst-gravity-presets-panel.myst-gravity-left-frame {{
     flex: 0 0 auto !important;
     height: auto !important;
     min-height: 0 !important;
+    max-height: none !important;
     padding-bottom: 0.65rem !important;
+    overflow: visible !important;
+    visibility: visible !important;
+    display: flex !important;
 }}
 .gradio-container .myst-gravity-presets-header {{
     display: flex !important;
@@ -2203,15 +2221,20 @@ footer {{ visibility: hidden; }}
     font-size: 0.72rem !important;
 }}
 .gradio-container .myst-gravity-left-frame.myst-gravity-panel-window.vqc-optics-panel {{
-    flex: 1 1 auto !important;
-    height: 100% !important;
-    min-height: 100% !important;
+    flex: 0 0 auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
     width: 100% !important;
     margin: 0 !important;
     padding: 0 0.75rem 0.85rem !important;
     display: flex !important;
     flex-direction: column !important;
     box-sizing: border-box !important;
+    overflow: visible !important;
+}}
+.gradio-container .myst-gravity-left-tui.myst-gravity-left-frame.myst-gravity-panel-window.vqc-optics-panel {{
+    flex: 0 0 auto !important;
     overflow: hidden !important;
 }}
 .gradio-container .myst-gravity-cube-panel.myst-gravity-panel-window.vqc-optics-panel {{
@@ -2238,7 +2261,7 @@ footer {{ visibility: hidden; }}
     margin: 0 0 0.55rem 0 !important;
 }}
 .gradio-container .myst-gravity-left-frame .myst-gravity-controls-accordion .accordion {{
-    max-height: min(52vh, 28rem) !important;
+    max-height: min(38vh, 22rem) !important;
     overflow-y: auto !important;
 }}
 .gradio-container .myst-gravity-left-frame .myst-gravity-metrics-inner {{
@@ -2253,9 +2276,10 @@ footer {{ visibility: hidden; }}
     background: rgba(0, 0, 0, 0.22) !important;
 }}
 .gradio-container .myst-gravity-left-frame .myst-gravity-metrics-inner textarea {{
-    flex: 1 1 auto !important;
-    min-height: 0 !important;
-    height: 100% !important;
+    flex: 0 0 auto !important;
+    min-height: 8.5rem !important;
+    height: auto !important;
+    max-height: 12rem !important;
 }}
 .gradio-container .myst-gravity-controls-col .myst-gravity-controls-accordion {{
     flex: 0 1 auto !important;
