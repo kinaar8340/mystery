@@ -551,38 +551,16 @@ def build_unit_cell_viewport_header_html(
     frame_idx: int | None = None,
     total_frames: int | None = None,
 ) -> str:
-    """Frame-layer header: brand, status, legend, and residual equation bar."""
+    """Compact fixed viewport nameplate (no legend/equation scroll stack)."""
+    del r_val
     p = float(np.clip(pressure, 0.0, 1.0))
-    r_show = R if r_val is None else r_val
     hint = _deform_pressure_hint(p)
     frame_note = ""
     if frame_idx is not None and total_frames:
         frame_note = f" · frame {int(frame_idx)}/{int(total_frames)}"
-    swatch_alpha = 0.55 + 0.45 * p
-    legend_items = (
-        (_UNIT_CELL_BLUE, "π bowl (concave)"),
-        (_UNIT_CELL_RED, "φ face pinch"),
-        (_UNIT_CELL_GREEN, "e face pinch"),
-        (_UNIT_CELL_BOTTOM_CONVEX, "bottom convex"),
-    )
-    legend_html = "".join(
-        (
-            f'<span class="myst-cube-legend-item">'
-            f'<span class="myst-cube-legend-swatch" style="color:{color};opacity:{swatch_alpha:.2f}">■</span>'
-            f'<span class="myst-cube-legend-label">{label}</span>'
-            f"</span>"
-        )
-        for color, label in legend_items
-    )
-    return f"""<div class="myst-cube-viewport-header" role="img" aria-label="Unit cell viewport">
-  <span class="myst-cube-viewport-brand">MYSTERY</span>
-  <span class="myst-cube-viewport-title">Unit Cell Viewport</span>
-  <span class="myst-cube-viewport-tag">Deformable unit cell · no WebGL</span>
-  <span class="myst-cube-viewport-status">pressure {p * 100:.0f}% · {hint}{frame_note}</span>
-  <div class="myst-cube-viewport-legend" aria-label="Deformation legend">{legend_html}</div>
-  <div class="myst-cube-viewport-equation" aria-label="Residual equation">
-    R = φ² + e² − π² ≈ {r_show:+.3f} drives net δ<sub>side</sub> contraction
-  </div>
+    return f"""<div class="myst-cube-viewport-header myst-cube-viewport-header-fixed" role="img" aria-label="Unit cell viewport">
+  <div class="myst-cube-viewport-title-line">UNIT CELL VIEWPORT</div>
+  <div class="myst-cube-viewport-sub-line">Deformable Unit Cell · No WebGL · pressure {p * 100:.0f}% · {hint}{frame_note}</div>
 </div>"""
 
 

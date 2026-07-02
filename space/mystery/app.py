@@ -1068,10 +1068,56 @@ HFB_CSS = f"""
     padding: 2px 10px !important;
     font-size: 0.78rem !important;
 }}
+.gradio-container .myst-gravity-cube-panel .myst-cube-viewport-header-slot,
+.gradio-container .myst-gravity-cube-panel .myst-cube-viewport-header-slot.block,
+.gradio-container .myst-gravity-cube-panel > .block:has(.myst-cube-viewport-header-fixed) {{
+    flex: 0 0 auto !important;
+    height: auto !important;
+    max-height: 4.25rem !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    overflow-y: hidden !important;
+    margin: 0 0 0.35rem 0 !important;
+    padding: 0 !important;
+}}
+.gradio-container .myst-cube-viewport-header-fixed {{
+    flex: 0 0 auto !important;
+    max-height: 4rem !important;
+    height: auto !important;
+    overflow: hidden !important;
+    overflow-y: hidden !important;
+    margin: 0 !important;
+    padding: 0.55rem 0.75rem !important;
+    border: 1px solid #444 !important;
+    border-radius: 8px !important;
+    background: #1f1f1f !important;
+    box-sizing: border-box !important;
+}}
+.gradio-container .myst-cube-viewport-header-fixed .myst-cube-viewport-title-line {{
+    font-size: 0.94rem !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.08em !important;
+    color: #dddddd !important;
+    line-height: 1.2 !important;
+    margin: 0 0 0.2rem 0 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}}
+.gradio-container .myst-cube-viewport-header-fixed .myst-cube-viewport-sub-line {{
+    font-size: 0.74rem !important;
+    color: #aaaaaa !important;
+    line-height: 1.25 !important;
+    margin: 0 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}}
 .gradio-container .myst-gravity-cube-panel .myst-cube-viewport-header {{
     flex: 0 0 auto !important;
-    max-height: 5.5rem !important;
-    padding-bottom: 0.15rem !important;
+    max-height: 4.25rem !important;
+    padding-bottom: 0 !important;
+    overflow: hidden !important;
 }}
 html {{
     background-color: #0a0818 !important;
@@ -2446,7 +2492,7 @@ footer {{ visibility: hidden; }}
     max-height: 100% !important;
     overflow: hidden !important;
 }}
-.gradio-container .myst-gravity-cube-panel .myst-cube-viewport-header {{
+.gradio-container .myst-gravity-cube-panel .myst-cube-viewport-header:not(.myst-cube-viewport-header-fixed) {{
     flex: 0 0 auto !important;
     min-height: 0 !important;
     max-height: 7.5rem !important;
@@ -2454,6 +2500,15 @@ footer {{ visibility: hidden; }}
     overflow: hidden !important;
     box-sizing: border-box !important;
     padding-bottom: 0.3rem !important;
+}}
+.gradio-container .myst-gravity-cube-panel .myst-cube-viewport-header.myst-cube-viewport-header-fixed {{
+    flex: 0 0 auto !important;
+    min-height: 0 !important;
+    max-height: 4rem !important;
+    height: auto !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+    padding-bottom: 0 !important;
 }}
 .gradio-container .myst-gravity-cube-panel .myst-cube-viewport-status {{
     display: block !important;
@@ -2904,7 +2959,7 @@ footer {{ visibility: hidden; }}
     height: 100% !important;
     flex: none !important;
 }}
-.gradio-container .myst-gravity-page .myst-cube-viewport-frame .myst-cube-viewport-header {{
+.gradio-container .myst-gravity-page .myst-cube-viewport-frame .myst-cube-viewport-header:not(.myst-cube-viewport-header-fixed) {{
     display: flex !important;
     flex-direction: column !important;
     align-items: flex-start !important;
@@ -2913,21 +2968,23 @@ footer {{ visibility: hidden; }}
     margin: 0 0 0.3rem 0 !important;
     padding: 0.45rem 0.55rem 0.5rem !important;
     min-height: 0 !important;
-    max-height: 9.5rem !important;
+    max-height: 4.25rem !important;
     overflow: hidden !important;
 }}
-.gradio-container .myst-gravity-page .myst-cube-viewport-header {{
+.gradio-container .myst-gravity-page .myst-cube-viewport-header:not(.myst-cube-viewport-header-fixed) {{
     display: flex !important;
     flex-direction: column !important;
     align-items: flex-start !important;
     gap: 0.08rem !important;
     width: 100% !important;
-    margin: 0 0 0.55rem 0 !important;
+    margin: 0 0 0.35rem 0 !important;
     padding: 0.65rem 0.75rem 0.75rem !important;
     border-bottom: 1px solid rgba(74, 56, 24, 0.65) !important;
     border-radius: 10px 10px 0 0 !important;
     background: linear-gradient(180deg, #1f140a 0%, #0f0a06 100%) !important;
     box-shadow: inset 0 0 14px rgba(0, 0, 0, 0.55) !important;
+    max-height: 4.25rem !important;
+    overflow: hidden !important;
 }}
 .gradio-container .myst-cube-viewport-brand {{
     font-size: 0.58rem !important;
@@ -3299,23 +3356,16 @@ footer {{ visibility: hidden; }}
     line-height: 1.5 !important;
 }}
 /* === KNOWN-GOOD VIEWPORT (last wins — matplotlib gr.Plot, not Plotly) === */
-.gradio-container .myst-gravity-visuals-col,
-.gradio-container .myst-gravity-visuals-col > .block,
-.gradio-container .myst-gravity-visuals-col > .form,
-.gradio-container .myst-gravity-visuals-col .gr-group,
-.gradio-container .myst-gravity-cube-panel.myst-gravity-panel-window,
-.gradio-container .column:has(#unit-cell-viewport),
-.gradio-container .column:has(#unit-cell-viewport) > div,
-.gradio-container .column:has(#unit-cell-viewport) > div > div,
-.gradio-container .myst-cube-viewport-media,
-.gradio-container #unit-cell-viewport,
-.gradio-container #unit-cell-viewport > div,
-.gradio-container #unit-cell-viewport .wrap {{
-    background-color: rgba(0, 0, 0, 0.08) !important;
-}}
 .gradio-container .myst-gravity-cube-panel.myst-gravity-panel-window.vqc-optics-panel {{
     grid-template-rows: auto minmax(var(--myst-viewport-min-height, 18rem), 1fr) !important;
-    background: rgba(42, 24, 16, 0.12) !important;
+}}
+.gradio-container .myst-gravity-cube-panel.myst-gravity-panel-window > .block:has(.myst-cube-viewport-header-fixed),
+.gradio-container .myst-gravity-cube-panel .myst-cube-viewport-header-slot {{
+    grid-row: 1 !important;
+    flex: 0 0 auto !important;
+    height: auto !important;
+    max-height: 4.25rem !important;
+    overflow: hidden !important;
 }}
 .gradio-container .myst-cube-viewport-media {{
     position: relative !important;
@@ -3359,7 +3409,7 @@ footer {{ visibility: hidden; }}
     flex: none !important;
     overflow: visible !important;
     box-sizing: border-box !important;
-    background-color: rgba(0, 0, 0, 0.12) !important;
+    background-color: #000000 !important;
 }}
 .gradio-container #unit-cell-viewport .plot-container img,
 .gradio-container .myst-cube-viewport-media .myst-cube-plot-inner .plot-container img {{
@@ -4850,7 +4900,10 @@ def build_app() -> gr.Blocks:
                             "myst-gravity-panel-window",
                         ]
                     ):
-                        unit_cell_header = gr.HTML(_init_unit_cell_header)
+                        unit_cell_header = gr.HTML(
+                            _init_unit_cell_header,
+                            elem_classes=["myst-cube-viewport-header-slot"],
+                        )
                         with gr.Column(elem_classes=["myst-cube-viewport-media", "myst-cube-viewport-media-slot"]):
                             unit_cell_plot = gr.Plot(
                                 label=None,
