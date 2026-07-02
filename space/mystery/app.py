@@ -999,6 +999,16 @@ WALLPAPER_HEAD = f"""
     document.addEventListener('DOMContentLoaded', mountWallpaper);
     window.addEventListener('load', mountWallpaper);
 }})();
+(function() {{
+    function onDeformVideoEnded(event) {{
+        var video = event && event.target;
+        if (!video || video.tagName !== 'VIDEO') return;
+        if (!video.closest('.myst-cube-anim-video')) return;
+        var doneBtn = document.getElementById('myst-anim-done-btn');
+        if (doneBtn) doneBtn.click();
+    }}
+    document.addEventListener('ended', onDeformVideoEnded, true);
+}})();
 </script>
 """
 
@@ -1006,6 +1016,7 @@ HFB_CSS = f"""
 :root, :root .dark {{
     --myst-control-bar-height: 2.05rem;
     --myst-viewport-min-height: clamp(14rem, 42vh, 28rem);
+    --myst-viewport-aspect: 7 / 5;
     --body-background-fill: transparent !important;
     --background-fill-primary: transparent !important;
     --background-fill-secondary: transparent !important;
@@ -2409,10 +2420,11 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-gravity-cube-panel > .column.myst-cube-viewport-media,
 .gradio-container .myst-gravity-cube-panel .myst-cube-viewport-media {{
     position: relative !important;
-    flex: 1 1 0 !important;
-    min-height: var(--myst-viewport-min-height, clamp(14rem, 42vh, 28rem)) !important;
+    flex: 0 1 auto !important;
+    min-height: 0 !important;
     height: 100% !important;
     max-height: 100% !important;
+    aspect-ratio: var(--myst-viewport-aspect, 7 / 5) !important;
     width: 100% !important;
     display: flex !important;
     flex-direction: column !important;
@@ -2653,20 +2665,28 @@ footer {{ visibility: hidden; }}
     grid-row: 2 !important;
     flex: unset !important;
     height: 100% !important;
-    min-height: var(--myst-viewport-min-height, clamp(14rem, 42vh, 28rem)) !important;
+    min-height: 0 !important;
     overflow: hidden !important;
     display: flex !important;
     flex-direction: column !important;
+    align-items: stretch !important;
+    justify-content: center !important;
 }}
 .gradio-container .myst-gravity-cube-panel.myst-gravity-panel-window > .column.myst-cube-viewport-media,
 .gradio-container .myst-gravity-cube-panel.myst-gravity-panel-window > .column.myst-cube-viewport-media-slot {{
     grid-row: 2 !important;
+    width: auto !important;
+    max-width: 100% !important;
     height: 100% !important;
+    max-height: 100% !important;
     min-height: var(--myst-viewport-min-height, clamp(14rem, 42vh, 28rem)) !important;
-    align-self: stretch !important;
+    aspect-ratio: var(--myst-viewport-aspect, 7 / 5) !important;
+    align-self: center !important;
+    margin: 0 auto !important;
     overflow: hidden !important;
     display: flex !important;
     flex-direction: column !important;
+    flex: 0 1 auto !important;
 }}
 .gradio-container .myst-gravity-left-frame .myst-gravity-controls-accordion {{
     flex: 0 0 auto !important;
@@ -2812,9 +2832,10 @@ footer {{ visibility: hidden; }}
     margin: 0 !important;
 }}
 .gradio-container .myst-gravity-page .myst-cube-viewport-frame .myst-cube-viewport-media {{
-    flex: 1 1 0 !important;
-    min-height: var(--myst-viewport-min-height, clamp(14rem, 42vh, 28rem)) !important;
+    flex: 0 1 auto !important;
+    min-height: 0 !important;
     height: 100% !important;
+    aspect-ratio: var(--myst-viewport-aspect, 7 / 5) !important;
     max-height: 100% !important;
     overflow: hidden !important;
     display: flex !important;
@@ -2966,7 +2987,7 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-gravity-page .myst-cube-viewport-frame .plot-container {{
     flex: 1 1 0 !important;
     width: 100% !important;
-    min-height: var(--myst-viewport-min-height, clamp(14rem, 42vh, 28rem)) !important;
+    min-height: 0 !important;
     height: 100% !important;
     max-height: 100% !important;
     border: 2px inset #5c4a1f !important;
@@ -3009,7 +3030,7 @@ footer {{ visibility: hidden; }}
     flex: 1 1 0 !important;
     width: 100% !important;
     height: 100% !important;
-    min-height: var(--myst-viewport-min-height, clamp(14rem, 42vh, 28rem)) !important;
+    min-height: 0 !important;
     display: flex !important;
     flex-direction: column !important;
     align-items: stretch !important;
@@ -3573,7 +3594,10 @@ def _format_gravity_preset_tui_html(
     preset_id = _gravity_preset_id(active_slot)
     profile = _GRAVITY_PRESET_SLOT_LABELS.get(active_slot)
     if key_metrics:
-        if key_metrics.get("phase") == "loop":
+        phase = key_metrics.get("phase")
+        if phase == "once":
+            status = "PLAYING — DEFORMATION (once)"
+        elif phase == "loop":
             status = "LOOP — DEFORMATION VIDEO"
         else:
             frame_idx = key_metrics.get("frame_idx")
@@ -3694,7 +3718,7 @@ def _gravity_hide_video_update() -> dict:
 
 
 def _gravity_show_video_update(video_path: str) -> dict:
-    return gr.update(value=video_path, visible=True, autoplay=True, loop=True)
+    return gr.update(value=video_path, visible=True, autoplay=True, loop=False)
 
 
 def _gravity_plot_media_update(fig: object) -> dict:
@@ -3739,14 +3763,8 @@ def _gravity_preset_btn_immediate_active(active_key: str) -> tuple:
 
 
 def _gravity_animate_btn_immediate(animate_active: bool, active_preset: int) -> tuple:
-    """Latch animate on start; immediately restore plot when stopping."""
-    if animate_active:
-        return (
-            False,
-            *_gravity_preset_btn_immediate_active(str(int(active_preset))),
-            gr.update(visible=True),
-            _gravity_hide_video_update(),
-        )
+    """Flash animate highlight; playback reset is handled after the video ends."""
+    del animate_active, active_preset
     return (
         gr.skip(),
         *_gravity_preset_btn_immediate_active("animate"),
@@ -3922,6 +3940,64 @@ def _make_gravity_quick_preset_click(slot: int):
     return handler
 
 
+def _gravity_animation_done(
+    phi_sq_scale: float,
+    e_sq_scale: float,
+    pi_sq_scale: float,
+    kappa: float,
+    delta_z: float,
+    alpha: float,
+    beta: float,
+    deform_pressure: float,
+    view_elev: float,
+    view_azim: float,
+    active_preset: int,
+    edit_params_enabled: bool,
+) -> tuple:
+    """Restore static plot after one-shot deformation video finishes."""
+    dials = _gravity_dial_bundle(
+        phi_sq_scale,
+        e_sq_scale,
+        pi_sq_scale,
+        kappa,
+        delta_z,
+        alpha,
+        beta,
+        deform_pressure,
+        view_elev,
+        view_azim,
+    )
+    slot = int(active_preset)
+    metrics, header, fig = run_residual_explorer(
+        phi_sq_scale,
+        e_sq_scale,
+        pi_sq_scale,
+        kappa,
+        delta_z,
+        alpha,
+        beta,
+        deform_pressure,
+        view_elev,
+        view_azim,
+    )
+    tui = _gravity_tui_for_preset(slot, dials)
+    return (
+        False,
+        *_gravity_explorer_outputs(
+            str(slot),
+            dials,
+            metrics,
+            header,
+            fig,
+            _gravity_hide_video_update(),
+            tui,
+            slot,
+            edit_params_enabled=bool(edit_params_enabled),
+            show_video=False,
+        ),
+    )
+
+
 def _gravity_animate_toggle_click(
     phi_sq_scale: float,
     e_sq_scale: float,
@@ -3938,6 +4014,7 @@ def _gravity_animate_toggle_click(
     animate_active: bool,
     progress: gr.Progress = gr.Progress(track_tqdm=False),
 ):
+    del animate_active
     dials = _gravity_dial_bundle(
         phi_sq_scale,
         e_sq_scale,
@@ -3951,35 +4028,6 @@ def _gravity_animate_toggle_click(
         view_azim,
     )
     slot = int(active_preset)
-    if animate_active:
-        metrics, header, fig = run_residual_explorer(
-            phi_sq_scale,
-            e_sq_scale,
-            pi_sq_scale,
-            kappa,
-            delta_z,
-            alpha,
-            beta,
-            deform_pressure,
-            view_elev,
-            view_azim,
-        )
-        tui = _gravity_tui_for_preset(slot, dials)
-        return (
-            False,
-            *_gravity_explorer_outputs(
-                str(slot),
-                dials,
-                metrics,
-                header,
-                fig,
-                _gravity_hide_video_update(),
-                tui,
-                slot,
-                edit_params_enabled=bool(edit_params_enabled),
-                show_video=False,
-            ),
-        )
     try:
         video_path, metrics, header, fig, key_metrics = render_unit_cell_deformation_video(
             phi_sq_scale,
@@ -4001,7 +4049,7 @@ def _gravity_animate_toggle_click(
             key_metrics=key_metrics,
         )
         return (
-            True,
+            False,
             *_gravity_explorer_outputs(
                 "animate",
                 dials,
@@ -4674,10 +4722,15 @@ def build_app() -> gr.Blocks:
                                 visible=False,
                                 interactive=False,
                                 autoplay=True,
-                                loop=True,
+                                loop=False,
                                 format="mp4",
                                 elem_classes=["myst-cube-anim-video"],
                             )
+                        anim_done_btn = gr.Button(
+                            "Animation done",
+                            visible=False,
+                            elem_id="myst-anim-done-btn",
+                        )
             re_inputs = [
                 re_phi_scale, re_e_scale, re_pi_scale,
                 re_kappa, re_delta_z, re_alpha, re_beta, re_pressure,
@@ -4728,6 +4781,11 @@ def build_app() -> gr.Blocks:
                 inputs=[*gravity_preset_inputs, re_animate_active],
                 outputs=gravity_preset_outputs,
                 show_progress="full",
+            )
+            anim_done_btn.click(
+                _gravity_animation_done,
+                inputs=gravity_preset_inputs,
+                outputs=gravity_preset_outputs,
             )
             for slot, preset_btn in enumerate(re_quick_presets):
                 preset_btn.click(

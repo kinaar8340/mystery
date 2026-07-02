@@ -968,6 +968,12 @@ def _ease_in_out_cubic(t: float) -> float:
     return 1.0 - (-2.0 * t + 2.0) ** 3 / 2.0
 
 
+def _deformation_pressure_once(n_forward: int = 24) -> list[float]:
+    """Single 0 → 1 pressure sweep for one-shot playback."""
+    sweep_t = np.linspace(0.0, 1.0, max(4, int(n_forward)))
+    return [_ease_in_out_cubic(float(t)) for t in sweep_t]
+
+
 def _deformation_pressure_loop(n_forward: int = 24) -> list[float]:
     """Ping-pong 0 → 1 → 0 pressure path for seamless video loops."""
     sweep_t = np.linspace(0.0, 1.0, max(4, int(n_forward)))
@@ -1079,7 +1085,7 @@ def build_unit_cell_figure(
     font_axis = 12
     caption_neutral = _UNIT_CELL_LABEL_TEXT
 
-    fig = plt.figure(figsize=(10.0, 13.0), dpi=dpi, facecolor=bg)
+    fig = plt.figure(figsize=(14.0, 10.0), dpi=dpi, facecolor=bg)
     ax = fig.add_subplot(111, projection="3d", facecolor=bg)
 
     triangles, tri_colors = _deformed_cube_surface(s, p, delta_z, side)
@@ -1213,7 +1219,6 @@ def build_unit_cell_figure(
     ax.view_init(elev=elev, azim=azim)
 
     fig.subplots_adjust(left=0.0, right=1.0, top=1.0, bottom=0.0)
-    fig.set_size_inches(12.0, 9.0, forward=True)
     return fig
 
 
@@ -1431,12 +1436,12 @@ def render_unit_cell_deformation_video(
     dpi: int = 96,
     progress=None,
 ) -> tuple[str, str, str, plt.Figure, dict[str, float | int | str | None]]:
-    """Render a seamless deformation loop (mp4/gif) for smooth Gradio playback."""
+    """Render a one-shot deformation sweep (mp4/gif) for Gradio playback."""
     r_val = residual_from_scales(phi_sq_scale, e_sq_scale, pi_sq_scale)
     d_side = delta_side_contraction(delta_z, r_val, kappa, alpha=alpha, beta=beta)
     side = abs(d_side) * 0.5
     hold = float(np.clip(deform_pressure, 0.0, 1.0))
-    pressures = _deformation_pressure_loop()
+    pressures = _deformation_pressure_once()
     total_frames = len(pressures)
     rgb_frames: list[np.ndarray] = []
 
@@ -1458,7 +1463,7 @@ def render_unit_cell_deformation_video(
         plt.close(fig)
 
     if progress is not None:
-        progress(0.98, desc="Encoding loop video…")
+        progress(0.98, desc="Encoding deformation video…")
     video_path = _encode_loop_video(rgb_frames, fps=fps)
 
     metrics, header, fig = run_residual_explorer(
@@ -1485,16 +1490,16 @@ def render_unit_cell_deformation_video(
         frame_idx=total_frames,
         total_frames=total_frames,
     )
-    final_km["phase"] = "loop"
+    final_km["phase"] = "once"
     metrics = (
         f"{metrics}\n\n"
-        f"=== DEFORMATION LOOP ===\n"
+        f"=== DEFORMATION PLAYBACK ===\n"
         f"Frames rendered       : {total_frames} @ {fps} fps\n"
-        f"Playback              : seamless 0→1→0 loop\n"
+        f"Playback              : single 0→100% sweep (plays once)\n"
         f"Hold pressure         : {hold * 100:.1f}%"
     )
     if progress is not None:
-        progress(1.0, desc="Loop ready")
+        progress(1.0, desc="Video ready")
     return video_path, metrics, header, fig, final_km
 
 
