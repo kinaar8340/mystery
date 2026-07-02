@@ -143,9 +143,8 @@ CONTROL_PANEL_HEADER_HTML = """
 """
 
 QUICK_PRESETS_PANEL_HEADER_HTML = """
-<div class="myst-gravity-presets-header" role="img" aria-label="Quick presets panel">
-  <span class="myst-cube-viewport-brand">MYSTERY</span>
-  <span class="myst-cube-viewport-title">Quick Presets</span>
+<div class="myst-gravity-presets-header myst-gravity-presets-header-compact" role="img" aria-label="Quick presets panel">
+  <span class="myst-cube-viewport-title">QUICK PRESETS</span>
   <span class="myst-cube-viewport-sub">one click sets dials</span>
 </div>
 """
@@ -1986,7 +1985,7 @@ footer {{ visibility: hidden; }}
     gap: 0.55rem !important;
     overflow: hidden !important;
     display: grid !important;
-    grid-template-rows: auto auto 0.85rem auto !important;
+    grid-template-rows: auto auto minmax(0, 1fr) !important;
     grid-template-columns: minmax(0, 1fr) !important;
     align-content: start !important;
 }}
@@ -2006,41 +2005,43 @@ footer {{ visibility: hidden; }}
     background: transparent !important;
     box-shadow: none !important;
 }}
-.gradio-container .myst-gravity-left-stack > .block:has(.myst-gravity-left-control-slot),
-.gradio-container .myst-gravity-left-stack > .block:has(.myst-gravity-control-panel) {{
-    grid-row: 1 !important;
-    min-height: 0 !important;
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-    align-self: stretch !important;
-}}
 .gradio-container .myst-gravity-left-stack > .block:has(.myst-gravity-left-presets-slot),
-.gradio-container .myst-gravity-left-stack > .block:has(.myst-gravity-presets-panel) {{
-    grid-row: 2 !important;
+.gradio-container .myst-gravity-left-stack > .block:has(.myst-gravity-presets-panel),
+.gradio-container .myst-gravity-left-stack > .block:has(.myst-gravity-presets-fixed) {{
+    grid-row: 1 !important;
     align-self: stretch !important;
     overflow: visible !important;
-}}
-.gradio-container .myst-gravity-left-stack > .block:has(.myst-gravity-left-tui-gap-slot) {{
-    grid-row: 3 !important;
-    align-self: stretch !important;
 }}
 .gradio-container .myst-gravity-left-stack > .block:has(.myst-gravity-left-tui-slot),
 .gradio-container .myst-gravity-left-stack > .block:has(.myst-gravity-left-tui) {{
-    grid-row: 4 !important;
+    grid-row: 2 !important;
     align-self: stretch !important;
     overflow: visible !important;
 }}
-.gradio-container .myst-gravity-left-stack > .column.myst-gravity-left-control-slot {{
+.gradio-container .myst-gravity-left-stack > .block:has(.myst-gravity-left-control-slot),
+.gradio-container .myst-gravity-left-stack > .block:has(.myst-gravity-control-panel) {{
+    grid-row: 3 !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    align-self: stretch !important;
+}}
+.gradio-container .myst-gravity-left-stack > .column.myst-gravity-left-presets-slot,
+.gradio-container .myst-gravity-left-stack > .column.myst-gravity-presets-fixed {{
     grid-row: 1 !important;
+}}
+.gradio-container .myst-gravity-left-stack > .column.myst-gravity-left-tui-slot {{
+    grid-row: 2 !important;
+}}
+.gradio-container .myst-gravity-left-stack > .column.myst-gravity-left-control-slot {{
+    grid-row: 3 !important;
     min-height: 0 !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
 }}
-.gradio-container .myst-gravity-left-stack > .column.myst-gravity-left-presets-slot {{
-    grid-row: 2 !important;
-}}
-.gradio-container .myst-gravity-left-stack > .column.myst-gravity-left-tui-slot {{
-    grid-row: 4 !important;
+.gradio-container .myst-gravity-presets-fixed {{
+    flex: 0 0 auto !important;
+    z-index: 5 !important;
 }}
 .gradio-container .myst-gravity-left-control-slot,
 .gradio-container .myst-gravity-control-panel.myst-gravity-left-frame {{
@@ -2081,6 +2082,10 @@ footer {{ visibility: hidden; }}
     display: flex !important;
     flex-direction: column !important;
     overflow: visible !important;
+}}
+.gradio-container .myst-gravity-presets-header.myst-gravity-presets-header-compact {{
+    align-items: center !important;
+    text-align: center !important;
 }}
 .gradio-container .myst-gravity-presets-header {{
     display: flex !important;
@@ -2656,6 +2661,108 @@ footer {{ visibility: hidden; }}
     color: #ffb347 !important;
     font-family: "Courier New", Courier, monospace !important;
 }}
+.gradio-container .myst-gravity-control-levels-wrap,
+.gradio-container .myst-gravity-control-levels-wrap .html-container {{
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+}}
+.gradio-container .myst-gravity-level-panel {{
+    width: 100% !important;
+    padding: 0.55rem 0.65rem 0.65rem !important;
+    background: #000000 !important;
+    border: 2px inset #5c4a1f !important;
+    border-radius: 8px !important;
+    font-family: "Courier New", Courier, monospace !important;
+    box-sizing: border-box !important;
+}}
+.gradio-container .myst-gravity-level-title {{
+    color: #f5e6c8 !important;
+    font-size: 0.82rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.14em !important;
+    text-align: center !important;
+    text-transform: uppercase !important;
+}}
+.gradio-container .myst-gravity-level-rule {{
+    border: none !important;
+    border-top: 1px solid rgba(245, 230, 200, 0.55) !important;
+    margin: 0.45rem 0 0.55rem 0 !important;
+}}
+.gradio-container .myst-gravity-level-row {{
+    display: grid !important;
+    grid-template-columns: 2.35rem 1fr auto auto !important;
+    align-items: center !important;
+    gap: 0.28rem 0.35rem !important;
+    margin: 0.18rem 0 !important;
+    font-size: 0.74rem !important;
+    line-height: 1.2 !important;
+}}
+.gradio-container .myst-gravity-level-id {{
+    color: #f5e6c8 !important;
+    font-weight: 600 !important;
+    white-space: nowrap !important;
+}}
+.gradio-container .myst-gravity-level-bar {{
+    display: inline-flex !important;
+    gap: 1px !important;
+    min-height: 0.72rem !important;
+    align-items: center !important;
+}}
+.gradio-container .myst-level-block {{
+    display: inline-block !important;
+    width: 0.46rem !important;
+    height: 0.72rem !important;
+    border-radius: 1px !important;
+}}
+.gradio-container .myst-level-block.myst-level-fill.myst-level-pos {{
+    background: #33ff66 !important;
+    box-shadow: 0 0 4px rgba(51, 255, 102, 0.45) !important;
+}}
+.gradio-container .myst-level-block.myst-level-fill.myst-level-neg {{
+    background: #ff3344 !important;
+    box-shadow: 0 0 4px rgba(255, 51, 68, 0.45) !important;
+}}
+.gradio-container .myst-level-block.myst-level-empty {{
+    background: rgba(255, 255, 255, 0.08) !important;
+}}
+.gradio-container .myst-gravity-level-sep {{
+    color: #f5e6c8 !important;
+    opacity: 0.85 !important;
+}}
+.gradio-container .myst-gravity-level-val {{
+    min-width: 4.1rem !important;
+    text-align: right !important;
+    font-weight: 700 !important;
+    white-space: nowrap !important;
+}}
+.gradio-container .myst-gravity-level-val.myst-val-pos {{
+    color: #33ff66 !important;
+}}
+.gradio-container .myst-gravity-level-val.myst-val-neg {{
+    color: #ff3344 !important;
+}}
+.gradio-container .myst-gravity-level-foot,
+.gradio-container .myst-gravity-level-hint {{
+    margin-top: 0.55rem !important;
+    color: #9a8458 !important;
+    font-size: 0.66rem !important;
+    letter-spacing: 0.06em !important;
+    text-align: center !important;
+}}
+.gradio-container .myst-preset-tui-menu .myst-preset-tui-lines,
+.gradio-container .myst-preset-tui-values .myst-preset-tui-lines {{
+    color: #e8d4a8 !important;
+    font-size: 0.68rem !important;
+    line-height: 1.35 !important;
+}}
+.gradio-container .myst-gravity-levels-accordion > .label-wrap span {{
+    color: #f5e6c8 !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.1em !important;
+    text-transform: uppercase !important;
+}}
 
 .gradio-container .myst-gravity-visuals-col .markdown.prose {{
     font-size: 0.92rem !important;
@@ -2730,24 +2837,126 @@ _GRAVITY_HOME_DIALS = {
     "azim": 45.0,
 }
 _GRAVITY_PRESET_SLOT_LABELS = {
-    0: "home · default startup",
-    1: "rigid cube",
-    2: "full π bowl",
-    3: "φ/e concave pinch",
+    0: "menu · parameter catalog",
+    1: "default · home values",
+    2: "rigid cube",
+    3: "full π bowl",
+    4: "φ/e concave pinch",
 }
+_GRAVITY_PARAM_CATALOG: tuple[dict[str, object], ...] = (
+    {
+        "id": "01",
+        "key": "pressure",
+        "label": "deformation pressure",
+        "kind": "percent",
+        "min": 0.0,
+        "max": 1.0,
+        "default": 0.35,
+        "desc": "0 = rigid cube · 1 = full π bowl + φ/e concave pinch",
+    },
+    {
+        "id": "02",
+        "key": "phi",
+        "label": "φ² scale",
+        "kind": "float",
+        "min": 0.90,
+        "max": 1.10,
+        "default": 1.0,
+        "desc": "Golden-ratio leg scale; unity = nominal φ²",
+    },
+    {
+        "id": "03",
+        "key": "e",
+        "label": "e² scale",
+        "kind": "float",
+        "min": 0.90,
+        "max": 1.10,
+        "default": 1.0,
+        "desc": "Natural-base leg scale; unity = nominal e²",
+    },
+    {
+        "id": "04",
+        "key": "pi",
+        "label": "π² scale",
+        "kind": "float",
+        "min": 0.90,
+        "max": 1.10,
+        "default": 1.0,
+        "desc": "Circle-completeness leg scale; unity = nominal π²",
+    },
+    {
+        "id": "05",
+        "key": "kappa",
+        "label": "κ holonomy-gap",
+        "kind": "float",
+        "min": 0.70,
+        "max": 0.95,
+        "default": KAPPA_DOC,
+        "desc": f"κ_doc = {KAPPA_DOC} · κ* nulls B(κ)−R",
+    },
+    {
+        "id": "06",
+        "key": "dz",
+        "label": "δ_z primary push",
+        "kind": "float",
+        "min": 0.0,
+        "max": 0.5,
+        "default": 0.1,
+        "desc": "Top-face downward push amplitude",
+    },
+    {
+        "id": "07",
+        "key": "alpha",
+        "label": "α geometry factor",
+        "kind": "float",
+        "min": 0.0,
+        "max": 2.0,
+        "default": 1.0,
+        "desc": "Side contraction geometry coupling",
+    },
+    {
+        "id": "08",
+        "key": "beta",
+        "label": "β residual coupling",
+        "kind": "float",
+        "min": 0.0,
+        "max": 2.0,
+        "default": 1.0,
+        "desc": "Residual-bound feedback into δ_side",
+    },
+    {
+        "id": "09",
+        "key": "elev",
+        "label": "view elevation",
+        "kind": "degrees",
+        "min": 5.0,
+        "max": 75.0,
+        "default": 22.0,
+        "desc": "Camera elevation angle (°)",
+    },
+    {
+        "id": "10",
+        "key": "azim",
+        "label": "view azimuth",
+        "kind": "degrees",
+        "min": 0.0,
+        "max": 360.0,
+        "default": 45.0,
+        "desc": "Camera azimuth angle (°)",
+    },
+)
 _GRAVITY_PRESET_PROFILES: dict[int, dict[str, float]] = {
-    0: dict(_GRAVITY_HOME_DIALS),
-    1: {
+    1: dict(_GRAVITY_HOME_DIALS),
+    2: {
         **_GRAVITY_HOME_DIALS,
         "pressure": 0.0,
     },
-    2: {
+    3: {
         **_GRAVITY_HOME_DIALS,
         "pressure": 1.0,
         "dz": 0.18,
-        "pi": 1.0,
     },
-    3: {
+    4: {
         **_GRAVITY_HOME_DIALS,
         "pressure": 0.68,
         "dz": 0.14,
@@ -2783,6 +2992,138 @@ def _gravity_dial_bundle(
     }
 
 
+def _gravity_preset_id(slot: int) -> str:
+    return f"{int(slot) + 1:02d}"
+
+
+def _gravity_param_display(spec: dict[str, object], value: float) -> str:
+    kind = str(spec["kind"])
+    if kind == "percent":
+        return f"{float(value) * 100.0:.1f}%"
+    if kind == "degrees":
+        return f"{float(value):.1f}°"
+    return f"{float(value):.4f}"
+
+
+def _gravity_param_default_display(spec: dict[str, object]) -> str:
+    return _gravity_param_display(spec, float(spec["default"]))
+
+
+def _gravity_param_range_label(spec: dict[str, object]) -> str:
+    kind = str(spec["kind"])
+    lo = float(spec["min"])
+    hi = float(spec["max"])
+    if kind == "percent":
+        return f"{lo * 100:.0f}–{hi * 100:.0f}%"
+    if kind == "degrees":
+        return f"{lo:.0f}–{hi:.0f}°"
+    return f"{lo:.3f}–{hi:.3f}"
+
+
+def _gravity_level_blocks(value: float, spec: dict[str, object]) -> tuple[str, str]:
+    lo = float(spec["min"])
+    hi = float(spec["max"])
+    span = max(hi - lo, 1e-9)
+    centered = float(value) - (lo + hi) / 2.0
+    if centered < 0 and abs(centered) > span * 0.05:
+        frac = min(1.0, abs(centered) / (span / 2.0))
+        n = max(1, min(10, round(frac * 10)))
+        blocks = (
+            '<span class="myst-level-block myst-level-fill myst-level-neg"></span>' * n
+        )
+        return blocks, "myst-val-neg"
+    norm = (float(value) - lo) / span
+    n = max(0, min(10, round(norm * 10)))
+    blocks = (
+        '<span class="myst-level-block myst-level-fill myst-level-pos"></span>' * n
+    )
+    blocks += '<span class="myst-level-block myst-level-empty"></span>' * (10 - n)
+    return blocks, "myst-val-pos"
+
+
+def _format_gravity_menu_tui_html() -> str:
+    lines: list[str] = []
+    for spec in _GRAVITY_PARAM_CATALOG:
+        kind = str(spec["kind"])
+        lines.append(
+            f"{spec['id']}  {spec['label']:<22} {kind:<8} "
+            f"{_gravity_param_range_label(spec):<12} default {_gravity_param_default_display(spec)}"
+        )
+        lines.append(f"    {spec['desc']}")
+        lines.append("")
+    body = "\n".join(lines).rstrip()
+    return (
+        '<div class="myst-preset-tui-serial myst-preset-tui-menu">'
+        '<div class="myst-preset-tui-status">'
+        "<u>ACTIVE STATUS: PRESET 01 — MENU · PARAMETER CATALOG</u>"
+        "</div>"
+        '<div class="myst-preset-tui-key-label">Preset menu description — table of contents</div>'
+        f'<pre class="myst-preset-tui-lines">{body}</pre>'
+        "</div>"
+    )
+
+
+def _format_gravity_values_tui_html(
+    dials: dict[str, float],
+    *,
+    active_slot: int = 1,
+    status_label: str | None = None,
+) -> str:
+    preset_id = _gravity_preset_id(active_slot)
+    profile = _GRAVITY_PRESET_SLOT_LABELS.get(active_slot, "values")
+    status = status_label or f"PRESET {preset_id} — {profile.upper()}"
+    lines = [
+        f"{spec['label']:<26} {_gravity_param_display(spec, float(dials[str(spec['key'])]))}"
+        for spec in _GRAVITY_PARAM_CATALOG
+    ]
+    body = "\n".join(lines)
+    return (
+        '<div class="myst-preset-tui-serial myst-preset-tui-values">'
+        f'<div class="myst-preset-tui-status"><u>ACTIVE STATUS: {status}</u></div>'
+        '<div class="myst-preset-tui-key-label">Default parameter values — live loadout</div>'
+        f'<pre class="myst-preset-tui-lines">{body}</pre>'
+        "</div>"
+    )
+
+
+def _format_gravity_control_panel_html(
+    dials: dict[str, float],
+    active_slot: int,
+) -> str:
+    if active_slot == 0:
+        return (
+            '<div class="myst-gravity-level-panel myst-gravity-level-menu-mode">'
+            '<div class="myst-gravity-level-title">PARAMETER LEVELS</div>'
+            '<hr class="myst-gravity-level-rule" />'
+            '<p class="myst-gravity-level-hint">'
+            "PRESET 01 — menu loaded in TUI. Select <b>02</b> for default levels."
+            "</p>"
+            "</div>"
+        )
+    rows: list[str] = []
+    for spec in _GRAVITY_PARAM_CATALOG:
+        val = float(dials[str(spec["key"])])
+        blocks, val_cls = _gravity_level_blocks(val, spec)
+        display = _gravity_param_display(spec, val)
+        rows.append(
+            '<div class="myst-gravity-level-row">'
+            f'<span class="myst-gravity-level-id">{spec["id"]} -</span>'
+            f'<span class="myst-gravity-level-bar">{blocks}</span>'
+            '<span class="myst-gravity-level-sep"> | </span>'
+            f'<span class="myst-gravity-level-val {val_cls}">{display}</span>'
+            "</div>"
+        )
+    preset_id = _gravity_preset_id(active_slot)
+    return (
+        '<div class="myst-gravity-level-panel">'
+        '<div class="myst-gravity-level-title">PARAMETER LEVELS</div>'
+        '<hr class="myst-gravity-level-rule" />'
+        f"{''.join(rows)}"
+        f'<div class="myst-gravity-level-foot">PRESET {preset_id} · live dial readout</div>'
+        "</div>"
+    )
+
+
 def _format_gravity_preset_tui_html(
     active_slot: int,
     dials: dict[str, float],
@@ -2790,7 +3131,11 @@ def _format_gravity_preset_tui_html(
     status_label: str | None = None,
     key_metrics: dict[str, float | int | str | None] | None = None,
 ) -> str:
-    preset_num = active_slot + 1
+    if active_slot == 0 and key_metrics is None and status_label is None:
+        return _format_gravity_menu_tui_html()
+    if active_slot == 1 and key_metrics is None and status_label is None:
+        return _format_gravity_values_tui_html(dials, active_slot=1)
+    preset_id = _gravity_preset_id(active_slot)
     profile = _GRAVITY_PRESET_SLOT_LABELS.get(active_slot)
     if key_metrics:
         if key_metrics.get("phase") == "loop":
@@ -2805,20 +3150,12 @@ def _format_gravity_preset_tui_html(
     elif status_label:
         status = status_label
     elif profile:
-        status = f"PRESET {preset_num} — {profile}"
+        status = f"PRESET {preset_id} — {profile}"
     else:
-        status = f"PRESET {preset_num}"
-    dial_lines = (
-        f"φ² scale                  {dials['phi']:.3f}",
-        f"e² scale                  {dials['e']:.3f}",
-        f"π² scale                  {dials['pi']:.3f}",
-        f"κ (holonomy-gap)          {dials['kappa']:.4f}",
-        f"δ_z (primary push)        {dials['dz']:.3f}",
-        f"α (geometry factor)       {dials['alpha']:.3f}",
-        f"β (residual coupling)     {dials['beta']:.3f}",
-        f"deformation pressure      {dials['pressure'] * 100:.1f}%",
-        f"view elevation            {dials['elev']:.0f}°",
-        f"view azimuth              {dials['azim']:.0f}°",
+        status = f"PRESET {preset_id}"
+    dial_lines = tuple(
+        f"{spec['label']:<26} {_gravity_param_display(spec, float(dials[str(spec['key'])]))}"
+        for spec in _GRAVITY_PARAM_CATALOG
     )
     dial_body = "\n".join(dial_lines)
     key_section = ""
@@ -2848,6 +3185,27 @@ def _format_gravity_preset_tui_html(
     )
 
 
+def _gravity_tui_for_preset(
+    active_slot: int,
+    dials: dict[str, float],
+    *,
+    status_label: str | None = None,
+    key_metrics: dict[str, float | int | str | None] | None = None,
+) -> str:
+    if key_metrics is not None or status_label is not None:
+        return _format_gravity_preset_tui_html(
+            active_slot,
+            dials,
+            status_label=status_label,
+            key_metrics=key_metrics,
+        )
+    if active_slot == 0:
+        return _format_gravity_menu_tui_html()
+    if active_slot == 1:
+        return _format_gravity_values_tui_html(dials, active_slot=1)
+    return _format_gravity_preset_tui_html(active_slot, dials)
+
+
 def _run_residual_explorer_ui(
     phi_sq_scale: float,
     e_sq_scale: float,
@@ -2860,7 +3218,7 @@ def _run_residual_explorer_ui(
     view_elev: float,
     view_azim: float,
     active_preset: int,
-) -> tuple[str, str, object, dict, str]:
+) -> tuple[str, str, object, dict, str, str]:
     metrics, header, fig = run_residual_explorer(
         phi_sq_scale,
         e_sq_scale,
@@ -2885,8 +3243,10 @@ def _run_residual_explorer_ui(
         view_elev,
         view_azim,
     )
-    tui = _format_gravity_preset_tui_html(int(active_preset), dials)
-    return metrics, header, fig, _gravity_hide_video_update(), tui
+    slot = int(active_preset)
+    tui = _gravity_tui_for_preset(slot, dials)
+    control_levels = _format_gravity_control_panel_html(dials, slot)
+    return metrics, header, fig, _gravity_hide_video_update(), control_levels, tui
 
 
 def _gravity_hide_video_update() -> dict:
@@ -2960,6 +3320,7 @@ def _gravity_explorer_outputs(
         header,
         plot_out,
         video_out,
+        _format_gravity_control_panel_html(dials, active_slot),
         tui,
         active_slot,
     )
@@ -2978,7 +3339,9 @@ def _gravity_quick_preset_apply(
     view_elev: float,
     view_azim: float,
 ) -> tuple[dict[str, float], str, str, object, str, int]:
-    if slot in _GRAVITY_PRESET_PROFILES:
+    if slot == 0:
+        dials = dict(_GRAVITY_HOME_DIALS)
+    elif slot in _GRAVITY_PRESET_PROFILES:
         dials = dict(_GRAVITY_PRESET_PROFILES[slot])
     else:
         dials = _gravity_dial_bundle(
@@ -3005,7 +3368,7 @@ def _gravity_quick_preset_apply(
         dials["elev"],
         dials["azim"],
     )
-    tui = _format_gravity_preset_tui_html(slot, dials)
+    tui = _gravity_tui_for_preset(slot, dials)
     return dials, metrics, header, fig, tui, slot
 
 
@@ -3091,7 +3454,7 @@ def _gravity_animate_click(
             progress=progress,
         )
         dials["pressure"] = float(key_metrics["pressure"])
-        tui = _format_gravity_preset_tui_html(
+        tui = _gravity_tui_for_preset(
             int(active_preset),
             dials,
             key_metrics=key_metrics,
@@ -3110,7 +3473,7 @@ def _gravity_animate_click(
     except Exception as exc:
         logger.exception("gravity animate render failed")
         err_metrics = f"Animation error: {exc}"
-        err_tui = _format_gravity_preset_tui_html(
+        err_tui = _gravity_tui_for_preset(
             int(active_preset),
             dials,
             status_label="ANIMATE ERROR",
@@ -3441,7 +3804,8 @@ def build_app() -> gr.Blocks:
         _init_re_metrics, _init_unit_cell_header, _init_unit_cell = run_residual_explorer(
             1.0, 1.0, 1.0, KAPPA_DOC, 0.1, 1.0, 1.0, 0.35, 22.0, 45.0
         )
-        _init_preset_tui = _format_gravity_preset_tui_html(0, _GRAVITY_HOME_DIALS)
+        _init_preset_tui = _format_gravity_menu_tui_html()
+        _init_control_levels = _format_gravity_control_panel_html(_GRAVITY_HOME_DIALS, 0)
 
         with gr.Column(visible=False, elem_classes=["myst-readme-page"]) as page_readme:
             with gr.Row(elem_classes=["vqc-source-tabs-row", "vqc-animations-nav-row"]):
@@ -3532,133 +3896,9 @@ def build_app() -> gr.Blocks:
                             "vqc-gravity-panel",
                             "myst-gravity-left-frame",
                             "myst-gravity-panel-window",
-                            "myst-gravity-control-panel",
-                            "myst-gravity-left-control-slot",
-                        ]
-                    ):
-                        gr.HTML(CONTROL_PANEL_HEADER_HTML)
-                        with gr.Accordion(
-                            "Deformation & residual dials",
-                            open=True,
-                            elem_classes=["myst-gravity-controls-accordion"],
-                        ):
-                            gr.HTML(
-                                '<p class="vqc-optics-presets-label">'
-                                "Drag dials or press Animate for curvature sweep"
-                                "</p>"
-                            )
-                            with gr.Row(elem_classes=["vqc-optics-dial-row"]):
-                                re_pressure = gr.Slider(
-                                    0.0,
-                                    1.0,
-                                    value=0.35,
-                                    step=0.01,
-                                    label="Deformation pressure",
-                                    info="0 = rigid cube · 1 = full π bowl + φ/e concave pinch",
-                                    elem_classes=["vqc-optics-dial-wrap"],
-                                )
-                            with gr.Row(elem_classes=["vqc-optics-dial-row"]):
-                                re_view_elev = gr.Slider(
-                                    5.0,
-                                    75.0,
-                                    value=22.0,
-                                    step=1.0,
-                                    label="View elevation (°)",
-                                    elem_classes=["vqc-optics-dial-wrap"],
-                                )
-                                re_view_azim = gr.Slider(
-                                    0.0,
-                                    360.0,
-                                    value=45.0,
-                                    step=5.0,
-                                    label="View azimuth (°)",
-                                    elem_classes=["vqc-optics-dial-wrap"],
-                                )
-                            gr.HTML(
-                                '<p class="vqc-optics-presets-label">'
-                                "Residual explorer — φ² · e² · π² · κ · δ_z"
-                                "</p>"
-                            )
-                            with gr.Row(elem_classes=["vqc-optics-dial-row"]):
-                                re_phi_scale = gr.Slider(
-                                    0.90,
-                                    1.10,
-                                    value=1.0,
-                                    step=0.001,
-                                    label="φ² scale",
-                                    elem_classes=["vqc-optics-dial-wrap"],
-                                )
-                                re_e_scale = gr.Slider(
-                                    0.90,
-                                    1.10,
-                                    value=1.0,
-                                    step=0.001,
-                                    label="e² scale",
-                                    elem_classes=["vqc-optics-dial-wrap"],
-                                )
-                                re_pi_scale = gr.Slider(
-                                    0.90,
-                                    1.10,
-                                    value=1.0,
-                                    step=0.001,
-                                    label="π² scale",
-                                    elem_classes=["vqc-optics-dial-wrap"],
-                                )
-                            with gr.Row(elem_classes=["vqc-optics-dial-row"]):
-                                re_kappa = gr.Slider(
-                                    0.70,
-                                    0.95,
-                                    value=KAPPA_DOC,
-                                    step=0.001,
-                                    label="κ (holonomy-gap parameter)",
-                                    info=f"κ_doc = {KAPPA_DOC} · κ* nulls B(κ)−R",
-                                    elem_classes=["vqc-optics-dial-wrap"],
-                                )
-                                re_delta_z = gr.Slider(
-                                    0.0,
-                                    0.5,
-                                    value=0.1,
-                                    step=0.01,
-                                    label="δ_z (primary push)",
-                                    elem_classes=["vqc-optics-dial-wrap"],
-                                )
-                            with gr.Row(elem_classes=["vqc-optics-dial-row"]):
-                                re_alpha = gr.Slider(
-                                    0.0,
-                                    2.0,
-                                    value=1.0,
-                                    step=0.05,
-                                    label="α (geometry factor)",
-                                    elem_classes=["vqc-optics-dial-wrap"],
-                                )
-                                re_beta = gr.Slider(
-                                    0.0,
-                                    2.0,
-                                    value=1.0,
-                                    step=0.05,
-                                    label="β (residual coupling)",
-                                    elem_classes=["vqc-optics-dial-wrap"],
-                                )
-                            with gr.Column(elem_classes=["myst-gravity-metrics-inner"]):
-                                gr.HTML(
-                                    '<p class="vqc-optics-presets-label" style="margin-top:0;">'
-                                    "Explorer metrics — live readout"
-                                    "</p>"
-                                )
-                                re_metrics = gr.Textbox(
-                                    label="Residual explorer",
-                                    lines=9,
-                                    interactive=False,
-                                    value=_init_re_metrics,
-                                )
-                    with gr.Column(
-                        elem_classes=[
-                            "vqc-optics-panel",
-                            "vqc-gravity-panel",
-                            "myst-gravity-left-frame",
-                            "myst-gravity-panel-window",
                             "myst-gravity-presets-panel",
                             "myst-gravity-left-presets-slot",
+                            "myst-gravity-presets-fixed",
                         ]
                     ):
                         gr.HTML(QUICK_PRESETS_PANEL_HEADER_HTML)
@@ -3675,7 +3915,7 @@ def build_app() -> gr.Blocks:
                                             preset_classes.append("active")
                                         re_quick_presets.append(
                                             gr.Button(
-                                                str(slot + 1),
+                                                f"{slot + 1:02d}",
                                                 variant="secondary",
                                                 size="sm",
                                                 elem_classes=preset_classes,
@@ -3687,13 +3927,6 @@ def build_app() -> gr.Blocks:
                             variant="secondary",
                             elem_classes=["vqc-receiver-preset", "vqc-full-width"],
                         )
-                    gr.HTML(
-                        '<div class="myst-gravity-tui-gap" aria-hidden="true"></div>',
-                        elem_classes=[
-                            "myst-gravity-tui-gap-wrap",
-                            "myst-gravity-left-tui-gap-slot",
-                        ],
-                    )
                     with gr.Column(
                         elem_classes=[
                             "vqc-optics-panel",
@@ -3710,6 +3943,128 @@ def build_app() -> gr.Blocks:
                             _init_preset_tui,
                             elem_classes=["myst-gravity-preset-tui-wrap"],
                         )
+                    with gr.Column(
+                        elem_classes=[
+                            "vqc-optics-panel",
+                            "vqc-gravity-panel",
+                            "myst-gravity-left-frame",
+                            "myst-gravity-panel-window",
+                            "myst-gravity-control-panel",
+                            "myst-gravity-left-control-slot",
+                        ]
+                    ):
+                        with gr.Accordion(
+                            "Parameter levels",
+                            open=True,
+                            elem_classes=[
+                                "myst-gravity-controls-accordion",
+                                "myst-gravity-levels-accordion",
+                            ],
+                        ):
+                            re_control_levels = gr.HTML(
+                                _init_control_levels,
+                                elem_classes=["myst-gravity-control-levels-wrap"],
+                            )
+                            with gr.Accordion(
+                                "Manual dials & metrics",
+                                open=False,
+                                elem_classes=["myst-gravity-manual-dials-accordion"],
+                            ):
+                                gr.HTML(CONTROL_PANEL_HEADER_HTML)
+                                with gr.Row(elem_classes=["vqc-optics-dial-row"]):
+                                    re_pressure = gr.Slider(
+                                        0.0,
+                                        1.0,
+                                        value=0.35,
+                                        step=0.01,
+                                        label="Deformation pressure",
+                                        info="0 = rigid cube · 1 = full π bowl + φ/e concave pinch",
+                                        elem_classes=["vqc-optics-dial-wrap"],
+                                    )
+                                with gr.Row(elem_classes=["vqc-optics-dial-row"]):
+                                    re_view_elev = gr.Slider(
+                                        5.0,
+                                        75.0,
+                                        value=22.0,
+                                        step=1.0,
+                                        label="View elevation (°)",
+                                        elem_classes=["vqc-optics-dial-wrap"],
+                                    )
+                                    re_view_azim = gr.Slider(
+                                        0.0,
+                                        360.0,
+                                        value=45.0,
+                                        step=5.0,
+                                        label="View azimuth (°)",
+                                        elem_classes=["vqc-optics-dial-wrap"],
+                                    )
+                                with gr.Row(elem_classes=["vqc-optics-dial-row"]):
+                                    re_phi_scale = gr.Slider(
+                                        0.90,
+                                        1.10,
+                                        value=1.0,
+                                        step=0.001,
+                                        label="φ² scale",
+                                        elem_classes=["vqc-optics-dial-wrap"],
+                                    )
+                                    re_e_scale = gr.Slider(
+                                        0.90,
+                                        1.10,
+                                        value=1.0,
+                                        step=0.001,
+                                        label="e² scale",
+                                        elem_classes=["vqc-optics-dial-wrap"],
+                                    )
+                                    re_pi_scale = gr.Slider(
+                                        0.90,
+                                        1.10,
+                                        value=1.0,
+                                        step=0.001,
+                                        label="π² scale",
+                                        elem_classes=["vqc-optics-dial-wrap"],
+                                    )
+                                with gr.Row(elem_classes=["vqc-optics-dial-row"]):
+                                    re_kappa = gr.Slider(
+                                        0.70,
+                                        0.95,
+                                        value=KAPPA_DOC,
+                                        step=0.001,
+                                        label="κ (holonomy-gap parameter)",
+                                        info=f"κ_doc = {KAPPA_DOC} · κ* nulls B(κ)−R",
+                                        elem_classes=["vqc-optics-dial-wrap"],
+                                    )
+                                    re_delta_z = gr.Slider(
+                                        0.0,
+                                        0.5,
+                                        value=0.1,
+                                        step=0.01,
+                                        label="δ_z (primary push)",
+                                        elem_classes=["vqc-optics-dial-wrap"],
+                                    )
+                                with gr.Row(elem_classes=["vqc-optics-dial-row"]):
+                                    re_alpha = gr.Slider(
+                                        0.0,
+                                        2.0,
+                                        value=1.0,
+                                        step=0.05,
+                                        label="α (geometry factor)",
+                                        elem_classes=["vqc-optics-dial-wrap"],
+                                    )
+                                    re_beta = gr.Slider(
+                                        0.0,
+                                        2.0,
+                                        value=1.0,
+                                        step=0.05,
+                                        label="β (residual coupling)",
+                                        elem_classes=["vqc-optics-dial-wrap"],
+                                    )
+                                with gr.Column(elem_classes=["myst-gravity-metrics-inner"]):
+                                    re_metrics = gr.Textbox(
+                                        label="Residual explorer",
+                                        lines=9,
+                                        interactive=False,
+                                        value=_init_re_metrics,
+                                    )
                 with gr.Column(
                     scale=8,
                     elem_classes=[
@@ -3759,6 +4114,7 @@ def build_app() -> gr.Blocks:
                 unit_cell_header,
                 unit_cell_plot,
                 unit_cell_video,
+                re_control_levels,
                 re_preset_tui,
             ]
             gravity_preset_inputs = [*re_inputs, re_active_preset]
