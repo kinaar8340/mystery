@@ -33,7 +33,6 @@ from demo_core import (
     TERM_KEY_ACTIONS,
     TOE_URL,
     WALLPAPER_URL,
-    build_unit_cell_plotly,
     get_build_label,
     is_hf_space,
     run_analysis,
@@ -2254,6 +2253,10 @@ def build_app() -> gr.Blocks:
             gr.HTML(_figures_grid_html())
             gr.Markdown(_figures_links_md())
 
+        _init_re_metrics, _init_unit_cell = run_residual_explorer(
+            1.0, 1.0, 1.0, KAPPA_DOC, 0.1, 1.0, 1.0
+        )
+
         with gr.Column(visible=False, elem_classes=["myst-gravity-page"]) as page_gravity:
             with gr.Row(elem_classes=["vqc-source-tabs-row", "vqc-animations-nav-row"]):
                 gr.HTML('<span class="vqc-source-label">Source:</span>')
@@ -2286,7 +2289,7 @@ def build_app() -> gr.Blocks:
             gr.Markdown(PHYSICAL_INTERPRETATION_INTRO_MD)
             unit_cell_plot = gr.Plot(
                 label="Interactive unit cell — drag to rotate",
-                value=build_unit_cell_plotly(),
+                value=_init_unit_cell,
                 elem_classes=["vqc-plot3d-panel"],
             )
             gr.Markdown(PHYSICAL_INTERPRETATION_MATH_MD)
@@ -2316,7 +2319,12 @@ def build_app() -> gr.Blocks:
             with gr.Row():
                 re_alpha = gr.Slider(0.0, 2.0, value=1.0, step=0.05, label="α (geometry factor)")
                 re_beta = gr.Slider(0.0, 2.0, value=1.0, step=0.05, label="β (residual coupling)")
-            re_metrics = gr.Textbox(label="Explorer metrics", lines=16, interactive=False)
+            re_metrics = gr.Textbox(
+                label="Explorer metrics",
+                lines=16,
+                interactive=False,
+                value=_init_re_metrics,
+            )
             re_inputs = [
                 re_phi_scale, re_e_scale, re_pi_scale,
                 re_kappa, re_delta_z, re_alpha, re_beta,
@@ -2324,11 +2332,6 @@ def build_app() -> gr.Blocks:
             re_outputs = [re_metrics, unit_cell_plot]
             for slider in re_inputs:
                 slider.change(run_residual_explorer, inputs=re_inputs, outputs=re_outputs)
-            page_gravity.load(
-                run_residual_explorer,
-                inputs=re_inputs,
-                outputs=re_outputs,
-            )
             gr.Markdown("### Probe hooks")
             gr.Markdown(PROBE_HOOKS_TABLE_MD)
             for title, script_url, snippet in PROBE_SNIPPETS:
@@ -2362,13 +2365,19 @@ def build_app() -> gr.Blocks:
         ]
         tab_demo_btn.click(lambda: _nav_to_page("demo"), outputs=nav_outputs)
         tab_anim_btn.click(lambda: _nav_to_page("animations"), outputs=nav_outputs)
-        tab_gravity_btn.click(lambda: _nav_to_page("gravity"), outputs=nav_outputs)
+        tab_gravity_btn.click(lambda: _nav_to_page("gravity"), outputs=nav_outputs).then(
+            run_residual_explorer, inputs=re_inputs, outputs=re_outputs
+        )
         anim_tab_demo_btn.click(lambda: _nav_to_page("demo"), outputs=nav_outputs)
         anim_tab_anim_btn.click(lambda: _nav_to_page("animations"), outputs=nav_outputs)
-        anim_tab_gravity_btn.click(lambda: _nav_to_page("gravity"), outputs=nav_outputs)
+        anim_tab_gravity_btn.click(lambda: _nav_to_page("gravity"), outputs=nav_outputs).then(
+            run_residual_explorer, inputs=re_inputs, outputs=re_outputs
+        )
         grav_tab_demo_btn.click(lambda: _nav_to_page("demo"), outputs=nav_outputs)
         grav_tab_anim_btn.click(lambda: _nav_to_page("animations"), outputs=nav_outputs)
-        grav_tab_gravity_btn.click(lambda: _nav_to_page("gravity"), outputs=nav_outputs)
+        grav_tab_gravity_btn.click(lambda: _nav_to_page("gravity"), outputs=nav_outputs).then(
+            run_residual_explorer, inputs=re_inputs, outputs=re_outputs
+        )
         tab_newhere_btn.click(_toggle_newhere, inputs=[newhere_open], outputs=newhere_outputs)
         tab_claims_btn.click(_toggle_claims, inputs=[claims_open], outputs=claims_outputs)
         newhere_minimize_btn.click(_minimize_newhere, outputs=newhere_outputs[:3])
