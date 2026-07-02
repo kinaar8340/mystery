@@ -1037,17 +1037,49 @@ WALLPAPER_HEAD = f"""
     window.addEventListener('load', mountWallpaper);
 }})();
 (function() {{
-    function mystSetViewportBox(el, heightPx) {{
+    function mystSetViewportBox(el, heightPx, isImg) {{
+        isImg = !!isImg;
         el.style.setProperty('display', 'block', 'important');
         el.style.setProperty('visibility', 'visible', 'important');
         el.style.setProperty('opacity', '1', 'important');
         el.style.setProperty('overflow', 'visible', 'important');
-        el.style.setProperty('height', heightPx, 'important');
-        el.style.setProperty('min-height', heightPx, 'important');
-        el.style.setProperty('max-height', heightPx, 'important');
+        el.style.setProperty('min-width', '0', 'important');
         el.style.setProperty('width', '100%', 'important');
-        el.style.setProperty('max-width', '550px', 'important');
+        el.style.setProperty('max-width', '100%', 'important');
         el.style.setProperty('flex', 'none', 'important');
+        el.style.setProperty('box-sizing', 'border-box', 'important');
+        if (isImg) {{
+            el.style.setProperty('height', heightPx, 'important');
+            el.style.setProperty('min-height', '0', 'important');
+            el.style.setProperty('max-height', heightPx, 'important');
+            el.style.setProperty('object-fit', 'contain', 'important');
+            el.style.setProperty('object-position', 'center center', 'important');
+        }} else {{
+            el.style.setProperty('height', heightPx, 'important');
+            el.style.setProperty('min-height', heightPx, 'important');
+            el.style.setProperty('max-height', heightPx, 'important');
+        }}
+    }}
+    function mystFixViewportAncestors(root) {{
+        var node = root;
+        while (node) {{
+            if (
+                node.classList &&
+                (
+                    node.classList.contains('myst-gravity-visuals-col') ||
+                    node.classList.contains('myst-unit-cell-image-row') ||
+                    node.classList.contains('myst-unit-cell-viewport-html') ||
+                    node.classList.contains('myst-unit-cell-viewport-image')
+                )
+            ) {{
+                node.style.setProperty('width', '100%', 'important');
+                node.style.setProperty('max-width', '100%', 'important');
+                node.style.setProperty('min-width', '0', 'important');
+                node.style.setProperty('overflow', 'visible', 'important');
+            }}
+            if (node.classList && node.classList.contains('myst-gravity-visuals-col')) break;
+            node = node.parentElement;
+        }}
     }}
     function paintViewportBackground(img) {{
         var wrap = document.getElementById('unit-cell-main-view');
@@ -1062,12 +1094,14 @@ WALLPAPER_HEAD = f"""
     function fixUnitCellViewportLayout() {{
         var root = document.getElementById('unit-cell-main-view');
         if (root) {{
-            mystSetViewportBox(root, '550px');
+            mystFixViewportAncestors(root);
+            mystSetViewportBox(root, '550px', false);
             root.style.setProperty('position', 'relative', 'important');
+            root.style.setProperty('margin', '0 auto', 'important');
             root.querySelectorAll(
-                '.wrap, .image-container, .image-container button, .image-frame, .gr-image'
+                '.html-container, .prose, .wrap, .image-container, .image-container button, .image-frame, .gr-image'
             ).forEach(function(el) {{
-                mystSetViewportBox(el, '550px');
+                mystSetViewportBox(el, '550px', false);
                 if (el.tagName === 'BUTTON') {{
                     el.style.setProperty('padding', '0', 'important');
                     el.style.setProperty('margin', '0', 'important');
@@ -1077,9 +1111,7 @@ WALLPAPER_HEAD = f"""
                 }}
             }});
             root.querySelectorAll('img').forEach(function(img) {{
-                mystSetViewportBox(img, '550px');
-                img.style.setProperty('object-fit', 'contain', 'important');
-                img.style.setProperty('object-position', 'center center', 'important');
+                mystSetViewportBox(img, '550px', true);
                 img.style.setProperty('position', 'relative', 'important');
                 img.style.setProperty('z-index', '2', 'important');
                 img.loading = 'eager';
@@ -1095,7 +1127,7 @@ WALLPAPER_HEAD = f"""
         document.querySelectorAll(
             '.myst-unit-cell-viewport-img-wrap, .myst-unit-cell-viewport-img'
         ).forEach(function(el) {{
-            mystSetViewportBox(el, '550px');
+            mystSetViewportBox(el, '550px', el.tagName === 'IMG');
         }});
         document.querySelectorAll('.myst-unit-cell-image-row, .myst-unit-cell-video-row').forEach(function(slot) {{
             slot.style.setProperty('overflow', 'visible', 'important');
@@ -3069,6 +3101,10 @@ footer {{ visibility: hidden; }}
     flex-direction: column !important;
     align-self: stretch !important;
     min-height: 100% !important;
+    min-width: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: visible !important;
 }}
 .gradio-container .myst-gravity-split > .block:has(.myst-gravity-visuals-col) > .form {{
     flex: 1 1 0 !important;
@@ -3590,9 +3626,10 @@ footer {{ visibility: hidden; }}
 }}
 .gradio-container #unit-cell-main-view img {{
     width: 100% !important;
-    min-width: 280px !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
     height: 550px !important;
-    min-height: 550px !important;
+    min-height: 0 !important;
     max-height: 550px !important;
     object-fit: contain !important;
     object-position: center center !important;
@@ -3716,11 +3753,14 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-unit-cell-image-row,
 .gradio-container .myst-unit-cell-image-row.block,
 .gradio-container .myst-unit-cell-image-row > .form,
+.gradio-container .myst-unit-cell-image-row > .form > .block,
 .gradio-container .myst-unit-cell-video-row,
 .gradio-container .myst-unit-cell-video-row.block,
 .gradio-container .myst-unit-cell-video-row > .form {{
     flex: 0 0 auto !important;
     width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
     height: auto !important;
     min-height: 0 !important;
     overflow: visible !important;
@@ -3738,7 +3778,8 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-unit-cell-image-row .html-container,
 .gradio-container .myst-unit-cell-image-row .prose {{
     width: 100% !important;
-    max-width: 550px !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
     height: auto !important;
     min-height: 550px !important;
     margin: 0 auto !important;
@@ -3759,7 +3800,8 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-unit-cell-viewport-html img,
 .gradio-container .myst-unit-cell-viewport-img {{
     width: 100% !important;
-    max-width: 550px !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
     height: 550px !important;
     min-height: 550px !important;
     max-height: 550px !important;
@@ -3960,12 +4002,18 @@ body {{
 .gradio-container .myst-unit-cell-image-row > .form > .block {{
     overflow: visible !important;
     min-height: 550px !important;
+    min-width: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
     height: auto !important;
 }}
 .gradio-container #unit-cell-main-view,
 .gradio-container #unit-cell-main-view.block,
 .gradio-container #unit-cell-main-view.myst-unit-cell-viewport-image {{
     min-height: 550px !important;
+    min-width: 0 !important;
+    width: 100% !important;
+    max-width: min(550px, 100%) !important;
     height: 550px !important;
     max-height: 550px !important;
     overflow: visible !important;
@@ -3974,6 +4022,7 @@ body {{
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
     position: relative !important;
+    margin: 0 auto !important;
 }}
 .gradio-container #unit-cell-main-view .empty,
 .gradio-container #unit-cell-main-view .icon-wrap {{
@@ -3989,8 +4038,9 @@ body {{
     height: 550px !important;
     min-height: 550px !important;
     max-height: 550px !important;
+    min-width: 0 !important;
     width: 100% !important;
-    max-width: 550px !important;
+    max-width: 100% !important;
     overflow: visible !important;
     display: block !important;
     flex: none !important;
@@ -4000,8 +4050,9 @@ body {{
     height: 550px !important;
     min-height: 550px !important;
     max-height: 550px !important;
+    min-width: 0 !important;
     width: 100% !important;
-    max-width: 550px !important;
+    max-width: 100% !important;
     padding: 0 !important;
     margin: 0 !important;
     border: none !important;
@@ -4015,8 +4066,9 @@ body {{
     height: 550px !important;
     min-height: 550px !important;
     max-height: 550px !important;
+    min-width: 0 !important;
     width: 100% !important;
-    max-width: 550px !important;
+    max-width: 100% !important;
     overflow: visible !important;
     display: block !important;
     flex: none !important;
@@ -4030,10 +4082,11 @@ body {{
     display: block !important;
     visibility: visible !important;
     opacity: 1 !important;
+    min-width: 0 !important;
     width: 100% !important;
-    max-width: 550px !important;
+    max-width: 100% !important;
     height: 550px !important;
-    min-height: 550px !important;
+    min-height: 0 !important;
     max-height: 550px !important;
     object-fit: contain !important;
     object-position: center center !important;

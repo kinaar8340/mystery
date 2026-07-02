@@ -1084,12 +1084,12 @@ def figure_to_viewport_numpy(fig: plt.Figure, *, dpi: int = 100) -> np.ndarray:
 
 
 _VIEWPORT_WRAP_STYLE = (
-    "width:100%;max-width:550px;height:550px;min-height:550px;"
-    "display:block;position:relative;z-index:20;margin:0 auto;"
+    "width:100%;max-width:min(550px,100%);height:550px;min-height:550px;"
+    "min-width:0;display:block;position:relative;z-index:20;margin:0 auto;"
     "overflow:visible;background:#000000;box-sizing:border-box;"
 )
 _VIEWPORT_IMG_STYLE = (
-    "width:100%;max-width:550px;height:550px;min-height:550px;"
+    "width:100%;max-width:100%;min-width:0;height:550px;min-height:0;"
     "display:block;position:relative;z-index:21;opacity:1;visibility:visible;"
     "object-fit:contain;object-position:center center;background:#000000;"
 )
