@@ -943,6 +943,23 @@ def _draw_leader_label(
     )
 
 
+def export_figure_for_gradio(fig: plt.Figure, *, dpi: int = 80) -> str:
+    """Write figure to a temp PNG and close it — safe for Gradio streaming."""
+    import tempfile
+
+    with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
+        path = tmp.name
+    fig.savefig(
+        path,
+        dpi=dpi,
+        facecolor=fig.get_facecolor(),
+        bbox_inches="tight",
+        pad_inches=0.05,
+    )
+    plt.close(fig)
+    return path
+
+
 def _ease_in_out_cubic(t: float) -> float:
     """Smooth acceleration/deceleration for deformation animation."""
     t = float(np.clip(t, 0.0, 1.0))
@@ -1186,19 +1203,18 @@ def stream_unit_cell_deformation(
     side = abs(d_side) * 0.5
     hold = float(np.clip(deform_pressure, 0.0, 1.0))
 
-    sweep_t = np.linspace(0.0, 1.0, 36)
+    sweep_t = np.linspace(0.0, 1.0, 20)
     eased = [_ease_in_out_cubic(t) for t in sweep_t]
-    total_frames = len(eased) + (8 if hold < 0.995 else 0)
+    ease_steps = 4 if hold < 0.995 else 0
+    total_frames = len(eased) + ease_steps
     frame_idx = 0
-    prev_fig: plt.Figure | None = None
-
     def _yield_frame(
         metrics_text: str,
         pressure_val: float,
         *,
         phase: str,
     ) -> tuple[str, str, plt.Figure, dict[str, float | int | str | None]]:
-        nonlocal prev_fig, frame_idx
+        nonlocal frame_idx
         fig = build_unit_cell_figure(
             delta_z=delta_z,
             delta_side=side,
@@ -1206,11 +1222,9 @@ def stream_unit_cell_deformation(
             pressure=pressure_val,
             view_elev=view_elev,
             view_azim=view_azim,
-            dpi=100,
+            show_curvature_grid=False,
+            dpi=80,
         )
-        if prev_fig is not None:
-            plt.close(prev_fig)
-        prev_fig = fig
         header = build_unit_cell_viewport_header_html(
             pressure=pressure_val,
             r_val=r_val,
@@ -1259,10 +1273,10 @@ def stream_unit_cell_deformation(
             f"▶ animating bow/concave"
         )
         yield _yield_frame(metrics, p, phase="sweep")
-        time.sleep(0.055)
+        time.sleep(0.03)
 
     if hold < 0.995:
-        for pressure in np.linspace(1.0, hold, 8):
+        for pressure in np.linspace(1.0, hold, ease_steps):
             frame_idx += 1
             p = float(pressure)
             km = deformation_key_metrics(
@@ -1289,11 +1303,7 @@ def stream_unit_cell_deformation(
                 f"▶ easing to slider"
             )
             yield _yield_frame(metrics, p, phase="ease")
-            time.sleep(0.04)
-
-    if prev_fig is not None:
-        plt.close(prev_fig)
-        prev_fig = None
+            time.sleep(0.03)
 
     metrics, header, fig = run_residual_explorer(
         phi_sq_scale,

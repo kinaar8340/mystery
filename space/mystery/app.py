@@ -35,6 +35,8 @@ from demo_core import (
     WALLPAPER_URL,
     get_build_label,
     is_hf_space,
+    build_unit_cell_viewport_header_html,
+    residual_from_scales,
     run_analysis,
     run_residual_explorer,
     stream_unit_cell_deformation,
@@ -2764,6 +2766,35 @@ def _make_gravity_quick_preset_click(slot: int):
     return handler
 
 
+def _gravity_animate_frame_yield(
+    metrics: str,
+    header: str,
+    fig: object,
+    tui: str,
+    pressure: float,
+    active_preset: int,
+) -> tuple:
+    """Stream-friendly yield: latch animate button + pressure slider + visuals only."""
+    return (
+        *_gravity_preset_btn_updates("animate"),
+        gr.skip(),
+        gr.skip(),
+        gr.skip(),
+        gr.skip(),
+        gr.skip(),
+        gr.skip(),
+        gr.skip(),
+        pressure,
+        gr.skip(),
+        gr.skip(),
+        metrics,
+        header,
+        fig,
+        tui,
+        gr.skip(),
+    )
+
+
 def _gravity_animate_click(
     phi_sq_scale: float,
     e_sq_scale: float,
@@ -2790,34 +2821,55 @@ def _gravity_animate_click(
         view_azim,
     )
     last_pack: tuple[str, str, object, str, dict[str, float | int | str | None]] | None = None
-    for metrics, header, fig, key_metrics in stream_unit_cell_deformation(
-        phi_sq_scale,
-        e_sq_scale,
-        pi_sq_scale,
-        kappa,
-        delta_z,
-        alpha,
-        beta,
-        deform_pressure,
-        view_elev,
-        view_azim,
-    ):
-        dials["pressure"] = float(key_metrics["pressure"])
-        tui = _format_gravity_preset_tui_html(
+    try:
+        for metrics, header, fig, key_metrics in stream_unit_cell_deformation(
+            phi_sq_scale,
+            e_sq_scale,
+            pi_sq_scale,
+            kappa,
+            delta_z,
+            alpha,
+            beta,
+            deform_pressure,
+            view_elev,
+            view_azim,
+        ):
+            pressure = float(key_metrics["pressure"])
+            dials["pressure"] = pressure
+            tui = _format_gravity_preset_tui_html(
+                int(active_preset),
+                dials,
+                key_metrics=key_metrics,
+            )
+            last_pack = (metrics, header, fig, tui, key_metrics)
+            yield _gravity_animate_frame_yield(
+                metrics,
+                header,
+                fig,
+                tui,
+                pressure,
+                int(active_preset),
+            )
+    except Exception as exc:
+        logger.exception("gravity animate stream failed")
+        err_metrics = f"Animation error: {exc}"
+        err_tui = _format_gravity_preset_tui_html(
             int(active_preset),
             dials,
-            key_metrics=key_metrics,
+            status_label="ANIMATE ERROR",
         )
-        last_pack = (metrics, header, fig, tui, key_metrics)
-        yield _gravity_explorer_outputs(
-            "animate",
-            dials,
-            metrics,
-            header,
-            fig,
-            tui,
+        yield _gravity_animate_frame_yield(
+            err_metrics,
+            build_unit_cell_viewport_header_html(
+                pressure=dials["pressure"],
+                r_val=residual_from_scales(phi_sq_scale, e_sq_scale, pi_sq_scale),
+            ),
+            gr.skip(),
+            err_tui,
+            dials["pressure"],
             int(active_preset),
         )
+        return
     if last_pack is not None:
         metrics, header, fig, tui, key_metrics = last_pack
         dials["pressure"] = float(key_metrics["pressure"])
@@ -3438,6 +3490,8 @@ def build_app() -> gr.Blocks:
                 _gravity_animate_click,
                 inputs=gravity_preset_inputs,
                 outputs=gravity_preset_outputs,
+                show_progress="full",
+                concurrency_limit=None,
             )
             for slot, preset_btn in enumerate(re_quick_presets):
                 preset_btn.click(
