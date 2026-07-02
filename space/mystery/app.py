@@ -1967,31 +1967,46 @@ footer {{ visibility: hidden; }}
     flex: 1 1 0 !important;
     min-height: 0 !important;
     overflow: hidden !important;
-    display: flex !important;
-    flex-direction: column !important;
+    display: grid !important;
+    grid-template-rows: auto minmax(0, 1fr) 14.75rem !important;
+    grid-template-columns: 1fr !important;
+    align-content: stretch !important;
 }}
 .gradio-container .myst-gravity-cube-panel > .block,
 .gradio-container .myst-gravity-cube-panel > .form {{
-    display: flex !important;
-    flex-direction: column !important;
-    flex: 1 1 0 !important;
+    display: contents !important;
     min-height: 0 !important;
     width: 100% !important;
 }}
 .gradio-container .myst-gravity-cube-panel .myst-cube-viewport-header {{
     flex: 0 0 auto !important;
+    min-height: 9.75rem !important;
+    max-height: 9.75rem !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+}}
+.gradio-container .myst-gravity-cube-panel .myst-cube-viewport-status {{
+    display: block !important;
+    min-height: 2.35rem !important;
+    max-height: 2.35rem !important;
+    overflow: hidden !important;
+    line-height: 1.15 !important;
 }}
 .gradio-container .myst-gravity-cube-panel .myst-cube-plot-inner,
 .gradio-container .myst-gravity-cube-panel .myst-cube-plot-inner.block {{
     flex: 1 1 0 !important;
     min-height: 0 !important;
-    max-height: 58% !important;
+    height: 100% !important;
+    max-height: none !important;
+    overflow: hidden !important;
 }}
 .gradio-container .myst-gravity-cube-panel .myst-gravity-preset-tui-section,
 .gradio-container .myst-gravity-cube-panel .myst-gravity-preset-tui-section.block {{
     flex: 0 0 auto !important;
-    min-height: 13rem !important;
-    max-height: 42% !important;
+    height: 14.75rem !important;
+    min-height: 14.75rem !important;
+    max-height: 14.75rem !important;
+    overflow: hidden !important;
 }}
 .gradio-container .myst-gravity-preset-tui-section {{
     flex: 0 0 auto !important;
@@ -2019,17 +2034,20 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-gravity-preset-tui-section .myst-gravity-preset-tui-wrap.block {{
     flex: 0 0 auto !important;
     width: calc(100% - 1.1rem) !important;
-    min-height: 10.5rem !important;
-    max-height: 14rem !important;
+    height: 9.25rem !important;
+    min-height: 9.25rem !important;
+    max-height: 9.25rem !important;
     margin: 0 0.55rem 0.55rem !important;
     padding: 0.55rem 0.65rem !important;
     border: 2px inset #5c4a1f !important;
     border-radius: 8px !important;
     background: rgba(0, 0, 0, 0.55) !important;
     overflow-y: auto !important;
+    overflow-x: hidden !important;
     display: block !important;
     visibility: visible !important;
     opacity: 1 !important;
+    box-sizing: border-box !important;
 }}
 .gradio-container .myst-gravity-preset-tui-section .html-container,
 .gradio-container .myst-gravity-preset-tui-section .html-container .prose {{
@@ -2039,6 +2057,7 @@ footer {{ visibility: hidden; }}
     padding: 0 !important;
 }}
 .gradio-container .myst-preset-tui-serial {{
+    min-height: 8.5rem !important;
     font-family: "Courier New", Courier, monospace !important;
     font-size: 0.78rem !important;
     line-height: 1.55 !important;
@@ -2313,9 +2332,13 @@ footer {{ visibility: hidden; }}
     background: rgba(0, 0, 0, 0.22) !important;
     border: 1px solid #4a3818 !important;
     border-radius: 10px !important;
-    flex: 1 1 auto !important;
+    flex: 1 1 0 !important;
+    min-height: 0 !important;
+    height: 100% !important;
     display: flex !important;
     flex-direction: column !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
 }}
 .gradio-container .myst-gravity-page .myst-cube-viewport-frame .myst-cube-plot-inner .label-wrap span {{
     color: #e8d4a8 !important;
@@ -2328,7 +2351,7 @@ footer {{ visibility: hidden; }}
     flex: 1 1 0 !important;
     width: 100% !important;
     min-height: 0 !important;
-    height: auto !important;
+    height: 100% !important;
     max-height: 100% !important;
     border: 2px inset #5c4a1f !important;
     border-radius: 8px !important;
@@ -2338,16 +2361,27 @@ footer {{ visibility: hidden; }}
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+}}
+.gradio-container .myst-gravity-page .myst-cube-viewport-frame .plot-container > div,
+.gradio-container .myst-gravity-page .myst-cube-viewport-frame .plot-container .matplotlib {{
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
 }}
 .gradio-container .myst-gravity-page .myst-cube-viewport-frame .plot-container img,
-.gradio-container .myst-gravity-page .myst-cube-viewport-frame .plot-container canvas {{
+.gradio-container .myst-gravity-page .myst-cube-viewport-frame .plot-container canvas,
+.gradio-container .myst-gravity-page .myst-cube-viewport-frame .plot-container svg {{
     width: 100% !important;
-    height: auto !important;
+    height: 100% !important;
     max-width: 100% !important;
-    max-height: none !important;
+    max-height: 100% !important;
     margin: 0 !important;
     display: block !important;
     object-fit: contain !important;
+    object-position: center center !important;
 }}
 .gradio-container .myst-gravity-page .vqc-gravity-panel.vqc-optics-panel {{
     background: linear-gradient(165deg, #2a1810 0%, #1a1008 38%, #120c06 100%) !important;
@@ -2767,14 +2801,11 @@ def _make_gravity_quick_preset_click(slot: int):
 
 
 def _gravity_animate_frame_yield(
-    metrics: str,
-    header: str,
     fig: object,
     tui: str,
     pressure: float,
-    active_preset: int,
 ) -> tuple:
-    """Stream-friendly yield: latch animate button + pressure slider + visuals only."""
+    """Stream-friendly yield: plot + TUI + pressure only — avoids layout reflow."""
     return (
         *_gravity_preset_btn_updates("animate"),
         gr.skip(),
@@ -2787,8 +2818,8 @@ def _gravity_animate_frame_yield(
         pressure,
         gr.skip(),
         gr.skip(),
-        metrics,
-        header,
+        gr.skip(),
+        gr.skip(),
         fig,
         tui,
         gr.skip(),
@@ -2842,14 +2873,7 @@ def _gravity_animate_click(
                 key_metrics=key_metrics,
             )
             last_pack = (metrics, header, fig, tui, key_metrics)
-            yield _gravity_animate_frame_yield(
-                metrics,
-                header,
-                fig,
-                tui,
-                pressure,
-                int(active_preset),
-            )
+            yield _gravity_animate_frame_yield(fig, tui, pressure)
     except Exception as exc:
         logger.exception("gravity animate stream failed")
         err_metrics = f"Animation error: {exc}"
@@ -2858,17 +2882,7 @@ def _gravity_animate_click(
             dials,
             status_label="ANIMATE ERROR",
         )
-        yield _gravity_animate_frame_yield(
-            err_metrics,
-            build_unit_cell_viewport_header_html(
-                pressure=dials["pressure"],
-                r_val=residual_from_scales(phi_sq_scale, e_sq_scale, pi_sq_scale),
-            ),
-            gr.skip(),
-            err_tui,
-            dials["pressure"],
-            int(active_preset),
-        )
+        yield _gravity_animate_frame_yield(gr.skip(), err_tui, dials["pressure"])
         return
     if last_pack is not None:
         metrics, header, fig, tui, key_metrics = last_pack

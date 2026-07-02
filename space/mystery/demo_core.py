@@ -1131,7 +1131,8 @@ def build_unit_cell_figure(
     azim = float(view_azim) % 360.0
     ax.view_init(elev=elev, azim=azim)
 
-    fig.subplots_adjust(left=0.0, right=1.0, top=1.0, bottom=0.0)
+    fig.subplots_adjust(left=0.02, right=0.98, top=0.98, bottom=0.02)
+    fig.set_size_inches(9.6, 7.0, forward=True)
     return fig
 
 
