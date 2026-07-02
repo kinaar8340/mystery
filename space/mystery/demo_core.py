@@ -938,18 +938,25 @@ def export_figure_for_gradio(fig: plt.Figure, *, dpi: int = 80) -> str:
     return path
 
 
-def export_unit_cell_image_for_gradio(fig: plt.Figure, *, dpi: int = 150) -> str:
-    """PNG path for gr.Image — preserves full figsize (no tight crop)."""
-    import tempfile
+def figure_to_pil_image(fig: plt.Figure, *, dpi: int = 150):
+    """Matplotlib figure → PIL Image (reliable for gr.Image type='pil' on HF Spaces)."""
+    import io
 
-    with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
-        path = tmp.name
-    fig.savefig(path, dpi=dpi, facecolor=fig.get_facecolor())
+    from PIL import Image as PILImage
+
+    buf = io.BytesIO()
+    fig.savefig(buf, format="png", dpi=dpi, facecolor=fig.get_facecolor())
     plt.close(fig)
-    return path
+    buf.seek(0)
+    return PILImage.open(buf).copy()
 
 
-def get_unit_cell_viewport_image(
+def export_unit_cell_pil_for_gradio(fig: plt.Figure, *, dpi: int = 150):
+    """PIL image for gr.Image — avoids /tmp filepath serving issues on Spaces."""
+    return figure_to_pil_image(fig, dpi=dpi)
+
+
+def get_unit_cell_viewport_pil_image(
     phi_sq_scale: float,
     e_sq_scale: float,
     pi_sq_scale: float,
@@ -962,8 +969,8 @@ def get_unit_cell_viewport_image(
     view_azim: float = 45.0,
     *,
     dpi: int = 150,
-) -> str:
-    """Build matplotlib unit cell and return a PNG filepath for gr.Image."""
+):
+    """Build matplotlib unit cell and return a PIL Image for gr.Image."""
     _metrics, _header, fig = run_residual_explorer(
         phi_sq_scale,
         e_sq_scale,
@@ -976,7 +983,7 @@ def get_unit_cell_viewport_image(
         view_elev,
         view_azim,
     )
-    return export_unit_cell_image_for_gradio(fig, dpi=dpi)
+    return export_unit_cell_pil_for_gradio(fig, dpi=dpi)
 
 
 def _ease_in_out_cubic(t: float) -> float:

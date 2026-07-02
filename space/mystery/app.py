@@ -37,7 +37,7 @@ from demo_core import (
     get_build_label,
     is_hf_space,
     build_unit_cell_viewport_header_html,
-    export_unit_cell_image_for_gradio,
+    export_unit_cell_pil_for_gradio,
     render_unit_cell_deformation_video,
     residual_from_scales,
     run_analysis,
@@ -3868,12 +3868,11 @@ def _gravity_tui_for_preset(
     return _format_gravity_preset_tui_html(active_slot, dials)
 
 
-def _gravity_static_image_update(fig: object) -> str | object | dict:
-    """PNG filepath for gr.Image (type=filepath)."""
+def _gravity_static_image_update(fig: object) -> object:
+    """PIL Image for gr.Image (type=pil) — no temp-file URLs on HF Spaces."""
     if fig is gr.skip():
         return gr.skip()
-    path = export_unit_cell_image_for_gradio(fig, dpi=_UNIT_CELL_IMAGE_DPI)
-    return gr.update(value=path)
+    return export_unit_cell_pil_for_gradio(fig, dpi=_UNIT_CELL_IMAGE_DPI)
 
 
 def _gravity_clear_video_update() -> dict:
@@ -4532,7 +4531,7 @@ def build_app() -> gr.Blocks:
         _init_re_metrics, _init_unit_cell_header, _init_unit_cell_fig = run_residual_explorer(
             1.0, 1.0, 1.0, KAPPA_DOC, 0.1, 1.0, 1.0, 0.35, 22.0, 45.0
         )
-        _init_unit_cell_image = export_unit_cell_image_for_gradio(
+        _init_unit_cell_image = export_unit_cell_pil_for_gradio(
             _init_unit_cell_fig,
             dpi=_UNIT_CELL_IMAGE_DPI,
         )
@@ -4849,7 +4848,7 @@ def build_app() -> gr.Blocks:
                     unit_cell_image = gr.Image(
                         label=None,
                         show_label=False,
-                        type="filepath",
+                        type="pil",
                         interactive=False,
                         scale=1,
                         height=550,
