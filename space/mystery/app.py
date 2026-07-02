@@ -37,8 +37,8 @@ from demo_core import (
     get_build_label,
     is_hf_space,
     build_unit_cell_viewport_header_html,
-    figure_to_viewport_pil,
-    unit_cell_error_placeholder_pil,
+    figure_to_viewport_filepath,
+    unit_cell_error_placeholder_filepath,
     render_unit_cell_deformation_video,
     residual_from_scales,
     run_analysis,
@@ -1004,13 +1004,29 @@ WALLPAPER_HEAD = f"""
     window.addEventListener('load', mountWallpaper);
 }})();
 (function() {{
-    function fixUnitCellImageUrls() {{
-        var origin = window.location.origin;
+    function shieldUnitCellViewport() {{
         var root = document.getElementById('unit-cell-main-view');
         if (!root) return;
+        root.style.backgroundColor = '#000000';
+        root.style.backgroundImage = 'none';
+        root.style.position = 'relative';
+        root.style.isolation = 'isolate';
+        var plate = root.querySelector('.myst-viewport-opaque-plate');
+        if (!plate) {{
+            plate = document.createElement('div');
+            plate.className = 'myst-viewport-opaque-plate';
+            plate.setAttribute('aria-hidden', 'true');
+            plate.style.cssText = 'position:absolute;inset:0;background:#000;z-index:0;pointer-events:none;';
+            root.insertBefore(plate, root.firstChild);
+        }}
         root.querySelectorAll('img').forEach(function(img) {{
+            img.style.backgroundColor = '#000000';
+            img.style.mixBlendMode = 'normal';
+            img.style.position = 'relative';
+            img.style.zIndex = '1';
             var src = img.getAttribute('src') || '';
             if (!src || src.indexOf('data:') === 0) return;
+            var origin = window.location.origin;
             if (src.indexOf('0.0.0.0') >= 0 || src.indexOf('127.0.0.1') >= 0 || src.indexOf('localhost') >= 0) {{
                 try {{
                     var u = new URL(src, origin);
@@ -1023,9 +1039,9 @@ WALLPAPER_HEAD = f"""
         }});
     }}
     function bootImageFix() {{
-        fixUnitCellImageUrls();
+        shieldUnitCellViewport();
         if (window.__mystUnitCellImgObs) return;
-        window.__mystUnitCellImgObs = new MutationObserver(fixUnitCellImageUrls);
+        window.__mystUnitCellImgObs = new MutationObserver(shieldUnitCellViewport);
         window.__mystUnitCellImgObs.observe(document.body, {{
             subtree: true, childList: true, attributes: true, attributeFilter: ['src']
         }});
@@ -1995,6 +2011,12 @@ footer {{
 .gradio-container .plot-container {{
     background-color: transparent !important;
     opacity: 1 !important;
+}}
+.gradio-container #unit-cell-main-view .image-container,
+.gradio-container #unit-cell-main-view .image-container img,
+.gradio-container #unit-cell-main-view .gr-image img {{
+    background-color: #000000 !important;
+    mix-blend-mode: normal !important;
 }}
 .gradio-container button,
 .gradio-container .gr-button {{
@@ -3409,9 +3431,18 @@ footer {{ visibility: hidden; }}
     min-height: 0 !important;
     overflow-y: auto !important;
     padding: 4px !important;
-    background-color: transparent !important;
+    background-color: #000000 !important;
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
+}}
+.gradio-container #unit-cell-main-view::before {{
+    content: "" !important;
+    display: block !important;
+    position: absolute !important;
+    inset: 0 !important;
+    background: #000000 !important;
+    z-index: 0 !important;
+    pointer-events: none !important;
 }}
 .gradio-container .myst-gravity-image-viewport > .block:has(#unit-cell-main-view),
 .gradio-container .myst-gravity-image-viewport > .form:has(#unit-cell-main-view),
@@ -3969,16 +4000,13 @@ def _gravity_tui_for_preset(
 
 
 def _gravity_static_image_update(fig: object) -> object:
-    """PIL PNG for gr.Image — same-origin /file/ URL (Brave-safe, no data: URI)."""
+    """Opaque JPEG filepath for gr.Image — same-origin /file/ URL, no alpha."""
     if fig is gr.skip():
         print("[DEBUG] _gravity_static_image_update: gr.skip()", flush=True)
         return gr.skip()
-    pil_img = figure_to_viewport_pil(fig, dpi=_UNIT_CELL_IMAGE_DPI)
-    print(
-        f"[DEBUG] _gravity_static_image_update: returning PIL size={pil_img.size}",
-        flush=True,
-    )
-    return pil_img
+    path = figure_to_viewport_filepath(fig, dpi=_UNIT_CELL_IMAGE_DPI)
+    print(f"[DEBUG] _gravity_static_image_update: returning path={path}", flush=True)
+    return path
 
 
 def _gravity_clear_video_update() -> dict:
@@ -4376,11 +4404,11 @@ def _make_gravity_quick_preset_click(slot: int):
         )
         if fig is None:
             outputs = list(outputs)
-            outputs[21] = unit_cell_error_placeholder_pil()
+            outputs[21] = unit_cell_error_placeholder_filepath()
         image_out = outputs[21]
-        if hasattr(image_out, "size"):
+        if isinstance(image_out, str) and image_out.endswith((".jpg", ".jpeg")):
             print(
-                f"[DEBUG] preset_click_unified: Returning PIL size={image_out.size}",
+                f"[DEBUG] preset_click_unified: Returning jpeg path={image_out}",
                 flush=True,
             )
         else:
@@ -4709,12 +4737,12 @@ def build_app() -> gr.Blocks:
         _init_re_metrics, _init_unit_cell_header, _init_unit_cell_fig = run_residual_explorer(
             1.0, 1.0, 1.0, KAPPA_DOC, 0.1, 1.0, 1.0, 0.35, 22.0, 45.0
         )
-        _init_unit_cell_pil = figure_to_viewport_pil(
+        _init_unit_cell_path = figure_to_viewport_filepath(
             _init_unit_cell_fig,
             dpi=_UNIT_CELL_IMAGE_DPI,
         )
         print(
-            f"[DEBUG] init unit cell PIL size={_init_unit_cell_pil.size}",
+            f"[DEBUG] init unit cell jpeg path={_init_unit_cell_path}",
             flush=True,
         )
         _init_preset_tui = _format_gravity_menu_tui_html()
@@ -5022,11 +5050,11 @@ def build_app() -> gr.Blocks:
                         elem_classes=["myst-cube-viewport-header-slot"],
                     )
                     unit_cell_image = gr.Image(
-                        value=_init_unit_cell_pil,
+                        value=_init_unit_cell_path,
                         label=None,
                         show_label=False,
-                        type="pil",
-                        format="png",
+                        type="filepath",
+                        format="jpeg",
                         interactive=False,
                         height=550,
                         container=False,
@@ -5185,7 +5213,7 @@ def build_app() -> gr.Blocks:
         claims_minimize_btn.click(_minimize_claims, outputs=claims_outputs[:3])
         demo.load(_stream_term_boot, outputs=term_keypad_outputs)
         demo.load(
-            lambda: _init_unit_cell_pil,
+            lambda: _init_unit_cell_path,
             outputs=[unit_cell_image],
             show_progress=False,
         )

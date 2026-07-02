@@ -1108,6 +1108,33 @@ def figure_to_viewport_pil(fig: plt.Figure, *, dpi: int = 100):
         return unit_cell_error_placeholder_pil()
 
 
+def _pil_to_viewport_jpeg_path(pil_img) -> str:
+    """Write opaque JPEG for gr.Image(type='filepath') — no alpha channel."""
+    fd, path = tempfile.mkstemp(suffix=".jpg", prefix="myst_viewport_")
+    os.close(fd)
+    pil_img.convert("RGB").save(path, format="JPEG", quality=92, subsampling=0)
+    return path
+
+
+def figure_to_viewport_filepath(fig: plt.Figure, *, dpi: int = 100) -> str:
+    """Matplotlib figure → JPEG filepath for gr.Image(type='filepath')."""
+    print(f"[DEBUG] figure_to_viewport_filepath: dpi={dpi}", flush=True)
+    try:
+        pil_img = figure_to_viewport_pil(fig, dpi=dpi)
+        path = _pil_to_viewport_jpeg_path(pil_img)
+        print(f"[DEBUG] figure_to_viewport_filepath: path={path}", flush=True)
+        return path
+    except Exception as exc:
+        print(f"[ERROR] figure_to_viewport_filepath failed: {exc}", flush=True)
+        traceback.print_exc()
+        return unit_cell_error_placeholder_filepath()
+
+
+def unit_cell_error_placeholder_filepath() -> str:
+    """Red JPEG placeholder filepath when viewport conversion fails."""
+    return _pil_to_viewport_jpeg_path(unit_cell_error_placeholder_pil())
+
+
 def unit_cell_error_placeholder_dict() -> dict:
     """Red placeholder as Gradio Image dict with inline base64 url."""
     from PIL import Image as PILImage
