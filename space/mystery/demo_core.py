@@ -938,6 +938,47 @@ def export_figure_for_gradio(fig: plt.Figure, *, dpi: int = 80) -> str:
     return path
 
 
+def export_unit_cell_image_for_gradio(fig: plt.Figure, *, dpi: int = 150) -> str:
+    """PNG path for gr.Image — preserves full figsize (no tight crop)."""
+    import tempfile
+
+    with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
+        path = tmp.name
+    fig.savefig(path, dpi=dpi, facecolor=fig.get_facecolor())
+    plt.close(fig)
+    return path
+
+
+def get_unit_cell_viewport_image(
+    phi_sq_scale: float,
+    e_sq_scale: float,
+    pi_sq_scale: float,
+    kappa: float,
+    delta_z: float,
+    alpha: float,
+    beta: float,
+    deform_pressure: float = 0.35,
+    view_elev: float = 22.0,
+    view_azim: float = 45.0,
+    *,
+    dpi: int = 150,
+) -> str:
+    """Build matplotlib unit cell and return a PNG filepath for gr.Image."""
+    _metrics, _header, fig = run_residual_explorer(
+        phi_sq_scale,
+        e_sq_scale,
+        pi_sq_scale,
+        kappa,
+        delta_z,
+        alpha,
+        beta,
+        deform_pressure,
+        view_elev,
+        view_azim,
+    )
+    return export_unit_cell_image_for_gradio(fig, dpi=dpi)
+
+
 def _ease_in_out_cubic(t: float) -> float:
     """Smooth acceleration/deceleration for deformation animation."""
     t = float(np.clip(t, 0.0, 1.0))

@@ -37,7 +37,8 @@ from demo_core import (
     get_build_label,
     is_hf_space,
     build_unit_cell_viewport_header_html,
-    export_figure_for_gradio,
+    export_unit_cell_image_for_gradio,
+    get_unit_cell_viewport_image,
     render_unit_cell_deformation_video,
     residual_from_scales,
     run_analysis,
@@ -3819,10 +3820,12 @@ def _gravity_tui_for_preset(
     return _format_gravity_preset_tui_html(active_slot, dials)
 
 
-def _gravity_static_image_path(fig: object) -> str | object:
+def _gravity_static_image_update(fig: object) -> str | object | dict:
+    """PNG filepath for gr.Image (type=filepath)."""
     if fig is gr.skip():
         return gr.skip()
-    return export_figure_for_gradio(fig, dpi=_UNIT_CELL_IMAGE_DPI)
+    path = export_unit_cell_image_for_gradio(fig, dpi=_UNIT_CELL_IMAGE_DPI)
+    return gr.update(value=path)
 
 
 def _gravity_clear_video_update() -> dict:
@@ -3876,7 +3879,7 @@ def _run_residual_explorer_ui(
     return (
         metrics,
         header,
-        _gravity_static_image_path(fig),
+        _gravity_static_image_update(fig),
         _gravity_clear_video_update(),
         control_levels,
         tui,
@@ -3967,7 +3970,7 @@ def _gravity_explorer_outputs(
     edit_params_enabled: bool = False,
     update_image: bool = True,
 ) -> tuple:
-    image_out = _gravity_static_image_path(fig) if update_image else gr.skip()
+    image_out = _gravity_static_image_update(fig) if update_image else gr.skip()
     return (
         *_gravity_preset_btn_updates(active_key),
         _gravity_edit_params_btn_update(edit_params_enabled),
@@ -4481,7 +4484,7 @@ def build_app() -> gr.Blocks:
         _init_re_metrics, _init_unit_cell_header, _init_unit_cell_fig = run_residual_explorer(
             1.0, 1.0, 1.0, KAPPA_DOC, 0.1, 1.0, 1.0, 0.35, 22.0, 45.0
         )
-        _init_unit_cell_image = export_figure_for_gradio(
+        _init_unit_cell_image = export_unit_cell_image_for_gradio(
             _init_unit_cell_fig,
             dpi=_UNIT_CELL_IMAGE_DPI,
         )
