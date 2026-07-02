@@ -5122,6 +5122,8 @@ def main() -> None:
         "show_api": False,
         "inbrowser": False,
         "share": False if on_hf else True,
+        # SSR can swallow button .click() events on HF Spaces — disable for reliable presets.
+        "ssr_mode": False,
     }
 
     demo.queue(default_concurrency_limit=2).launch(**launch_kwargs)
