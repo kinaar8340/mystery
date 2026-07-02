@@ -2246,7 +2246,7 @@ def build_app() -> gr.Blocks:
             )
             gr.Markdown(PHYSICAL_INTERPRETATION_INTRO_MD)
             unit_cell_plot = gr.Plot(
-                label="Interactive unit cell — drag to rotate",
+                label="Unit cell schematic (server-rendered — works without WebGL)",
                 value=_init_unit_cell,
                 elem_classes=["vqc-plot3d-panel"],
             )

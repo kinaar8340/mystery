@@ -108,7 +108,7 @@ emergent gravity at larger scales.
 **Legend:** \\(T_\\phi, T_e, T_\\pi\\) = quadratic flux/tension · \\(\\delta_z\\) = primary π-face push ·
 \\(\\delta_\\text{side}\\) = compensatory contraction · \\(R = \\phi^2+e^2-\\pi^2\\) imbalance.
 
-Use the **interactive 3D unit cell** below (drag to rotate; arrows update with the Residual explorer).
+The **unit cell schematic** below is server-rendered (no browser WebGL required) and updates when you move the Residual explorer sliders.
 """
 
 PHYSICAL_INTERPRETATION_MATH_MD = f"""
@@ -488,179 +488,81 @@ def format_residual_explorer(
     )
 
 
-def _plotly_arrow(
-    fig,
-    start: tuple[float, float, float],
-    direction: tuple[float, float, float],
-    *,
-    color: str,
-    name: str,
-    width: int = 6,
-) -> None:
-    import plotly.graph_objects as go
-
-    end = (
-        start[0] + direction[0],
-        start[1] + direction[1],
-        start[2] + direction[2],
-    )
-    fig.add_trace(
-        go.Scatter3d(
-            x=[start[0], end[0]],
-            y=[start[1], end[1]],
-            z=[start[2], end[2]],
-            mode="lines+markers",
-            name=name,
-            line=dict(color=color, width=width),
-            marker=dict(size=[3, 8], color=color, symbol=["circle", "diamond"]),
-            hovertemplate=f"{name}<extra></extra>",
-        )
-    )
-
-
-def build_unit_cell_plotly(
+def build_unit_cell_figure(
     delta_z: float = 0.15,
     delta_side: float = 0.08,
-):
-    """Interactive 3D unit cell: semi-transparent cube, tensions, δ_z / δ_side arrows."""
-    import plotly.graph_objects as go
+    *,
+    r_val: float | None = None,
+) -> plt.Figure:
+    """Server-rendered 3D unit cell (no client WebGL) — cube, tensions, δ_z / δ_side arrows."""
+    from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
     s = 1.0
-    verts = [
-        (-s, -s, -s),
-        (s, -s, -s),
-        (s, s, -s),
-        (-s, s, -s),
-        (-s, -s, s),
-        (s, -s, s),
-        (s, s, s),
-        (-s, s, s),
+    r_show = R if r_val is None else r_val
+    side = abs(delta_side)
+
+    fig = plt.figure(figsize=(8, 6.5), dpi=120, facecolor="#0a0818")
+    ax = fig.add_subplot(111, projection="3d", facecolor="#120c18")
+
+    faces = [
+        [[-s, -s, -s], [s, -s, -s], [s, s, -s], [-s, s, -s]],
+        [[-s, -s, s], [s, -s, s], [s, s, s], [-s, s, s]],
+        [[-s, -s, -s], [s, -s, -s], [s, -s, s], [-s, -s, s]],
+        [[-s, s, -s], [s, s, -s], [s, s, s], [-s, s, s]],
+        [[-s, -s, -s], [-s, s, -s], [-s, s, s], [-s, -s, s]],
+        [[s, -s, -s], [s, s, -s], [s, s, s], [s, -s, s]],
     ]
-    x, y, z = zip(*verts)
-    # Two triangles per cube face (vertex indices).
-    i = (0, 0, 4, 4, 0, 0, 2, 2, 0, 0, 1, 1)
-    j = (1, 2, 5, 6, 3, 7, 3, 6, 4, 5, 5, 6)
-    k = (2, 3, 6, 7, 7, 4, 6, 7, 5, 1, 6, 2)
-    edges = (
-        (0, 1),
-        (1, 2),
-        (2, 3),
-        (3, 0),
-        (4, 5),
-        (5, 6),
-        (6, 7),
-        (7, 4),
-        (0, 4),
-        (1, 5),
-        (2, 6),
-        (3, 7),
-    )
-    fig = go.Figure()
-    fig.add_trace(
-        go.Mesh3d(
-            x=x,
-            y=y,
-            z=z,
-            i=i,
-            j=j,
-            k=k,
-            color="#8ecae6",
-            opacity=0.28,
-            flatshading=True,
-            hoverinfo="skip",
-            showlegend=False,
-        )
-    )
-    for i_edge, j_edge in edges:
-        fig.add_trace(
-            go.Scatter3d(
-                x=[verts[i_edge][0], verts[j_edge][0]],
-                y=[verts[i_edge][1], verts[j_edge][1]],
-                z=[verts[i_edge][2], verts[j_edge][2]],
-                mode="lines",
-                line=dict(color="#457b9d", width=5),
-                showlegend=False,
-                hoverinfo="skip",
-            )
-        )
-
-    tension_labels = (
-        (1.55, 0.0, 0.0, "T<sub>φ</sub> ∝ φ²", "#c9a227"),
-        (0.0, 1.55, 0.0, "T<sub>e</sub> ∝ e²", "#2a9d8f"),
-        (0.0, 0.0, 1.55, "T<sub>π</sub> ∝ π²", "#e63946"),
-    )
-    for tx, ty, tz, label, color in tension_labels:
-        fig.add_trace(
-            go.Scatter3d(
-                x=[tx],
-                y=[ty],
-                z=[tz],
-                mode="text",
-                text=[label],
-                textfont=dict(color=color, size=12),
-                showlegend=False,
-                hoverinfo="skip",
-            )
-        )
-
-    _plotly_arrow(
-        fig,
-        (0.0, 0.0, s + 0.05),
-        (0.0, 0.0, -delta_z * 2.5),
-        color="#c9a227",
-        name="δ_z — π-face push",
-    )
-    _plotly_arrow(
-        fig,
-        (-s - 0.05, 0.0, 0.0),
-        (delta_side * 2.5, 0.0, 0.0),
-        color="#457b9d",
-        name="δ_side — φ-face",
-    )
-    _plotly_arrow(
-        fig,
-        (s + 0.05, 0.0, 0.0),
-        (-delta_side * 2.5, 0.0, 0.0),
-        color="#2a9d8f",
-        name="δ_side — e-face",
-    )
-
-    fig.add_trace(
-        go.Scatter3d(
-            x=[0],
-            y=[0],
-            z=[0],
-            mode="markers+text",
-            name="R imbalance",
-            marker=dict(size=6, color="#e63946"),
-            text=[f"R ≈ {R:+.3f}"],
-            textposition="bottom center",
-            textfont=dict(color="#e63946", size=12),
-            hovertemplate="R = φ²+e²−π²<extra></extra>",
+    ax.add_collection3d(
+        Poly3DCollection(
+            faces,
+            facecolors="#8ecae6",
+            edgecolors="#457b9d",
+            linewidths=1.2,
+            alpha=0.38,
         )
     )
 
-    fig.update_layout(
-        title=dict(
-            text=(
-                f"Unit cell deformation — R = φ²+e²−π² ≈ {R:+.3f} drives net δ_side contraction"
-            ),
-            font=dict(color="#e8e0f8", size=13),
-        ),
-        paper_bgcolor="rgba(10, 8, 24, 0)",
-        plot_bgcolor="rgba(10, 8, 24, 0)",
-        scene=dict(
-            xaxis=dict(title="φ-face", color="#a89ec8", gridcolor="rgba(255,255,255,0.08)"),
-            yaxis=dict(title="e-face", color="#a89ec8", gridcolor="rgba(255,255,255,0.08)"),
-            zaxis=dict(title="π-face", color="#a89ec8", gridcolor="rgba(255,255,255,0.08)"),
-            bgcolor="rgba(10, 8, 24, 0.35)",
-            aspectmode="cube",
-            camera=dict(eye=dict(x=1.6, y=1.6, z=1.1)),
-        ),
-        margin=dict(l=0, r=0, t=40, b=0),
-        legend=dict(font=dict(color="#e8e0f8"), bgcolor="rgba(18,10,28,0.7)"),
-        height=420,
+    arrow_kw = dict(arrow_length_ratio=0.28, linewidth=2.2)
+    ax.quiver(0, 0, s + 0.1, 0, 0, -delta_z * 2.0, color="#c9a227", **arrow_kw)
+    ax.quiver(-s - 0.1, 0, 0, side * 2.0, 0, 0, color="#457b9d", **arrow_kw)
+    ax.quiver(s + 0.1, 0, 0, -side * 2.0, 0, 0, color="#2a9d8f", **arrow_kw)
+
+    ax.text(1.55, 0, 0, r"$T_\phi \propto \phi^2$", color="#c9a227", fontsize=10, ha="center")
+    ax.text(0, 1.55, 0, r"$T_e \propto e^2$", color="#2a9d8f", fontsize=10, ha="center")
+    ax.text(0, 0, 1.55, r"$T_\pi \propto \pi^2$", color="#e63946", fontsize=10, ha="center")
+    ax.text(0, 0, -0.35, r"$\delta_\mathrm{side}$ (inward)", color="#457b9d", fontsize=9, ha="center")
+    ax.text(0, -1.35, 0, r"$\delta_z$ (push)", color="#c9a227", fontsize=9, ha="center")
+
+    ax.text2D(
+        0.5,
+        0.03,
+        f"R = φ²+e²−π² ≈ {r_show:+.3f} drives net δ_side contraction",
+        transform=ax.transAxes,
+        ha="center",
+        color="#f5e6c8",
+        fontsize=9,
+        bbox=dict(boxstyle="round", facecolor="#2a1838", alpha=0.9, edgecolor="#6a4c93"),
     )
+
+    ax.set_xlim(-2, 2)
+    ax.set_ylim(-2, 2)
+    ax.set_zlim(-2, 2.2)
+    ax.set_xlabel("φ-face", color="#a89ec8", labelpad=8)
+    ax.set_ylabel("e-face", color="#a89ec8", labelpad=8)
+    ax.set_zlabel("π-face", color="#a89ec8", labelpad=8)
+    ax.tick_params(colors="#a89ec8", labelsize=8)
+    ax.xaxis.pane.fill = False
+    ax.yaxis.pane.fill = False
+    ax.zaxis.pane.fill = False
+    ax.grid(True, color="#3a3550")
+    ax.view_init(elev=22, azim=45)
+    ax.set_title(
+        "Unit cell — orthogonal push δ_z and compensatory δ_side",
+        color="#e8e0f8",
+        fontsize=11,
+        pad=14,
+    )
+    fig.tight_layout()
     return fig
 
 
@@ -672,14 +574,18 @@ def run_residual_explorer(
     delta_z: float,
     alpha: float,
     beta: float,
-) -> tuple[str, object]:
-    """Return explorer metrics text and updated Plotly unit-cell figure."""
+) -> tuple[str, plt.Figure]:
+    """Return explorer metrics text and updated matplotlib unit-cell figure."""
     r_val = residual_from_scales(phi_sq_scale, e_sq_scale, pi_sq_scale)
     d_side = delta_side_contraction(delta_z, r_val, kappa, alpha=alpha, beta=beta)
     metrics = format_residual_explorer(
         phi_sq_scale, e_sq_scale, pi_sq_scale, kappa, delta_z, alpha, beta
     )
-    fig = build_unit_cell_plotly(delta_z=delta_z, delta_side=abs(d_side) * 0.5)
+    fig = build_unit_cell_figure(
+        delta_z=delta_z,
+        delta_side=abs(d_side) * 0.5,
+        r_val=r_val,
+    )
     return metrics, fig
 
 
