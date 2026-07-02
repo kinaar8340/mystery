@@ -2222,7 +2222,7 @@ def build_app() -> gr.Blocks:
             gr.Markdown(_figures_links_md())
 
         _init_re_metrics, _init_unit_cell = run_residual_explorer(
-            1.0, 1.0, 1.0, KAPPA_DOC, 0.1, 1.0, 1.0, 0.35
+            1.0, 1.0, 1.0, KAPPA_DOC, 0.1, 1.0, 1.0, 0.35, 22.0, 45.0
         )
 
         with gr.Column(visible=True, elem_classes=["myst-gravity-page"]) as page_gravity:
@@ -2256,15 +2256,9 @@ def build_app() -> gr.Blocks:
             )
             gr.Markdown(PHYSICAL_INTERPRETATION_INTRO_MD)
             unit_cell_plot = gr.Plot(
-                label="Deformable unit cell — drag sliders or animate (no WebGL required)",
+                label="Deformable unit cell — pressure, view, animate (no WebGL)",
                 value=_init_unit_cell,
                 elem_classes=["vqc-plot3d-panel"],
-            )
-            gr.Markdown(PHYSICAL_INTERPRETATION_MATH_MD)
-            gr.Markdown("### Residual explorer")
-            gr.Markdown(
-                "Tweak φ², e², and π² scale factors to see how **R**, **B(κ)**, and **δ_side** respond. "
-                "Use **deformation pressure** to bow the π-face and curve the φ/e sides; press **Animate deformation** for a full 0→100% sweep."
             )
             with gr.Row():
                 re_pressure = gr.Slider(
@@ -2272,12 +2266,34 @@ def build_app() -> gr.Blocks:
                     1.0,
                     value=0.35,
                     step=0.01,
-                    label="Deformation pressure (0 = rigid, 1 = full bend)",
+                    label="Deformation pressure (0 = rigid, 1 = full bow/concave)",
+                )
+                re_view_elev = gr.Slider(
+                    5.0,
+                    75.0,
+                    value=22.0,
+                    step=1.0,
+                    label="View elevation (°)",
+                )
+                re_view_azim = gr.Slider(
+                    0.0,
+                    360.0,
+                    value=45.0,
+                    step=5.0,
+                    label="View azimuth (°)",
                 )
                 animate_deform_btn = gr.Button(
                     "Animate deformation",
                     variant="primary",
                 )
+            gr.Markdown(PHYSICAL_INTERPRETATION_MATH_MD)
+            gr.Markdown("### Residual explorer")
+            gr.Markdown(
+                "Tweak φ², e², and π² scale factors to see how **R**, **B(κ)**, and **δ_side** respond. "
+                "**Deformation pressure** drives π-face bowing (concave) and φ/e side pinch; "
+                "the mesh colors shift blue/red/green as curvature intensifies. "
+                "Press **Animate deformation** for an eased 0→100% sweep."
+            )
             with gr.Row():
                 re_phi_scale = gr.Slider(
                     0.90, 1.10, value=1.0, step=0.001, label="φ² scale",
@@ -2308,6 +2324,7 @@ def build_app() -> gr.Blocks:
             re_inputs = [
                 re_phi_scale, re_e_scale, re_pi_scale,
                 re_kappa, re_delta_z, re_alpha, re_beta, re_pressure,
+                re_view_elev, re_view_azim,
             ]
             re_outputs = [re_metrics, unit_cell_plot]
             for slider in re_inputs:

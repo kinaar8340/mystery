@@ -108,7 +108,7 @@ emergent gravity at larger scales.
 **Legend:** \\(T_\\phi, T_e, T_\\pi\\) = quadratic flux/tension · \\(\\delta_z\\) = primary π-face push ·
 \\(\\delta_\\text{side}\\) = compensatory contraction · \\(R = \\phi^2+e^2-\\pi^2\\) imbalance.
 
-The **deformable unit cell** below is server-rendered (no browser WebGL required). Use **deformation pressure** or **Animate deformation** to watch the π-face bow inward and the φ/e faces curve concave under rising δ_z / δ_side.
+The **deformable unit cell** below is server-rendered (no browser WebGL required). Drag **deformation pressure** to bow the π-face concave and pinch the φ/e sides inward; rotate with **view elevation/azimuth**; press **Animate deformation** for a smooth 0→100% curvature sweep with color-coded face modes.
 """
 
 PHYSICAL_INTERPRETATION_MATH_MD = f"""
@@ -519,6 +519,84 @@ def _bilinear_face(
     return _lerp3(p0, p1, v)
 
 
+def _deformation_weights(
+    x: float,
+    y: float,
+    z: float,
+    s: float,
+) -> dict[str, float]:
+    """Per-vertex weights for π-bowl, φ/e concavity, and bottom convex bulge."""
+    xn, yn, zn = x / s, y / s, z / s
+    bowl = max(0.0, 1.0 - xn**2) * max(0.0, 1.0 - yn**2)
+    equator = max(0.12, 1.0 - 0.5 * zn**2)
+    top_w = max(0.0, zn) ** 1.45
+    bottom_w = max(0.0, -zn) ** 1.45
+    x_edge = min(1.0, abs(xn) ** 1.25)
+    y_edge = min(1.0, abs(yn) ** 1.25)
+    return {
+        "bowl": bowl,
+        "equator": equator,
+        "top_w": top_w,
+        "bottom_w": bottom_w,
+        "x_edge": x_edge,
+        "y_edge": y_edge,
+        "zn": zn,
+        "xn": xn,
+        "yn": yn,
+    }
+
+
+def _displacement_components(
+    x: float,
+    y: float,
+    z: float,
+    s: float,
+    pressure: float,
+    delta_z: float,
+    delta_side: float,
+) -> tuple[float, float, float, dict[str, float]]:
+    """Return (dx, dy, dz) offsets and signed mode weights for coloring."""
+    if pressure <= 0.0:
+        return 0.0, 0.0, 0.0, {
+            "pi_bowl": 0.0,
+            "phi_concave": 0.0,
+            "e_concave": 0.0,
+            "bottom_convex": 0.0,
+        }
+
+    w = _deformation_weights(x, y, z, s)
+    bowl = w["bowl"]
+    equator = w["equator"]
+
+    # π-face: parabolic bowl — concave when viewed from above
+    pi_mag = pressure * delta_z * 5.0 * w["top_w"] * bowl
+    dz_pi = -pi_mag
+
+    # φ / e lateral faces: concave pinch toward cell center
+    phi_mag = 0.0
+    e_mag = 0.0
+    dx_side = 0.0
+    dy_side = 0.0
+    if abs(x) > 1e-9:
+        phi_mag = pressure * delta_side * 3.6 * w["x_edge"] * equator * (1.0 - 0.25 * bowl)
+        dx_side = -np.sign(x) * phi_mag
+    if abs(y) > 1e-9:
+        e_mag = pressure * delta_side * 3.6 * w["y_edge"] * equator * (1.0 - 0.25 * bowl)
+        dy_side = -np.sign(y) * e_mag
+
+    # Bottom: compensatory convex dome (anticlastic response)
+    bottom_mag = pressure * delta_z * 0.85 * w["bottom_w"] * bowl
+    dz_bottom = bottom_mag
+
+    modes = {
+        "pi_bowl": pi_mag,
+        "phi_concave": phi_mag,
+        "e_concave": e_mag,
+        "bottom_convex": bottom_mag,
+    }
+    return dx_side, dy_side, dz_pi + dz_bottom, modes
+
+
 def _displace_vertex(
     x: float,
     y: float,
@@ -529,30 +607,10 @@ def _displace_vertex(
     delta_side: float,
 ) -> tuple[float, float, float]:
     """π-face bowl (push), φ/e side concavity, slight bottom convex — scaled by pressure."""
-    if pressure <= 0.0:
-        return x, y, z
-
-    xn, yn, zn = x / s, y / s, z / s
-    bowl = max(0.0, 1.0 - xn**2) * max(0.0, 1.0 - yn**2)
-    equator = max(0.15, 1.0 - 0.55 * zn**2)
-
-    # π-face: center bows down (concave from above / convex downward)
-    top_w = max(0.0, zn) ** 1.6
-    z -= pressure * delta_z * 4.2 * top_w * bowl
-
-    # φ / e faces: concave inward along ±x and ±y
-    x_edge = min(1.0, abs(xn) ** 1.35)
-    y_edge = min(1.0, abs(yn) ** 1.35)
-    if abs(x) > 1e-9:
-        x -= np.sign(x) * pressure * delta_side * 3.0 * x_edge * equator * (1.0 - 0.3 * bowl)
-    if abs(y) > 1e-9:
-        y -= np.sign(y) * pressure * delta_side * 3.0 * y_edge * equator * (1.0 - 0.3 * bowl)
-
-    # Bottom face: mild compensatory convex bulge (anticlastic)
-    bottom_w = max(0.0, -zn) ** 1.6
-    z += pressure * delta_z * 0.55 * bottom_w * bowl
-
-    return float(x), float(y), float(z)
+    dx, dy, dz, _modes = _displacement_components(
+        x, y, z, s, pressure, delta_z, delta_side
+    )
+    return float(x + dx), float(y + dy), float(z + dz)
 
 
 def _cube_face_quads(s: float) -> tuple[tuple[tuple[float, float, float], ...], ...]:
@@ -566,6 +624,97 @@ def _cube_face_quads(s: float) -> tuple[tuple[tuple[float, float, float], ...], 
     )
 
 
+_MESH_TOPOLOGY_CACHE: dict[int, list[tuple[tuple[float, float, float], ...]]] = {}
+
+
+def _cube_mesh_topology(
+    s: float,
+    *,
+    subdiv: int = 8,
+) -> list[tuple[tuple[float, float, float], ...]]:
+    """Fixed quad corners per surface patch (cached by subdiv)."""
+    if subdiv not in _MESH_TOPOLOGY_CACHE:
+        patches: list[tuple[tuple[float, float, float], ...]] = []
+        for p00, p10, p11, p01 in _cube_face_quads(s):
+            for i in range(subdiv):
+                u0, u1 = i / subdiv, (i + 1) / subdiv
+                for j in range(subdiv):
+                    v0, v1 = j / subdiv, (j + 1) / subdiv
+                    patches.append(
+                        (
+                            _bilinear_face(p00, p10, p11, p01, u0, v0),
+                            _bilinear_face(p00, p10, p11, p01, u1, v0),
+                            _bilinear_face(p00, p10, p11, p01, u1, v1),
+                            _bilinear_face(p00, p10, p11, p01, u0, v1),
+                        )
+                    )
+        _MESH_TOPOLOGY_CACHE[subdiv] = patches
+    return _MESH_TOPOLOGY_CACHE[subdiv]
+
+
+def _triangle_mode_color(
+    modes: tuple[dict[str, float], dict[str, float], dict[str, float]],
+    *,
+    pressure: float,
+) -> tuple[float, float, float, float]:
+    """Blend face colors from dominant deformation mode at triangle centroid."""
+    eq_red = (0.90, 0.22, 0.27)
+    eq_green = (0.13, 0.77, 0.37)
+    eq_blue = (0.15, 0.39, 0.92)
+    neutral = (0.22, 0.28, 0.42)
+
+    totals = {
+        "pi_bowl": sum(m["pi_bowl"] for m in modes),
+        "phi_concave": sum(m["phi_concave"] for m in modes),
+        "e_concave": sum(m["e_concave"] for m in modes),
+        "bottom_convex": sum(m["bottom_convex"] for m in modes),
+    }
+    dominant = max(totals, key=totals.get)
+    mag = totals[dominant] / 3.0
+    blend = min(1.0, mag / max(0.08, pressure * 0.35 + 0.05))
+    palette = {
+        "pi_bowl": eq_blue,
+        "phi_concave": eq_red,
+        "e_concave": eq_green,
+        "bottom_convex": (0.35, 0.62, 0.95),
+    }
+    base = palette.get(dominant, neutral)
+    rgb = tuple(neutral[i] + blend * (base[i] - neutral[i]) for i in range(3))
+    alpha = 0.12 + 0.38 * min(1.0, pressure)
+    return (*rgb, alpha)
+
+
+def _deformed_cube_surface(
+    s: float,
+    pressure: float,
+    delta_z: float,
+    delta_side: float,
+    *,
+    subdiv: int = 8,
+) -> tuple[list[list[tuple[float, float, float]]], list[tuple[float, float, float, float]]]:
+    """Subdivided surface triangles and per-triangle RGBA colors."""
+    triangles: list[list[tuple[float, float, float]]] = []
+    colors: list[tuple[float, float, float, float]] = []
+    for corners in _cube_mesh_topology(s, subdiv=subdiv):
+        displaced = []
+        mode_triplet = []
+        for corner in corners:
+            x, y, z = corner
+            dx, dy, dz, modes = _displacement_components(
+                x, y, z, s, pressure, delta_z, delta_side
+            )
+            displaced.append((x + dx, y + dy, z + dz))
+            mode_triplet.append(modes)
+        a, b, c, d = displaced
+        ma, mb, mc = mode_triplet[0], mode_triplet[1], mode_triplet[2]
+        md = mode_triplet[3]
+        triangles.append([a, b, c])
+        colors.append(_triangle_mode_color((ma, mb, mc), pressure=pressure))
+        triangles.append([a, c, d])
+        colors.append(_triangle_mode_color((ma, mc, md), pressure=pressure))
+    return triangles, colors
+
+
 def _deformed_cube_triangles(
     s: float,
     pressure: float,
@@ -575,26 +724,52 @@ def _deformed_cube_triangles(
     subdiv: int = 8,
 ) -> list[list[tuple[float, float, float]]]:
     """Subdivided surface triangles for a pressure-deformed unit cell."""
-    triangles: list[list[tuple[float, float, float]]] = []
-    for p00, p10, p11, p01 in _cube_face_quads(s):
-        for i in range(subdiv):
-            u0, u1 = i / subdiv, (i + 1) / subdiv
-            for j in range(subdiv):
-                v0, v1 = j / subdiv, (j + 1) / subdiv
-                corners = (
-                    _bilinear_face(p00, p10, p11, p01, u0, v0),
-                    _bilinear_face(p00, p10, p11, p01, u1, v0),
-                    _bilinear_face(p00, p10, p11, p01, u1, v1),
-                    _bilinear_face(p00, p10, p11, p01, u0, v1),
-                )
-                displaced = [
-                    _displace_vertex(*corner, s, pressure, delta_z, delta_side)
-                    for corner in corners
-                ]
-                a, b, c, d = displaced
-                triangles.append([a, b, c])
-                triangles.append([a, c, d])
+    triangles, _colors = _deformed_cube_surface(
+        s, pressure, delta_z, delta_side, subdiv=subdiv
+    )
     return triangles
+
+
+def _deformed_face_curvature_grid(
+    s: float,
+    pressure: float,
+    delta_z: float,
+    delta_side: float,
+    *,
+    subdiv: int = 8,
+    grid_step: int = 2,
+) -> list[list[tuple[float, float, float]]]:
+    """Iso-u / iso-v lines on each face — bend visibly under pressure."""
+    polylines: list[list[tuple[float, float, float]]] = []
+    for p00, p10, p11, p01 in _cube_face_quads(s):
+        n = subdiv
+        for i in range(0, n + 1, grid_step):
+            u = i / n
+            line = [
+                _displace_vertex(
+                    *_bilinear_face(p00, p10, p11, p01, u, v / n),
+                    s,
+                    pressure,
+                    delta_z,
+                    delta_side,
+                )
+                for v in range(n + 1)
+            ]
+            polylines.append(line)
+        for j in range(0, n + 1, grid_step):
+            v = j / n
+            line = [
+                _displace_vertex(
+                    *_bilinear_face(p00, p10, p11, p01, u / n, v),
+                    s,
+                    pressure,
+                    delta_z,
+                    delta_side,
+                )
+                for u in range(n + 1)
+            ]
+            polylines.append(line)
+    return polylines
 
 
 def _deformed_cube_edge_polylines(
@@ -674,14 +849,27 @@ def _draw_leader_label(
     )
 
 
+def _ease_in_out_cubic(t: float) -> float:
+    """Smooth acceleration/deceleration for deformation animation."""
+    t = float(np.clip(t, 0.0, 1.0))
+    if t < 0.5:
+        return 4.0 * t * t * t
+    return 1.0 - (-2.0 * t + 2.0) ** 3 / 2.0
+
+
 def build_unit_cell_figure(
     delta_z: float = 0.15,
     delta_side: float = 0.08,
     *,
     r_val: float | None = None,
     pressure: float = 1.0,
+    view_elev: float = 22.0,
+    view_azim: float = 45.0,
+    show_curvature_grid: bool = True,
+    dpi: int = 120,
 ) -> plt.Figure:
     """Server-rendered deformable unit cell — bowing π-face, concave φ/e sides."""
+    from matplotlib.colors import to_rgba
     from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
     s = 1.0
@@ -702,19 +890,31 @@ def build_unit_cell_figure(
     font_axis = 12
     caption_neutral = "#ffffff"
 
-    fig = plt.figure(figsize=(8, 6.5), dpi=120, facecolor=bg)
+    fig = plt.figure(figsize=(8, 6.5), dpi=dpi, facecolor=bg)
     ax = fig.add_subplot(111, projection="3d", facecolor=bg)
 
-    triangles = _deformed_cube_triangles(s, p, delta_z, side)
+    triangles, tri_colors = _deformed_cube_surface(s, p, delta_z, side)
     ax.add_collection3d(
         Poly3DCollection(
             triangles,
-            facecolors=eq_blue,
+            facecolors=[to_rgba(c) for c in tri_colors],
             edgecolors=(0, 0, 0, 0),
             linewidths=0.0,
-            alpha=0.1,
         )
     )
+    if show_curvature_grid and p > 0.02:
+        grid_alpha = 0.25 + 0.55 * p
+        for grid_line in _deformed_face_curvature_grid(s, p, delta_z, side):
+            gx, gy, gz = zip(*grid_line)
+            ax.plot(
+                gx,
+                gy,
+                gz,
+                color=matrix_green,
+                linewidth=0.85,
+                alpha=grid_alpha,
+                zorder=4,
+            )
     for edge_pts in _deformed_cube_edge_polylines(s, p, delta_z, side):
         xs, ys, zs = zip(*edge_pts)
         ax.plot(
@@ -860,13 +1060,56 @@ def build_unit_cell_figure(
         axis.pane.fill = False
         axis.pane.set_edgecolor("#333333")
     ax.grid(True, color="#505050")
-    ax.view_init(elev=22, azim=45)
+    elev = float(np.clip(view_elev, 5.0, 85.0))
+    azim = float(view_azim) % 360.0
+    ax.view_init(elev=elev, azim=azim)
+
+    if p < 0.04:
+        deform_hint = "rigid cube"
+    elif p < 0.45:
+        deform_hint = "mild bow + side pinch"
+    elif p < 0.8:
+        deform_hint = "π bowl concave · φ/e sides curving inward"
+    else:
+        deform_hint = "full concave bowl + compensatory bottom convex bulge"
+
     ax.set_title(
-        f"Deformable unit cell — pressure {p * 100:.0f}% · δ_z push + δ_side concavity",
+        f"Deformable unit cell — pressure {p * 100:.0f}% · {deform_hint}",
         color=caption_neutral,
         fontsize=font_title,
         pad=14,
     )
+
+    legend_y = 0.94
+    legend_items = (
+        (0.16, r"$\pi$ bowl (concave)", eq_blue),
+        (0.38, r"$\phi$ face pinch", eq_red),
+        (0.56, r"$e$ face pinch", eq_green),
+        (0.74, "bottom convex", (0.35, 0.62, 0.95)),
+    )
+    for x_pos, label, color in legend_items:
+        fig.text(
+            x_pos,
+            legend_y,
+            "■",
+            transform=fig.transFigure,
+            ha="center",
+            color=color,
+            fontsize=font_small,
+            alpha=0.55 + 0.45 * p,
+            zorder=6,
+        )
+        fig.text(
+            x_pos + 0.02,
+            legend_y,
+            label,
+            transform=fig.transFigure,
+            ha="left",
+            color=caption_neutral,
+            fontsize=font_caption - 1,
+            alpha=0.75,
+            zorder=6,
+        )
     fig.tight_layout()
     return fig
 
@@ -880,6 +1123,8 @@ def run_residual_explorer(
     alpha: float,
     beta: float,
     deform_pressure: float = 0.35,
+    view_elev: float = 22.0,
+    view_azim: float = 45.0,
 ) -> tuple[str, plt.Figure]:
     """Return explorer metrics text and updated deformable unit-cell figure."""
     r_val = residual_from_scales(phi_sq_scale, e_sq_scale, pi_sq_scale)
@@ -888,15 +1133,27 @@ def run_residual_explorer(
         phi_sq_scale, e_sq_scale, pi_sq_scale, kappa, delta_z, alpha, beta
     )
     p = float(np.clip(deform_pressure, 0.0, 1.0))
+    mode = (
+        "rigid"
+        if p < 0.05
+        else "mild curvature"
+        if p < 0.45
+        else "strong concave bowl"
+        if p < 0.85
+        else "max bow + bottom convex bulge"
+    )
     metrics = (
         f"{metrics}\n\n"
-        f"Deformation pressure : {p * 100:.1f}%  (0 = rigid cube, 100 = full δ_z / δ_side bend)"
+        f"Deformation pressure : {p * 100:.1f}%  ({mode})\n"
+        f"View                 : elev {view_elev:.0f}° · azim {view_azim:.0f}°"
     )
     fig = build_unit_cell_figure(
         delta_z=delta_z,
         delta_side=abs(d_side) * 0.5,
         r_val=r_val,
         pressure=p,
+        view_elev=view_elev,
+        view_azim=view_azim,
     )
     return metrics, fig
 
@@ -910,6 +1167,8 @@ def stream_unit_cell_deformation(
     alpha: float,
     beta: float,
     deform_pressure: float = 0.35,
+    view_elev: float = 22.0,
+    view_azim: float = 45.0,
 ):
     """Yield frames sweeping deformation pressure 0 → 1 → hold (animation)."""
     import time
@@ -922,33 +1181,54 @@ def stream_unit_cell_deformation(
     side = abs(d_side) * 0.5
     hold = float(np.clip(deform_pressure, 0.0, 1.0))
 
-    for pressure in np.linspace(0.0, 1.0, 26):
-        p = float(pressure)
-        metrics = (
-            f"{base_metrics}\n\n"
-            f"Deformation pressure : {p * 100:.1f}%  ▶ animating…"
-        )
-        yield metrics, build_unit_cell_figure(
-            delta_z=delta_z,
-            delta_side=side,
-            r_val=r_val,
-            pressure=p,
-        )
-        time.sleep(0.07)
+    sweep_t = np.linspace(0.0, 1.0, 36)
+    eased = [_ease_in_out_cubic(t) for t in sweep_t]
+    total_frames = len(eased) + (8 if hold < 0.995 else 0)
+    frame_idx = 0
+    prev_fig: plt.Figure | None = None
 
-    for pressure in np.linspace(1.0, hold, 8):
-        p = float(pressure)
-        metrics = (
-            f"{base_metrics}\n\n"
-            f"Deformation pressure : {p * 100:.1f}%  ▶ easing to slider"
-        )
-        yield metrics, build_unit_cell_figure(
+    def _yield_frame(metrics_text: str, pressure_val: float) -> tuple[str, plt.Figure]:
+        nonlocal prev_fig
+        fig = build_unit_cell_figure(
             delta_z=delta_z,
             delta_side=side,
             r_val=r_val,
-            pressure=p,
+            pressure=pressure_val,
+            view_elev=view_elev,
+            view_azim=view_azim,
+            dpi=100,
         )
-        time.sleep(0.05)
+        if prev_fig is not None:
+            plt.close(prev_fig)
+        prev_fig = fig
+        return metrics_text, fig
+
+    for pressure in eased:
+        frame_idx += 1
+        p = float(pressure)
+        metrics = (
+            f"{base_metrics}\n\n"
+            f"Deformation pressure : {p * 100:.1f}%  "
+            f"▶ animating bow/concave ({frame_idx}/{total_frames})"
+        )
+        yield _yield_frame(metrics, p)
+        time.sleep(0.055)
+
+    if hold < 0.995:
+        for pressure in np.linspace(1.0, hold, 8):
+            frame_idx += 1
+            p = float(pressure)
+            metrics = (
+                f"{base_metrics}\n\n"
+                f"Deformation pressure : {p * 100:.1f}%  "
+                f"▶ easing to slider ({frame_idx}/{total_frames})"
+            )
+            yield _yield_frame(metrics, p)
+            time.sleep(0.04)
+
+    if prev_fig is not None:
+        plt.close(prev_fig)
+        prev_fig = None
 
     yield run_residual_explorer(
         phi_sq_scale,
@@ -959,6 +1239,8 @@ def stream_unit_cell_deformation(
         alpha,
         beta,
         deform_pressure=hold,
+        view_elev=view_elev,
+        view_azim=view_azim,
     )
 
 
