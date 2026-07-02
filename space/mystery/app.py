@@ -1017,7 +1017,7 @@ HFB_CSS = f"""
     --myst-control-bar-height: 1.54rem;
     --myst-button-height: 26px;
     --myst-viewport-min-height: calc(100dvh - 11rem);
-    --myst-viewport-plot-height: calc(100dvh - 12.5rem);
+    --myst-viewport-plot-height: max(680px, calc(100dvh - 12.5rem));
     --myst-viewport-aspect: 7 / 5;
     --body-background-fill: transparent !important;
     --background-fill-primary: transparent !important;
@@ -2118,7 +2118,7 @@ footer {{ visibility: hidden; }}
 }}
 .gradio-container .myst-gravity-split {{
     display: grid !important;
-    grid-template-columns: minmax(240px, 24%) minmax(0, 1fr) !important;
+    grid-template-columns: minmax(220px, 20%) minmax(0, 1fr) !important;
     grid-template-rows: 1fr !important;
     align-items: stretch !important;
     gap: 0.5rem !important;
@@ -3335,6 +3335,66 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-readme-page .markdown.prose {{
     font-size: 0.94rem !important;
     line-height: 1.5 !important;
+}}
+/* Aggressive full-height viewport — matplotlib gr.Plot PNG (not Plotly) */
+.gradio-container .column:has(.full-height-3d),
+.gradio-container .myst-cube-viewport-media:has(.full-height-3d) {{
+    flex: 1 1 auto !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: var(--myst-viewport-plot-height, max(680px, calc(100dvh - 12.5rem))) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-self: stretch !important;
+}}
+.gradio-container .myst-cube-viewport-media .myst-cube-plot-inner.full-height-3d.block {{
+    position: relative !important;
+    inset: auto !important;
+    top: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    left: auto !important;
+    width: 100% !important;
+    height: var(--myst-viewport-plot-height, max(680px, calc(100dvh - 12.5rem))) !important;
+    min-height: var(--myst-viewport-plot-height, max(680px, calc(100dvh - 12.5rem))) !important;
+    max-height: none !important;
+    flex: 1 1 auto !important;
+    display: block !important;
+    overflow: visible !important;
+}}
+.gradio-container .full-height-3d,
+.gradio-container .full-height-3d.block,
+.gradio-container .full-height-3d > div,
+.gradio-container .full-height-3d .wrap,
+.gradio-container .full-height-3d .plot-container,
+.gradio-container .full-height-3d .js-plotly-plot,
+.gradio-container .full-height-3d .plotly-graph-div,
+.gradio-container .full-height-3d .main-svg,
+.gradio-container .full-height-3d .svg-container {{
+    width: 100% !important;
+    height: var(--myst-viewport-plot-height, max(680px, calc(100dvh - 12.5rem))) !important;
+    min-height: var(--myst-viewport-plot-height, max(680px, calc(100dvh - 12.5rem))) !important;
+    max-height: none !important;
+    display: block !important;
+    flex: none !important;
+    box-sizing: border-box !important;
+    overflow: visible !important;
+}}
+.gradio-container .full-height-3d .plot-container img,
+.gradio-container .full-height-3d img {{
+    width: 100% !important;
+    height: var(--myst-viewport-plot-height, max(680px, calc(100dvh - 12.5rem))) !important;
+    min-height: var(--myst-viewport-plot-height, max(680px, calc(100dvh - 12.5rem))) !important;
+    max-height: none !important;
+    display: block !important;
+    flex: none !important;
+    object-fit: contain !important;
+    object-position: center center !important;
+}}
+.gradio-container .myst-cube-viewport-media .myst-cube-anim-video.block {{
+    position: absolute !important;
+    inset: 0 !important;
+    z-index: 3 !important;
 }}
 @media (max-width: 768px) {{
     .gradio-container .myst-gravity-split {{
@@ -4582,8 +4642,8 @@ def build_app() -> gr.Blocks:
                 )
             with gr.Row(elem_classes=["myst-gravity-split"], equal_height=True):
                 with gr.Column(
-                    scale=3,
-                    min_width=240,
+                    scale=2,
+                    min_width=220,
                     elem_classes=[
                         "myst-gravity-controls-col",
                         "myst-gravity-left-panel",
@@ -4791,7 +4851,7 @@ def build_app() -> gr.Blocks:
                                 elem_classes=["myst-gravity-preset-tui-wrap"],
                             )
                 with gr.Column(
-                    scale=7,
+                    scale=8,
                     elem_classes=[
                         "myst-gravity-visuals-col",
                         "myst-gravity-right-panel",
@@ -4817,6 +4877,7 @@ def build_app() -> gr.Blocks:
                                 elem_id="unit-cell-viewport",
                                 value=_init_unit_cell,
                                 elem_classes=[
+                                    "full-height-3d",
                                     "vqc-plot3d-panel",
                                     "myst-cube-plot-inner",
                                     "myst-cube-plot-static",
