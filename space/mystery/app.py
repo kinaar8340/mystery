@@ -3408,17 +3408,12 @@ footer {{ visibility: hidden; }}
     padding: 4px 6px !important;
     flex: 1 1 0 !important;
 }}
-.gradio-container #unit-cell-viewport,
-.gradio-container #unit-cell-viewport.block,
-.gradio-container #unit-cell-viewport > div,
 .gradio-container .myst-gravity-viewport-full .myst-cube-viewport-media .myst-cube-plot-inner.block,
 .gradio-container .myst-gravity-viewport-full .myst-cube-viewport-media #unit-cell-viewport {{
     position: absolute !important;
     inset: 0 !important;
     width: 100% !important;
     height: 100% !important;
-    min-height: var(--myst-viewport-min-height, 18rem) !important;
-    max-height: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
     display: block !important;
@@ -3429,36 +3424,32 @@ footer {{ visibility: hidden; }}
     opacity: 1 !important;
     background: #000000 !important;
 }}
+/* === AGGRESSIVE FULL-SIZE MATPLOTLIB VIEWPORT (last wins) === */
 .gradio-container #unit-cell-viewport {{
-    min-height: var(--myst-viewport-plot-height, 700px) !important;
+    height: 100% !important;
+    min-height: 800px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: #000000 !important;
 }}
 .gradio-container #unit-cell-viewport .wrap,
-.gradio-container #unit-cell-viewport .plot-container,
 .gradio-container #unit-cell-viewport > div,
-.gradio-container .myst-gravity-viewport-full .myst-cube-viewport-media .myst-cube-plot-inner .plot-container {{
-    display: block !important;
+.gradio-container #unit-cell-viewport .plot-container,
+.gradio-container #unit-cell-viewport .plot-container img {{
     width: 100% !important;
     height: 100% !important;
-    min-height: var(--myst-viewport-min-height, 18rem) !important;
     max-height: none !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    flex: none !important;
-    overflow: visible !important;
+    object-fit: contain !important;
+    display: block !important;
+    margin: 0 auto !important;
     box-sizing: border-box !important;
     background-color: #000000 !important;
 }}
-.gradio-container #unit-cell-viewport .plot-container img,
-.gradio-container .myst-gravity-viewport-full .myst-cube-viewport-media .myst-cube-plot-inner .plot-container img {{
-    display: block !important;
+.gradio-container #unit-cell-viewport .gradio-plot,
+.gradio-container #unit-cell-viewport .gradio-plot > div,
+.gradio-container #unit-cell-viewport .gradio-plot .plot-container {{
+    height: 100% !important;
     width: 100% !important;
-    height: auto !important;
-    min-height: var(--myst-viewport-min-height, 18rem) !important;
-    max-width: 100% !important;
-    max-height: none !important;
-    flex: none !important;
-    object-fit: contain !important;
-    object-position: center center !important;
 }}
 @media (max-width: 768px) {{
     .gradio-container .myst-gravity-split {{
