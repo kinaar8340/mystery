@@ -1014,6 +1014,41 @@ def unit_cell_error_placeholder_html() -> str:
     )
 
 
+def unit_cell_error_placeholder_pil():
+    """Red PIL placeholder when viewport conversion fails."""
+    from PIL import Image as PILImage
+
+    return PILImage.fromarray(unit_cell_error_placeholder_numpy())
+
+
+def figure_to_viewport_pil(fig: plt.Figure, *, dpi: int = 100):
+    """Matplotlib figure → PIL for gr.Image(type='pil'); never raises."""
+    print(f"[DEBUG] figure_to_viewport_pil: dpi={dpi}", flush=True)
+    try:
+        import io
+
+        from PIL import Image as PILImage
+
+        buf = io.BytesIO()
+        fig.savefig(
+            buf,
+            format="png",
+            dpi=dpi,
+            facecolor=fig.get_facecolor(),
+            bbox_inches="tight",
+            pad_inches=0.02,
+        )
+        plt.close(fig)
+        buf.seek(0)
+        pil_img = PILImage.open(buf).copy().convert("RGB")
+        print(f"[DEBUG] figure_to_viewport_pil: size={pil_img.size}", flush=True)
+        return pil_img
+    except Exception as exc:
+        print(f"[ERROR] figure_to_viewport_pil failed: {exc}", flush=True)
+        traceback.print_exc()
+        return unit_cell_error_placeholder_pil()
+
+
 def figure_to_viewport_img_html(fig: plt.Figure, *, dpi: int = 100) -> str:
     """Matplotlib figure → inline base64 PNG for gr.HTML (no /tmp file URLs on HF)."""
     print(f"[DEBUG] figure_to_viewport_img_html: dpi={dpi}", flush=True)

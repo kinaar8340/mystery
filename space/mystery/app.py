@@ -37,8 +37,8 @@ from demo_core import (
     get_build_label,
     is_hf_space,
     build_unit_cell_viewport_header_html,
-    figure_to_viewport_img_html,
-    unit_cell_error_placeholder_html,
+    figure_to_viewport_pil,
+    unit_cell_error_placeholder_pil,
     render_unit_cell_deformation_video,
     residual_from_scales,
     run_analysis,
@@ -3368,111 +3368,71 @@ footer {{ visibility: hidden; }}
     font-size: 0.94rem !important;
     line-height: 1.5 !important;
 }}
-/* === VIEWPORT COLUMN — prevent flex collapse (image was 0px tall) === */
+/* === UNIT CELL VIEWPORT — gr.Image (PIL), solid black, no wallpaper bleed === */
 .gradio-container .myst-gravity-image-viewport {{
     display: flex !important;
     flex-direction: column !important;
     flex: 1 1 0 !important;
     min-height: 0 !important;
     overflow-y: auto !important;
-    overflow-x: hidden !important;
     padding: 4px !important;
-}}
-.gradio-container .myst-gravity-image-viewport > .block,
-.gradio-container .myst-gravity-image-viewport > .form {{
-    flex: 0 0 auto !important;
-    min-height: 0 !important;
-    overflow: visible !important;
 }}
 .gradio-container .myst-gravity-image-viewport > .block:has(#unit-cell-main-view),
 .gradio-container .myst-gravity-image-viewport > .form:has(#unit-cell-main-view) {{
-    flex: 1 0 550px !important;
-    min-height: 550px !important;
+    flex: 0 0 550px !important;
     height: 550px !important;
-    max-height: min(60vh, 550px) !important;
+    min-height: 550px !important;
+    max-height: 550px !important;
+    background: #000000 !important;
     overflow: hidden !important;
+    isolation: isolate !important;
+    z-index: 8 !important;
+    position: relative !important;
     margin: 0 !important;
     padding: 0 !important;
-    background: #000000 !important;
-    isolation: isolate !important;
-    z-index: 6 !important;
-    position: relative !important;
 }}
-.gradio-container .myst-gravity-image-viewport .wrap {{
-    padding: 0 !important;
-    overflow: visible !important;
-    min-height: 550px !important;
-    height: 100% !important;
-}}
-/* Upper static image — #unit-cell-main-view */
 .gradio-container #unit-cell-main-view,
 .gradio-container #unit-cell-main-view.block,
-.gradio-container #unit-cell-main-view .gradio-image,
 .gradio-container #unit-cell-main-view .gr-image,
-.gradio-container #unit-cell-main-view .gradio-image > div,
-.gradio-container #unit-cell-main-view .gr-image > div,
-.gradio-container #unit-cell-main-view .image-container {{
+.gradio-container #unit-cell-main-view .gradio-image {{
+    height: 550px !important;
     min-height: 550px !important;
-    width: 100% !important;
-    padding: 4px !important;
-    background-color: rgba(20, 20, 20, 0.65) !important;
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-    box-sizing: border-box !important;
-}}
-.gradio-container #unit-cell-main-view,
-.gradio-container #unit-cell-main-view.block,
-.gradio-container #unit-cell-main-view .myst-unit-cell-viewport-html,
-.gradio-container #unit-cell-main-view .html-container,
-.gradio-container #unit-cell-main-view .prose {{
-    min-height: 550px !important;
-    height: 100% !important;
-    width: 100% !important;
-    overflow: visible !important;
-    display: block !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-    z-index: 5 !important;
-    position: relative !important;
-}}
-.gradio-container #unit-cell-main-view .myst-unit-cell-viewport-img-wrap {{
-    width: 100% !important;
-    min-height: 520px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    background: rgba(0, 0, 0, 0.85) !important;
-    border-radius: 6px !important;
-    padding: 4px !important;
-    box-sizing: border-box !important;
-}}
-.gradio-container #unit-cell-main-view img,
-.gradio-container #unit-cell-main-view .myst-unit-cell-viewport-img {{
-    width: 100% !important;
-    height: auto !important;
-    min-height: 120px !important;
     max-height: 550px !important;
+    width: 100% !important;
+    background: #000000 !important;
     padding: 0 !important;
-    background-color: transparent !important;
-    object-fit: contain !important;
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    box-sizing: border-box !important;
+    margin: 0 !important;
+    overflow: hidden !important;
 }}
+.gradio-container #unit-cell-main-view .image-container,
 .gradio-container #unit-cell-main-view .wrap,
 .gradio-container #unit-cell-main-view .wrap.center,
 .gradio-container #unit-cell-main-view .wrap.center.full,
 .gradio-container #unit-cell-main-view .wrap.full {{
     position: relative !important;
     inset: auto !important;
-    height: 100% !important;
+    height: 550px !important;
     min-height: 550px !important;
     width: 100% !important;
     max-width: 100% !important;
-    display: block !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: #000000 !important;
     padding: 0 !important;
     margin: 0 !important;
+    overflow: hidden !important;
+}}
+.gradio-container #unit-cell-main-view img {{
+    width: 100% !important;
+    height: 100% !important;
+    max-height: 550px !important;
+    object-fit: contain !important;
+    object-position: center center !important;
+    display: block !important;
+    background: #000000 !important;
+    opacity: 1 !important;
+    visibility: visible !important;
 }}
 /* Lower animation video — #unit-cell-animation */
 .gradio-container #unit-cell-animation,
@@ -3530,10 +3490,7 @@ footer {{ visibility: hidden; }}
 /* Viewport + video: solid opaque — wallpaper must not bleed through */
 .gradio-container #unit-cell-main-view,
 .gradio-container #unit-cell-main-view.block,
-.gradio-container #unit-cell-main-view .block,
-.gradio-container #unit-cell-main-view .html-container,
-.gradio-container #unit-cell-main-view .prose,
-.gradio-container #unit-cell-main-view .myst-unit-cell-viewport-img-wrap,
+.gradio-container #unit-cell-main-view .image-container,
 .gradio-container #unit-cell-animation,
 .gradio-container #unit-cell-animation.block,
 .gradio-container .myst-cube-viewport-header-slot {{
@@ -3972,17 +3929,17 @@ def _gravity_tui_for_preset(
 
 
 def _gravity_static_image_update(fig: object) -> object:
-    """Inline base64 PNG HTML for gr.HTML — avoids broken Gradio file URLs on HF Spaces."""
+    """PIL image for gr.Image(type='pil') — native Gradio image rendering on HF Spaces."""
     if fig is gr.skip():
         print("[DEBUG] _gravity_static_image_update: gr.skip()", flush=True)
         return gr.skip()
-    print("[DEBUG] _gravity_static_image_update: converting figure to HTML img", flush=True)
-    html = figure_to_viewport_img_html(fig, dpi=_UNIT_CELL_IMAGE_DPI)
+    print("[DEBUG] _gravity_static_image_update: converting figure to PIL", flush=True)
+    pil_img = figure_to_viewport_pil(fig, dpi=_UNIT_CELL_IMAGE_DPI)
     print(
-        f"[DEBUG] _gravity_static_image_update: returning HTML len={len(html)}",
+        f"[DEBUG] _gravity_static_image_update: returning PIL size={pil_img.size}",
         flush=True,
     )
-    return gr.update(value=html)
+    return gr.update(value=pil_img)
 
 
 def _gravity_clear_video_update() -> dict:
@@ -4380,12 +4337,19 @@ def _make_gravity_quick_preset_click(slot: int):
         )
         if fig is None:
             outputs = list(outputs)
-            outputs[21] = unit_cell_error_placeholder_html()
+            outputs[21] = gr.update(value=unit_cell_error_placeholder_pil())
         image_out = outputs[21]
-        if isinstance(image_out, str):
+        if hasattr(image_out, "size"):
             print(
-                f"[DEBUG] preset_click_unified: Returning HTML to Gradio, "
-                f"len={len(image_out)}",
+                f"[DEBUG] preset_click_unified: Returning PIL to Gradio, "
+                f"size={image_out.size}",
+                flush=True,
+            )
+        elif isinstance(image_out, dict) and "value" in image_out:
+            val = image_out.get("value")
+            size = getattr(val, "size", None)
+            print(
+                f"[DEBUG] preset_click_unified: Returning gr.update PIL, size={size}",
                 flush=True,
             )
         else:
@@ -4714,12 +4678,12 @@ def build_app() -> gr.Blocks:
         _init_re_metrics, _init_unit_cell_header, _init_unit_cell_fig = run_residual_explorer(
             1.0, 1.0, 1.0, KAPPA_DOC, 0.1, 1.0, 1.0, 0.35, 22.0, 45.0
         )
-        _init_unit_cell_viewport_html = figure_to_viewport_img_html(
+        _init_unit_cell_pil = figure_to_viewport_pil(
             _init_unit_cell_fig,
             dpi=_UNIT_CELL_IMAGE_DPI,
         )
         print(
-            f"[DEBUG] init unit cell viewport html len={len(_init_unit_cell_viewport_html)}",
+            f"[DEBUG] init unit cell PIL size={_init_unit_cell_pil.size}",
             flush=True,
         )
         _init_preset_tui = _format_gravity_menu_tui_html()
@@ -5034,14 +4998,18 @@ def build_app() -> gr.Blocks:
                         _init_unit_cell_header,
                         elem_classes=["myst-cube-viewport-header-slot"],
                     )
-                    unit_cell_image = gr.HTML(
-                        _init_unit_cell_viewport_html,
+                    unit_cell_image = gr.Image(
+                        label=None,
+                        show_label=False,
+                        type="pil",
+                        interactive=False,
+                        height=550,
                         elem_id="unit-cell-main-view",
-                        container=True,
-                        padding=False,
+                        value=_init_unit_cell_pil,
+                        show_download_button=False,
                         elem_classes=[
                             "myst-unit-cell-main-image",
-                            "myst-unit-cell-viewport-html",
+                            "myst-unit-cell-viewport-image",
                         ],
                     )
                     gr.HTML(
@@ -5190,7 +5158,7 @@ def build_app() -> gr.Blocks:
         claims_minimize_btn.click(_minimize_claims, outputs=claims_outputs[:3])
         demo.load(_stream_term_boot, outputs=term_keypad_outputs)
         demo.load(
-            lambda: _init_unit_cell_viewport_html,
+            lambda: _init_unit_cell_pil,
             outputs=[unit_cell_image],
             show_progress=False,
         )
