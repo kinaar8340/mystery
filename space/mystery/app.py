@@ -3460,7 +3460,7 @@ footer {{ visibility: hidden; }}
     height: 550px !important;
     min-height: 550px !important;
     max-height: 550px !important;
-    object-fit: contain !important;
+    object-fit: fill !important;
     object-position: center center !important;
     display: block !important;
     background: #000000 !important;

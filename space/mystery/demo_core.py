@@ -968,6 +968,48 @@ def _resize_pil_for_viewport(pil_img, *, max_px: int = UNIT_CELL_VIEWPORT_PX):
     return resized
 
 
+def _flatten_to_opaque_black_rgb(pil_img) -> "object":
+    """Composite any alpha onto solid #000 — prevents wallpaper bleed in browser."""
+    from PIL import Image as PILImage
+
+    if pil_img.mode == "P":
+        pil_img = pil_img.convert("RGBA")
+    if pil_img.mode in ("RGBA", "LA"):
+        bg = PILImage.new("RGB", pil_img.size, (0, 0, 0))
+        alpha = pil_img.getchannel("A")
+        bg.paste(pil_img.convert("RGB"), mask=alpha)
+        return bg
+    return pil_img.convert("RGB")
+
+
+def _fit_on_black_canvas(pil_img, *, size: int = UNIT_CELL_VIEWPORT_PX) -> "object":
+    """Center image on a fixed opaque black square for the Gradio viewport."""
+    from PIL import Image as PILImage
+
+    rgb = _flatten_to_opaque_black_rgb(pil_img)
+    fitted = _resize_pil_for_viewport(rgb, max_px=size)
+    canvas = PILImage.new("RGB", (size, size), (0, 0, 0))
+    ox = (size - fitted.size[0]) // 2
+    oy = (size - fitted.size[1]) // 2
+    canvas.paste(fitted, (ox, oy))
+    return canvas
+
+
+def _save_figure_opaque_png(fig: plt.Figure, buf: io.BytesIO, *, dpi: int) -> None:
+    """Save full figure as opaque black PNG (no tight-crop transparency)."""
+    fig.savefig(
+        buf,
+        format="png",
+        dpi=dpi,
+        facecolor="#000000",
+        edgecolor="#000000",
+        transparent=False,
+        bbox_inches=None,
+        pad_inches=0,
+    )
+    plt.close(fig)
+
+
 def _resize_rgb_for_viewport(arr: np.ndarray, *, max_px: int = UNIT_CELL_VIEWPORT_PX) -> np.ndarray:
     from PIL import Image as PILImage
 
@@ -1011,19 +1053,11 @@ def figure_to_viewport_numpy(fig: plt.Figure, *, dpi: int = 100) -> np.ndarray:
     print(f"[DEBUG] figure_to_viewport_numpy: dpi={dpi}", flush=True)
     try:
         buf = io.BytesIO()
-        fig.savefig(
-            buf,
-            format="png",
-            dpi=dpi,
-            facecolor=fig.get_facecolor(),
-            bbox_inches="tight",
-            pad_inches=0.02,
-        )
-        plt.close(fig)
+        _save_figure_opaque_png(fig, buf, dpi=dpi)
         buf.seek(0)
         from PIL import Image as PILImage
 
-        pil_img = _resize_pil_for_viewport(PILImage.open(buf).convert("RGB"))
+        pil_img = _fit_on_black_canvas(PILImage.open(buf))
         arr = np.asarray(pil_img, dtype=np.uint8)
         print(f"[DEBUG] figure_to_viewport_numpy: shape={arr.shape}", flush=True)
         return arr
@@ -1060,24 +1094,12 @@ def figure_to_viewport_pil(fig: plt.Figure, *, dpi: int = 100):
     """Matplotlib figure → PIL for gr.Image(type='pil'); never raises."""
     print(f"[DEBUG] figure_to_viewport_pil: dpi={dpi}", flush=True)
     try:
-        import io
-
         from PIL import Image as PILImage
 
         buf = io.BytesIO()
-        fig.savefig(
-            buf,
-            format="png",
-            dpi=dpi,
-            facecolor=fig.get_facecolor(),
-            bbox_inches="tight",
-            pad_inches=0.02,
-        )
-        plt.close(fig)
+        _save_figure_opaque_png(fig, buf, dpi=dpi)
         buf.seek(0)
-        pil_img = _resize_pil_for_viewport(
-            PILImage.open(buf).copy().convert("RGB")
-        )
+        pil_img = _fit_on_black_canvas(PILImage.open(buf))
         print(f"[DEBUG] figure_to_viewport_pil: size={pil_img.size}", flush=True)
         return pil_img
     except Exception as exc:
@@ -1136,7 +1158,7 @@ def figure_to_viewport_img_html(fig: plt.Figure, *, dpi: int = 100) -> str:
     """Matplotlib figure → inline base64 PNG for gr.HTML (no /tmp file URLs on HF)."""
     print(f"[DEBUG] figure_to_viewport_img_html: dpi={dpi}", flush=True)
     try:
-        pil_img = _resize_pil_for_viewport(figure_to_pil_image(fig, dpi=dpi))
+        pil_img = _fit_on_black_canvas(figure_to_pil_image(fig, dpi=dpi))
         buf = io.BytesIO()
         pil_img.save(buf, format="PNG", optimize=True)
         b64 = base64.b64encode(buf.getvalue()).decode("ascii")
