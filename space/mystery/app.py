@@ -1077,7 +1077,7 @@ HFB_CSS = f"""
     min-height: 0 !important;
     overflow: hidden !important;
     overflow-y: hidden !important;
-    margin: 0 0 0.35rem 0 !important;
+    margin: 0 0 0.25rem 0 !important;
     padding: 0 !important;
 }}
 .gradio-container .myst-cube-viewport-header-fixed {{
@@ -1087,9 +1087,9 @@ HFB_CSS = f"""
     overflow: hidden !important;
     overflow-y: hidden !important;
     margin: 0 !important;
-    padding: 0.55rem 0.75rem !important;
+    padding: 0.4rem 0.55rem !important;
     border: 1px solid #444 !important;
-    border-radius: 8px !important;
+    border-radius: 6px !important;
     background: #1f1f1f !important;
     box-sizing: border-box !important;
 }}
@@ -2550,7 +2550,7 @@ footer {{ visibility: hidden; }}
     min-height: var(--myst-viewport-min-height, calc(100dvh - 11rem)) !important;
     max-height: 100% !important;
     margin: 0 !important;
-    padding: 0.2rem 0.3rem 0.3rem !important;
+    padding: 0 !important;
     overflow: hidden !important;
     box-sizing: border-box !important;
     flex: none !important;
@@ -2739,7 +2739,7 @@ footer {{ visibility: hidden; }}
     min-height: var(--myst-viewport-min-height, calc(100dvh - 11rem)) !important;
     width: 100% !important;
     margin: 0 !important;
-    padding: 0 0.3rem 0 !important;
+    padding: 0 !important;
     display: grid !important;
     grid-template-rows: auto minmax(var(--myst-viewport-min-height, 18rem), 1fr) !important;
     grid-template-columns: minmax(0, 1fr) !important;
@@ -3386,7 +3386,7 @@ footer {{ visibility: hidden; }}
     min-height: var(--myst-viewport-min-height, 18rem) !important;
     max-height: 100% !important;
     margin: 0 !important;
-    padding: 0.2rem 0.3rem 0.3rem !important;
+    padding: 0 !important;
     display: block !important;
     flex: none !important;
     overflow: hidden !important;
@@ -3415,13 +3415,55 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-cube-viewport-media .myst-cube-plot-inner .plot-container img {{
     display: block !important;
     width: 100% !important;
-    height: auto !important;
+    height: 100% !important;
     min-height: var(--myst-viewport-min-height, 18rem) !important;
     max-width: 100% !important;
-    max-height: none !important;
+    max-height: 100% !important;
     flex: none !important;
     object-fit: contain !important;
     object-position: center center !important;
+}}
+/* === EXPAND VIEWPORT TO PANEL EDGES (matplotlib gr.Plot, not Plotly) === */
+.gradio-container .myst-gravity-visuals-col,
+.gradio-container .myst-gravity-split > .column.myst-gravity-visuals-col {{
+    padding: 0 !important;
+    margin: 0 !important;
+}}
+.gradio-container .column:has(#unit-cell-viewport),
+.gradio-container .myst-cube-viewport-media,
+.gradio-container .myst-cube-viewport-media-slot {{
+    padding: 0 !important;
+    margin: 0 !important;
+}}
+.gradio-container .myst-gravity-cube-panel.myst-gravity-panel-window.vqc-optics-panel,
+.gradio-container .myst-gravity-page .myst-cube-viewport-frame.vqc-optics-panel {{
+    padding: 4px !important;
+    margin: 0 !important;
+}}
+.gradio-container #unit-cell-viewport,
+.gradio-container #unit-cell-viewport.block,
+.gradio-container #unit-cell-viewport > div,
+.gradio-container #unit-cell-viewport .wrap,
+.gradio-container #unit-cell-viewport .form,
+.gradio-container #unit-cell-viewport .plot-container,
+.gradio-container .myst-cube-viewport-media .myst-cube-plot-inner.block,
+.gradio-container .myst-cube-viewport-media .myst-cube-plot-inner .wrap,
+.gradio-container .myst-cube-viewport-media .myst-cube-plot-inner .plot-container {{
+    padding: 0 !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+}}
+.gradio-container .myst-gravity-page .myst-cube-viewport-frame .plot-container,
+.gradio-container .myst-gravity-cube-panel .myst-cube-viewport-media .plot-container {{
+    padding: 0 !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+}}
+.gradio-container .myst-gravity-cube-panel .myst-cube-viewport-header-slot,
+.gradio-container .myst-gravity-cube-panel .myst-cube-viewport-header-slot.block {{
+    margin: 0 0 4px 0 !important;
+    padding: 0 !important;
 }}
 .gradio-container .myst-cube-viewport-media .myst-cube-anim-video.block {{
     position: absolute !important;
@@ -4884,7 +4926,7 @@ def build_app() -> gr.Blocks:
                                 elem_classes=["myst-gravity-preset-tui-wrap"],
                             )
                 with gr.Column(
-                    scale=6,
+                    scale=7,
                     elem_classes=[
                         "myst-gravity-visuals-col",
                         "myst-gravity-right-panel",
