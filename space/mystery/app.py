@@ -1959,20 +1959,47 @@ footer {{ visibility: hidden; }}
     overflow: hidden !important;
 }}
 .gradio-container .myst-gravity-right-stack {{
-    gap: 0.55rem !important;
+    gap: 0 !important;
 }}
 .gradio-container .myst-gravity-cube-panel {{
     flex: 1 1 0 !important;
     min-height: 0 !important;
     overflow: hidden !important;
-}}
-.gradio-container .myst-gravity-preset-tui-panel {{
-    flex: 0 0 auto !important;
-    min-height: 11rem !important;
-    max-height: 34% !important;
-    overflow: hidden !important;
     display: flex !important;
     flex-direction: column !important;
+}}
+.gradio-container .myst-gravity-cube-panel > .block,
+.gradio-container .myst-gravity-cube-panel > .form {{
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 1 0 !important;
+    min-height: 0 !important;
+    width: 100% !important;
+}}
+.gradio-container .myst-gravity-cube-panel .myst-cube-viewport-header {{
+    flex: 0 0 auto !important;
+}}
+.gradio-container .myst-gravity-cube-panel .myst-cube-plot-inner,
+.gradio-container .myst-gravity-cube-panel .myst-cube-plot-inner.block {{
+    flex: 1 1 0 !important;
+    min-height: 0 !important;
+    max-height: 58% !important;
+}}
+.gradio-container .myst-gravity-cube-panel .myst-gravity-preset-tui-section,
+.gradio-container .myst-gravity-cube-panel .myst-gravity-preset-tui-section.block {{
+    flex: 0 0 auto !important;
+    min-height: 13rem !important;
+    max-height: 42% !important;
+}}
+.gradio-container .myst-gravity-preset-tui-section {{
+    flex: 0 0 auto !important;
+    width: 100% !important;
+    margin-top: 0.5rem !important;
+    padding-top: 0.45rem !important;
+    border-top: 1px solid rgba(74, 56, 24, 0.75) !important;
+    position: relative !important;
+    z-index: 4 !important;
+    background: linear-gradient(180deg, #1a1008 0%, #0c0804 100%) !important;
 }}
 .gradio-container .myst-gravity-preset-tui-header {{
     display: flex !important;
@@ -1986,15 +2013,28 @@ footer {{ visibility: hidden; }}
     border-radius: 10px 10px 0 0 !important;
     background: linear-gradient(180deg, #1f140a 0%, #0f0a06 100%) !important;
 }}
-.gradio-container .myst-gravity-preset-tui-panel .myst-gravity-preset-tui-wrap {{
-    flex: 1 1 auto !important;
-    min-height: 0 !important;
+.gradio-container .myst-gravity-preset-tui-section .myst-gravity-preset-tui-wrap,
+.gradio-container .myst-gravity-preset-tui-section .myst-gravity-preset-tui-wrap.block {{
+    flex: 0 0 auto !important;
+    width: calc(100% - 1.1rem) !important;
+    min-height: 10.5rem !important;
+    max-height: 14rem !important;
     margin: 0 0.55rem 0.55rem !important;
     padding: 0.55rem 0.65rem !important;
     border: 2px inset #5c4a1f !important;
     border-radius: 8px !important;
-    background: rgba(0, 0, 0, 0.42) !important;
+    background: rgba(0, 0, 0, 0.55) !important;
     overflow-y: auto !important;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}}
+.gradio-container .myst-gravity-preset-tui-section .html-container,
+.gradio-container .myst-gravity-preset-tui-section .html-container .prose {{
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
 }}
 .gradio-container .myst-preset-tui-serial {{
     font-family: "Courier New", Courier, monospace !important;
@@ -2044,10 +2084,22 @@ footer {{ visibility: hidden; }}
     padding: 0.26rem 0.2rem !important;
     font-size: 0.72rem !important;
 }}
-.gradio-container .myst-gravity-panel-window.vqc-optics-panel {{
+.gradio-container .myst-gravity-left-frame.myst-gravity-panel-window.vqc-optics-panel {{
     flex: 1 1 auto !important;
     height: 100% !important;
     min-height: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 0.75rem 0.85rem !important;
+    display: flex !important;
+    flex-direction: column !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+}}
+.gradio-container .myst-gravity-cube-panel.myst-gravity-panel-window.vqc-optics-panel {{
+    flex: 1 1 0 !important;
+    height: 100% !important;
+    min-height: 0 !important;
     width: 100% !important;
     margin: 0 !important;
     padding: 0 0.75rem 0.85rem !important;
@@ -2254,11 +2306,11 @@ footer {{ visibility: hidden; }}
     font-weight: 700 !important;
 }}
 .gradio-container .myst-gravity-page .myst-cube-viewport-frame .plot-container {{
-    flex: 1 1 auto !important;
+    flex: 1 1 0 !important;
     width: 100% !important;
     min-height: 0 !important;
-    height: 100% !important;
-    max-height: none !important;
+    height: auto !important;
+    max-height: 100% !important;
     border: 2px inset #5c4a1f !important;
     border-radius: 8px !important;
     background-color: #000000 !important;
@@ -3286,19 +3338,12 @@ def build_app() -> gr.Blocks:
                             value=_init_unit_cell,
                             elem_classes=["vqc-plot3d-panel", "myst-cube-plot-inner"],
                         )
-                    with gr.Group(
-                        elem_classes=[
-                            "vqc-optics-panel",
-                            "vqc-gravity-panel",
-                            "myst-gravity-preset-tui-panel",
-                            "myst-gravity-panel-window",
-                        ]
-                    ):
-                        gr.HTML(GRAVITY_PRESET_TUI_HEADER_HTML)
-                        re_preset_tui = gr.HTML(
-                            _init_preset_tui,
-                            elem_classes=["myst-gravity-preset-tui-wrap"],
-                        )
+                        with gr.Column(elem_classes=["myst-gravity-preset-tui-section"]):
+                            gr.HTML(GRAVITY_PRESET_TUI_HEADER_HTML)
+                            re_preset_tui = gr.HTML(
+                                _init_preset_tui,
+                                elem_classes=["myst-gravity-preset-tui-wrap"],
+                            )
             re_inputs = [
                 re_phi_scale, re_e_scale, re_pi_scale,
                 re_kappa, re_delta_z, re_alpha, re_beta, re_pressure,
