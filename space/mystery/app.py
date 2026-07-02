@@ -3424,32 +3424,76 @@ footer {{ visibility: hidden; }}
     opacity: 1 !important;
     background: #000000 !important;
 }}
-/* === AGGRESSIVE FULL-SIZE MATPLOTLIB VIEWPORT (last wins) === */
-.gradio-container #unit-cell-viewport {{
+/* === AGGRESSIVE FULL-SIZE MATPLOTLIB VIEWPORT (Gradio 5 gr.Plot — last wins) === */
+.gradio-container #unit-cell-viewport,
+.gradio-container #unit-cell-viewport.block,
+.gradio-container #unit-cell-viewport.vqc-plot3d-panel {{
     height: 100% !important;
     min-height: 800px !important;
+    max-height: none !important;
     padding: 0 !important;
     margin: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 1 auto !important;
+    overflow: hidden !important;
     background: #000000 !important;
 }}
+/* Override global .wrap {{ height: auto }} inside the viewport */
 .gradio-container #unit-cell-viewport .wrap,
-.gradio-container #unit-cell-viewport > div,
-.gradio-container #unit-cell-viewport .plot-container,
-.gradio-container #unit-cell-viewport .plot-container img {{
+.gradio-container #unit-cell-viewport.block > .wrap,
+.gradio-container .myst-cube-viewport-media #unit-cell-viewport .wrap {{
     width: 100% !important;
     height: 100% !important;
+    min-height: 800px !important;
     max-height: none !important;
-    object-fit: contain !important;
-    display: block !important;
-    margin: 0 auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 1 auto !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: hidden !important;
     box-sizing: border-box !important;
-    background-color: #000000 !important;
 }}
+.gradio-container #unit-cell-viewport .gr-plot,
 .gradio-container #unit-cell-viewport .gradio-plot,
 .gradio-container #unit-cell-viewport .gradio-plot > div,
-.gradio-container #unit-cell-viewport .gradio-plot .plot-container {{
-    height: 100% !important;
+.gradio-container #unit-cell-viewport > div,
+.gradio-container #unit-cell-viewport .plot-container,
+.gradio-container #unit-cell-viewport .plot-container > div,
+.gradio-container #unit-cell-viewport .plot-container .matplotlib,
+.gradio-container .myst-gravity-viewport-full .myst-cube-viewport-media .myst-cube-plot-inner .plot-container {{
     width: 100% !important;
+    height: 100% !important;
+    min-height: 800px !important;
+    max-height: none !important;
+    flex: 1 1 auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+    background-color: #000000 !important;
+    opacity: 1 !important;
+}}
+.gradio-container #unit-cell-viewport .plot-container img,
+.gradio-container #unit-cell-viewport img,
+.gradio-container .myst-gravity-viewport-full .myst-cube-viewport-media .myst-cube-plot-inner .plot-container img,
+.gradio-container .myst-gravity-page .myst-cube-viewport-frame .plot-container img {{
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100% !important;
+    max-height: none !important;
+    flex: 1 1 auto !important;
+    object-fit: contain !important;
+    object-position: center center !important;
+    display: block !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
 }}
 @media (max-width: 768px) {{
     .gradio-container .myst-gravity-split {{
