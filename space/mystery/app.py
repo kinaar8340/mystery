@@ -1982,7 +1982,7 @@ footer {{ visibility: hidden; }}
     gap: 0.5rem !important;
     width: 100% !important;
     height: calc(100vh - 4.1rem) !important;
-    min-height: 34rem !important;
+    min-height: 0 !important;
     max-height: calc(100vh - 4.1rem) !important;
     box-sizing: border-box !important;
     margin: 0 !important;
@@ -2011,10 +2011,10 @@ footer {{ visibility: hidden; }}
     flex: 1 1 0 !important;
     min-height: 0 !important;
     height: 100% !important;
-    gap: 0.35rem !important;
+    gap: 0.3rem !important;
     overflow: hidden !important;
     display: grid !important;
-    grid-template-rows: minmax(0, 1fr) auto !important;
+    grid-template-rows: auto minmax(0, 1fr) !important;
     grid-template-columns: minmax(0, 1fr) !important;
     align-content: stretch !important;
 }}
@@ -2034,40 +2034,47 @@ footer {{ visibility: hidden; }}
     background: transparent !important;
     box-shadow: none !important;
 }}
-.gradio-container .myst-gravity-left-stack > .block:has(.myst-gravity-left-presets-tui-slot),
-.gradio-container .myst-gravity-left-stack > .block:has(.myst-gravity-presets-tui-card) {{
+.gradio-container .myst-gravity-left-stack > .block:has(.myst-gravity-left-control-slot),
+.gradio-container .myst-gravity-left-stack > .block:has(.myst-gravity-control-panel),
+.gradio-container .myst-gravity-left-stack > .block:has(.myst-gravity-control-top-slot) {{
     grid-row: 1 !important;
     min-height: 0 !important;
+    height: auto !important;
+    overflow: visible !important;
+    align-self: start !important;
+    display: flex !important;
+    flex-direction: column !important;
+}}
+.gradio-container .myst-gravity-left-stack > .block:has(.myst-gravity-left-presets-tui-slot),
+.gradio-container .myst-gravity-left-stack > .block:has(.myst-gravity-presets-tui-card) {{
+    grid-row: 2 !important;
+    min-height: 0 !important;
+    height: 100% !important;
     align-self: stretch !important;
     overflow: hidden !important;
     display: flex !important;
     flex-direction: column !important;
 }}
-.gradio-container .myst-gravity-left-stack > .block:has(.myst-gravity-left-control-slot),
-.gradio-container .myst-gravity-left-stack > .block:has(.myst-gravity-control-panel) {{
-    grid-row: 2 !important;
-    min-height: 0 !important;
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-    align-self: stretch !important;
-}}
-.gradio-container .myst-gravity-left-stack > .column.myst-gravity-left-presets-tui-slot {{
+.gradio-container .myst-gravity-left-stack > .column.myst-gravity-left-control-slot,
+.gradio-container .myst-gravity-left-stack > .column.myst-gravity-control-top-slot {{
     grid-row: 1 !important;
     min-height: 0 !important;
-    overflow: hidden !important;
+    height: auto !important;
+    overflow: visible !important;
 }}
-.gradio-container .myst-gravity-left-stack > .column.myst-gravity-left-control-slot {{
+.gradio-container .myst-gravity-left-stack > .column.myst-gravity-left-presets-tui-slot {{
     grid-row: 2 !important;
     min-height: 0 !important;
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
+    height: 100% !important;
+    overflow: hidden !important;
 }}
 .gradio-container .myst-gravity-presets-fixed {{
     flex: 0 0 auto !important;
     z-index: 5 !important;
 }}
 .gradio-container .myst-gravity-left-control-slot,
-.gradio-container .myst-gravity-control-panel.myst-gravity-left-frame {{
+.gradio-container .myst-gravity-control-panel.myst-gravity-left-frame,
+.gradio-container .myst-gravity-control-top-slot {{
     flex: 0 0 auto !important;
     height: auto !important;
     min-height: 0 !important;
@@ -2076,6 +2083,10 @@ footer {{ visibility: hidden; }}
     display: flex !important;
     flex-direction: column !important;
     overflow: visible !important;
+}}
+.gradio-container .myst-gravity-control-top-slot.myst-gravity-panel-window.vqc-optics-panel {{
+    padding: 0 0.55rem 0.35rem !important;
+    margin: 0 !important;
 }}
 .gradio-container .myst-gravity-control-panel .myst-cube-viewport-header {{
     flex: 0 0 auto !important;
@@ -2092,11 +2103,18 @@ footer {{ visibility: hidden; }}
     padding: 0 0.55rem 0.5rem !important;
     gap: 0 !important;
     display: grid !important;
-    grid-template-rows: auto minmax(16rem, 1fr) !important;
+    grid-template-rows: auto auto minmax(0, 1fr) !important;
     grid-template-columns: minmax(0, 1fr) !important;
     overflow: hidden !important;
     background: linear-gradient(180deg, #1a1008 0%, #0a0604 100%) !important;
     box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.42) !important;
+}}
+.gradio-container .myst-gravity-presets-tui-card > .block:has(button.vqc-full-width) {{
+    grid-row: 2 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 0.45rem !important;
 }}
 .gradio-container .myst-gravity-presets-tui-card > .gap {{
     display: none !important;
@@ -2125,8 +2143,8 @@ footer {{ visibility: hidden; }}
 }}
 .gradio-container .myst-gravity-presets-tui-card .myst-gravity-left-tui-slot,
 .gradio-container .myst-gravity-presets-tui-card .myst-gravity-preset-tui-section {{
-    grid-row: 2 !important;
-    min-height: 16rem !important;
+    grid-row: 3 !important;
+    min-height: 0 !important;
     height: 100% !important;
     width: 100% !important;
     display: flex !important;
@@ -2278,7 +2296,7 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-gravity-cube-panel .myst-cube-viewport-media {{
     position: relative !important;
     flex: 1 1 0 !important;
-    min-height: clamp(22rem, 58vh, 44rem) !important;
+    min-height: 0 !important;
     height: 0 !important;
     max-height: 100% !important;
     width: 100% !important;
@@ -2303,7 +2321,7 @@ footer {{ visibility: hidden; }}
     inset: 0 !important;
     width: 100% !important;
     height: 100% !important;
-    min-height: clamp(20rem, 54vh, 42rem) !important;
+    min-height: 0 !important;
     max-height: 100% !important;
     margin: 0 !important;
     padding: 0.2rem 0.3rem 0.3rem !important;
@@ -2365,7 +2383,7 @@ footer {{ visibility: hidden; }}
     flex: 1 1 0 !important;
     width: calc(100% - 0.9rem) !important;
     height: 100% !important;
-    min-height: 12rem !important;
+    min-height: 0 !important;
     max-height: 100% !important;
     margin: 0.3rem 0.45rem 0.4rem !important;
     padding: 0.5rem 0.6rem !important;
@@ -2493,7 +2511,7 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-gravity-cube-panel.myst-gravity-panel-window > .column.myst-cube-viewport-media-slot {{
     flex: 1 1 0 !important;
     height: 0 !important;
-    min-height: clamp(22rem, 58vh, 44rem) !important;
+    min-height: 0 !important;
 }}
 .gradio-container .myst-gravity-left-frame .myst-gravity-controls-accordion {{
     flex: 0 0 auto !important;
@@ -2507,17 +2525,17 @@ footer {{ visibility: hidden; }}
     margin: 0 0 0.4rem 0 !important;
 }}
 .gradio-container .myst-gravity-left-frame .myst-gravity-levels-accordion .accordion {{
-    max-height: min(34vh, 20rem) !important;
+    max-height: min(28vh, 16rem) !important;
     overflow-y: auto !important;
 }}
 .gradio-container .myst-gravity-left-frame .myst-gravity-manual-edit-accordion {{
     flex: 0 0 auto !important;
     margin: 0 !important;
-    overflow: visible !important;
+    overflow: hidden !important;
 }}
 .gradio-container .myst-gravity-left-frame .myst-gravity-manual-edit-accordion .accordion {{
-    max-height: none !important;
-    overflow: visible !important;
+    max-height: min(42vh, 26rem) !important;
+    overflow-y: auto !important;
 }}
 .gradio-container .myst-gravity-left-frame .myst-gravity-manual-edit-accordion .myst-cube-viewport-header {{
     margin-top: 0.15rem !important;
@@ -2585,8 +2603,16 @@ footer {{ visibility: hidden; }}
     overflow: hidden !important;
 }}
 .gradio-container .myst-gravity-controls-col .vqc-gravity-panel.vqc-optics-panel {{
-    height: 100% !important;
     width: 100% !important;
+}}
+.gradio-container .myst-gravity-controls-col .myst-gravity-control-top-slot.vqc-optics-panel {{
+    height: auto !important;
+    flex: 0 0 auto !important;
+}}
+.gradio-container .myst-gravity-controls-col .myst-gravity-presets-tui-card.vqc-optics-panel {{
+    height: 100% !important;
+    flex: 1 1 0 !important;
+    min-height: 0 !important;
 }}
 .gradio-container .myst-gravity-visuals-col {{
     align-items: stretch !important;
@@ -2602,7 +2628,7 @@ footer {{ visibility: hidden; }}
 }}
 .gradio-container .myst-gravity-page .myst-cube-viewport-frame .myst-cube-viewport-media {{
     flex: 1 1 0 !important;
-    min-height: clamp(22rem, 58vh, 44rem) !important;
+    min-height: 0 !important;
     height: 0 !important;
     max-height: 100% !important;
     overflow: hidden !important;
@@ -2722,7 +2748,7 @@ footer {{ visibility: hidden; }}
     border: 1px solid #4a3818 !important;
     border-radius: 8px !important;
     flex: 1 1 0 !important;
-    min-height: clamp(20rem, 54vh, 42rem) !important;
+    min-height: 0 !important;
     height: 100% !important;
     max-height: 100% !important;
     display: flex !important;
@@ -2740,7 +2766,7 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-gravity-page .myst-cube-viewport-frame .plot-container {{
     flex: 1 1 0 !important;
     width: 100% !important;
-    min-height: clamp(18rem, 50vh, 40rem) !important;
+    min-height: 0 !important;
     height: 100% !important;
     max-height: 100% !important;
     border: 2px inset #5c4a1f !important;
@@ -4183,63 +4209,10 @@ def build_app() -> gr.Blocks:
                             "vqc-gravity-panel",
                             "myst-gravity-left-frame",
                             "myst-gravity-panel-window",
-                            "myst-gravity-presets-tui-card",
-                            "myst-gravity-left-presets-tui-slot",
-                        ],
-                    ):
-                        with gr.Column(
-                            elem_classes=[
-                                "myst-gravity-presets-panel",
-                                "myst-gravity-presets-fixed",
-                            ],
-                        ):
-                            gr.HTML(QUICK_PRESETS_PANEL_HEADER_HTML)
-                            re_quick_presets: list[gr.Button] = []
-                            for row_start in (0, 4):
-                                with gr.Row(elem_classes=["myst-gravity-preset-row"]):
-                                    for slot in range(row_start, row_start + 4):
-                                        preset_classes = [
-                                            "vqc-receiver-preset",
-                                            "myst-gravity-quick-preset",
-                                        ]
-                                        if slot == 0:
-                                            preset_classes.append("active")
-                                        re_quick_presets.append(
-                                            gr.Button(
-                                                str(slot + 1),
-                                                variant="secondary",
-                                                size="sm",
-                                                elem_classes=preset_classes,
-                                            )
-                                        )
-                        re_active_preset = gr.State(0)
-                        re_animate_active = gr.State(False)
-                        animate_deform_btn = gr.Button(
-                                "Animate deformation",
-                                variant="secondary",
-                                elem_classes=["vqc-receiver-preset", "vqc-full-width"],
-                            )
-                        with gr.Column(
-                            elem_classes=[
-                                "myst-gravity-preset-tui-section",
-                                "myst-gravity-left-tui",
-                                "myst-gravity-left-tui-slot",
-                            ],
-                        ):
-                            gr.HTML(GRAVITY_PRESET_TUI_HEADER_HTML)
-                            re_preset_tui = gr.HTML(
-                                _init_preset_tui,
-                                elem_classes=["myst-gravity-preset-tui-wrap"],
-                            )
-                    with gr.Column(
-                        elem_classes=[
-                            "vqc-optics-panel",
-                            "vqc-gravity-panel",
-                            "myst-gravity-left-frame",
-                            "myst-gravity-panel-window",
                             "myst-gravity-control-panel",
                             "myst-gravity-left-control-slot",
-                        ]
+                            "myst-gravity-control-top-slot",
+                        ],
                     ):
                         with gr.Accordion(
                             "Parameter levels",
@@ -4376,6 +4349,60 @@ def build_app() -> gr.Blocks:
                                     interactive=False,
                                     value=_init_re_metrics,
                                 )
+                    with gr.Column(
+                        elem_classes=[
+                            "vqc-optics-panel",
+                            "vqc-gravity-panel",
+                            "myst-gravity-left-frame",
+                            "myst-gravity-panel-window",
+                            "myst-gravity-presets-tui-card",
+                            "myst-gravity-left-presets-tui-slot",
+                        ],
+                    ):
+                        with gr.Column(
+                            elem_classes=[
+                                "myst-gravity-presets-panel",
+                                "myst-gravity-presets-fixed",
+                            ],
+                        ):
+                            gr.HTML(QUICK_PRESETS_PANEL_HEADER_HTML)
+                            re_quick_presets: list[gr.Button] = []
+                            for row_start in (0, 4):
+                                with gr.Row(elem_classes=["myst-gravity-preset-row"]):
+                                    for slot in range(row_start, row_start + 4):
+                                        preset_classes = [
+                                            "vqc-receiver-preset",
+                                            "myst-gravity-quick-preset",
+                                        ]
+                                        if slot == 0:
+                                            preset_classes.append("active")
+                                        re_quick_presets.append(
+                                            gr.Button(
+                                                str(slot + 1),
+                                                variant="secondary",
+                                                size="sm",
+                                                elem_classes=preset_classes,
+                                            )
+                                        )
+                        re_active_preset = gr.State(0)
+                        re_animate_active = gr.State(False)
+                        animate_deform_btn = gr.Button(
+                            "Animate deformation",
+                            variant="secondary",
+                            elem_classes=["vqc-receiver-preset", "vqc-full-width"],
+                        )
+                        with gr.Column(
+                            elem_classes=[
+                                "myst-gravity-preset-tui-section",
+                                "myst-gravity-left-tui",
+                                "myst-gravity-left-tui-slot",
+                            ],
+                        ):
+                            gr.HTML(GRAVITY_PRESET_TUI_HEADER_HTML)
+                            re_preset_tui = gr.HTML(
+                                _init_preset_tui,
+                                elem_classes=["myst-gravity-preset-tui-wrap"],
+                            )
                 with gr.Column(
                     scale=9,
                     elem_classes=[
