@@ -3527,7 +3527,7 @@ def run_probe(
 
 _GRAVITY_QUICK_PRESET_KEYS = tuple(str(i) for i in range(8))
 _GRAVITY_PRESET_BTN_KEYS = _GRAVITY_QUICK_PRESET_KEYS
-_UNIT_CELL_IMAGE_DPI = 150
+_UNIT_CELL_IMAGE_DPI = 100
 _GRAVITY_HOME_DIALS = {
     "phi": 1.0,
     "e": 1.0,
@@ -3974,6 +3974,39 @@ def _run_residual_explorer_ui(
         _gravity_clear_video_update(),
         control_levels,
         tui,
+    )
+
+
+def _run_residual_explorer_ui_manual(
+    phi_sq_scale: float,
+    e_sq_scale: float,
+    pi_sq_scale: float,
+    kappa: float,
+    delta_z: float,
+    alpha: float,
+    beta: float,
+    deform_pressure: float,
+    view_elev: float,
+    view_azim: float,
+    active_preset: int,
+    edit_params_enabled: bool,
+) -> tuple:
+    """Manual dial refresh — only when Manual Edit is latched (avoids preset cascade)."""
+    if not edit_params_enabled:
+        return tuple(gr.skip() for _ in range(6))
+    print("[DEBUG] _run_residual_explorer_ui_manual: manual dial release", flush=True)
+    return _run_residual_explorer_ui(
+        phi_sq_scale,
+        e_sq_scale,
+        pi_sq_scale,
+        kappa,
+        delta_z,
+        alpha,
+        beta,
+        deform_pressure,
+        view_elev,
+        view_azim,
+        active_preset,
     )
 
 
