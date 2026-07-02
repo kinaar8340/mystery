@@ -1953,15 +1953,40 @@ footer {{ visibility: hidden; }}
 }}
 .gradio-container:has(.myst-gravity-page) {{
     overflow: hidden !important;
-    max-height: 100vh !important;
+    max-height: 100dvh !important;
+    padding: 0.15rem 0.5rem 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: calc(100dvh - 3.5rem) !important;
+    box-sizing: border-box !important;
+}}
+.gradio-container:has(.myst-gravity-page) .main,
+.gradio-container:has(.myst-gravity-page) .main > .wrap,
+.gradio-container:has(.myst-gravity-page) .contain {{
+    flex: 1 1 0 !important;
+    min-height: 0 !important;
+    height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+}}
+.gradio-container:has(.myst-gravity-page) .myst-app-footer,
+.gradio-container:has(.myst-gravity-page) .myst-app-footer.block {{
+    display: none !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    visibility: hidden !important;
 }}
 .gradio-container .myst-gravity-page {{
     width: 100% !important;
     max-width: none !important;
     padding: 0 0.25rem 0 !important;
-    height: calc(100vh - 2.85rem) !important;
-    min-height: calc(100vh - 2.85rem) !important;
-    max-height: calc(100vh - 2.85rem) !important;
+    flex: 1 1 0 !important;
+    height: auto !important;
+    min-height: calc(100dvh - 4.25rem) !important;
+    max-height: none !important;
     overflow: hidden !important;
     box-sizing: border-box !important;
     gap: 0 !important;
@@ -2367,11 +2392,11 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-gravity-cube-panel .myst-cube-viewport-header {{
     flex: 0 0 auto !important;
     min-height: 0 !important;
-    max-height: 9.5rem !important;
+    max-height: 7.5rem !important;
     height: auto !important;
     overflow: hidden !important;
     box-sizing: border-box !important;
-    padding-bottom: 0.45rem !important;
+    padding-bottom: 0.3rem !important;
 }}
 .gradio-container .myst-gravity-cube-panel .myst-cube-viewport-status {{
     display: block !important;
@@ -2384,7 +2409,7 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-gravity-cube-panel .myst-cube-viewport-media {{
     position: relative !important;
     flex: 1 1 0 !important;
-    min-height: 14rem !important;
+    min-height: 0 !important;
     height: 100% !important;
     max-height: 100% !important;
     width: 100% !important;
@@ -2598,9 +2623,10 @@ footer {{ visibility: hidden; }}
     margin: 0 !important;
     padding: 0 0.3rem 0 !important;
     display: grid !important;
-    grid-template-rows: auto minmax(14rem, 1fr) !important;
+    grid-template-rows: auto minmax(0, 1fr) !important;
     grid-template-columns: minmax(0, 1fr) !important;
     align-content: stretch !important;
+    align-items: stretch !important;
     box-sizing: border-box !important;
     overflow: hidden !important;
 }}
@@ -2731,6 +2757,20 @@ footer {{ visibility: hidden; }}
     box-sizing: border-box !important;
     overflow: hidden !important;
 }}
+.gradio-container .myst-gravity-split > .column.myst-gravity-visuals-col,
+.gradio-container .myst-gravity-split > .block:has(.myst-gravity-visuals-col) {{
+    display: flex !important;
+    flex-direction: column !important;
+    align-self: stretch !important;
+    min-height: 100% !important;
+}}
+.gradio-container .myst-gravity-split > .block:has(.myst-gravity-visuals-col) > .form {{
+    flex: 1 1 0 !important;
+    min-height: 0 !important;
+    height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+}}
 .gradio-container .myst-gravity-controls-col .vqc-gravity-panel.vqc-optics-panel {{
     width: 100% !important;
 }}
@@ -2768,7 +2808,7 @@ footer {{ visibility: hidden; }}
 }}
 .gradio-container .myst-gravity-page .myst-cube-viewport-frame .myst-cube-viewport-media {{
     flex: 1 1 0 !important;
-    min-height: 14rem !important;
+    min-height: 0 !important;
     height: 100% !important;
     max-height: 100% !important;
     overflow: hidden !important;
