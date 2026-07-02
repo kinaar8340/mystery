@@ -1079,7 +1079,7 @@ def build_unit_cell_figure(
     font_axis = 12
     caption_neutral = _UNIT_CELL_LABEL_TEXT
 
-    fig = plt.figure(figsize=(9.6, 7.0), dpi=dpi, facecolor=bg)
+    fig = plt.figure(figsize=(12.0, 9.0), dpi=dpi, facecolor=bg)
     ax = fig.add_subplot(111, projection="3d", facecolor=bg)
 
     triangles, tri_colors = _deformed_cube_surface(s, p, delta_z, side)
@@ -1197,9 +1197,9 @@ def build_unit_cell_figure(
         fontsize=font_small,
     )
 
-    ax.set_xlim(-2.6, 2.6)
-    ax.set_ylim(-2.6, 2.6)
-    ax.set_zlim(-2.6, 2.6)
+    ax.set_xlim(-2.25, 2.25)
+    ax.set_ylim(-2.25, 2.25)
+    ax.set_zlim(-2.25, 2.25)
     ax.set_xlabel("φ-face", color=caption_neutral, fontsize=font_axis, labelpad=8)
     ax.set_ylabel("e-face", color=caption_neutral, fontsize=font_axis, labelpad=8)
     ax.set_zlabel("π-face", color=caption_neutral, fontsize=font_axis, labelpad=8)
@@ -1212,8 +1212,8 @@ def build_unit_cell_figure(
     azim = float(view_azim) % 360.0
     ax.view_init(elev=elev, azim=azim)
 
-    fig.subplots_adjust(left=0.02, right=0.98, top=0.98, bottom=0.02)
-    fig.set_size_inches(9.6, 7.0, forward=True)
+    fig.subplots_adjust(left=0.0, right=1.0, top=1.0, bottom=0.0)
+    fig.set_size_inches(12.0, 9.0, forward=True)
     return fig
 
 
