@@ -37,8 +37,8 @@ from demo_core import (
     get_build_label,
     is_hf_space,
     build_unit_cell_viewport_header_html,
-    figure_to_viewport_filepath,
-    unit_cell_error_placeholder_filepath,
+    figure_to_viewport_gradio_pil,
+    unit_cell_error_placeholder_pil,
     render_unit_cell_deformation_video,
     residual_from_scales,
     run_analysis,
@@ -4000,13 +4000,16 @@ def _gravity_tui_for_preset(
 
 
 def _gravity_static_image_update(fig: object) -> object:
-    """Opaque JPEG filepath for gr.Image — same-origin /file/ URL, no alpha."""
+    """Opaque PIL for gr.Image(type='pil') — websocket inline, HF-served /file/ URL."""
     if fig is gr.skip():
         print("[DEBUG] _gravity_static_image_update: gr.skip()", flush=True)
         return gr.skip()
-    path = figure_to_viewport_filepath(fig, dpi=_UNIT_CELL_IMAGE_DPI)
-    print(f"[DEBUG] _gravity_static_image_update: returning path={path}", flush=True)
-    return path
+    pil_img = figure_to_viewport_gradio_pil(fig, dpi=_UNIT_CELL_IMAGE_DPI)
+    print(
+        f"[DEBUG] _gravity_static_image_update: returning PIL size={pil_img.size}",
+        flush=True,
+    )
+    return pil_img
 
 
 def _gravity_clear_video_update() -> dict:
@@ -4404,11 +4407,11 @@ def _make_gravity_quick_preset_click(slot: int):
         )
         if fig is None:
             outputs = list(outputs)
-            outputs[21] = unit_cell_error_placeholder_filepath()
+            outputs[21] = unit_cell_error_placeholder_pil()
         image_out = outputs[21]
-        if isinstance(image_out, str) and image_out.endswith((".jpg", ".jpeg")):
+        if hasattr(image_out, "size"):
             print(
-                f"[DEBUG] preset_click_unified: Returning jpeg path={image_out}",
+                f"[DEBUG] preset_click_unified: Returning PIL size={image_out.size}",
                 flush=True,
             )
         else:
@@ -4737,12 +4740,12 @@ def build_app() -> gr.Blocks:
         _init_re_metrics, _init_unit_cell_header, _init_unit_cell_fig = run_residual_explorer(
             1.0, 1.0, 1.0, KAPPA_DOC, 0.1, 1.0, 1.0, 0.35, 22.0, 45.0
         )
-        _init_unit_cell_path = figure_to_viewport_filepath(
+        _init_unit_cell_pil = figure_to_viewport_gradio_pil(
             _init_unit_cell_fig,
             dpi=_UNIT_CELL_IMAGE_DPI,
         )
         print(
-            f"[DEBUG] init unit cell jpeg path={_init_unit_cell_path}",
+            f"[DEBUG] init unit cell PIL size={_init_unit_cell_pil.size}",
             flush=True,
         )
         _init_preset_tui = _format_gravity_menu_tui_html()
@@ -5050,10 +5053,10 @@ def build_app() -> gr.Blocks:
                         elem_classes=["myst-cube-viewport-header-slot"],
                     )
                     unit_cell_image = gr.Image(
-                        value=_init_unit_cell_path,
+                        value=_init_unit_cell_pil,
                         label=None,
                         show_label=False,
-                        type="filepath",
+                        type="pil",
                         format="jpeg",
                         interactive=False,
                         height=550,
@@ -5213,7 +5216,7 @@ def build_app() -> gr.Blocks:
         claims_minimize_btn.click(_minimize_claims, outputs=claims_outputs[:3])
         demo.load(_stream_term_boot, outputs=term_keypad_outputs)
         demo.load(
-            lambda: _init_unit_cell_path,
+            lambda: _init_unit_cell_pil,
             outputs=[unit_cell_image],
             show_progress=False,
         )

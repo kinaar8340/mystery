@@ -1135,6 +1135,25 @@ def unit_cell_error_placeholder_filepath() -> str:
     return _pil_to_viewport_jpeg_path(unit_cell_error_placeholder_pil())
 
 
+def figure_to_viewport_gradio_pil(fig: plt.Figure, *, dpi: int = 100):
+    """Opaque RGB PIL for gr.Image(type='pil') — inline over websocket (HF-safe)."""
+    print(f"[DEBUG] figure_to_viewport_gradio_pil: dpi={dpi}", flush=True)
+    try:
+        from PIL import Image as PILImage
+
+        pil_img = figure_to_viewport_pil(fig, dpi=dpi)
+        buf = io.BytesIO()
+        pil_img.save(buf, format="JPEG", quality=92, subsampling=0)
+        buf.seek(0)
+        out = PILImage.open(buf).copy()
+        print(f"[DEBUG] figure_to_viewport_gradio_pil: size={out.size}", flush=True)
+        return out
+    except Exception as exc:
+        print(f"[ERROR] figure_to_viewport_gradio_pil failed: {exc}", flush=True)
+        traceback.print_exc()
+        return unit_cell_error_placeholder_pil()
+
+
 def unit_cell_error_placeholder_dict() -> dict:
     """Red placeholder as Gradio Image dict with inline base64 url."""
     from PIL import Image as PILImage
