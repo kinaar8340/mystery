@@ -5030,7 +5030,9 @@ def build_app() -> gr.Blocks:
                         interactive=False,
                         height=550,
                         container=False,
-                        buttons=[],
+                        show_download_button=False,
+                        show_share_button=False,
+                        show_fullscreen_button=False,
                         elem_id="unit-cell-main-view",
                         elem_classes=[
                             "myst-unit-cell-viewport-image",
