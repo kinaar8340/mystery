@@ -11,6 +11,7 @@ import traceback
 from collections.abc import Callable, Iterator
 
 import gradio as gr
+import matplotlib.pyplot as plt
 
 from demo_core import (
     BOOT_QUOTE_STRING,
@@ -36,6 +37,8 @@ from demo_core import (
     get_build_label,
     is_hf_space,
     build_unit_cell_viewport_header_html,
+    export_figure_for_gradio,
+    render_unit_cell_deformation_video,
     residual_from_scales,
     run_analysis,
     run_residual_explorer,
@@ -3358,91 +3361,33 @@ footer {{ visibility: hidden; }}
     font-size: 0.94rem !important;
     line-height: 1.5 !important;
 }}
-/* === KNOWN-GOOD FULL VIEWPORT (matplotlib gr.Plot — last wins, not Plotly) === */
-.gradio-container .myst-gravity-viewport-full.myst-gravity-cube-panel.myst-gravity-panel-window.vqc-optics-panel {{
-    display: grid !important;
-    grid-template-rows: auto minmax(var(--myst-viewport-min-height, 18rem), 1fr) !important;
-    grid-template-columns: minmax(0, 1fr) !important;
-    height: 100% !important;
-    min-height: var(--myst-viewport-min-height, calc(100dvh - 11rem)) !important;
+/* === UNIT CELL gr.Image + gr.Video viewport (last wins) === */
+.gradio-container .myst-gravity-image-viewport {{
     padding: 4px 6px !important;
-    overflow: hidden !important;
-}}
-.gradio-container .myst-gravity-viewport-full > .block:has(.myst-cube-viewport-header-fixed),
-.gradio-container .myst-gravity-viewport-full .myst-cube-viewport-header-slot {{
-    grid-row: 1 !important;
-    flex: 0 0 auto !important;
-    max-height: 4.25rem !important;
-    overflow: hidden !important;
-    margin: 0 0 4px 0 !important;
-    padding: 0 !important;
-}}
-.gradio-container .myst-gravity-viewport-full > .block:has(.myst-cube-viewport-media),
-.gradio-container .myst-gravity-viewport-full > .block:has(.myst-cube-viewport-media-slot),
-.gradio-container .myst-gravity-viewport-full > .column.myst-cube-viewport-media,
-.gradio-container .myst-gravity-viewport-full > .column.myst-cube-viewport-media-slot {{
-    grid-row: 2 !important;
-    flex: 1 1 0 !important;
-    width: 100% !important;
-    min-height: var(--myst-viewport-min-height, 18rem) !important;
-    height: 100% !important;
-    max-height: 100% !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    overflow: hidden !important;
-    display: flex !important;
-    flex-direction: column !important;
-}}
-.gradio-container .myst-gravity-viewport-full .myst-cube-viewport-media,
-.gradio-container .myst-gravity-viewport-full .myst-cube-viewport-media-slot {{
-    position: relative !important;
-    flex: 1 1 0 !important;
-    width: 100% !important;
-    min-height: var(--myst-viewport-min-height, 18rem) !important;
-    height: 100% !important;
-    overflow: hidden !important;
-}}
-.gradio-container .column:has(#unit-cell-viewport) {{
-    height: 100% !important;
-    min-height: var(--myst-viewport-min-height, 18rem) !important;
-    padding: 4px 6px !important;
-    flex: 1 1 0 !important;
-}}
-.gradio-container .myst-gravity-viewport-full .myst-cube-viewport-media .myst-cube-plot-inner.block,
-.gradio-container .myst-gravity-viewport-full .myst-cube-viewport-media #unit-cell-viewport {{
-    position: absolute !important;
-    inset: 0 !important;
-    width: 100% !important;
-    height: 100% !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    display: block !important;
-    flex: none !important;
-    overflow: hidden !important;
-    z-index: 2 !important;
-    visibility: visible !important;
-    opacity: 1 !important;
     background: #000000 !important;
 }}
-/* === TARGETED FIX: tall figsize + height chain (last wins) === */
-.gradio-container #unit-cell-viewport,
-.gradio-container #unit-cell-viewport .wrap,
-.gradio-container #unit-cell-viewport .gr-plot,
-.gradio-container #unit-cell-viewport .gradio-plot,
-.gradio-container #unit-cell-viewport .plot-container {{
-    height: 100% !important;
-    min-height: 900px !important;
+.gradio-container #unit-cell-main-view,
+.gradio-container #unit-cell-main-view .wrap,
+.gradio-container #unit-cell-main-view .image-container,
+.gradio-container .myst-unit-cell-main-image .image-container {{
     width: 100% !important;
-    max-height: none !important;
     background-color: #000000 !important;
-    box-sizing: border-box !important;
 }}
-.gradio-container #unit-cell-viewport .plot-container img {{
+.gradio-container #unit-cell-main-view img,
+.gradio-container .myst-unit-cell-main-image img {{
     width: 100% !important;
     height: auto !important;
     max-height: none !important;
     object-fit: contain !important;
     display: block !important;
+    background-color: #000000 !important;
+}}
+.gradio-container #unit-cell-animation,
+.gradio-container #unit-cell-animation .wrap,
+.gradio-container #unit-cell-animation video,
+.gradio-container .myst-unit-cell-animation video {{
+    width: 100% !important;
+    background-color: #000000 !important;
 }}
 @media (max-width: 768px) {{
     .gradio-container .myst-gravity-split {{
@@ -3494,6 +3439,7 @@ def run_probe(
 
 _GRAVITY_QUICK_PRESET_KEYS = tuple(str(i) for i in range(8))
 _GRAVITY_PRESET_BTN_KEYS = _GRAVITY_QUICK_PRESET_KEYS
+_UNIT_CELL_IMAGE_DPI = 150
 _GRAVITY_HOME_DIALS = {
     "phi": 1.0,
     "e": 1.0,
@@ -3873,6 +3819,20 @@ def _gravity_tui_for_preset(
     return _format_gravity_preset_tui_html(active_slot, dials)
 
 
+def _gravity_static_image_path(fig: object) -> str | object:
+    if fig is gr.skip():
+        return gr.skip()
+    return export_figure_for_gradio(fig, dpi=_UNIT_CELL_IMAGE_DPI)
+
+
+def _gravity_clear_video_update() -> dict:
+    return gr.update(value=None)
+
+
+def _gravity_load_video_update(video_path: str) -> dict:
+    return gr.update(value=video_path, autoplay=True, loop=True)
+
+
 def _run_residual_explorer_ui(
     phi_sq_scale: float,
     e_sq_scale: float,
@@ -3885,7 +3845,7 @@ def _run_residual_explorer_ui(
     view_elev: float,
     view_azim: float,
     active_preset: int,
-) -> tuple[str, str, object, str, str]:
+) -> tuple[str, str, str | object, dict, str, str]:
     metrics, header, fig = run_residual_explorer(
         phi_sq_scale,
         e_sq_scale,
@@ -3916,16 +3876,11 @@ def _run_residual_explorer_ui(
     return (
         metrics,
         header,
-        _gravity_plot_media_update(fig),
+        _gravity_static_image_path(fig),
+        _gravity_clear_video_update(),
         control_levels,
         tui,
     )
-
-
-def _gravity_plot_media_update(fig: object) -> dict:
-    if fig is gr.skip():
-        return gr.update(visible=True)
-    return gr.update(value=fig, visible=True)
 
 
 def _gravity_preset_btn_classes(key: str, active: str) -> list[str]:
@@ -3954,6 +3909,15 @@ def _gravity_preset_click_immediate(slot: int) -> tuple:
     return (
         *_gravity_preset_btn_immediate_active(str(slot)),
         gr.skip(),
+        _gravity_clear_video_update(),
+    )
+
+
+def _gravity_animate_btn_immediate() -> tuple:
+    return (
+        *_gravity_preset_btn_updates(),
+        gr.skip(),
+        _gravity_clear_video_update(),
     )
 
 
@@ -3996,22 +3960,121 @@ def _gravity_explorer_outputs(
     metrics: str,
     header: str,
     fig: object,
+    video_update: dict,
     tui: str,
     active_slot: int,
     *,
     edit_params_enabled: bool = False,
+    update_image: bool = True,
 ) -> tuple:
+    image_out = _gravity_static_image_path(fig) if update_image else gr.skip()
     return (
         *_gravity_preset_btn_updates(active_key),
         _gravity_edit_params_btn_update(edit_params_enabled),
         *_gravity_slider_control_updates(dials, edit_enabled=edit_params_enabled),
         metrics,
         header,
-        _gravity_plot_media_update(fig),
+        image_out,
+        video_update,
         _format_gravity_control_panel_html(dials, active_slot),
         tui,
         active_slot,
     )
+
+
+def _gravity_animation_render_outputs(
+    active_key: str,
+    dials: dict[str, float],
+    metrics: str,
+    header: str,
+    video_update: dict,
+    tui: str,
+    active_slot: int,
+    *,
+    edit_params_enabled: bool = False,
+) -> tuple:
+    return _gravity_explorer_outputs(
+        active_key,
+        dials,
+        metrics,
+        header,
+        gr.skip(),
+        video_update,
+        tui,
+        active_slot,
+        edit_params_enabled=edit_params_enabled,
+        update_image=False,
+    )
+
+
+def _gravity_animate_toggle_click(
+    phi_sq_scale: float,
+    e_sq_scale: float,
+    pi_sq_scale: float,
+    kappa: float,
+    delta_z: float,
+    alpha: float,
+    beta: float,
+    deform_pressure: float,
+    view_elev: float,
+    view_azim: float,
+    active_preset: int,
+    edit_params_enabled: bool,
+    progress: gr.Progress = gr.Progress(track_tqdm=False),
+) -> tuple:
+    dials = _gravity_dial_bundle(
+        phi_sq_scale,
+        e_sq_scale,
+        pi_sq_scale,
+        kappa,
+        delta_z,
+        alpha,
+        beta,
+        deform_pressure,
+        view_elev,
+        view_azim,
+    )
+    slot = int(active_preset)
+    try:
+        video_path, metrics, header, fig, key_metrics = render_unit_cell_deformation_video(
+            phi_sq_scale,
+            e_sq_scale,
+            pi_sq_scale,
+            kappa,
+            delta_z,
+            alpha,
+            beta,
+            deform_pressure,
+            view_elev,
+            view_azim,
+            progress=progress,
+        )
+        plt.close(fig)
+        dials["pressure"] = float(key_metrics["pressure"])
+        tui = _gravity_tui_for_preset(slot, dials, key_metrics=key_metrics)
+        return _gravity_animation_render_outputs(
+            str(slot),
+            dials,
+            metrics,
+            header,
+            _gravity_load_video_update(video_path),
+            tui,
+            slot,
+            edit_params_enabled=bool(edit_params_enabled),
+        )
+    except Exception as exc:
+        logger.exception("gravity animate render failed")
+        err_tui = _gravity_tui_for_preset(slot, dials, status_label="ANIMATE ERROR")
+        return _gravity_animation_render_outputs(
+            str(slot),
+            dials,
+            f"Animation error: {exc}",
+            gr.skip(),
+            _gravity_clear_video_update(),
+            err_tui,
+            slot,
+            edit_params_enabled=bool(edit_params_enabled),
+        )
 
 
 def _gravity_quick_preset_apply(
@@ -4094,6 +4157,7 @@ def _make_gravity_quick_preset_click(slot: int):
             metrics,
             header,
             fig,
+            _gravity_clear_video_update(),
             tui,
             active_slot,
             edit_params_enabled=edit_params_enabled,
@@ -4414,8 +4478,12 @@ def build_app() -> gr.Blocks:
             gr.HTML(_figures_grid_html())
             gr.Markdown(_figures_links_md())
 
-        _init_re_metrics, _init_unit_cell_header, _init_unit_cell = run_residual_explorer(
+        _init_re_metrics, _init_unit_cell_header, _init_unit_cell_fig = run_residual_explorer(
             1.0, 1.0, 1.0, KAPPA_DOC, 0.1, 1.0, 1.0, 0.35, 22.0, 45.0
+        )
+        _init_unit_cell_image = export_figure_for_gradio(
+            _init_unit_cell_fig,
+            dpi=_UNIT_CELL_IMAGE_DPI,
         )
         _init_preset_tui = _format_gravity_menu_tui_html()
         _init_control_levels = _format_gravity_control_panel_html(_GRAVITY_HOME_DIALS, 0)
@@ -4685,6 +4753,15 @@ def build_app() -> gr.Blocks:
                                             )
                                         )
                         re_active_preset = gr.State(0)
+                        animate_deform_btn = gr.Button(
+                            "Animate deformation",
+                            variant="secondary",
+                            elem_classes=[
+                                "vqc-receiver-preset",
+                                "myst-gravity-edit-params-btn",
+                                "vqc-full-width",
+                            ],
+                        )
                         with gr.Column(
                             elem_classes=[
                                 "myst-gravity-preset-tui-section",
@@ -4698,45 +4775,57 @@ def build_app() -> gr.Blocks:
                                 elem_classes=["myst-gravity-preset-tui-wrap"],
                             )
                 with gr.Column(
-                    scale=8,
+                    scale=7,
                     elem_classes=[
                         "myst-gravity-visuals-col",
                         "myst-gravity-right-panel",
                         "myst-gravity-right-stack",
+                        "myst-gravity-image-viewport",
                     ],
                 ):
-                    with gr.Group(
-                        elem_classes=[
-                            "vqc-optics-panel",
-                            "vqc-gravity-panel",
-                            "myst-cube-viewport-frame",
-                            "myst-gravity-cube-panel",
-                            "myst-gravity-panel-window",
-                            "myst-gravity-viewport-full",
-                        ]
-                    ):
-                        unit_cell_header = gr.HTML(
-                            _init_unit_cell_header,
-                            elem_classes=["myst-cube-viewport-header-slot"],
+                    gr.HTML(
+                        """
+                        <div style="margin-bottom: 10px;">
+                          <div style="font-weight: 600; font-size: 16px; color: #ddd;">UNIT CELL VIEWPORT</div>
+                          <div style="font-size: 12px; color: #aaa;">Deformable Unit Cell • No WebGL</div>
+                        </div>
+                        """
+                    )
+                    unit_cell_header = gr.HTML(
+                        _init_unit_cell_header,
+                        elem_classes=["myst-cube-viewport-header-slot"],
+                    )
+                    with gr.Row():
+                        unit_cell_image = gr.Image(
+                            label="Deformable Unit Cell",
+                            show_label=False,
+                            type="filepath",
+                            interactive=False,
+                            scale=1,
+                            height=520,
+                            elem_id="unit-cell-main-view",
+                            value=_init_unit_cell_image,
+                            elem_classes=["myst-unit-cell-main-image"],
                         )
-                        with gr.Column(
-                            elem_classes=[
-                                "myst-cube-viewport-media",
-                                "myst-cube-viewport-media-slot",
-                            ],
-                        ):
-                            unit_cell_plot = gr.Plot(
-                                label=None,
-                                show_label=False,
-                                scale=1,
-                                elem_id="unit-cell-viewport",
-                                value=_init_unit_cell,
-                                elem_classes=[
-                                    "vqc-plot3d-panel",
-                                    "myst-cube-plot-inner",
-                                    "myst-cube-plot-static",
-                                ],
-                            )
+                    gr.HTML(
+                        """
+                        <div style="margin: 14px 0 6px 0;">
+                          <div style="font-weight: 600; font-size: 14px; color: #aaa;">Animation Output</div>
+                        </div>
+                        """
+                    )
+                    unit_cell_video = gr.Video(
+                        label=None,
+                        show_label=False,
+                        interactive=False,
+                        autoplay=True,
+                        loop=True,
+                        height=320,
+                        scale=1,
+                        format="mp4",
+                        elem_id="unit-cell-animation",
+                        elem_classes=["myst-unit-cell-animation"],
+                    )
             re_inputs = [
                 re_phi_scale, re_e_scale, re_pi_scale,
                 re_kappa, re_delta_z, re_alpha, re_beta, re_pressure,
@@ -4745,7 +4834,8 @@ def build_app() -> gr.Blocks:
             re_outputs = [
                 re_metrics,
                 unit_cell_header,
-                unit_cell_plot,
+                unit_cell_image,
+                unit_cell_video,
                 re_control_levels,
                 re_preset_tui,
             ]
@@ -4772,8 +4862,18 @@ def build_app() -> gr.Blocks:
                 )
             gravity_immediate_outputs = [
                 *gravity_preset_btn_outputs,
-                unit_cell_plot,
+                unit_cell_image,
+                unit_cell_video,
             ]
+            animate_event = animate_deform_btn.click(
+                _gravity_animate_btn_immediate,
+                outputs=gravity_immediate_outputs,
+            ).then(
+                _gravity_animate_toggle_click,
+                inputs=gravity_preset_inputs,
+                outputs=gravity_preset_outputs,
+                show_progress="hidden",
+            )
             for slot, preset_btn in enumerate(re_quick_presets):
                 preset_btn.click(
                     lambda s=slot: _gravity_preset_click_immediate(s),
@@ -4782,6 +4882,7 @@ def build_app() -> gr.Blocks:
                     _make_gravity_quick_preset_click(slot),
                     inputs=gravity_preset_inputs,
                     outputs=gravity_preset_outputs,
+                    cancels=[animate_event],
                 )
 
         newhere_outputs = [panel_newhere, tab_newhere_btn, newhere_open, panel_claims, tab_claims_btn, claims_open]
@@ -4848,8 +4949,8 @@ def build_app() -> gr.Blocks:
         claims_minimize_btn.click(_minimize_claims, outputs=claims_outputs[:3])
         demo.load(_stream_term_boot, outputs=term_keypad_outputs)
         demo.load(
-            lambda: _init_unit_cell,
-            outputs=[unit_cell_plot],
+            lambda: _init_unit_cell_image,
+            outputs=[unit_cell_image],
             show_progress=False,
         )
 
