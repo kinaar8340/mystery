@@ -3240,8 +3240,6 @@ def _format_gravity_preset_tui_html(
 ) -> str:
     if active_slot == 0 and key_metrics is None and status_label is None:
         return _format_gravity_menu_tui_html()
-    if active_slot == 1 and key_metrics is None and status_label is None:
-        return _format_gravity_preset_tui_html(active_slot, dials)
     preset_id = _gravity_preset_id(active_slot)
     profile = _GRAVITY_PRESET_SLOT_LABELS.get(active_slot)
     if key_metrics:
@@ -3397,6 +3395,13 @@ def _gravity_preset_btn_immediate_active(active_key: str) -> tuple:
     return _gravity_preset_btn_updates(active_key)
 
 
+def _gravity_animate_btn_immediate(animate_active: bool, active_preset: int) -> tuple:
+    """Latch animate on start; restore prior preset highlight when stopping."""
+    if animate_active:
+        return _gravity_preset_btn_immediate_active(str(int(active_preset)))
+    return _gravity_preset_btn_immediate_active("animate")
+
+
 def _gravity_edit_params_btn_update(enabled: bool) -> dict:
     classes = [
         "vqc-receiver-preset",
@@ -3536,22 +3541,25 @@ def _make_gravity_quick_preset_click(slot: int):
             view_elev,
             view_azim,
         )
-        return _gravity_explorer_outputs(
-            str(active_slot),
-            dials,
-            metrics,
-            header,
-            fig,
-            _gravity_hide_video_update(),
-            tui,
-            active_slot,
-            edit_params_enabled=edit_params_enabled,
+        return (
+            False,
+            *_gravity_explorer_outputs(
+                str(active_slot),
+                dials,
+                metrics,
+                header,
+                fig,
+                _gravity_hide_video_update(),
+                tui,
+                active_slot,
+                edit_params_enabled=edit_params_enabled,
+            ),
         )
 
     return handler
 
 
-def _gravity_animate_click(
+def _gravity_animate_toggle_click(
     phi_sq_scale: float,
     e_sq_scale: float,
     pi_sq_scale: float,
@@ -3564,6 +3572,7 @@ def _gravity_animate_click(
     view_azim: float,
     active_preset: int,
     edit_params_enabled: bool,
+    animate_active: bool,
     progress: gr.Progress = gr.Progress(track_tqdm=False),
 ):
     dials = _gravity_dial_bundle(
@@ -3578,6 +3587,36 @@ def _gravity_animate_click(
         view_elev,
         view_azim,
     )
+    slot = int(active_preset)
+    if animate_active:
+        metrics, header, fig = run_residual_explorer(
+            phi_sq_scale,
+            e_sq_scale,
+            pi_sq_scale,
+            kappa,
+            delta_z,
+            alpha,
+            beta,
+            deform_pressure,
+            view_elev,
+            view_azim,
+        )
+        tui = _gravity_tui_for_preset(slot, dials)
+        return (
+            False,
+            *_gravity_explorer_outputs(
+                str(slot),
+                dials,
+                metrics,
+                header,
+                fig,
+                _gravity_hide_video_update(),
+                tui,
+                slot,
+                edit_params_enabled=bool(edit_params_enabled),
+                show_video=False,
+            ),
+        )
     try:
         video_path, metrics, header, fig, key_metrics = render_unit_cell_deformation_video(
             phi_sq_scale,
@@ -3594,40 +3633,46 @@ def _gravity_animate_click(
         )
         dials["pressure"] = float(key_metrics["pressure"])
         tui = _gravity_tui_for_preset(
-            int(active_preset),
+            slot,
             dials,
             key_metrics=key_metrics,
         )
-        return _gravity_explorer_outputs(
-            "animate",
-            dials,
-            metrics,
-            header,
-            fig,
-            _gravity_show_video_update(video_path),
-            tui,
-            int(active_preset),
-            edit_params_enabled=bool(edit_params_enabled),
-            show_video=True,
+        return (
+            True,
+            *_gravity_explorer_outputs(
+                "animate",
+                dials,
+                metrics,
+                header,
+                fig,
+                _gravity_show_video_update(video_path),
+                tui,
+                slot,
+                edit_params_enabled=bool(edit_params_enabled),
+                show_video=True,
+            ),
         )
     except Exception as exc:
         logger.exception("gravity animate render failed")
         err_metrics = f"Animation error: {exc}"
         err_tui = _gravity_tui_for_preset(
-            int(active_preset),
+            slot,
             dials,
             status_label="ANIMATE ERROR",
         )
-        return _gravity_explorer_outputs(
-            "animate",
-            dials,
-            err_metrics,
-            gr.skip(),
-            gr.skip(),
-            _gravity_hide_video_update(),
-            err_tui,
-            int(active_preset),
-            edit_params_enabled=bool(edit_params_enabled),
+        return (
+            False,
+            *_gravity_explorer_outputs(
+                str(slot),
+                dials,
+                err_metrics,
+                gr.skip(),
+                gr.skip(),
+                _gravity_hide_video_update(),
+                err_tui,
+                slot,
+                edit_params_enabled=bool(edit_params_enabled),
+            ),
         )
 
 
@@ -4066,8 +4111,9 @@ def build_app() -> gr.Blocks:
                                                 elem_classes=preset_classes,
                                             )
                                         )
-                            re_active_preset = gr.State(0)
-                            animate_deform_btn = gr.Button(
+                        re_active_preset = gr.State(0)
+                        re_animate_active = gr.State(False)
+                        animate_deform_btn = gr.Button(
                                 "Animate deformation",
                                 variant="secondary",
                                 elem_classes=["vqc-receiver-preset", "vqc-full-width"],
@@ -4277,6 +4323,7 @@ def build_app() -> gr.Blocks:
             gravity_preset_inputs = [*gravity_dial_inputs, re_edit_params]
             gravity_preset_btn_outputs = [*re_quick_presets, animate_deform_btn]
             gravity_preset_outputs = [
+                re_animate_active,
                 *gravity_preset_btn_outputs,
                 edit_params_btn,
                 *re_inputs,
@@ -4295,11 +4342,12 @@ def build_app() -> gr.Blocks:
                     outputs=re_outputs,
                 )
             animate_deform_btn.click(
-                lambda: _gravity_preset_btn_immediate_active("animate"),
+                _gravity_animate_btn_immediate,
+                inputs=[re_animate_active, re_active_preset],
                 outputs=gravity_preset_btn_outputs,
             ).then(
-                _gravity_animate_click,
-                inputs=gravity_preset_inputs,
+                _gravity_animate_toggle_click,
+                inputs=[*gravity_preset_inputs, re_animate_active],
                 outputs=gravity_preset_outputs,
                 show_progress="full",
             )

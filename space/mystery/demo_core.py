@@ -976,6 +976,16 @@ def _deformation_pressure_loop(n_forward: int = 24) -> list[float]:
     return forward + reverse
 
 
+def _ensure_even_frame(frame: np.ndarray) -> np.ndarray:
+    """libx264 requires even width and height."""
+    h, w = frame.shape[:2]
+    h_even = h - (h % 2)
+    w_even = w - (w % 2)
+    if h_even == h and w_even == w:
+        return frame
+    return frame[:h_even, :w_even]
+
+
 def _figure_to_rgb(fig: plt.Figure, *, dpi: int = 96) -> np.ndarray:
     """Rasterize a matplotlib figure to a fixed-size RGB frame."""
     from PIL import Image
@@ -990,7 +1000,7 @@ def _figure_to_rgb(fig: plt.Figure, *, dpi: int = 96) -> np.ndarray:
         pad_inches=0,
     )
     buf.seek(0)
-    return np.asarray(Image.open(buf).convert("RGB"))
+    return _ensure_even_frame(np.asarray(Image.open(buf).convert("RGB")))
 
 
 def _encode_loop_video(rgb_frames: list[np.ndarray], *, fps: int = 12) -> str:
@@ -1014,7 +1024,7 @@ def _encode_loop_video(rgb_frames: list[np.ndarray], *, fps: int = 12) -> str:
         )
         try:
             for frame in rgb_frames:
-                writer.append_data(frame)
+                writer.append_data(_ensure_even_frame(frame))
         finally:
             writer.close()
         return mp4_path
