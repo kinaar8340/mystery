@@ -1084,7 +1084,9 @@ HFB_CSS = f"""
     padding: 0.4rem 0.55rem !important;
     border: 1px solid #444 !important;
     border-radius: 6px !important;
-    background: #1f1f1f !important;
+    background: rgba(20, 20, 20, 0.65) !important;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
     box-sizing: border-box !important;
 }}
 .gradio-container .myst-cube-viewport-header-fixed .myst-cube-viewport-title-line {{
@@ -3366,7 +3368,9 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-gravity-image-viewport > .block,
 .gradio-container .myst-gravity-image-viewport .wrap {{
     padding: 4px !important;
-    background: #000000 !important;
+    background: rgba(20, 20, 20, 0.65) !important;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
 }}
 /* Upper static image — #unit-cell-main-view */
 .gradio-container #unit-cell-main-view,
@@ -3375,13 +3379,24 @@ footer {{ visibility: hidden; }}
 .gradio-container #unit-cell-main-view .gr-image,
 .gradio-container #unit-cell-main-view .gradio-image > div,
 .gradio-container #unit-cell-main-view .gr-image > div,
-.gradio-container #unit-cell-main-view .image-container,
-.gradio-container #unit-cell-main-view img {{
-    height: 100% !important;
+.gradio-container #unit-cell-main-view .image-container {{
     min-height: 550px !important;
     width: 100% !important;
     padding: 4px !important;
-    background-color: #000000 !important;
+    background-color: rgba(20, 20, 20, 0.65) !important;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    box-sizing: border-box !important;
+}}
+.gradio-container #unit-cell-main-view img {{
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: 550px !important;
+    padding: 0 !important;
+    background-color: transparent !important;
+    object-fit: contain !important;
+    display: block !important;
     box-sizing: border-box !important;
 }}
 .gradio-container #unit-cell-main-view .wrap,
@@ -3409,7 +3424,9 @@ footer {{ visibility: hidden; }}
     min-height: 320px !important;
     width: 100% !important;
     padding: 4px !important;
-    background-color: #000000 !important;
+    background-color: rgba(20, 20, 20, 0.65) !important;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
     box-sizing: border-box !important;
 }}
 .gradio-container #unit-cell-animation .wrap,
@@ -3432,11 +3449,27 @@ footer {{ visibility: hidden; }}
 .gradio-container .gr-image img,
 .gradio-container .gr-video video {{
     width: 100% !important;
-    height: 100% !important;
-    max-height: none !important;
+    height: auto !important;
+    max-height: 100% !important;
     object-fit: contain !important;
     display: block !important;
-    background-color: #000000 !important;
+    background-color: transparent !important;
+}}
+/* Semi-transparent foreground panels — wallpaper shows through */
+.gradio-container .gradio-row,
+.gradio-container .gradio-column,
+.gradio-container .block,
+.gradio-container .gr-panel,
+.gradio-container .myst-gravity-right-panel,
+.gradio-container .myst-gravity-right-stack {{
+    background-color: rgba(30, 30, 30, 0.5) !important;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+}}
+.gradio-container #unit-cell-main-view,
+.gradio-container #unit-cell-animation,
+.gradio-container .myst-cube-viewport-header-slot {{
+    background-color: rgba(20, 20, 20, 0.65) !important;
 }}
 @media (max-width: 768px) {{
     .gradio-container .myst-gravity-split {{
@@ -3966,6 +3999,7 @@ def _gravity_preset_btn_immediate_active(active_key: str) -> tuple:
 
 
 def _gravity_preset_click_immediate(slot: int) -> tuple:
+    print(f"[DEBUG] preset_click_immediate: slot={slot}", flush=True)
     return (
         *_gravity_preset_btn_immediate_active(str(slot)),
         gr.skip(),
@@ -4199,6 +4233,7 @@ def _make_gravity_quick_preset_click(slot: int):
         edit_params_enabled: bool,
     ):
         print(f"[DEBUG] preset_click handler: slot={slot}", flush=True)
+        print(f"[DEBUG] preset_click handler: type(slot)={type(slot)}", flush=True)
         dials, metrics, header, fig, tui, active_slot = _gravity_quick_preset_apply(
             slot,
             phi_sq_scale,
@@ -4212,7 +4247,7 @@ def _make_gravity_quick_preset_click(slot: int):
             view_elev,
             view_azim,
         )
-        return _gravity_explorer_outputs(
+        outputs = _gravity_explorer_outputs(
             str(active_slot),
             dials,
             metrics,
@@ -4223,6 +4258,18 @@ def _make_gravity_quick_preset_click(slot: int):
             active_slot,
             edit_params_enabled=edit_params_enabled,
         )
+        image_out = outputs[21]
+        if hasattr(image_out, "shape"):
+            print(
+                f"[DEBUG] preset_click handler: image shape={image_out.shape}",
+                flush=True,
+            )
+        else:
+            print(
+                f"[DEBUG] preset_click handler: image_out={image_out!r}",
+                flush=True,
+            )
+        return outputs
 
     return handler
 
@@ -4944,6 +4991,7 @@ def build_app() -> gr.Blocks:
                     _make_gravity_quick_preset_click(slot),
                     inputs=gravity_preset_inputs,
                     outputs=gravity_preset_outputs,
+                    show_progress="hidden",
                     cancels=[animate_event],
                 )
 
