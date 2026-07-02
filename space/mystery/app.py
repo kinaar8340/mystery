@@ -37,7 +37,9 @@ from demo_core import (
     get_build_label,
     is_hf_space,
     build_unit_cell_viewport_header_html,
+    figure_to_viewport_html,
     figure_to_viewport_numpy,
+    unit_cell_error_placeholder_html,
     unit_cell_error_placeholder_numpy,
     render_unit_cell_deformation_video,
     residual_from_scales,
@@ -1005,32 +1007,29 @@ WALLPAPER_HEAD = f"""
 }})();
 (function() {{
     function fixUnitCellViewportLayout() {{
-        var imgRoot = document.getElementById('unit-cell-main-view');
-        if (imgRoot) {{
-            imgRoot.style.setProperty('display', 'block', 'important');
-            imgRoot.style.setProperty('visibility', 'visible', 'important');
-            imgRoot.style.setProperty('opacity', '1', 'important');
-            imgRoot.style.setProperty('height', '550px', 'important');
-            imgRoot.style.setProperty('min-height', '550px', 'important');
-            imgRoot.style.setProperty('width', '100%', 'important');
-            imgRoot.style.setProperty('overflow', 'visible', 'important');
-            imgRoot.querySelectorAll('.wrap, .image-container, .gr-image').forEach(function(el) {{
-                el.style.setProperty('display', 'block', 'important');
+        document.querySelectorAll(
+            '#unit-cell-main-view, .myst-unit-cell-viewport-img-wrap, .myst-unit-cell-viewport-img'
+        ).forEach(function(el) {{
+            el.style.setProperty('display', 'block', 'important');
+            el.style.setProperty('visibility', 'visible', 'important');
+            el.style.setProperty('opacity', '1', 'important');
+            el.style.setProperty('overflow', 'visible', 'important');
+            if (el.tagName === 'IMG' || el.classList.contains('myst-unit-cell-viewport-img-wrap')) {{
                 el.style.setProperty('height', '550px', 'important');
                 el.style.setProperty('min-height', '550px', 'important');
                 el.style.setProperty('width', '100%', 'important');
-                el.style.setProperty('overflow', 'visible', 'important');
-            }});
-            imgRoot.querySelectorAll('img').forEach(function(img) {{
-                img.style.setProperty('display', 'block', 'important');
-                img.style.setProperty('visibility', 'visible', 'important');
-                img.style.setProperty('opacity', '1', 'important');
-                img.style.setProperty('height', '550px', 'important');
-                img.style.setProperty('min-height', '550px', 'important');
-                img.style.setProperty('width', '100%', 'important');
-                img.style.setProperty('object-fit', 'contain', 'important');
-            }});
-        }}
+                el.style.setProperty('max-width', '550px', 'important');
+            }}
+        }});
+        document.querySelectorAll('.myst-unit-cell-viewport-img, #unit-cell-main-view img').forEach(function(img) {{
+            img.style.setProperty('display', 'block', 'important');
+            img.style.setProperty('visibility', 'visible', 'important');
+            img.style.setProperty('opacity', '1', 'important');
+            img.style.setProperty('height', '550px', 'important');
+            img.style.setProperty('min-height', '550px', 'important');
+            img.style.setProperty('width', '100%', 'important');
+            img.style.setProperty('object-fit', 'contain', 'important');
+        }});
         var vidRoot = document.getElementById('unit-cell-animation');
         if (vidRoot) {{
             vidRoot.style.setProperty('display', 'block', 'important');
@@ -1046,7 +1045,7 @@ WALLPAPER_HEAD = f"""
                 el.style.setProperty('width', '100%', 'important');
             }});
         }}
-        document.querySelectorAll('.myst-unit-cell-viewport-slot, .myst-unit-cell-animation-slot').forEach(function(slot) {{
+        document.querySelectorAll('.myst-unit-cell-image-row, .myst-unit-cell-video-row').forEach(function(slot) {{
             slot.style.setProperty('overflow', 'visible', 'important');
             slot.style.setProperty('height', 'auto', 'important');
         }});
@@ -1054,9 +1053,9 @@ WALLPAPER_HEAD = f"""
     function fixUnitCellImageUrls() {{
         var origin = window.location.origin;
         var gradioRoot = (window.gradio_config && window.gradio_config.root) || '';
+        fixUnitCellViewportLayout();
         var root = document.getElementById('unit-cell-main-view');
         if (!root) return;
-        fixUnitCellViewportLayout();
         root.querySelectorAll('img').forEach(function(img) {{
             var src = img.getAttribute('src') || '';
             if (!src || src.indexOf('data:') === 0 || src.indexOf('blob:') === 0) return;
@@ -3639,9 +3638,9 @@ footer {{ visibility: hidden; }}
         min-height: min(70vh, var(--myst-viewport-plot-height, calc(100dvh - 12.5rem))) !important;
     }}
 }}
-/* === HF SPACE VIEWPORT SURVIVAL (class-based; avoids :has() + flex collapse) === */
-.gradio-container .myst-gravity-visuals-col.myst-gravity-image-viewport {{
-    flex: 0 0 auto !important;
+/* === HF SPACE VIEWPORT — inline HTML img + simple rows (no gr.Image) === */
+.gradio-container .myst-gravity-visuals-col {{
+    flex: 1 1 auto !important;
     height: auto !important;
     min-height: 0 !important;
     max-height: none !important;
@@ -3649,110 +3648,70 @@ footer {{ visibility: hidden; }}
     display: flex !important;
     flex-direction: column !important;
     align-items: stretch !important;
-    gap: 0.35rem !important;
-}}
-.gradio-container .myst-gravity-image-viewport.myst-gravity-right-panel,
-.gradio-container .myst-gravity-image-viewport.myst-gravity-right-stack {{
-    overflow: visible !important;
-    min-height: 0 !important;
-    height: auto !important;
-}}
-.gradio-container .myst-unit-cell-viewport-slot,
-.gradio-container .myst-unit-cell-viewport-slot.block,
-.gradio-container .myst-unit-cell-viewport-slot > .form {{
-    flex: 0 0 auto !important;
-    width: 100% !important;
-    height: auto !important;
-    min-height: 550px !important;
-    max-height: none !important;
-    overflow: visible !important;
-    display: block !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    border: none !important;
+    gap: 0.5rem !important;
+    padding: 4px !important;
     background: #000000 !important;
-    box-shadow: none !important;
 }}
-.gradio-container .myst-unit-cell-animation-slot,
-.gradio-container .myst-unit-cell-animation-slot.block,
-.gradio-container .myst-unit-cell-animation-slot > .form {{
+.gradio-container .myst-unit-cell-image-row,
+.gradio-container .myst-unit-cell-image-row.block,
+.gradio-container .myst-unit-cell-image-row > .form,
+.gradio-container .myst-unit-cell-video-row,
+.gradio-container .myst-unit-cell-video-row.block,
+.gradio-container .myst-unit-cell-video-row > .form {{
     flex: 0 0 auto !important;
     width: 100% !important;
     height: auto !important;
-    min-height: 320px !important;
-    max-height: none !important;
+    min-height: 0 !important;
     overflow: visible !important;
     display: block !important;
     margin: 0 !important;
     padding: 0 !important;
     border: none !important;
-    background: rgba(20, 20, 20, 0.65) !important;
+    background: transparent !important;
     box-shadow: none !important;
 }}
-.gradio-container #unit-cell-main-view,
-.gradio-container .myst-unit-cell-viewport-image,
-.gradio-container .myst-unit-cell-main-image,
-.gradio-container .block.myst-unit-cell-viewport-image,
-.gradio-container .block.myst-unit-cell-main-image {{
-    flex: 0 0 auto !important;
+.gradio-container .myst-unit-cell-viewport-html,
+.gradio-container .myst-unit-cell-viewport-html.block,
+.gradio-container .myst-unit-cell-viewport-html .html-container,
+.gradio-container .myst-unit-cell-viewport-html .prose {{
     width: 100% !important;
     max-width: 550px !important;
-    height: 550px !important;
-    min-height: 550px !important;
-    max-height: 550px !important;
-    overflow: visible !important;
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    position: relative !important;
     margin: 0 auto !important;
     padding: 0 !important;
     border: none !important;
     background: #000000 !important;
     box-shadow: none !important;
-}}
-.gradio-container #unit-cell-main-view .wrap,
-.gradio-container #unit-cell-main-view .image-container,
-.gradio-container #unit-cell-main-view .gr-image,
-.gradio-container .myst-unit-cell-viewport-image .wrap,
-.gradio-container .myst-unit-cell-viewport-image .image-container,
-.gradio-container .myst-unit-cell-viewport-image .gr-image,
-.gradio-container .myst-unit-cell-main-image .wrap,
-.gradio-container .myst-unit-cell-main-image .image-container,
-.gradio-container .myst-unit-cell-main-image .gr-image {{
-    width: 100% !important;
-    height: 550px !important;
-    min-height: 550px !important;
-    max-height: 550px !important;
     overflow: visible !important;
     display: block !important;
-    flex: none !important;
-    background: #000000 !important;
 }}
-.gradio-container #unit-cell-main-view img,
-.gradio-container .myst-unit-cell-viewport-image img,
-.gradio-container .myst-unit-cell-main-image img,
-.gradio-container .myst-unit-cell-viewport-image .gr-image img,
-.gradio-container .myst-unit-cell-main-image .gr-image img {{
+.gradio-container #unit-cell-main-view,
+.gradio-container .myst-unit-cell-viewport-img-wrap,
+.gradio-container .myst-unit-cell-viewport-html img,
+.gradio-container .myst-unit-cell-viewport-img {{
     width: 100% !important;
+    max-width: 550px !important;
     height: 550px !important;
     min-height: 550px !important;
     max-height: 550px !important;
-    object-fit: contain !important;
-    object-position: center center !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
     display: block !important;
     visibility: visible !important;
     opacity: 1 !important;
+    object-fit: contain !important;
+    object-position: center center !important;
     background: #000000 !important;
+    border: none !important;
+    box-shadow: none !important;
 }}
 .gradio-container #unit-cell-animation,
 .gradio-container .myst-unit-cell-animation,
-.gradio-container .block.myst-unit-cell-animation {{
+.gradio-container .block.myst-unit-cell-animation,
+.gradio-container .myst-unit-cell-video-row #unit-cell-animation {{
     flex: 0 0 auto !important;
     width: 100% !important;
     height: 320px !important;
     min-height: 320px !important;
-    max-height: none !important;
     overflow: visible !important;
     display: block !important;
     visibility: visible !important;
@@ -3760,37 +3719,29 @@ footer {{ visibility: hidden; }}
     margin: 0 !important;
     padding: 0 !important;
     border: none !important;
-    background: rgba(20, 20, 20, 0.65) !important;
+    background: rgba(20, 20, 20, 0.85) !important;
     box-shadow: none !important;
 }}
 .gradio-container #unit-cell-animation .wrap,
 .gradio-container #unit-cell-animation .video-container,
+.gradio-container #unit-cell-animation .gr-video,
 .gradio-container .myst-unit-cell-animation .wrap,
 .gradio-container .myst-unit-cell-animation .video-container,
-.gradio-container .myst-unit-cell-animation .gr-video {{
+.gradio-container .myst-unit-cell-animation video,
+.gradio-container #unit-cell-animation video {{
     width: 100% !important;
     height: 320px !important;
     min-height: 320px !important;
     max-height: none !important;
     overflow: visible !important;
     display: block !important;
-    flex: none !important;
-}}
-.gradio-container #unit-cell-animation video,
-.gradio-container .myst-unit-cell-animation video {{
-    width: 100% !important;
-    height: 320px !important;
-    min-height: 320px !important;
-    max-height: none !important;
-    object-fit: contain !important;
-    display: block !important;
     visibility: visible !important;
     opacity: 1 !important;
+    object-fit: contain !important;
 }}
-.gradio-container .myst-gravity-image-viewport .myst-cube-viewport-header-slot {{
+.gradio-container .myst-gravity-visuals-col .myst-cube-viewport-header-slot {{
     flex: 0 0 auto !important;
     height: auto !important;
-    min-height: 0 !important;
     overflow: visible !important;
 }}
 """
@@ -4195,16 +4146,16 @@ def _gravity_tui_for_preset(
 
 
 def _gravity_static_image_update(fig: object) -> object:
-    """Opaque RGB numpy on 550×550 black canvas for gr.Image(type='numpy')."""
+    """Inline base64 HTML img — bypasses gr.Image layout issues on HF Spaces."""
     if fig is gr.skip():
         print("[DEBUG] _gravity_static_image_update: gr.skip()", flush=True)
         return gr.skip()
-    arr = figure_to_viewport_numpy(fig, dpi=_UNIT_CELL_IMAGE_DPI)
+    html = figure_to_viewport_html(fig, dpi=_UNIT_CELL_IMAGE_DPI)
     print(
-        f"[DEBUG] _gravity_static_image_update: returning numpy shape={arr.shape}",
+        f"[DEBUG] _gravity_static_image_update: returning html len={len(html)}",
         flush=True,
     )
-    return arr
+    return html
 
 
 def _gravity_clear_video_update() -> dict:
@@ -4602,7 +4553,7 @@ def _make_gravity_quick_preset_click(slot: int):
         )
         if fig is None:
             outputs = list(outputs)
-            outputs[21] = unit_cell_error_placeholder_numpy()
+            outputs[21] = unit_cell_error_placeholder_html()
         image_out = outputs[21]
         if hasattr(image_out, "shape"):
             print(
@@ -4940,12 +4891,12 @@ def build_app() -> gr.Blocks:
         _init_re_metrics, _init_unit_cell_header, _init_unit_cell_fig = run_residual_explorer(
             1.0, 1.0, 1.0, KAPPA_DOC, 0.1, 1.0, 1.0, 0.35, 22.0, 45.0
         )
-        _init_unit_cell_numpy = figure_to_viewport_numpy(
+        _init_unit_cell_html = figure_to_viewport_html(
             _init_unit_cell_fig,
             dpi=_UNIT_CELL_IMAGE_DPI,
         )
         print(
-            f"[DEBUG] init unit cell numpy shape={_init_unit_cell_numpy.shape}",
+            f"[DEBUG] init unit cell html len={len(_init_unit_cell_html)}",
             flush=True,
         )
         _init_preset_tui = _format_gravity_menu_tui_html()
@@ -5241,52 +5192,27 @@ def build_app() -> gr.Blocks:
                             )
                 with gr.Column(
                     scale=7,
-                    elem_classes=[
-                        "myst-gravity-visuals-col",
-                        "myst-gravity-right-panel",
-                        "myst-gravity-right-stack",
-                        "myst-gravity-image-viewport",
-                    ],
+                    elem_classes=["myst-gravity-visuals-col"],
                 ):
                     unit_cell_header = gr.HTML(
                         _init_unit_cell_header,
                         elem_classes=["myst-cube-viewport-header-slot"],
                     )
-                    with gr.Column(elem_classes=["myst-unit-cell-viewport-slot"]):
-                        unit_cell_image = gr.Image(
-                            value=_init_unit_cell_numpy,
-                            label=None,
-                            show_label=False,
-                            type="numpy",
-                            image_mode="RGB",
-                            interactive=False,
+                    with gr.Row(elem_classes=["myst-unit-cell-image-row"]):
+                        unit_cell_image = gr.HTML(
+                            _init_unit_cell_html,
+                            elem_classes=["myst-unit-cell-viewport-html"],
                             container=False,
-                            height=550,
-                            width=550,
-                            show_download_button=False,
-                            show_share_button=False,
-                            show_fullscreen_button=False,
-                            elem_id="unit-cell-main-view",
-                            elem_classes=[
-                                "myst-unit-cell-viewport-image",
-                                "myst-unit-cell-main-image",
-                            ],
                         )
-                    gr.HTML(
-                        """
-                        <div style="margin: 12px 0 6px 0; font-weight: 600; color: #aaa;">Animation Output</div>
-                        """
-                    )
-                    with gr.Column(elem_classes=["myst-unit-cell-animation-slot"]):
+                    with gr.Row(elem_classes=["myst-unit-cell-video-row"]):
                         unit_cell_video = gr.Video(
-                            label=None,
-                            show_label=False,
+                            label="Deformation Animation",
+                            show_label=True,
                             interactive=False,
                             container=False,
                             autoplay=True,
                             loop=True,
                             height=320,
-                            scale=1,
                             format="mp4",
                             elem_id="unit-cell-animation",
                             elem_classes=["myst-unit-cell-animation", "gradio-video"],
@@ -5420,7 +5346,7 @@ def build_app() -> gr.Blocks:
         claims_minimize_btn.click(_minimize_claims, outputs=claims_outputs[:3])
         demo.load(_stream_term_boot, outputs=term_keypad_outputs)
         demo.load(
-            lambda: _init_unit_cell_numpy,
+            lambda: _init_unit_cell_html,
             outputs=[unit_cell_image],
             show_progress=False,
         )

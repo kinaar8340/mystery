@@ -1079,6 +1079,39 @@ def figure_to_viewport_numpy(fig: plt.Figure, *, dpi: int = 100) -> np.ndarray:
         return unit_cell_error_placeholder_numpy()
 
 
+def numpy_viewport_to_html(arr: np.ndarray) -> str:
+    """RGB numpy → inline base64 <img> for gr.HTML (HF Spaces-safe)."""
+    from PIL import Image as PILImage
+
+    buf = io.BytesIO()
+    PILImage.fromarray(np.asarray(arr, dtype=np.uint8)).save(buf, format="PNG")
+    b64 = base64.b64encode(buf.getvalue()).decode("ascii")
+    return (
+        '<div id="unit-cell-main-view" class="myst-unit-cell-viewport-img-wrap '
+        'myst-unit-cell-viewport-html">'
+        f'<img src="data:image/png;base64,{b64}" '
+        'alt="Unit cell viewport" class="myst-unit-cell-viewport-img" />'
+        "</div>"
+    )
+
+
+def figure_to_viewport_html(fig: plt.Figure, *, dpi: int = 100) -> str:
+    """Matplotlib figure → inline HTML img; never raises."""
+    print(f"[DEBUG] figure_to_viewport_html: dpi={dpi}", flush=True)
+    try:
+        arr = figure_to_viewport_numpy(fig, dpi=dpi)
+        html = numpy_viewport_to_html(arr)
+        print(
+            f"[DEBUG] figure_to_viewport_html: shape={arr.shape} bytes={len(html)}",
+            flush=True,
+        )
+        return html
+    except Exception as exc:
+        print(f"[ERROR] figure_to_viewport_html failed: {exc}", flush=True)
+        traceback.print_exc()
+        return unit_cell_error_placeholder_html()
+
+
 def unit_cell_error_placeholder_html() -> str:
     """Red placeholder <img> when viewport conversion fails."""
     placeholder = unit_cell_error_placeholder_numpy()
@@ -1088,7 +1121,8 @@ def unit_cell_error_placeholder_html() -> str:
     PILImage.fromarray(placeholder).save(buf, format="PNG")
     b64 = base64.b64encode(buf.getvalue()).decode("ascii")
     return (
-        '<div class="myst-unit-cell-viewport-img-wrap myst-unit-cell-viewport-error">'
+        '<div id="unit-cell-main-view" class="myst-unit-cell-viewport-img-wrap '
+        'myst-unit-cell-viewport-error myst-unit-cell-viewport-html">'
         f'<img src="data:image/png;base64,{b64}" '
         'alt="Viewport error placeholder" class="myst-unit-cell-viewport-img" />'
         "</div>"
