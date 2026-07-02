@@ -3454,12 +3454,11 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-gravity-viewport-full .myst-cube-viewport-media .myst-cube-plot-inner .plot-container img {{
     display: block !important;
     width: 100% !important;
-    height: auto !important;
-    min-width: 100% !important;
+    height: 100% !important;
     max-width: 100% !important;
-    max-height: 100% !important;
+    max-height: none !important;
     margin: 0 auto !important;
-    flex: none !important;
+    flex: 1 1 auto !important;
     object-fit: contain !important;
     object-position: center center !important;
 }}
