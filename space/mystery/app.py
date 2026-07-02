@@ -3357,7 +3357,19 @@ footer {{ visibility: hidden; }}
 }}
 /* === KNOWN-GOOD VIEWPORT (last wins — matplotlib gr.Plot, not Plotly) === */
 .gradio-container .myst-gravity-cube-panel.myst-gravity-panel-window.vqc-optics-panel {{
-    grid-template-rows: auto minmax(var(--myst-viewport-min-height, 18rem), 1fr) !important;
+    grid-template-rows: auto minmax(var(--myst-viewport-min-height, 18rem), 1fr) auto !important;
+}}
+.gradio-container .myst-gravity-cube-panel.myst-gravity-panel-window > .column.myst-cube-viewport-plot-slot,
+.gradio-container .myst-gravity-cube-panel.myst-gravity-panel-window > .block:has(.myst-cube-viewport-plot-slot) {{
+    grid-row: 2 !important;
+}}
+.gradio-container .myst-gravity-cube-panel.myst-gravity-panel-window > .column.myst-cube-viewport-animation-slot,
+.gradio-container .myst-gravity-cube-panel.myst-gravity-panel-window > .block:has(.myst-cube-viewport-animation-slot) {{
+    grid-row: 3 !important;
+    flex: 0 0 auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
 }}
 .gradio-container .myst-gravity-cube-panel.myst-gravity-panel-window > .block:has(.myst-cube-viewport-header-fixed),
 .gradio-container .myst-gravity-cube-panel .myst-cube-viewport-header-slot {{
@@ -3473,11 +3485,54 @@ footer {{ visibility: hidden; }}
     margin: 0 0 4px 0 !important;
     padding: 0 !important;
 }}
-.gradio-container .myst-cube-viewport-media .myst-cube-anim-video.block {{
-    position: absolute !important;
-    inset: 0 !important;
-    z-index: 3 !important;
+/* === SPLIT VIEWPORT: plot above, animation below (no overlay) === */
+.gradio-container .myst-cube-viewport-plot-slot {{
+    position: relative !important;
+    flex: 1 1 0 !important;
+    width: 100% !important;
     min-height: var(--myst-viewport-min-height, 18rem) !important;
+    height: 100% !important;
+    overflow: hidden !important;
+    display: block !important;
+}}
+.gradio-container .myst-cube-viewport-animation-slot {{
+    flex: 0 0 auto !important;
+    width: 100% !important;
+    margin: 0.35rem 0 0 0 !important;
+    padding: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.25rem !important;
+}}
+.gradio-container .myst-cube-viewport-animation-label {{
+    font-size: 0.72rem !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.06em !important;
+    text-transform: uppercase !important;
+    color: #aaaaaa !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}}
+.gradio-container .myst-cube-viewport-animation-slot .myst-cube-anim-video.block {{
+    position: relative !important;
+    inset: auto !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: 14rem !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    z-index: 1 !important;
+    flex: 0 0 auto !important;
+    overflow: hidden !important;
+}}
+.gradio-container .myst-cube-viewport-animation-slot .myst-cube-anim-video .wrap,
+.gradio-container .myst-cube-viewport-animation-slot .myst-cube-anim-video .video-container,
+.gradio-container .myst-cube-viewport-animation-slot .myst-cube-anim-video video {{
+    width: 100% !important;
+    max-height: 14rem !important;
+    margin: 0 !important;
+    object-fit: contain !important;
 }}
 @media (max-width: 768px) {{
     .gradio-container .myst-gravity-split {{
@@ -3952,7 +4007,7 @@ def _run_residual_explorer_ui(
         metrics,
         header,
         _gravity_plot_media_update(fig),
-        _gravity_hide_video_update(),
+        *_gravity_hide_animation_outputs(),
         control_levels,
         tui,
     )
@@ -3966,21 +4021,18 @@ def _gravity_show_video_update(video_path: str) -> dict:
     return gr.update(value=video_path, visible=True, autoplay=True, loop=False)
 
 
+def _gravity_hide_animation_outputs() -> tuple[dict, dict]:
+    return gr.update(visible=False), _gravity_hide_video_update()
+
+
+def _gravity_show_animation_outputs(video_path: str) -> tuple[dict, dict]:
+    return gr.update(visible=True), _gravity_show_video_update(video_path)
+
+
 def _gravity_plot_media_update(fig: object) -> dict:
     if fig is gr.skip():
         return gr.update(visible=True)
     return gr.update(value=fig, visible=True)
-
-
-def _gravity_viewport_media(
-    fig: object,
-    video_update: dict,
-    *,
-    show_video: bool = False,
-) -> tuple[dict, dict]:
-    if show_video:
-        return gr.update(visible=False), video_update
-    return _gravity_plot_media_update(fig), _gravity_hide_video_update()
 
 
 def _gravity_preset_btn_classes(key: str, active: str) -> list[str]:
@@ -4015,6 +4067,7 @@ def _gravity_animate_btn_immediate(animate_active: bool, active_preset: int) -> 
         *_gravity_preset_btn_immediate_active("animate"),
         gr.skip(),
         gr.skip(),
+        gr.skip(),
     )
 
 
@@ -4023,8 +4076,8 @@ def _gravity_preset_click_immediate(slot: int) -> tuple:
     return (
         False,
         *_gravity_preset_btn_immediate_active(str(slot)),
-        gr.update(visible=True),
-        _gravity_hide_video_update(),
+        gr.skip(),
+        *_gravity_hide_animation_outputs(),
     )
 
 
@@ -4067,18 +4120,15 @@ def _gravity_explorer_outputs(
     metrics: str,
     header: str,
     fig: object,
+    anim_label_update: dict,
     video_update: dict,
     tui: str,
     active_slot: int,
     *,
     edit_params_enabled: bool = False,
-    show_video: bool = False,
+    update_plot: bool = True,
 ) -> tuple:
-    plot_out, video_out = _gravity_viewport_media(
-        fig,
-        video_update,
-        show_video=show_video,
-    )
+    plot_out = _gravity_plot_media_update(fig) if update_plot else gr.skip()
     return (
         *_gravity_preset_btn_updates(active_key),
         _gravity_edit_params_btn_update(edit_params_enabled),
@@ -4086,7 +4136,8 @@ def _gravity_explorer_outputs(
         metrics,
         header,
         plot_out,
-        video_out,
+        anim_label_update,
+        video_update,
         _format_gravity_control_panel_html(dials, active_slot),
         tui,
         active_slot,
@@ -4175,7 +4226,7 @@ def _make_gravity_quick_preset_click(slot: int):
                 metrics,
                 header,
                 fig,
-                _gravity_hide_video_update(),
+                *_gravity_hide_animation_outputs(),
                 tui,
                 active_slot,
                 edit_params_enabled=edit_params_enabled,
@@ -4234,11 +4285,10 @@ def _gravity_animation_done(
             metrics,
             header,
             fig,
-            _gravity_hide_video_update(),
+            *_gravity_hide_animation_outputs(),
             tui,
             slot,
             edit_params_enabled=bool(edit_params_enabled),
-            show_video=False,
         ),
     )
 
@@ -4301,11 +4351,11 @@ def _gravity_animate_toggle_click(
                 metrics,
                 header,
                 fig,
-                _gravity_show_video_update(video_path),
+                *_gravity_show_animation_outputs(video_path),
                 tui,
                 slot,
                 edit_params_enabled=bool(edit_params_enabled),
-                show_video=True,
+                update_plot=False,
             ),
         )
     except Exception as exc:
@@ -4324,7 +4374,7 @@ def _gravity_animate_toggle_click(
                 err_metrics,
                 gr.skip(),
                 gr.skip(),
-                _gravity_hide_video_update(),
+                *_gravity_hide_animation_outputs(),
                 err_tui,
                 slot,
                 edit_params_enabled=bool(edit_params_enabled),
@@ -4954,7 +5004,13 @@ def build_app() -> gr.Blocks:
                             _init_unit_cell_header,
                             elem_classes=["myst-cube-viewport-header-slot"],
                         )
-                        with gr.Column(elem_classes=["myst-cube-viewport-media", "myst-cube-viewport-media-slot"]):
+                        with gr.Column(
+                            elem_classes=[
+                                "myst-cube-viewport-plot-slot",
+                                "myst-cube-viewport-media",
+                                "myst-cube-viewport-media-slot",
+                            ],
+                        ):
                             unit_cell_plot = gr.Plot(
                                 label=None,
                                 show_label=False,
@@ -4966,6 +5022,12 @@ def build_app() -> gr.Blocks:
                                     "myst-cube-plot-inner",
                                     "myst-cube-plot-static",
                                 ],
+                            )
+                        with gr.Column(elem_classes=["myst-cube-viewport-animation-slot"]):
+                            unit_cell_anim_label = gr.HTML(
+                                '<div class="myst-cube-viewport-animation-label">Animation Output</div>',
+                                visible=False,
+                                elem_classes=["myst-cube-viewport-animation-label-slot"],
                             )
                             unit_cell_video = gr.Video(
                                 label=None,
@@ -4991,6 +5053,7 @@ def build_app() -> gr.Blocks:
                 re_metrics,
                 unit_cell_header,
                 unit_cell_plot,
+                unit_cell_anim_label,
                 unit_cell_video,
                 re_control_levels,
                 re_preset_tui,
@@ -5021,6 +5084,7 @@ def build_app() -> gr.Blocks:
                 re_animate_active,
                 *gravity_preset_btn_outputs,
                 unit_cell_plot,
+                unit_cell_anim_label,
                 unit_cell_video,
             ]
             animate_event = animate_deform_btn.click(
@@ -5031,7 +5095,7 @@ def build_app() -> gr.Blocks:
                 _gravity_animate_toggle_click,
                 inputs=[*gravity_preset_inputs, re_animate_active],
                 outputs=gravity_preset_outputs,
-                show_progress="full",
+                show_progress="hidden",
             )
             anim_done_btn.click(
                 _gravity_animation_done,
