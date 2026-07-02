@@ -3432,12 +3432,12 @@ footer {{ visibility: hidden; }}
 .gradio-container .column:has(#unit-cell-viewport),
 .gradio-container .myst-cube-viewport-media,
 .gradio-container .myst-cube-viewport-media-slot {{
-    padding: 2px 4px !important;
+    padding: 2px 6px 4px 6px !important;
     margin: 0 !important;
 }}
 .gradio-container .myst-gravity-cube-panel.myst-gravity-panel-window.vqc-optics-panel,
 .gradio-container .myst-gravity-page .myst-cube-viewport-frame.vqc-optics-panel {{
-    padding: 2px 4px !important;
+    padding: 2px 6px 4px 6px !important;
     margin: 0 !important;
 }}
 .gradio-container #unit-cell-viewport,
@@ -4934,7 +4934,7 @@ def build_app() -> gr.Blocks:
                                 elem_classes=["myst-gravity-preset-tui-wrap"],
                             )
                 with gr.Column(
-                    scale=7,
+                    scale=8,
                     elem_classes=[
                         "myst-gravity-visuals-col",
                         "myst-gravity-right-panel",

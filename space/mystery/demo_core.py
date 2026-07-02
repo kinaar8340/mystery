@@ -1041,8 +1041,8 @@ def build_unit_cell_figure(
     pressure: float = 1.0,
     view_elev: float = 22.0,
     view_azim: float = 45.0,
-    view_dist: float = 13.5,
-    axis_half: float = 3.0,
+    view_dist: float = 17.5,
+    axis_half: float = 2.4,
     show_curvature_grid: bool = True,
     dpi: int = 120,
 ) -> plt.Figure:
@@ -1065,7 +1065,7 @@ def build_unit_cell_figure(
     font_axis = 12
     caption_neutral = _UNIT_CELL_LABEL_TEXT
 
-    fig = plt.figure(figsize=(12.0, 11.0), dpi=dpi, facecolor=bg)
+    fig = plt.figure(figsize=(14.0, 9.5), dpi=dpi, facecolor=bg)
     ax = fig.add_subplot(111, projection="3d", facecolor=bg)
 
     triangles, tri_colors = _deformed_cube_surface(s, p, delta_z, side)
