@@ -929,17 +929,8 @@ def _build_vqc_theme() -> gr.themes.Base:
     )
 
 
-INIT_BANNER_HTML = """
-<div id="myst-init-banner" class="myst-init-banner" role="status" aria-live="polite">
-  <p class="myst-init-title">Initializing Mystery φ · e · π probe…</p>
-  <p class="myst-init-sub">Loading constants, keypad, and analysis pipeline.
-  If Hugging Face shows &ldquo;Fetching metadata&rdquo;, the container is still starting.</p>
-</div>
-"""
-
 # Wallpaper: #vqc-wallpaper (body child) + body::before fallback — cover, fixed to viewport.
 WALLPAPER_HEAD = f"""
-{INIT_BANNER_HTML}
 <style id="vqc-wallpaper-style">
 #vqc-wallpaper {{
     position: fixed !important;
@@ -968,16 +959,6 @@ WALLPAPER_HEAD = f"""
     if (document.body) mountWallpaper();
     document.addEventListener('DOMContentLoaded', mountWallpaper);
     window.addEventListener('load', mountWallpaper);
-}})();
-(function() {{
-    function hideInitBanner() {{
-        var b = document.getElementById('myst-init-banner');
-        if (b) b.style.display = 'none';
-    }}
-    document.addEventListener('DOMContentLoaded', function() {{
-        setTimeout(hideInitBanner, 1200);
-    }});
-    window.addEventListener('load', hideInitBanner);
 }})();
 </script>
 """
@@ -1878,29 +1859,6 @@ footer {{
     background: transparent !important;
 }}
 footer {{ visibility: hidden; }}
-.myst-init-banner {{
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    z-index: 99999 !important;
-    padding: 0.85rem 1.1rem !important;
-    background: linear-gradient(180deg, rgba(18, 10, 28, 0.96), rgba(10, 8, 24, 0.92)) !important;
-    border-bottom: 1px solid rgba(201, 162, 39, 0.45) !important;
-    text-align: center !important;
-    pointer-events: none !important;
-}}
-.myst-init-title {{
-    margin: 0 !important;
-    color: #f5e6c8 !important;
-    font-weight: 700 !important;
-    font-size: 0.95rem !important;
-}}
-.myst-init-sub {{
-    margin: 0.25rem 0 0 0 !important;
-    color: #a89ec8 !important;
-    font-size: 0.82rem !important;
-}}
 .gradio-container .myst-gravity-page .markdown table {{
     display: block !important;
     overflow-x: auto !important;
