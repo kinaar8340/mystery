@@ -1014,7 +1014,8 @@ WALLPAPER_HEAD = f"""
 
 HFB_CSS = f"""
 :root, :root .dark {{
-    --myst-control-bar-height: 2.05rem;
+    --myst-control-bar-height: 1.54rem;
+    --myst-button-height: 28px;
     --myst-viewport-min-height: clamp(14rem, 42vh, 28rem);
     --myst-viewport-aspect: 7 / 5;
     --body-background-fill: transparent !important;
@@ -1032,6 +1033,37 @@ HFB_CSS = f"""
     --link-text-color-active: {_VQC_ACCENT} !important;
     --link-text-color-visited: {_VQC_ACCENT} !important;
     color-scheme: dark;
+}}
+/* Global compact controls (~25% shorter than prior 2.05rem bars) */
+.gradio-container button,
+.gradio-container .gr-button {{
+    min-height: var(--myst-button-height, 28px) !important;
+    height: auto !important;
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;
+    font-size: 0.81rem !important;
+    line-height: 1.2 !important;
+}}
+.gradio-container .vqc-source-tab,
+.gradio-container .vqc-source-tabs-row button.vqc-source-tab,
+.gradio-container .vqc-nav-cell a.vqc-source-tab {{
+    min-height: var(--myst-control-bar-height, 1.54rem) !important;
+    height: var(--myst-control-bar-height, 1.54rem) !important;
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;
+    font-size: 0.78rem !important;
+}}
+.gradio-container .myst-gravity-controls-accordion > .label-wrap,
+.gradio-container .gr-accordion > .label-wrap {{
+    min-height: var(--myst-control-bar-height, 1.54rem) !important;
+    height: var(--myst-control-bar-height, 1.54rem) !important;
+    padding-top: 4px !important;
+    padding-bottom: 4px !important;
+}}
+.gradio-container button.myst-gravity-quick-preset,
+.gradio-container button.myst-gravity-quick-preset span {{
+    min-height: var(--myst-button-height, 28px) !important;
+    height: var(--myst-button-height, 28px) !important;
 }}
 html {{
     background-color: #0a0818 !important;
@@ -1963,9 +1995,23 @@ footer {{ visibility: hidden; }}
     background-color: #000000 !important;
 }}
 .gradio-container .myst-cube-viewport-media .plot-container,
+.gradio-container #unit-cell-viewport .plot-container,
 .gradio-container #mystery-viewport .plot-container {{
     min-height: var(--myst-viewport-min-height, clamp(14rem, 42vh, 28rem)) !important;
     height: 100% !important;
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}}
+.gradio-container #unit-cell-viewport,
+.gradio-container #unit-cell-viewport .wrap,
+.gradio-container #unit-cell-viewport .plot-container,
+.gradio-container #unit-cell-viewport .plot-container img {{
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    width: 100% !important;
+    min-height: var(--myst-viewport-min-height, clamp(14rem, 42vh, 28rem)) !important;
 }}
 .gradio-container .myst-gravity-page .vqc-plot3d-panel,
 .gradio-container .myst-gravity-page .vqc-plot3d-panel .block,
@@ -3034,6 +3080,8 @@ footer {{ visibility: hidden; }}
 }}
 .gradio-container .myst-cube-viewport-media .myst-cube-plot-inner.block,
 .gradio-container .myst-cube-viewport-media .myst-cube-plot-inner.block > .wrap,
+.gradio-container .myst-cube-viewport-media #unit-cell-viewport,
+.gradio-container .myst-cube-viewport-media #unit-cell-viewport .wrap,
 .gradio-container .myst-cube-viewport-media #mystery-viewport,
 .gradio-container .myst-cube-viewport-media #mystery-viewport .wrap {{
     width: 100% !important;
@@ -3045,6 +3093,7 @@ footer {{ visibility: hidden; }}
     box-sizing: border-box !important;
 }}
 .gradio-container .myst-cube-viewport-media .myst-cube-plot-inner .plot-container img,
+.gradio-container .myst-cube-viewport-media #unit-cell-viewport .plot-container img,
 .gradio-container .myst-cube-viewport-media #mystery-viewport .plot-container img {{
     width: 100% !important;
     height: 100% !important;
@@ -4738,7 +4787,9 @@ def build_app() -> gr.Blocks:
                             unit_cell_plot = gr.Plot(
                                 label=None,
                                 show_label=False,
-                                elem_id="mystery-viewport",
+                                scale=1,
+                                container=False,
+                                elem_id="unit-cell-viewport",
                                 value=_init_unit_cell,
                                 elem_classes=[
                                     "vqc-plot3d-panel",
@@ -4891,6 +4942,11 @@ def build_app() -> gr.Blocks:
         newhere_minimize_btn.click(_minimize_newhere, outputs=newhere_outputs[:3])
         claims_minimize_btn.click(_minimize_claims, outputs=claims_outputs[:3])
         demo.load(_stream_term_boot, outputs=term_keypad_outputs)
+        demo.load(
+            lambda: _init_unit_cell,
+            outputs=[unit_cell_plot],
+            show_progress=False,
+        )
 
         gr.Markdown(
             "Research notebook — emergent signature, not forced identity · "
