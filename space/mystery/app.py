@@ -140,6 +140,14 @@ CUBE_VIEWPORT_HEADER_HTML = """
 </div>
 """
 
+CONTROL_PANEL_HEADER_HTML = """
+<div class="myst-cube-viewport-header" role="img" aria-label="Gravity control panel">
+  <span class="myst-cube-viewport-brand">MYSTERY</span>
+  <span class="myst-cube-viewport-title">Gravity Control Panel</span>
+  <span class="myst-cube-viewport-sub">deform · residual · animate</span>
+</div>
+"""
+
 # Client-side CSS phosphor scan — no server streaming loop (HF-safe).
 SIGNAL_SCANNER_HTML = f"""
 <div class="myst-signal-scan" role="img" aria-label="Phosphor signal scan">
@@ -1921,49 +1929,58 @@ footer {{ visibility: hidden; }}
     max-height: calc(100vh - 9.5rem) !important;
     box-sizing: border-box !important;
 }}
-.gradio-container .myst-gravity-left-panel {{
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 0.65rem !important;
-    height: 100% !important;
-    min-height: 0 !important;
-    overflow: hidden !important;
-}}
+.gradio-container .myst-gravity-left-panel,
 .gradio-container .myst-gravity-right-panel {{
+    display: flex !important;
+    flex-direction: column !important;
     height: 100% !important;
     min-height: 0 !important;
     overflow: hidden !important;
+}}
+.gradio-container .myst-gravity-panel-window.vqc-optics-panel {{
+    flex: 1 1 auto !important;
+    height: 100% !important;
+    min-height: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 0.75rem 0.85rem !important;
     display: flex !important;
     flex-direction: column !important;
-}}
-.gradio-container .myst-gravity-right-panel .myst-cube-viewport-frame {{
-    flex: 1 1 auto !important;
-    min-height: 0 !important;
-}}
-.gradio-container .myst-gravity-left-panel .myst-gravity-metrics-frame {{
-    flex: 1 1 auto !important;
-    min-height: 0 !important;
-    height: auto !important;
-    display: flex !important;
-    flex-direction: column !important;
+    box-sizing: border-box !important;
     overflow: hidden !important;
 }}
-.gradio-container .myst-gravity-left-panel .myst-gravity-metrics-frame textarea {{
-    flex: 1 1 auto !important;
-    min-height: 10rem !important;
-    height: 100% !important;
-}}
-.gradio-container .myst-gravity-controls-col .myst-gravity-controls-accordion {{
-    background: linear-gradient(165deg, #2a1810 0%, #1a1008 38%, #120c06 100%) !important;
-    border: 3px solid #6b4f1d !important;
-    border-radius: 14px !important;
-    box-shadow:
-        inset 0 2px 8px rgba(255, 220, 150, 0.08),
-        inset 0 -4px 14px rgba(0, 0, 0, 0.55),
-        0 8px 22px rgba(0, 0, 0, 0.45) !important;
+.gradio-container .myst-gravity-left-frame .myst-gravity-controls-accordion {{
+    flex: 0 1 auto !important;
+    background: rgba(0, 0, 0, 0.18) !important;
+    border: 1px solid #4a3818 !important;
+    border-radius: 10px !important;
+    box-shadow: inset 0 1px 0 rgba(255, 220, 150, 0.08) !important;
     overflow: hidden !important;
     width: 100% !important;
     max-width: 100% !important;
+    margin: 0 0 0.55rem 0 !important;
+}}
+.gradio-container .myst-gravity-left-frame .myst-gravity-controls-accordion .accordion {{
+    max-height: 52% !important;
+    overflow-y: auto !important;
+}}
+.gradio-container .myst-gravity-left-frame .myst-gravity-metrics-inner {{
+    flex: 1 1 0 !important;
+    min-height: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    padding: 0.45rem 0.55rem 0.55rem !important;
+    border: 1px solid #4a3818 !important;
+    border-radius: 10px !important;
+    background: rgba(0, 0, 0, 0.22) !important;
+}}
+.gradio-container .myst-gravity-left-frame .myst-gravity-metrics-inner textarea {{
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    height: 100% !important;
+}}
+.gradio-container .myst-gravity-controls-col .myst-gravity-controls-accordion {{
     flex: 0 1 auto !important;
 }}
 .gradio-container .myst-gravity-controls-col .myst-gravity-controls-accordion > .label-wrap {{
@@ -1989,7 +2006,7 @@ footer {{ visibility: hidden; }}
     margin: 0 !important;
     padding: 0 !important;
 }}
-.gradio-container .myst-gravity-left-panel .myst-gravity-metrics-frame .label-wrap span {{
+.gradio-container .myst-gravity-left-frame .myst-gravity-metrics-inner .label-wrap span {{
     color: #e8d4a8 !important;
     font-size: 0.76rem !important;
     letter-spacing: 0.06em !important;
@@ -2023,12 +2040,10 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-gravity-page .myst-cube-viewport-frame.vqc-optics-panel {{
     width: 100% !important;
     max-width: none !important;
-    margin: 0 !important;
-    padding: 0 0.75rem 0.85rem !important;
-    height: 100% !important;
-    display: flex !important;
-    flex-direction: column !important;
-    flex: 1 1 auto !important;
+}}
+.gradio-container .myst-gravity-page .myst-cube-viewport-frame .myst-cube-plot-inner {{
+    flex: 1 1 0 !important;
+    min-height: 0 !important;
 }}
 .gradio-container .myst-gravity-page .myst-cube-viewport-header {{
     display: flex !important;
@@ -2617,17 +2632,23 @@ def build_app() -> gr.Blocks:
                         "myst-gravity-left-panel",
                     ],
                 ):
-                    with gr.Accordion(
-                        "Gravity Control Panel — deformation & residual explorer",
-                        open=True,
-                        elem_classes=["myst-gravity-controls-accordion"],
+                    with gr.Group(
+                        elem_classes=[
+                            "vqc-optics-panel",
+                            "vqc-gravity-panel",
+                            "myst-gravity-left-frame",
+                            "myst-gravity-panel-window",
+                        ]
                     ):
-                        with gr.Group(elem_classes=["vqc-optics-panel", "vqc-gravity-panel"]):
-                            with gr.Row(elem_classes=["vqc-optics-panel-header"]):
-                                gr.HTML(GRAVITY_OPTICS_LOGO_HTML)
+                        gr.HTML(CONTROL_PANEL_HEADER_HTML)
+                        with gr.Accordion(
+                            "Deformation & residual dials",
+                            open=True,
+                            elem_classes=["myst-gravity-controls-accordion"],
+                        ):
                             gr.HTML(
                                 '<p class="vqc-optics-presets-label">'
-                                "Deformation &amp; view — drag dials, animate curvature sweep"
+                                "Drag dials or press Animate for curvature sweep"
                                 "</p>"
                             )
                             with gr.Row(elem_classes=["vqc-optics-dial-row"]):
@@ -2757,24 +2778,18 @@ def build_app() -> gr.Blocks:
                                 variant="primary",
                                 elem_classes=["vqc-full-width"],
                             )
-                    with gr.Group(
-                        elem_classes=[
-                            "vqc-optics-panel",
-                            "vqc-gravity-panel",
-                            "myst-gravity-metrics-frame",
-                        ]
-                    ):
-                        gr.HTML(
-                            '<p class="vqc-optics-presets-label" style="margin-top:0;">'
-                            "Explorer metrics — live readout"
-                            "</p>"
-                        )
-                        re_metrics = gr.Textbox(
-                            label="Residual explorer",
-                            lines=16,
-                            interactive=False,
-                            value=_init_re_metrics,
-                        )
+                        with gr.Column(elem_classes=["myst-gravity-metrics-inner"]):
+                            gr.HTML(
+                                '<p class="vqc-optics-presets-label" style="margin-top:0;">'
+                                "Explorer metrics — live readout"
+                                "</p>"
+                            )
+                            re_metrics = gr.Textbox(
+                                label="Residual explorer",
+                                lines=12,
+                                interactive=False,
+                                value=_init_re_metrics,
+                            )
                 with gr.Column(
                     scale=8,
                     elem_classes=[
@@ -2787,6 +2802,7 @@ def build_app() -> gr.Blocks:
                             "vqc-optics-panel",
                             "vqc-gravity-panel",
                             "myst-cube-viewport-frame",
+                            "myst-gravity-panel-window",
                         ]
                     ):
                         gr.HTML(CUBE_VIEWPORT_HEADER_HTML)
