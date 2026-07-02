@@ -3432,12 +3432,12 @@ footer {{ visibility: hidden; }}
 .gradio-container .column:has(#unit-cell-viewport),
 .gradio-container .myst-cube-viewport-media,
 .gradio-container .myst-cube-viewport-media-slot {{
-    padding: 0 !important;
+    padding: 2px 4px !important;
     margin: 0 !important;
 }}
 .gradio-container .myst-gravity-cube-panel.myst-gravity-panel-window.vqc-optics-panel,
 .gradio-container .myst-gravity-page .myst-cube-viewport-frame.vqc-optics-panel {{
-    padding: 4px !important;
+    padding: 2px 4px !important;
     margin: 0 !important;
 }}
 .gradio-container #unit-cell-viewport,
@@ -3452,6 +3452,14 @@ footer {{ visibility: hidden; }}
     padding: 0 !important;
     margin: 0 !important;
     border-radius: 0 !important;
+    height: 100% !important;
+}}
+.gradio-container #unit-cell-viewport,
+.gradio-container #unit-cell-viewport.block,
+.gradio-container #unit-cell-viewport > div,
+.gradio-container #unit-cell-viewport .wrap,
+.gradio-container #unit-cell-viewport .plot-container {{
+    height: 100% !important;
 }}
 .gradio-container .myst-gravity-page .myst-cube-viewport-frame .plot-container,
 .gradio-container .myst-gravity-cube-panel .myst-cube-viewport-media .plot-container {{
