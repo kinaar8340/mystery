@@ -1939,7 +1939,11 @@ footer {{ visibility: hidden; }}
     width: 100% !important;
     max-width: none !important;
     padding: 0 0.5rem 0.35rem !important;
+    height: calc(100vh - 8rem) !important;
     min-height: calc(100vh - 8rem) !important;
+    max-height: calc(100vh - 8rem) !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
 }}
 .gradio-container .myst-gravity-page > .block {{
     background: transparent !important;
@@ -2220,6 +2224,13 @@ footer {{ visibility: hidden; }}
     min-height: 0 !important;
     max-height: none !important;
 }}
+.gradio-container .myst-gravity-cube-panel > .column.myst-cube-viewport-media,
+.gradio-container .myst-gravity-cube-panel > .column.myst-cube-viewport-media-slot {{
+    flex: 1 1 0 !important;
+    min-height: 0 !important;
+    max-height: 100% !important;
+    overflow: hidden !important;
+}}
 .gradio-container .myst-gravity-cube-panel .myst-cube-viewport-header {{
     flex: 0 0 auto !important;
     min-height: 12.5rem !important;
@@ -2238,35 +2249,58 @@ footer {{ visibility: hidden; }}
 }}
 .gradio-container .myst-gravity-cube-panel > .column.myst-cube-viewport-media,
 .gradio-container .myst-gravity-cube-panel .myst-cube-viewport-media {{
-    flex: 1 1 auto !important;
-    min-height: clamp(22rem, 52vh, 36rem) !important;
-    height: auto !important;
-    max-height: none !important;
+    position: relative !important;
+    flex: 1 1 0 !important;
+    min-height: clamp(16rem, 38vh, 30rem) !important;
+    height: 0 !important;
+    max-height: 100% !important;
     width: 100% !important;
-    display: flex !important;
-    flex-direction: column !important;
+    display: block !important;
     overflow: hidden !important;
     box-sizing: border-box !important;
+    padding: 0 !important;
+    margin: 0 !important;
 }}
-.gradio-container .myst-gravity-cube-panel .myst-cube-viewport-media .myst-cube-plot-inner,
+.gradio-container .myst-gravity-cube-panel .myst-cube-viewport-media > .gap {{
+    display: none !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}}
+.gradio-container .myst-gravity-cube-panel .myst-cube-viewport-media > .block.myst-cube-plot-inner,
+.gradio-container .myst-gravity-cube-panel .myst-cube-viewport-media > .block.myst-cube-anim-video,
 .gradio-container .myst-gravity-cube-panel .myst-cube-viewport-media .myst-cube-plot-inner.block,
-.gradio-container .myst-gravity-cube-panel .myst-cube-viewport-media .myst-cube-anim-video,
 .gradio-container .myst-gravity-cube-panel .myst-cube-viewport-media .myst-cube-anim-video.block {{
-    flex: 1 1 auto !important;
-    min-height: clamp(22rem, 52vh, 36rem) !important;
-    height: auto !important;
-    max-height: none !important;
+    position: absolute !important;
+    inset: 0 !important;
     width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    max-height: 100% !important;
+    margin: 0 !important;
+    padding: 0.35rem 0.45rem 0.45rem !important;
     overflow: hidden !important;
+    box-sizing: border-box !important;
+    flex: none !important;
 }}
+.gradio-container .myst-gravity-cube-panel .myst-cube-viewport-media > .block[style*="display: none"],
+.gradio-container .myst-gravity-cube-panel .myst-cube-viewport-media > .block.hidden {{
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+}}
+.gradio-container .myst-gravity-cube-panel .myst-cube-viewport-media .myst-cube-anim-video .wrap,
+.gradio-container .myst-gravity-cube-panel .myst-cube-viewport-media .myst-cube-anim-video .video-container,
 .gradio-container .myst-gravity-cube-panel .myst-cube-viewport-media .myst-cube-anim-video video {{
     width: 100% !important;
     height: 100% !important;
-    max-height: clamp(20rem, 48vh, 34rem) !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
     object-fit: contain !important;
     object-position: center center !important;
     background: #000000 !important;
     display: block !important;
+    box-sizing: border-box !important;
 }}
 .gradio-container .myst-gravity-preset-tui-section {{
     flex: 1 1 auto !important;
@@ -2514,10 +2548,16 @@ footer {{ visibility: hidden; }}
     width: 100% !important;
     max-width: none !important;
 }}
-.gradio-container .myst-gravity-page .myst-cube-viewport-frame .myst-cube-viewport-media,
+.gradio-container .myst-gravity-page .myst-cube-viewport-frame .myst-cube-viewport-media {{
+    flex: 1 1 0 !important;
+    min-height: clamp(16rem, 38vh, 30rem) !important;
+    max-height: 100% !important;
+    overflow: hidden !important;
+}}
 .gradio-container .myst-gravity-page .myst-cube-viewport-frame .myst-cube-plot-inner {{
-    flex: 1 1 auto !important;
-    min-height: clamp(18rem, 42vh, 28rem) !important;
+    min-height: 0 !important;
+    max-height: 100% !important;
+    height: 100% !important;
 }}
 .gradio-container .myst-gravity-page .myst-cube-viewport-frame .myst-cube-viewport-header {{
     display: flex !important;
@@ -2624,13 +2664,14 @@ footer {{ visibility: hidden; }}
     width: 100% !important;
     max-width: 100% !important;
     margin: 0 !important;
-    padding: 0.4rem 0.5rem 0.5rem !important;
+    padding: 0.35rem 0.45rem 0.45rem !important;
     background: rgba(0, 0, 0, 0.22) !important;
     border: 1px solid #4a3818 !important;
     border-radius: 10px !important;
-    flex: 1 1 auto !important;
-    min-height: clamp(18rem, 42vh, 28rem) !important;
-    height: auto !important;
+    flex: none !important;
+    min-height: 0 !important;
+    height: 100% !important;
+    max-height: 100% !important;
     display: flex !important;
     flex-direction: column !important;
     overflow: hidden !important;
@@ -2644,11 +2685,11 @@ footer {{ visibility: hidden; }}
     font-weight: 700 !important;
 }}
 .gradio-container .myst-gravity-page .myst-cube-viewport-frame .plot-container {{
-    flex: 1 1 auto !important;
+    flex: 1 1 0 !important;
     width: 100% !important;
-    min-height: clamp(16rem, 38vh, 26rem) !important;
-    height: auto !important;
-    max-height: none !important;
+    min-height: 0 !important;
+    height: 100% !important;
+    max-height: 100% !important;
     border: 2px inset #5c4a1f !important;
     border-radius: 8px !important;
     background-color: #000000 !important;
@@ -3357,7 +3398,13 @@ def _gravity_hide_video_update() -> dict:
 
 
 def _gravity_show_video_update(video_path: str) -> dict:
-    return gr.update(value=video_path, visible=True, autoplay=True)
+    return gr.update(value=video_path, visible=True, autoplay=True, loop=True)
+
+
+def _gravity_plot_media_update(fig: object) -> dict:
+    if fig is gr.skip():
+        return gr.update(visible=True)
+    return gr.update(value=fig, visible=True)
 
 
 def _gravity_viewport_media(
@@ -3365,10 +3412,10 @@ def _gravity_viewport_media(
     video_update: dict,
     *,
     show_video: bool = False,
-) -> tuple[object, dict]:
+) -> tuple[dict, dict]:
     if show_video:
-        return gr.skip(), video_update
-    return fig, _gravity_hide_video_update()
+        return gr.update(visible=False), video_update
+    return _gravity_plot_media_update(fig), _gravity_hide_video_update()
 
 
 def _gravity_preset_btn_classes(key: str, active: str) -> list[str]:
@@ -4285,7 +4332,7 @@ def build_app() -> gr.Blocks:
                         ]
                     ):
                         unit_cell_header = gr.HTML(_init_unit_cell_header)
-                        with gr.Column(elem_classes=["myst-cube-viewport-media"]):
+                        with gr.Column(elem_classes=["myst-cube-viewport-media", "myst-cube-viewport-media-slot"]):
                             unit_cell_plot = gr.Plot(
                                 label=None,
                                 show_label=False,
