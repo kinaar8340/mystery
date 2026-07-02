@@ -2696,6 +2696,13 @@ footer {{ visibility: hidden; }}
     width: 100% !important;
     margin-top: 0.2rem !important;
 }}
+.gradio-container .myst-gravity-control-panel button.myst-gravity-edit-params-btn.active,
+.gradio-container .myst-gravity-control-panel button.myst-gravity-edit-params-btn.active span,
+.gradio-container .myst-gravity-control-panel button.myst-gravity-edit-params-btn.active:hover,
+.gradio-container .myst-gravity-control-panel button.myst-gravity-edit-params-btn.active:hover span {{
+    color: {_VQC_MATRIX_GREEN} !important;
+    -webkit-text-fill-color: {_VQC_MATRIX_GREEN} !important;
+}}
 .gradio-container .myst-gravity-page .vqc-gravity-panel textarea {{
     background: #120c06 !important;
     border: 2px inset #5c4a1f !important;
@@ -3328,6 +3335,39 @@ def _gravity_preset_btn_updates(active: str = "") -> tuple:
     )
 
 
+def _gravity_edit_params_btn_update(enabled: bool) -> dict:
+    classes = [
+        "vqc-receiver-preset",
+        "myst-gravity-edit-params-btn",
+        "vqc-full-width",
+    ]
+    if enabled:
+        classes.append("active")
+    return gr.update(elem_classes=classes, variant="secondary")
+
+
+def _gravity_slider_control_updates(
+    dials: dict[str, float] | None,
+    *,
+    edit_enabled: bool,
+) -> tuple:
+    keys = ("phi", "e", "pi", "kappa", "dz", "alpha", "beta", "pressure", "elev", "azim")
+    if dials is None:
+        return tuple(gr.update(interactive=edit_enabled) for _ in keys)
+    return tuple(
+        gr.update(value=float(dials[key]), interactive=edit_enabled) for key in keys
+    )
+
+
+def _gravity_edit_params_toggle(enabled: bool) -> tuple:
+    new_state = not bool(enabled)
+    return (
+        new_state,
+        _gravity_edit_params_btn_update(new_state),
+        *_gravity_slider_control_updates(None, edit_enabled=new_state),
+    )
+
+
 def _gravity_explorer_outputs(
     active_key: str,
     dials: dict[str, float],
@@ -3338,6 +3378,7 @@ def _gravity_explorer_outputs(
     tui: str,
     active_slot: int,
     *,
+    edit_params_enabled: bool = False,
     show_video: bool = False,
 ) -> tuple:
     plot_out, video_out = _gravity_viewport_media(
@@ -3347,16 +3388,8 @@ def _gravity_explorer_outputs(
     )
     return (
         *_gravity_preset_btn_updates(active_key),
-        dials["phi"],
-        dials["e"],
-        dials["pi"],
-        dials["kappa"],
-        dials["dz"],
-        dials["alpha"],
-        dials["beta"],
-        dials["pressure"],
-        dials["elev"],
-        dials["azim"],
+        _gravity_edit_params_btn_update(edit_params_enabled),
+        *_gravity_slider_control_updates(dials, edit_enabled=edit_params_enabled),
         metrics,
         header,
         plot_out,
@@ -3426,6 +3459,7 @@ def _make_gravity_quick_preset_click(slot: int):
         view_elev: float,
         view_azim: float,
         _active_preset: int,
+        edit_params_enabled: bool,
     ):
         dials, metrics, header, fig, tui, active_slot = _gravity_quick_preset_apply(
             slot,
@@ -3449,6 +3483,7 @@ def _make_gravity_quick_preset_click(slot: int):
             _gravity_hide_video_update(),
             tui,
             active_slot,
+            edit_params_enabled=edit_params_enabled,
         )
 
     return handler
@@ -3466,6 +3501,7 @@ def _gravity_animate_click(
     view_elev: float,
     view_azim: float,
     active_preset: int,
+    edit_params_enabled: bool,
     progress: gr.Progress = gr.Progress(track_tqdm=False),
 ):
     dials = _gravity_dial_bundle(
@@ -3509,6 +3545,7 @@ def _gravity_animate_click(
             _gravity_show_video_update(video_path),
             tui,
             int(active_preset),
+            edit_params_enabled=bool(edit_params_enabled),
             show_video=True,
         )
     except Exception as exc:
@@ -3528,6 +3565,7 @@ def _gravity_animate_click(
             _gravity_hide_video_update(),
             err_tui,
             int(active_preset),
+            edit_params_enabled=bool(edit_params_enabled),
         )
 
 
@@ -4005,106 +4043,121 @@ def build_app() -> gr.Blocks:
                                 _init_control_levels,
                                 elem_classes=["myst-gravity-control-levels-wrap"],
                             )
-                            with gr.Accordion(
-                                "Manual dials & metrics",
-                                open=False,
-                                elem_classes=["myst-gravity-manual-dials-accordion"],
-                            ):
-                                gr.HTML(CONTROL_PANEL_HEADER_HTML)
-                                with gr.Row(elem_classes=["vqc-optics-dial-row"]):
-                                    re_pressure = gr.Slider(
-                                        0.0,
-                                        1.0,
-                                        value=0.35,
-                                        step=0.01,
-                                        label="Deformation pressure",
-                                        info="0 = rigid cube · 1 = full π bowl + φ/e concave pinch",
-                                        elem_classes=["vqc-optics-dial-wrap"],
-                                    )
-                                with gr.Row(elem_classes=["vqc-optics-dial-row"]):
-                                    re_view_elev = gr.Slider(
-                                        5.0,
-                                        75.0,
-                                        value=22.0,
-                                        step=1.0,
-                                        label="View elevation (°)",
-                                        elem_classes=["vqc-optics-dial-wrap"],
-                                    )
-                                    re_view_azim = gr.Slider(
-                                        0.0,
-                                        360.0,
-                                        value=45.0,
-                                        step=5.0,
-                                        label="View azimuth (°)",
-                                        elem_classes=["vqc-optics-dial-wrap"],
-                                    )
-                                with gr.Row(elem_classes=["vqc-optics-dial-row"]):
-                                    re_phi_scale = gr.Slider(
-                                        0.90,
-                                        1.10,
-                                        value=1.0,
-                                        step=0.001,
-                                        label="φ² scale",
-                                        elem_classes=["vqc-optics-dial-wrap"],
-                                    )
-                                    re_e_scale = gr.Slider(
-                                        0.90,
-                                        1.10,
-                                        value=1.0,
-                                        step=0.001,
-                                        label="e² scale",
-                                        elem_classes=["vqc-optics-dial-wrap"],
-                                    )
-                                    re_pi_scale = gr.Slider(
-                                        0.90,
-                                        1.10,
-                                        value=1.0,
-                                        step=0.001,
-                                        label="π² scale",
-                                        elem_classes=["vqc-optics-dial-wrap"],
-                                    )
-                                with gr.Row(elem_classes=["vqc-optics-dial-row"]):
-                                    re_kappa = gr.Slider(
-                                        0.70,
-                                        0.95,
-                                        value=KAPPA_DOC,
-                                        step=0.001,
-                                        label="κ (holonomy-gap parameter)",
-                                        info=f"κ_doc = {KAPPA_DOC} · κ* nulls B(κ)−R",
-                                        elem_classes=["vqc-optics-dial-wrap"],
-                                    )
-                                    re_delta_z = gr.Slider(
-                                        0.0,
-                                        0.5,
-                                        value=0.1,
-                                        step=0.01,
-                                        label="δ_z (primary push)",
-                                        elem_classes=["vqc-optics-dial-wrap"],
-                                    )
-                                with gr.Row(elem_classes=["vqc-optics-dial-row"]):
-                                    re_alpha = gr.Slider(
-                                        0.0,
-                                        2.0,
-                                        value=1.0,
-                                        step=0.05,
-                                        label="α (geometry factor)",
-                                        elem_classes=["vqc-optics-dial-wrap"],
-                                    )
-                                    re_beta = gr.Slider(
-                                        0.0,
-                                        2.0,
-                                        value=1.0,
-                                        step=0.05,
-                                        label="β (residual coupling)",
-                                        elem_classes=["vqc-optics-dial-wrap"],
-                                    )
-                                with gr.Column(elem_classes=["myst-gravity-metrics-inner"]):
-                                    re_metrics = gr.Textbox(
-                                        label="Residual explorer",
-                                        lines=9,
-                                        interactive=False,
-                                        value=_init_re_metrics,
-                                    )
+                        gr.HTML(CONTROL_PANEL_HEADER_HTML)
+                        re_edit_params = gr.State(False)
+                        edit_params_btn = gr.Button(
+                            "Manual Edit",
+                            variant="secondary",
+                            elem_classes=[
+                                "vqc-receiver-preset",
+                                "myst-gravity-edit-params-btn",
+                                "vqc-full-width",
+                            ],
+                        )
+                        with gr.Row(elem_classes=["vqc-optics-dial-row"]):
+                            re_pressure = gr.Slider(
+                                0.0,
+                                1.0,
+                                value=0.35,
+                                step=0.01,
+                                label="Deformation pressure",
+                                info="0 = rigid cube · 1 = full π bowl + φ/e concave pinch",
+                                elem_classes=["vqc-optics-dial-wrap"],
+                                interactive=False,
+                            )
+                        with gr.Row(elem_classes=["vqc-optics-dial-row"]):
+                            re_view_elev = gr.Slider(
+                                5.0,
+                                75.0,
+                                value=22.0,
+                                step=1.0,
+                                label="View elevation (°)",
+                                elem_classes=["vqc-optics-dial-wrap"],
+                                interactive=False,
+                            )
+                            re_view_azim = gr.Slider(
+                                0.0,
+                                360.0,
+                                value=45.0,
+                                step=5.0,
+                                label="View azimuth (°)",
+                                elem_classes=["vqc-optics-dial-wrap"],
+                                interactive=False,
+                            )
+                        with gr.Row(elem_classes=["vqc-optics-dial-row"]):
+                            re_phi_scale = gr.Slider(
+                                0.90,
+                                1.10,
+                                value=1.0,
+                                step=0.001,
+                                label="φ² scale",
+                                elem_classes=["vqc-optics-dial-wrap"],
+                                interactive=False,
+                            )
+                            re_e_scale = gr.Slider(
+                                0.90,
+                                1.10,
+                                value=1.0,
+                                step=0.001,
+                                label="e² scale",
+                                elem_classes=["vqc-optics-dial-wrap"],
+                                interactive=False,
+                            )
+                            re_pi_scale = gr.Slider(
+                                0.90,
+                                1.10,
+                                value=1.0,
+                                step=0.001,
+                                label="π² scale",
+                                elem_classes=["vqc-optics-dial-wrap"],
+                                interactive=False,
+                            )
+                        with gr.Row(elem_classes=["vqc-optics-dial-row"]):
+                            re_kappa = gr.Slider(
+                                0.70,
+                                0.95,
+                                value=KAPPA_DOC,
+                                step=0.001,
+                                label="κ (holonomy-gap parameter)",
+                                info=f"κ_doc = {KAPPA_DOC} · κ* nulls B(κ)−R",
+                                elem_classes=["vqc-optics-dial-wrap"],
+                                interactive=False,
+                            )
+                            re_delta_z = gr.Slider(
+                                0.0,
+                                0.5,
+                                value=0.1,
+                                step=0.01,
+                                label="δ_z (primary push)",
+                                elem_classes=["vqc-optics-dial-wrap"],
+                                interactive=False,
+                            )
+                        with gr.Row(elem_classes=["vqc-optics-dial-row"]):
+                            re_alpha = gr.Slider(
+                                0.0,
+                                2.0,
+                                value=1.0,
+                                step=0.05,
+                                label="α (geometry factor)",
+                                elem_classes=["vqc-optics-dial-wrap"],
+                                interactive=False,
+                            )
+                            re_beta = gr.Slider(
+                                0.0,
+                                2.0,
+                                value=1.0,
+                                step=0.05,
+                                label="β (residual coupling)",
+                                elem_classes=["vqc-optics-dial-wrap"],
+                                interactive=False,
+                            )
+                        with gr.Column(elem_classes=["myst-gravity-metrics-inner"]):
+                            re_metrics = gr.Textbox(
+                                label="Residual explorer",
+                                lines=9,
+                                interactive=False,
+                                value=_init_re_metrics,
+                            )
                 with gr.Column(
                     scale=8,
                     elem_classes=[
@@ -4157,14 +4210,20 @@ def build_app() -> gr.Blocks:
                 re_control_levels,
                 re_preset_tui,
             ]
-            gravity_preset_inputs = [*re_inputs, re_active_preset]
+            gravity_preset_inputs = [*re_inputs, re_active_preset, re_edit_params]
             gravity_preset_outputs = [
                 *re_quick_presets,
                 animate_deform_btn,
+                edit_params_btn,
                 *re_inputs,
                 *re_outputs,
                 re_active_preset,
             ]
+            edit_params_btn.click(
+                _gravity_edit_params_toggle,
+                inputs=[re_edit_params],
+                outputs=[re_edit_params, edit_params_btn, *re_inputs],
+            )
             for slider in re_inputs:
                 slider.change(
                     _run_residual_explorer_ui,
