@@ -3361,43 +3361,76 @@ footer {{ visibility: hidden; }}
     font-size: 0.94rem !important;
     line-height: 1.5 !important;
 }}
-/* === UNIT CELL gr.Image + gr.Video viewport (last wins) === */
+/* === FORCE IMAGE & VIDEO TO FILL CONTAINERS (elem_id targets — last wins) === */
 .gradio-container .myst-gravity-image-viewport,
 .gradio-container .myst-gravity-image-viewport > .block,
 .gradio-container .myst-gravity-image-viewport .wrap {{
     padding: 4px !important;
     background: #000000 !important;
 }}
-.gradio-container .myst-gravity-image-viewport .gradio-image,
-.gradio-container .myst-gravity-image-viewport .gradio-video,
-.gradio-container .myst-gravity-image-viewport .gr-image,
-.gradio-container .myst-gravity-image-viewport .gr-video,
+/* Upper static image — #unit-cell-main-view */
 .gradio-container #unit-cell-main-view,
-.gradio-container #unit-cell-animation,
-.gradio-container #unit-cell-main-view .wrap,
-.gradio-container #unit-cell-animation .wrap,
+.gradio-container #unit-cell-main-view.block,
+.gradio-container #unit-cell-main-view .gradio-image,
+.gradio-container #unit-cell-main-view .gr-image,
+.gradio-container #unit-cell-main-view .gradio-image > div,
+.gradio-container #unit-cell-main-view .gr-image > div,
 .gradio-container #unit-cell-main-view .image-container,
-.gradio-container #unit-cell-animation .video-container {{
+.gradio-container #unit-cell-main-view img {{
+    height: 100% !important;
+    min-height: 550px !important;
     width: 100% !important;
-    min-height: 0 !important;
     padding: 4px !important;
     background-color: #000000 !important;
     box-sizing: border-box !important;
 }}
-.gradio-container #unit-cell-main-view,
-.gradio-container #unit-cell-main-view.block {{
+.gradio-container #unit-cell-main-view .wrap,
+.gradio-container #unit-cell-main-view .wrap.center,
+.gradio-container #unit-cell-main-view .wrap.center.full,
+.gradio-container #unit-cell-main-view .wrap.full {{
+    position: relative !important;
+    inset: auto !important;
+    height: 100% !important;
     min-height: 550px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    display: block !important;
+    padding: 0 !important;
+    margin: 0 !important;
 }}
+/* Lower animation video — #unit-cell-animation */
 .gradio-container #unit-cell-animation,
-.gradio-container #unit-cell-animation.block {{
+.gradio-container #unit-cell-animation.block,
+.gradio-container #unit-cell-animation .gradio-video,
+.gradio-container #unit-cell-animation .gr-video,
+.gradio-container #unit-cell-animation .video-container,
+.gradio-container #unit-cell-animation video {{
+    height: 100% !important;
     min-height: 320px !important;
+    width: 100% !important;
+    padding: 4px !important;
+    background-color: #000000 !important;
+    box-sizing: border-box !important;
 }}
+.gradio-container #unit-cell-animation .wrap,
+.gradio-container #unit-cell-animation .wrap.center,
+.gradio-container #unit-cell-animation .wrap.center.full,
+.gradio-container #unit-cell-animation .wrap.full {{
+    position: relative !important;
+    inset: auto !important;
+    height: 100% !important;
+    min-height: 320px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    display: block !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}}
+/* General safety rules */
 .gradio-container .gradio-image img,
 .gradio-container .gradio-video video,
 .gradio-container .gr-image img,
-.gradio-container .gr-video video,
-.gradio-container #unit-cell-main-view img,
-.gradio-container #unit-cell-animation video {{
+.gradio-container .gr-video video {{
     width: 100% !important;
     height: 100% !important;
     max-height: none !important;
