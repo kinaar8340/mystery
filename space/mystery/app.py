@@ -3367,228 +3367,118 @@ footer {{ visibility: hidden; }}
     font-size: 0.94rem !important;
     line-height: 1.5 !important;
 }}
-/* === KNOWN-GOOD VIEWPORT (last wins — matplotlib gr.Plot, not Plotly) === */
-.gradio-container .myst-gravity-cube-panel.myst-gravity-panel-window.vqc-optics-panel {{
-    grid-template-rows: auto minmax(var(--myst-viewport-min-height, 14rem), 1fr) minmax(10rem, auto) !important;
-    overflow: visible !important;
-}}
-.gradio-container .myst-gravity-cube-panel.myst-gravity-panel-window > .column.myst-cube-viewport-plot-slot,
-.gradio-container .myst-gravity-cube-panel.myst-gravity-panel-window > .block:has(.myst-cube-viewport-plot-slot) {{
-    grid-row: 2 !important;
-}}
-.gradio-container .myst-gravity-cube-panel.myst-gravity-panel-window > .column.myst-cube-viewport-animation-slot,
-.gradio-container .myst-gravity-cube-panel.myst-gravity-panel-window > .block:has(.myst-cube-viewport-animation-slot) {{
-    grid-row: 3 !important;
-    flex: 0 0 auto !important;
-    height: auto !important;
-    min-height: 10rem !important;
-    max-height: none !important;
-    overflow: visible !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    z-index: 4 !important;
+/* === VIEWPORT SPLIT RESET (matplotlib plot top + video bottom) === */
+.gradio-container .myst-gravity-viewport-split.myst-gravity-cube-panel,
+.gradio-container .myst-gravity-viewport-split.myst-gravity-panel-window.vqc-optics-panel {{
     display: flex !important;
     flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.35rem !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    padding: 0.45rem 0.5rem 0.5rem !important;
+    overflow: auto !important;
 }}
-.gradio-container .myst-gravity-cube-panel.myst-gravity-panel-window > .block:has(.myst-cube-viewport-header-fixed),
-.gradio-container .myst-gravity-cube-panel .myst-cube-viewport-header-slot {{
-    grid-row: 1 !important;
+.gradio-container .myst-gravity-viewport-split > .block,
+.gradio-container .myst-gravity-viewport-split > .column {{
     flex: 0 0 auto !important;
-    height: auto !important;
+    width: 100% !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}}
+.gradio-container .myst-gravity-viewport-split .myst-cube-viewport-header-slot {{
+    flex: 0 0 auto !important;
     max-height: 4.25rem !important;
     overflow: hidden !important;
 }}
-.gradio-container .myst-cube-viewport-media {{
-    position: relative !important;
-    flex: 1 1 0 !important;
-    width: 100% !important;
-    min-height: var(--myst-viewport-min-height, 18rem) !important;
-    height: 100% !important;
-    overflow: hidden !important;
-    display: block !important;
-}}
-.gradio-container .myst-cube-viewport-media .myst-cube-plot-inner.block,
-.gradio-container .myst-cube-viewport-media #unit-cell-viewport,
-.gradio-container .myst-cube-viewport-media #unit-cell-viewport.block {{
-    position: absolute !important;
-    inset: 0 !important;
-    width: 100% !important;
-    height: 100% !important;
-    min-height: var(--myst-viewport-min-height, 18rem) !important;
-    max-height: 100% !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    display: block !important;
-    flex: none !important;
-    overflow: hidden !important;
-    z-index: 2 !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-}}
-.gradio-container #unit-cell-viewport {{
-    min-height: var(--myst-viewport-plot-height, 700px) !important;
-    height: 100% !important;
-}}
-.gradio-container #unit-cell-viewport .wrap,
-.gradio-container #unit-cell-viewport .plot-container,
-.gradio-container .myst-cube-viewport-media .myst-cube-plot-inner .plot-container {{
-    display: block !important;
-    width: 100% !important;
-    height: 100% !important;
-    min-height: var(--myst-viewport-min-height, 18rem) !important;
-    max-height: none !important;
-    flex: none !important;
-    overflow: visible !important;
-    box-sizing: border-box !important;
-    background-color: #000000 !important;
-}}
-.gradio-container #unit-cell-viewport .plot-container img,
-.gradio-container .myst-cube-viewport-media .myst-cube-plot-inner .plot-container img {{
-    display: block !important;
-    width: 100% !important;
-    height: 100% !important;
-    min-height: var(--myst-viewport-min-height, 18rem) !important;
-    max-width: 100% !important;
-    max-height: 100% !important;
-    flex: none !important;
-    object-fit: contain !important;
-    object-position: center center !important;
-}}
-/* === EXPAND VIEWPORT TO PANEL EDGES (matplotlib gr.Plot, not Plotly) === */
-.gradio-container .myst-gravity-visuals-col,
-.gradio-container .myst-gravity-split > .column.myst-gravity-visuals-col {{
-    padding: 0 !important;
-    margin: 0 !important;
-}}
-.gradio-container .column:has(#unit-cell-viewport),
-.gradio-container .myst-cube-viewport-media,
-.gradio-container .myst-cube-viewport-media-slot {{
-    padding: 2px 6px 4px 6px !important;
-    margin: 0 !important;
-}}
-.gradio-container .myst-gravity-cube-panel.myst-gravity-panel-window.vqc-optics-panel,
-.gradio-container .myst-gravity-page .myst-cube-viewport-frame.vqc-optics-panel {{
-    padding: 2px 6px 4px 6px !important;
-    margin: 0 !important;
-}}
-.gradio-container #unit-cell-viewport,
-.gradio-container #unit-cell-viewport.block,
-.gradio-container #unit-cell-viewport > div,
-.gradio-container #unit-cell-viewport .wrap,
-.gradio-container #unit-cell-viewport .form,
-.gradio-container #unit-cell-viewport .plot-container,
-.gradio-container .myst-cube-viewport-media .myst-cube-plot-inner.block,
-.gradio-container .myst-cube-viewport-media .myst-cube-plot-inner .wrap,
-.gradio-container .myst-cube-viewport-media .myst-cube-plot-inner .plot-container {{
-    padding: 0 !important;
-    margin: 0 !important;
-    border-radius: 0 !important;
-    height: 100% !important;
-}}
-.gradio-container #unit-cell-viewport,
-.gradio-container #unit-cell-viewport.block,
-.gradio-container #unit-cell-viewport > div,
-.gradio-container #unit-cell-viewport .wrap,
-.gradio-container #unit-cell-viewport .plot-container {{
-    height: 100% !important;
-}}
-.gradio-container .myst-gravity-page .myst-cube-viewport-frame .plot-container,
-.gradio-container .myst-gravity-cube-panel .myst-cube-viewport-media .plot-container {{
-    padding: 0 !important;
-    margin: 0 !important;
-    border-radius: 0 !important;
-    box-shadow: none !important;
-}}
-.gradio-container .myst-gravity-cube-panel .myst-cube-viewport-header-slot,
-.gradio-container .myst-gravity-cube-panel .myst-cube-viewport-header-slot.block {{
-    margin: 0 0 4px 0 !important;
-    padding: 0 !important;
-}}
-/* === SPLIT VIEWPORT: plot above, animation below (no overlay) === */
-.gradio-container .myst-cube-viewport-plot-slot {{
-    position: relative !important;
-    flex: 1 1 0 !important;
-    width: 100% !important;
+.gradio-container .myst-gravity-viewport-split .myst-gravity-viewport-plot,
+.gradio-container .myst-gravity-viewport-split .myst-gravity-viewport-plot.block,
+.gradio-container .myst-gravity-viewport-split > .block:has(.myst-gravity-viewport-plot) {{
+    flex: 1 1 auto !important;
     min-height: var(--myst-viewport-min-height, 14rem) !important;
-    height: 100% !important;
-    max-height: 100% !important;
     overflow: hidden !important;
-    display: block !important;
-    grid-row: 2 !important;
 }}
-.gradio-container .myst-cube-viewport-animation-slot,
-.gradio-container .myst-cube-viewport-animation-slot.block,
-.gradio-container .myst-cube-viewport-animation-slot > .form {{
-    flex: 0 0 auto !important;
-    width: 100% !important;
-    margin: 0.4rem 0 0 0 !important;
-    padding: 0.45rem 0.35rem 0.35rem !important;
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 0.35rem !important;
-    min-height: 10rem !important;
-    overflow: visible !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    background: rgba(8, 8, 12, 0.92) !important;
-    border-top: 1px solid rgba(107, 79, 29, 0.55) !important;
-    border-radius: 0 0 8px 8px !important;
-    box-sizing: border-box !important;
+.gradio-container .myst-gravity-viewport-split .myst-gravity-viewport-anim-title-slot {{
+    margin-top: 0.15rem !important;
 }}
-.gradio-container .myst-cube-viewport-animation-label-slot,
-.gradio-container .myst-cube-viewport-animation-label-slot.block {{
-    flex: 0 0 auto !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    overflow: visible !important;
-    visibility: visible !important;
-}}
-.gradio-container .myst-cube-viewport-animation-label {{
-    font-size: 0.72rem !important;
+.gradio-container .myst-gravity-viewport-anim-title {{
+    font-size: 0.74rem !important;
     font-weight: 600 !important;
     letter-spacing: 0.06em !important;
     text-transform: uppercase !important;
-    color: #c8c0d8 !important;
+    color: #aaaaaa !important;
     margin: 0 !important;
     padding: 0 !important;
 }}
-.gradio-container #unit-cell-animation,
-.gradio-container #unit-cell-animation.block,
-.gradio-container .myst-cube-viewport-animation-slot .myst-cube-anim-video.block {{
+.gradio-container .myst-gravity-viewport-split #unit-cell-viewport,
+.gradio-container .myst-gravity-viewport-split #unit-cell-viewport.block {{
     position: relative !important;
     inset: auto !important;
     width: 100% !important;
-    height: 280px !important;
-    min-height: 12rem !important;
-    max-height: 280px !important;
+    min-height: var(--myst-viewport-min-height, 14rem) !important;
+    height: auto !important;
     margin: 0 !important;
     padding: 0 !important;
-    z-index: 1 !important;
-    flex: 0 0 auto !important;
-    overflow: visible !important;
-    visibility: visible !important;
-    opacity: 1 !important;
     display: block !important;
+    overflow: hidden !important;
     background: #000000 !important;
     border: 1px solid rgba(107, 79, 29, 0.45) !important;
     border-radius: 6px !important;
 }}
-.gradio-container #unit-cell-animation .wrap,
-.gradio-container #unit-cell-animation .video-container,
-.gradio-container .myst-cube-viewport-animation-slot .myst-cube-anim-video .wrap,
-.gradio-container .myst-cube-viewport-animation-slot .myst-cube-anim-video .video-container,
-.gradio-container .myst-cube-viewport-animation-slot .myst-cube-anim-video video,
-.gradio-container #unit-cell-animation video {{
+.gradio-container .myst-gravity-viewport-split #unit-cell-viewport .wrap,
+.gradio-container .myst-gravity-viewport-split #unit-cell-viewport .plot-container {{
     width: 100% !important;
-    height: 280px !important;
-    min-height: 12rem !important;
-    max-height: 280px !important;
+    min-height: var(--myst-viewport-min-height, 14rem) !important;
+    height: auto !important;
     margin: 0 !important;
+    padding: 0 !important;
+    background: #000000 !important;
+}}
+.gradio-container .myst-gravity-viewport-split #unit-cell-viewport .plot-container img {{
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+    max-width: 100% !important;
+    object-fit: contain !important;
+    object-position: center center !important;
+}}
+.gradio-container .myst-gravity-viewport-split #unit-cell-animation,
+.gradio-container .myst-gravity-viewport-split #unit-cell-animation.block {{
+    position: relative !important;
+    inset: auto !important;
+    width: 100% !important;
+    height: 320px !important;
+    min-height: 12rem !important;
+    max-height: 320px !important;
+    margin: 0 !important;
+    padding: 0 !important;
     display: block !important;
     visibility: visible !important;
     opacity: 1 !important;
+    background: #000000 !important;
+    border: 1px solid rgba(107, 79, 29, 0.45) !important;
+    border-radius: 6px !important;
+}}
+.gradio-container .myst-gravity-viewport-split #unit-cell-animation .wrap,
+.gradio-container .myst-gravity-viewport-split #unit-cell-animation .video-container,
+.gradio-container .myst-gravity-viewport-split #unit-cell-animation video {{
+    width: 100% !important;
+    height: 320px !important;
+    max-height: 320px !important;
+    margin: 0 !important;
+    display: block !important;
     object-fit: contain !important;
     background: #000000 !important;
+}}
+.gradio-container .myst-gravity-viewport-split .myst-gravity-anim-status,
+.gradio-container .myst-gravity-viewport-split .myst-gravity-anim-status textarea {{
+    min-height: 2rem !important;
+    font-size: 0.76rem !important;
+    color: #c8c0d8 !important;
+    background: rgba(8, 8, 12, 0.85) !important;
+    border: 1px solid rgba(107, 79, 29, 0.35) !important;
+    border-radius: 6px !important;
 }}
 @media (max-width: 768px) {{
     .gradio-container .myst-gravity-split {{
@@ -4019,6 +3909,9 @@ def _gravity_tui_for_preset(
     return _format_gravity_preset_tui_html(active_slot, dials)
 
 
+_GRAVITY_VIEWPORT_IDLE_STATUS = "Ready — interactive 3D viewport active"
+
+
 def _run_residual_explorer_ui(
     phi_sq_scale: float,
     e_sq_scale: float,
@@ -4063,26 +3956,33 @@ def _run_residual_explorer_ui(
         metrics,
         header,
         _gravity_plot_media_update(fig),
-        *_gravity_hide_animation_outputs(),
+        *_gravity_clear_animation_panel(),
         control_levels,
         tui,
     )
 
 
-def _gravity_hide_video_update() -> dict:
-    return gr.update(visible=False, value=None)
+def _gravity_status_update(message: str) -> dict:
+    return gr.update(value=message)
 
 
-def _gravity_show_video_update(video_path: str) -> dict:
-    return gr.update(value=video_path, visible=True, autoplay=True, loop=False)
+def _gravity_clear_video_update() -> dict:
+    return gr.update(value=None)
 
 
-def _gravity_hide_animation_outputs() -> tuple[dict, dict]:
-    return gr.update(visible=True), gr.update(visible=True, value=None)
+def _gravity_load_video_update(video_path: str) -> dict:
+    return gr.update(value=video_path, autoplay=True, loop=False)
 
 
-def _gravity_show_animation_outputs(video_path: str) -> tuple[dict, dict]:
-    return gr.update(visible=True), _gravity_show_video_update(video_path)
+def _gravity_clear_animation_panel() -> tuple[dict, dict]:
+    return _gravity_clear_video_update(), _gravity_status_update(_GRAVITY_VIEWPORT_IDLE_STATUS)
+
+
+def _gravity_play_animation_panel(video_path: str) -> tuple[dict, dict]:
+    return (
+        _gravity_load_video_update(video_path),
+        _gravity_status_update("Playing deformation sweep (once)…"),
+    )
 
 
 def _gravity_animation_render_outputs(
@@ -4090,14 +3990,14 @@ def _gravity_animation_render_outputs(
     dials: dict[str, float],
     metrics: str,
     header: str,
-    anim_label_update: dict,
     video_update: dict,
+    status_update: dict,
     tui: str,
     active_slot: int,
     *,
     edit_params_enabled: bool = False,
 ) -> tuple:
-    """Animation path: never touch the static 3D plot component."""
+    """Animation path: update video + status only; never touch the 3D plot."""
     return (
         False,
         *_gravity_preset_btn_updates(active_key),
@@ -4106,8 +4006,8 @@ def _gravity_animation_render_outputs(
         metrics,
         header,
         gr.skip(),
-        anim_label_update,
         video_update,
+        status_update,
         _format_gravity_control_panel_html(dials, active_slot),
         tui,
         active_slot,
@@ -4151,8 +4051,8 @@ def _gravity_animate_btn_immediate(animate_active: bool, active_preset: int) -> 
         gr.skip(),
         *_gravity_preset_btn_immediate_active("animate"),
         gr.skip(),
-        gr.skip(),
-        gr.skip(),
+        _gravity_clear_video_update(),
+        _gravity_status_update("Rendering deformation frames (server-side)…"),
     )
 
 
@@ -4162,7 +4062,7 @@ def _gravity_preset_click_immediate(slot: int) -> tuple:
         False,
         *_gravity_preset_btn_immediate_active(str(slot)),
         gr.skip(),
-        *_gravity_hide_animation_outputs(),
+        *_gravity_clear_animation_panel(),
     )
 
 
@@ -4205,8 +4105,8 @@ def _gravity_explorer_outputs(
     metrics: str,
     header: str,
     fig: object,
-    anim_label_update: dict,
     video_update: dict,
+    status_update: dict,
     tui: str,
     active_slot: int,
     *,
@@ -4221,8 +4121,8 @@ def _gravity_explorer_outputs(
         metrics,
         header,
         plot_out,
-        anim_label_update,
         video_update,
+        status_update,
         _format_gravity_control_panel_html(dials, active_slot),
         tui,
         active_slot,
@@ -4311,7 +4211,7 @@ def _make_gravity_quick_preset_click(slot: int):
                 metrics,
                 header,
                 fig,
-                *_gravity_hide_animation_outputs(),
+                *_gravity_clear_animation_panel(),
                 tui,
                 active_slot,
                 edit_params_enabled=edit_params_enabled,
@@ -4370,7 +4270,7 @@ def _gravity_animation_done(
             metrics,
             header,
             fig,
-            *_gravity_hide_animation_outputs(),
+            *_gravity_clear_animation_panel(),
             tui,
             slot,
             edit_params_enabled=bool(edit_params_enabled),
@@ -4434,7 +4334,7 @@ def _gravity_animate_toggle_click(
             dials,
             metrics,
             header,
-            *_gravity_show_animation_outputs(video_path),
+            *_gravity_play_animation_panel(video_path),
             tui,
             slot,
             edit_params_enabled=bool(edit_params_enabled),
@@ -4452,7 +4352,8 @@ def _gravity_animate_toggle_click(
             dials,
             err_metrics,
             gr.skip(),
-            *_gravity_hide_animation_outputs(),
+            _gravity_clear_video_update(),
+            _gravity_status_update(f"Animation failed: {exc}"),
             err_tui,
             slot,
             edit_params_enabled=bool(edit_params_enabled),
@@ -5075,19 +4976,14 @@ def build_app() -> gr.Blocks:
                             "myst-cube-viewport-frame",
                             "myst-gravity-cube-panel",
                             "myst-gravity-panel-window",
+                            "myst-gravity-viewport-split",
                         ]
                     ):
                         unit_cell_header = gr.HTML(
                             _init_unit_cell_header,
                             elem_classes=["myst-cube-viewport-header-slot"],
                         )
-                        with gr.Column(
-                            elem_classes=[
-                                "myst-cube-viewport-plot-slot",
-                                "myst-cube-viewport-media",
-                                "myst-cube-viewport-media-slot",
-                            ],
-                        ):
+                        with gr.Column(elem_classes=["myst-gravity-viewport-plot"]):
                             unit_cell_plot = gr.Plot(
                                 label=None,
                                 show_label=False,
@@ -5096,26 +4992,32 @@ def build_app() -> gr.Blocks:
                                 value=_init_unit_cell,
                                 elem_classes=[
                                     "vqc-plot3d-panel",
-                                    "myst-cube-plot-inner",
                                     "myst-cube-plot-static",
                                 ],
                             )
-                        with gr.Column(elem_classes=["myst-cube-viewport-animation-slot"]):
-                            unit_cell_anim_label = gr.HTML(
-                                '<div class="myst-cube-viewport-animation-label">Animation Output</div>',
-                                elem_classes=["myst-cube-viewport-animation-label-slot"],
-                            )
-                            unit_cell_video = gr.Video(
-                                label=None,
-                                show_label=False,
-                                interactive=False,
-                                autoplay=True,
-                                loop=False,
-                                height=280,
-                                format="mp4",
-                                elem_id="unit-cell-animation",
-                                elem_classes=["myst-cube-anim-video"],
-                            )
+                        gr.HTML(
+                            '<div class="myst-gravity-viewport-anim-title">Animation</div>',
+                            elem_classes=["myst-gravity-viewport-anim-title-slot"],
+                        )
+                        unit_cell_video = gr.Video(
+                            label=None,
+                            show_label=False,
+                            interactive=False,
+                            autoplay=True,
+                            loop=False,
+                            height=320,
+                            format="mp4",
+                            elem_id="unit-cell-animation",
+                            elem_classes=["myst-cube-anim-video"],
+                        )
+                        anim_status = gr.Textbox(
+                            label="Status",
+                            value=_GRAVITY_VIEWPORT_IDLE_STATUS,
+                            lines=1,
+                            max_lines=1,
+                            interactive=False,
+                            elem_classes=["myst-gravity-anim-status"],
+                        )
                         anim_done_btn = gr.Button(
                             "Animation done",
                             visible=False,
@@ -5130,8 +5032,8 @@ def build_app() -> gr.Blocks:
                 re_metrics,
                 unit_cell_header,
                 unit_cell_plot,
-                unit_cell_anim_label,
                 unit_cell_video,
+                anim_status,
                 re_control_levels,
                 re_preset_tui,
             ]
@@ -5161,8 +5063,8 @@ def build_app() -> gr.Blocks:
                 re_animate_active,
                 *gravity_preset_btn_outputs,
                 unit_cell_plot,
-                unit_cell_anim_label,
                 unit_cell_video,
+                anim_status,
             ]
             animate_event = animate_deform_btn.click(
                 _gravity_animate_btn_immediate,
