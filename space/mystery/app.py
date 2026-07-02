@@ -1989,7 +1989,7 @@ footer {{ visibility: hidden; }}
     gap: 0.35rem !important;
     overflow: hidden !important;
     display: grid !important;
-    grid-template-rows: minmax(16rem, 1fr) auto !important;
+    grid-template-rows: minmax(0, 1fr) auto !important;
     grid-template-columns: minmax(0, 1fr) !important;
     align-content: stretch !important;
 }}
@@ -2043,15 +2043,14 @@ footer {{ visibility: hidden; }}
 }}
 .gradio-container .myst-gravity-left-control-slot,
 .gradio-container .myst-gravity-control-panel.myst-gravity-left-frame {{
-    flex: 0 1 auto !important;
+    flex: 0 0 auto !important;
     height: auto !important;
     min-height: 0 !important;
-    max-height: min(42vh, 24rem) !important;
+    max-height: none !important;
     width: 100% !important;
     display: flex !important;
     flex-direction: column !important;
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
+    overflow: visible !important;
 }}
 .gradio-container .myst-gravity-control-panel .myst-cube-viewport-header {{
     flex: 0 0 auto !important;
@@ -2067,8 +2066,9 @@ footer {{ visibility: hidden; }}
     margin: 0 !important;
     padding: 0 0.55rem 0.5rem !important;
     gap: 0 !important;
-    display: flex !important;
-    flex-direction: column !important;
+    display: grid !important;
+    grid-template-rows: auto minmax(11rem, 1fr) !important;
+    grid-template-columns: minmax(0, 1fr) !important;
     overflow: hidden !important;
     background: linear-gradient(180deg, #1a1008 0%, #0a0604 100%) !important;
     box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.42) !important;
@@ -2089,7 +2089,7 @@ footer {{ visibility: hidden; }}
     padding: 0 !important;
 }}
 .gradio-container .myst-gravity-presets-tui-card .myst-gravity-presets-panel {{
-    flex: 0 0 auto !important;
+    grid-row: 1 !important;
     height: auto !important;
     min-height: 0 !important;
     width: 100% !important;
@@ -2100,9 +2100,9 @@ footer {{ visibility: hidden; }}
 }}
 .gradio-container .myst-gravity-presets-tui-card .myst-gravity-left-tui-slot,
 .gradio-container .myst-gravity-presets-tui-card .myst-gravity-preset-tui-section {{
-    flex: 1 1 auto !important;
-    min-height: 0 !important;
-    height: auto !important;
+    grid-row: 2 !important;
+    min-height: 11rem !important;
+    height: 100% !important;
     width: 100% !important;
     display: flex !important;
     flex-direction: column !important;
@@ -2192,12 +2192,13 @@ footer {{ visibility: hidden; }}
 }}
 .gradio-container .myst-gravity-presets-tui-card .myst-gravity-left-tui-slot .myst-gravity-preset-tui-wrap,
 .gradio-container .myst-gravity-presets-tui-card .myst-gravity-left-tui-slot .myst-gravity-preset-tui-wrap.block {{
-    flex: 1 1 auto !important;
-    min-height: 13.5rem !important;
-    height: auto !important;
-    max-height: none !important;
+    flex: 1 1 0 !important;
+    min-height: 9.5rem !important;
+    height: 100% !important;
+    max-height: 100% !important;
     display: block !important;
     visibility: visible !important;
+    overflow-y: auto !important;
 }}
 .gradio-container .myst-gravity-cube-panel {{
     flex: 1 1 0 !important;
@@ -2331,11 +2332,11 @@ footer {{ visibility: hidden; }}
 }}
 .gradio-container .myst-gravity-preset-tui-section .myst-gravity-preset-tui-wrap,
 .gradio-container .myst-gravity-preset-tui-section .myst-gravity-preset-tui-wrap.block {{
-    flex: 1 1 auto !important;
+    flex: 1 1 0 !important;
     width: calc(100% - 0.9rem) !important;
-    height: auto !important;
-    min-height: 13.5rem !important;
-    max-height: none !important;
+    height: 100% !important;
+    min-height: 9.5rem !important;
+    max-height: 100% !important;
     margin: 0.3rem 0.45rem 0.4rem !important;
     padding: 0.5rem 0.6rem !important;
     border: 2px inset #5c4a1f !important;
@@ -2456,7 +2457,7 @@ footer {{ visibility: hidden; }}
     overflow: hidden !important;
 }}
 .gradio-container .myst-gravity-left-frame .myst-gravity-controls-accordion {{
-    flex: 0 1 auto !important;
+    flex: 0 0 auto !important;
     background: rgba(0, 0, 0, 0.18) !important;
     border: 1px solid #4a3818 !important;
     border-radius: 10px !important;
@@ -2464,11 +2465,18 @@ footer {{ visibility: hidden; }}
     overflow: hidden !important;
     width: 100% !important;
     max-width: 100% !important;
-    margin: 0 0 0.55rem 0 !important;
+    margin: 0 0 0.4rem 0 !important;
 }}
 .gradio-container .myst-gravity-left-frame .myst-gravity-controls-accordion .accordion {{
-    max-height: min(38vh, 22rem) !important;
+    max-height: min(34vh, 20rem) !important;
     overflow-y: auto !important;
+}}
+.gradio-container .myst-gravity-left-frame .myst-gravity-manual-edit-accordion {{
+    flex: 0 0 auto !important;
+    margin: 0 !important;
+}}
+.gradio-container .myst-gravity-left-frame .myst-gravity-manual-edit-accordion .myst-cube-viewport-header {{
+    margin-top: 0.15rem !important;
 }}
 .gradio-container .myst-gravity-left-frame .myst-gravity-metrics-inner {{
     flex: 0 0 auto !important;
@@ -4199,121 +4207,129 @@ def build_app() -> gr.Blocks:
                                 _init_control_levels,
                                 elem_classes=["myst-gravity-control-levels-wrap"],
                             )
-                        gr.HTML(CONTROL_PANEL_HEADER_HTML)
-                        re_edit_params = gr.State(False)
-                        edit_params_btn = gr.Button(
+                        with gr.Accordion(
                             "Manual Edit",
-                            variant="secondary",
+                            open=False,
                             elem_classes=[
-                                "vqc-receiver-preset",
-                                "myst-gravity-edit-params-btn",
-                                "vqc-full-width",
+                                "myst-gravity-controls-accordion",
+                                "myst-gravity-manual-edit-accordion",
                             ],
-                        )
-                        with gr.Row(elem_classes=["vqc-optics-dial-row"]):
-                            re_pressure = gr.Slider(
-                                0.0,
-                                1.0,
-                                value=0.35,
-                                step=0.01,
-                                label="Deformation pressure",
-                                info="0 = rigid cube · 1 = full π bowl + φ/e concave pinch",
-                                elem_classes=["vqc-optics-dial-wrap"],
-                                interactive=False,
+                        ):
+                            gr.HTML(CONTROL_PANEL_HEADER_HTML)
+                            re_edit_params = gr.State(False)
+                            edit_params_btn = gr.Button(
+                                "Manual Edit",
+                                variant="secondary",
+                                elem_classes=[
+                                    "vqc-receiver-preset",
+                                    "myst-gravity-edit-params-btn",
+                                    "vqc-full-width",
+                                ],
                             )
-                        with gr.Row(elem_classes=["vqc-optics-dial-row"]):
-                            re_view_elev = gr.Slider(
-                                5.0,
-                                75.0,
-                                value=22.0,
-                                step=1.0,
-                                label="View elevation (°)",
-                                elem_classes=["vqc-optics-dial-wrap"],
-                                interactive=False,
-                            )
-                            re_view_azim = gr.Slider(
-                                0.0,
-                                360.0,
-                                value=45.0,
-                                step=5.0,
-                                label="View azimuth (°)",
-                                elem_classes=["vqc-optics-dial-wrap"],
-                                interactive=False,
-                            )
-                        with gr.Row(elem_classes=["vqc-optics-dial-row"]):
-                            re_phi_scale = gr.Slider(
-                                0.90,
-                                1.10,
-                                value=1.0,
-                                step=0.001,
-                                label="φ² scale",
-                                elem_classes=["vqc-optics-dial-wrap"],
-                                interactive=False,
-                            )
-                            re_e_scale = gr.Slider(
-                                0.90,
-                                1.10,
-                                value=1.0,
-                                step=0.001,
-                                label="e² scale",
-                                elem_classes=["vqc-optics-dial-wrap"],
-                                interactive=False,
-                            )
-                            re_pi_scale = gr.Slider(
-                                0.90,
-                                1.10,
-                                value=1.0,
-                                step=0.001,
-                                label="π² scale",
-                                elem_classes=["vqc-optics-dial-wrap"],
-                                interactive=False,
-                            )
-                        with gr.Row(elem_classes=["vqc-optics-dial-row"]):
-                            re_kappa = gr.Slider(
-                                0.70,
-                                0.95,
-                                value=KAPPA_DOC,
-                                step=0.001,
-                                label="κ (holonomy-gap parameter)",
-                                info=f"κ_doc = {KAPPA_DOC} · κ* nulls B(κ)−R",
-                                elem_classes=["vqc-optics-dial-wrap"],
-                                interactive=False,
-                            )
-                            re_delta_z = gr.Slider(
-                                0.0,
-                                0.5,
-                                value=0.1,
-                                step=0.01,
-                                label="δ_z (primary push)",
-                                elem_classes=["vqc-optics-dial-wrap"],
-                                interactive=False,
-                            )
-                        with gr.Row(elem_classes=["vqc-optics-dial-row"]):
-                            re_alpha = gr.Slider(
-                                0.0,
-                                2.0,
-                                value=1.0,
-                                step=0.05,
-                                label="α (geometry factor)",
-                                elem_classes=["vqc-optics-dial-wrap"],
-                                interactive=False,
-                            )
-                            re_beta = gr.Slider(
-                                0.0,
-                                2.0,
-                                value=1.0,
-                                step=0.05,
-                                label="β (residual coupling)",
-                                elem_classes=["vqc-optics-dial-wrap"],
-                                interactive=False,
-                            )
-                        with gr.Column(elem_classes=["myst-gravity-metrics-inner"]):
-                            re_metrics = gr.Textbox(
-                                label="Residual explorer",
-                                lines=9,
-                                interactive=False,
-                                value=_init_re_metrics,
-                            )
+                            with gr.Row(elem_classes=["vqc-optics-dial-row"]):
+                                re_pressure = gr.Slider(
+                                    0.0,
+                                    1.0,
+                                    value=0.35,
+                                    step=0.01,
+                                    label="Deformation pressure",
+                                    info="0 = rigid cube · 1 = full π bowl + φ/e concave pinch",
+                                    elem_classes=["vqc-optics-dial-wrap"],
+                                    interactive=False,
+                                )
+                            with gr.Row(elem_classes=["vqc-optics-dial-row"]):
+                                re_view_elev = gr.Slider(
+                                    5.0,
+                                    75.0,
+                                    value=22.0,
+                                    step=1.0,
+                                    label="View elevation (°)",
+                                    elem_classes=["vqc-optics-dial-wrap"],
+                                    interactive=False,
+                                )
+                                re_view_azim = gr.Slider(
+                                    0.0,
+                                    360.0,
+                                    value=45.0,
+                                    step=5.0,
+                                    label="View azimuth (°)",
+                                    elem_classes=["vqc-optics-dial-wrap"],
+                                    interactive=False,
+                                )
+                            with gr.Row(elem_classes=["vqc-optics-dial-row"]):
+                                re_phi_scale = gr.Slider(
+                                    0.90,
+                                    1.10,
+                                    value=1.0,
+                                    step=0.001,
+                                    label="φ² scale",
+                                    elem_classes=["vqc-optics-dial-wrap"],
+                                    interactive=False,
+                                )
+                                re_e_scale = gr.Slider(
+                                    0.90,
+                                    1.10,
+                                    value=1.0,
+                                    step=0.001,
+                                    label="e² scale",
+                                    elem_classes=["vqc-optics-dial-wrap"],
+                                    interactive=False,
+                                )
+                                re_pi_scale = gr.Slider(
+                                    0.90,
+                                    1.10,
+                                    value=1.0,
+                                    step=0.001,
+                                    label="π² scale",
+                                    elem_classes=["vqc-optics-dial-wrap"],
+                                    interactive=False,
+                                )
+                            with gr.Row(elem_classes=["vqc-optics-dial-row"]):
+                                re_kappa = gr.Slider(
+                                    0.70,
+                                    0.95,
+                                    value=KAPPA_DOC,
+                                    step=0.001,
+                                    label="κ (holonomy-gap parameter)",
+                                    info=f"κ_doc = {KAPPA_DOC} · κ* nulls B(κ)−R",
+                                    elem_classes=["vqc-optics-dial-wrap"],
+                                    interactive=False,
+                                )
+                                re_delta_z = gr.Slider(
+                                    0.0,
+                                    0.5,
+                                    value=0.1,
+                                    step=0.01,
+                                    label="δ_z (primary push)",
+                                    elem_classes=["vqc-optics-dial-wrap"],
+                                    interactive=False,
+                                )
+                            with gr.Row(elem_classes=["vqc-optics-dial-row"]):
+                                re_alpha = gr.Slider(
+                                    0.0,
+                                    2.0,
+                                    value=1.0,
+                                    step=0.05,
+                                    label="α (geometry factor)",
+                                    elem_classes=["vqc-optics-dial-wrap"],
+                                    interactive=False,
+                                )
+                                re_beta = gr.Slider(
+                                    0.0,
+                                    2.0,
+                                    value=1.0,
+                                    step=0.05,
+                                    label="β (residual coupling)",
+                                    elem_classes=["vqc-optics-dial-wrap"],
+                                    interactive=False,
+                                )
+                            with gr.Column(elem_classes=["myst-gravity-metrics-inner"]):
+                                re_metrics = gr.Textbox(
+                                    label="Residual explorer",
+                                    lines=9,
+                                    interactive=False,
+                                    value=_init_re_metrics,
+                                )
                 with gr.Column(
                     scale=8,
                     elem_classes=[
