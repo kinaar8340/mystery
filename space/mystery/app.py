@@ -2252,11 +2252,12 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-gravity-cube-panel .myst-cube-viewport-media {{
     position: relative !important;
     flex: 1 1 0 !important;
-    min-height: 0 !important;
-    height: 100% !important;
+    min-height: clamp(20rem, 50vh, 38rem) !important;
+    height: 0 !important;
     max-height: 100% !important;
     width: 100% !important;
-    display: block !important;
+    display: flex !important;
+    flex-direction: column !important;
     overflow: hidden !important;
     box-sizing: border-box !important;
     padding: 0 !important;
@@ -2276,19 +2277,22 @@ footer {{ visibility: hidden; }}
     inset: 0 !important;
     width: 100% !important;
     height: 100% !important;
-    min-height: 0 !important;
+    min-height: clamp(18rem, 46vh, 36rem) !important;
     max-height: 100% !important;
     margin: 0 !important;
-    padding: 0.12rem 0.2rem 0.2rem !important;
+    padding: 0.2rem 0.3rem 0.3rem !important;
     overflow: hidden !important;
     box-sizing: border-box !important;
-    flex: none !important;
+    flex: 1 1 0 !important;
+    visibility: visible !important;
+    opacity: 1 !important;
 }}
 .gradio-container .myst-gravity-cube-panel .myst-cube-viewport-media > .block[style*="display: none"],
 .gradio-container .myst-gravity-cube-panel .myst-cube-viewport-media > .block.hidden {{
     display: none !important;
     visibility: hidden !important;
     pointer-events: none !important;
+    min-height: 0 !important;
 }}
 .gradio-container .myst-gravity-cube-panel .myst-cube-viewport-media .myst-cube-anim-video .wrap,
 .gradio-container .myst-gravity-cube-panel .myst-cube-viewport-media .myst-cube-anim-video .video-container,
@@ -2462,8 +2466,8 @@ footer {{ visibility: hidden; }}
 }}
 .gradio-container .myst-gravity-cube-panel.myst-gravity-panel-window > .column.myst-cube-viewport-media-slot {{
     flex: 1 1 0 !important;
-    height: 100% !important;
-    min-height: 0 !important;
+    height: 0 !important;
+    min-height: clamp(20rem, 50vh, 38rem) !important;
 }}
 .gradio-container .myst-gravity-left-frame .myst-gravity-controls-accordion {{
     flex: 0 0 auto !important;
@@ -2567,8 +2571,8 @@ footer {{ visibility: hidden; }}
 }}
 .gradio-container .myst-gravity-page .myst-cube-viewport-frame .myst-cube-viewport-media {{
     flex: 1 1 0 !important;
-    min-height: 0 !important;
-    height: 100% !important;
+    min-height: clamp(20rem, 50vh, 38rem) !important;
+    height: 0 !important;
     max-height: 100% !important;
     overflow: hidden !important;
 }}
@@ -2682,12 +2686,12 @@ footer {{ visibility: hidden; }}
     width: 100% !important;
     max-width: 100% !important;
     margin: 0 !important;
-    padding: 0.1rem 0.15rem 0.15rem !important;
+    padding: 0.2rem 0.3rem 0.3rem !important;
     background: rgba(0, 0, 0, 0.22) !important;
     border: 1px solid #4a3818 !important;
     border-radius: 8px !important;
-    flex: none !important;
-    min-height: 0 !important;
+    flex: 1 1 0 !important;
+    min-height: clamp(18rem, 46vh, 36rem) !important;
     height: 100% !important;
     max-height: 100% !important;
     display: flex !important;
@@ -2705,17 +2709,17 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-gravity-page .myst-cube-viewport-frame .plot-container {{
     flex: 1 1 0 !important;
     width: 100% !important;
-    min-height: 0 !important;
+    min-height: clamp(16rem, 42vh, 34rem) !important;
     height: 100% !important;
     max-height: 100% !important;
     border: 2px inset #5c4a1f !important;
     border-radius: 8px !important;
     background-color: #000000 !important;
-    padding: 0.05rem !important;
+    padding: 0.15rem !important;
     box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.75) !important;
     display: flex !important;
-    align-items: stretch !important;
-    justify-content: stretch !important;
+    align-items: center !important;
+    justify-content: center !important;
     overflow: hidden !important;
     box-sizing: border-box !important;
 }}
@@ -2735,11 +2739,8 @@ footer {{ visibility: hidden; }}
     max-height: 100% !important;
     margin: 0 !important;
     display: block !important;
-    object-fit: fill !important;
+    object-fit: contain !important;
     object-position: center center !important;
-}}
-.gradio-container .myst-gravity-page .myst-cube-viewport-frame .plot-container .modebar {{
-    display: none !important;
 }}
 .gradio-container .myst-gravity-page .vqc-gravity-panel.vqc-optics-panel {{
     background: linear-gradient(165deg, #2a1810 0%, #1a1008 38%, #120c06 100%) !important;
