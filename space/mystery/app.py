@@ -140,6 +140,14 @@ CONTROL_PANEL_HEADER_HTML = """
 </div>
 """
 
+GRAVITY_PRESET_TUI_HEADER_HTML = """
+<div class="myst-gravity-preset-tui-header" role="img" aria-label="Preset metrics terminal">
+  <span class="myst-cube-viewport-brand">MYSTERY</span>
+  <span class="myst-cube-viewport-title">Preset Metrics TUI</span>
+  <span class="myst-cube-viewport-tag">quick preset loadout · live readout</span>
+</div>
+"""
+
 # Client-side CSS phosphor scan — no server streaming loop (HF-safe).
 SIGNAL_SCANNER_HTML = f"""
 <div class="myst-signal-scan" role="img" aria-label="Phosphor signal scan">
@@ -1950,6 +1958,66 @@ footer {{ visibility: hidden; }}
     min-height: 0 !important;
     overflow: hidden !important;
 }}
+.gradio-container .myst-gravity-right-stack {{
+    gap: 0.55rem !important;
+}}
+.gradio-container .myst-gravity-cube-panel {{
+    flex: 1 1 0 !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+}}
+.gradio-container .myst-gravity-preset-tui-panel {{
+    flex: 0 0 auto !important;
+    min-height: 11rem !important;
+    max-height: 34% !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+}}
+.gradio-container .myst-gravity-preset-tui-header {{
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.08rem !important;
+    width: 100% !important;
+    margin: 0 0 0.45rem 0 !important;
+    padding: 0.55rem 0.65rem 0.6rem !important;
+    border-bottom: 1px solid rgba(74, 56, 24, 0.65) !important;
+    border-radius: 10px 10px 0 0 !important;
+    background: linear-gradient(180deg, #1f140a 0%, #0f0a06 100%) !important;
+}}
+.gradio-container .myst-gravity-preset-tui-panel .myst-gravity-preset-tui {{
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    margin: 0 0.55rem 0.55rem !important;
+}}
+.gradio-container .myst-gravity-preset-tui-panel .myst-gravity-preset-tui textarea {{
+    min-height: 7.5rem !important;
+    max-height: 9.5rem !important;
+}}
+.gradio-container .myst-gravity-preset-grid {{
+    width: 100% !important;
+    margin: 0 0 0.35rem 0 !important;
+}}
+.gradio-container .myst-gravity-preset-grid .myst-gravity-preset-row {{
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 0.28rem !important;
+    width: 100% !important;
+    margin: 0 0 0.28rem 0 !important;
+}}
+.gradio-container .myst-gravity-preset-grid .myst-gravity-preset-row > .block,
+.gradio-container .myst-gravity-preset-grid .myst-gravity-preset-row > .form {{
+    min-width: 0 !important;
+    width: 100% !important;
+}}
+.gradio-container .myst-gravity-page .vqc-gravity-panel button.myst-gravity-quick-preset {{
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    padding: 0.26rem 0.2rem !important;
+    font-size: 0.72rem !important;
+}}
 .gradio-container .myst-gravity-panel-window.vqc-optics-panel {{
     flex: 1 1 auto !important;
     height: 100% !important;
@@ -2304,12 +2372,71 @@ def run_probe(
         return err, None, None
 
 
-_GRAVITY_PRESET_KEYS = ("rigid", "full", "kappa_doc", "kappa_star", "animate")
+_GRAVITY_QUICK_PRESET_KEYS = tuple(str(i) for i in range(8))
+_GRAVITY_PRESET_BTN_KEYS = (*_GRAVITY_QUICK_PRESET_KEYS, "animate")
 _GRAVITY_PRESET_RELEASE_DELAY_S = 0.35
+_GRAVITY_PRESET_SLOT_NAMES = {
+    0: "rigid cube · pressure 0%",
+    1: "full deform · pressure 100%",
+    2: f"κ_doc = {KAPPA_DOC}",
+    3: "κ* exact null",
+}
+
+
+def _format_gravity_preset_tui(
+    preset_slot: int | None,
+    metrics: str,
+    *,
+    reserved: bool = False,
+    source: str = "preset",
+) -> str:
+    sep = "─" * 52
+    if source == "animate":
+        banner = "ANIMATE — deformation sweep"
+    elif source == "manual":
+        banner = "MANUAL DIALS — live explorer"
+    elif preset_slot is None:
+        banner = "PRESET TUI — awaiting quick preset [1–8]"
+    elif reserved:
+        banner = f"PRESET [{preset_slot + 1}] — slot reserved"
+    else:
+        banner = (
+            f"PRESET [{preset_slot + 1}] LOADED — "
+            f"{_GRAVITY_PRESET_SLOT_NAMES[preset_slot]}"
+        )
+    return f"{banner}\n{sep}\n{metrics}"
+
+
+def _run_residual_explorer_ui(
+    phi_sq_scale: float,
+    e_sq_scale: float,
+    pi_sq_scale: float,
+    kappa: float,
+    delta_z: float,
+    alpha: float,
+    beta: float,
+    deform_pressure: float,
+    view_elev: float,
+    view_azim: float,
+) -> tuple[str, str, object, str]:
+    metrics, header, fig = run_residual_explorer(
+        phi_sq_scale,
+        e_sq_scale,
+        pi_sq_scale,
+        kappa,
+        delta_z,
+        alpha,
+        beta,
+        deform_pressure,
+        view_elev,
+        view_azim,
+    )
+    tui = _format_gravity_preset_tui(None, metrics, source="manual")
+    return metrics, header, fig, tui
 
 
 def _gravity_preset_btn_classes(key: str, active: str) -> list[str]:
-    classes = ["vqc-receiver-preset"]
+    classes = ["vqc-receiver-preset", "myst-gravity-quick-preset"]
     if key == "animate":
         classes.append("vqc-full-width")
     if key == active:
@@ -2323,11 +2450,32 @@ def _gravity_preset_btn_updates(active: str = "") -> tuple:
             elem_classes=_gravity_preset_btn_classes(key, active),
             variant="secondary",
         )
-        for key in _GRAVITY_PRESET_KEYS
+        for key in _GRAVITY_PRESET_BTN_KEYS
     )
 
 
-def _gravity_preset_rigid_click(
+def _gravity_explorer_outputs(
+    active_key: str,
+    kappa_val: float,
+    pressure_val: float,
+    metrics: str,
+    header: str,
+    fig: object,
+    tui: str,
+) -> tuple:
+    return (
+        *_gravity_preset_btn_updates(active_key),
+        kappa_val,
+        pressure_val,
+        metrics,
+        header,
+        fig,
+        tui,
+    )
+
+
+def _gravity_quick_preset_apply(
+    slot: int,
     phi_sq_scale: float,
     e_sq_scale: float,
     pi_sq_scale: float,
@@ -2338,49 +2486,19 @@ def _gravity_preset_rigid_click(
     deform_pressure: float,
     view_elev: float,
     view_azim: float,
-):
-    result = run_residual_explorer(
-        phi_sq_scale, e_sq_scale, pi_sq_scale, kappa, delta_z, alpha, beta, 0.0, view_elev, view_azim
-    )
-    yield (*_gravity_preset_btn_updates("rigid"), kappa, 0.0, *result)
-    time.sleep(_GRAVITY_PRESET_RELEASE_DELAY_S)
-    yield (*_gravity_preset_btn_updates(), kappa, 0.0, *result)
-
-
-def _gravity_preset_full_click(
-    phi_sq_scale: float,
-    e_sq_scale: float,
-    pi_sq_scale: float,
-    kappa: float,
-    delta_z: float,
-    alpha: float,
-    beta: float,
-    deform_pressure: float,
-    view_elev: float,
-    view_azim: float,
-):
-    result = run_residual_explorer(
-        phi_sq_scale, e_sq_scale, pi_sq_scale, kappa, delta_z, alpha, beta, 1.0, view_elev, view_azim
-    )
-    yield (*_gravity_preset_btn_updates("full"), kappa, 1.0, *result)
-    time.sleep(_GRAVITY_PRESET_RELEASE_DELAY_S)
-    yield (*_gravity_preset_btn_updates(), kappa, 1.0, *result)
-
-
-def _gravity_preset_kappa_doc_click(
-    phi_sq_scale: float,
-    e_sq_scale: float,
-    pi_sq_scale: float,
-    kappa: float,
-    delta_z: float,
-    alpha: float,
-    beta: float,
-    deform_pressure: float,
-    view_elev: float,
-    view_azim: float,
-):
-    new_kappa = load_kappa_doc()
-    result = run_residual_explorer(
+) -> tuple[float, float, str, str, object, str]:
+    reserved = slot >= 4
+    new_kappa = kappa
+    new_pressure = deform_pressure
+    if slot == 0:
+        new_pressure = 0.0
+    elif slot == 1:
+        new_pressure = 1.0
+    elif slot == 2:
+        new_kappa = load_kappa_doc()
+    elif slot == 3:
+        new_kappa = load_kappa_star()
+    metrics, header, fig = run_residual_explorer(
         phi_sq_scale,
         e_sq_scale,
         pi_sq_scale,
@@ -2388,43 +2506,50 @@ def _gravity_preset_kappa_doc_click(
         delta_z,
         alpha,
         beta,
-        deform_pressure,
+        new_pressure,
         view_elev,
         view_azim,
     )
-    yield (*_gravity_preset_btn_updates("kappa_doc"), new_kappa, deform_pressure, *result)
-    time.sleep(_GRAVITY_PRESET_RELEASE_DELAY_S)
-    yield (*_gravity_preset_btn_updates(), new_kappa, deform_pressure, *result)
+    tui = _format_gravity_preset_tui(slot, metrics, reserved=reserved)
+    return new_kappa, new_pressure, metrics, header, fig, tui
 
 
-def _gravity_preset_kappa_star_click(
-    phi_sq_scale: float,
-    e_sq_scale: float,
-    pi_sq_scale: float,
-    kappa: float,
-    delta_z: float,
-    alpha: float,
-    beta: float,
-    deform_pressure: float,
-    view_elev: float,
-    view_azim: float,
-):
-    new_kappa = load_kappa_star()
-    result = run_residual_explorer(
-        phi_sq_scale,
-        e_sq_scale,
-        pi_sq_scale,
-        new_kappa,
-        delta_z,
-        alpha,
-        beta,
-        deform_pressure,
-        view_elev,
-        view_azim,
-    )
-    yield (*_gravity_preset_btn_updates("kappa_star"), new_kappa, deform_pressure, *result)
-    time.sleep(_GRAVITY_PRESET_RELEASE_DELAY_S)
-    yield (*_gravity_preset_btn_updates(), new_kappa, deform_pressure, *result)
+def _make_gravity_quick_preset_click(slot: int):
+    def handler(
+        phi_sq_scale: float,
+        e_sq_scale: float,
+        pi_sq_scale: float,
+        kappa: float,
+        delta_z: float,
+        alpha: float,
+        beta: float,
+        deform_pressure: float,
+        view_elev: float,
+        view_azim: float,
+    ):
+        active_key = str(slot)
+        new_kappa, new_pressure, metrics, header, fig, tui = _gravity_quick_preset_apply(
+            slot,
+            phi_sq_scale,
+            e_sq_scale,
+            pi_sq_scale,
+            kappa,
+            delta_z,
+            alpha,
+            beta,
+            deform_pressure,
+            view_elev,
+            view_azim,
+        )
+        yield _gravity_explorer_outputs(
+            active_key, new_kappa, new_pressure, metrics, header, fig, tui
+        )
+        time.sleep(_GRAVITY_PRESET_RELEASE_DELAY_S)
+        yield _gravity_explorer_outputs(
+            "", new_kappa, new_pressure, metrics, header, fig, tui
+        )
+
+    return handler
 
 
 def _gravity_animate_click(
@@ -2440,8 +2565,8 @@ def _gravity_animate_click(
     view_azim: float,
 ):
     latch = _gravity_preset_btn_updates("animate")
-    last_result: tuple[str, str, object] | None = None
-    for frame in stream_unit_cell_deformation(
+    last_pack: tuple[str, str, object, str] | None = None
+    for metrics, header, fig in stream_unit_cell_deformation(
         phi_sq_scale,
         e_sq_scale,
         pi_sq_scale,
@@ -2453,10 +2578,20 @@ def _gravity_animate_click(
         view_elev,
         view_azim,
     ):
-        last_result = frame
-        yield (*latch, kappa, deform_pressure, *frame)
-    if last_result is not None:
-        yield (*_gravity_preset_btn_updates(), kappa, deform_pressure, *last_result)
+        tui = _format_gravity_preset_tui(None, metrics, source="animate")
+        last_pack = (metrics, header, fig, tui)
+        yield (*latch, kappa, deform_pressure, metrics, header, fig, tui)
+    if last_pack is not None:
+        metrics, header, fig, tui = last_pack
+        yield (
+            *_gravity_preset_btn_updates(),
+            kappa,
+            deform_pressure,
+            metrics,
+            header,
+            fig,
+            tui,
+        )
 
 
 def load_kappa_doc() -> float:
@@ -2773,6 +2908,7 @@ def build_app() -> gr.Blocks:
         _init_re_metrics, _init_unit_cell_header, _init_unit_cell = run_residual_explorer(
             1.0, 1.0, 1.0, KAPPA_DOC, 0.1, 1.0, 1.0, 0.35, 22.0, 45.0
         )
+        _init_preset_tui = _format_gravity_preset_tui(None, _init_re_metrics)
 
         with gr.Column(visible=False, elem_classes=["myst-readme-page"]) as page_readme:
             with gr.Row(elem_classes=["vqc-source-tabs-row", "vqc-animations-nav-row"]):
@@ -2972,31 +3108,22 @@ def build_app() -> gr.Blocks:
                                 "Quick presets — one click sets dials"
                                 "</p>"
                             )
-                            with gr.Row():
-                                re_preset_rigid = gr.Button(
-                                    "Rigid cube",
-                                    variant="secondary",
-                                    size="sm",
-                                    elem_classes=["vqc-receiver-preset"],
-                                )
-                                re_preset_full = gr.Button(
-                                    "Full deform",
-                                    variant="secondary",
-                                    size="sm",
-                                    elem_classes=["vqc-receiver-preset"],
-                                )
-                                re_preset_kappa_doc = gr.Button(
-                                    "κ_doc = 0.85",
-                                    variant="secondary",
-                                    size="sm",
-                                    elem_classes=["vqc-receiver-preset"],
-                                )
-                                re_preset_kappa_star = gr.Button(
-                                    "κ* null",
-                                    variant="secondary",
-                                    size="sm",
-                                    elem_classes=["vqc-receiver-preset"],
-                                )
+                            re_quick_presets: list[gr.Button] = []
+                            with gr.Column(elem_classes=["myst-gravity-preset-grid"]):
+                                for row_start in (0, 4):
+                                    with gr.Row(elem_classes=["myst-gravity-preset-row"]):
+                                        for slot in range(row_start, row_start + 4):
+                                            re_quick_presets.append(
+                                                gr.Button(
+                                                    str(slot + 1),
+                                                    variant="secondary",
+                                                    size="sm",
+                                                    elem_classes=[
+                                                        "vqc-receiver-preset",
+                                                        "myst-gravity-quick-preset",
+                                                    ],
+                                                )
+                                            )
                             animate_deform_btn = gr.Button(
                                 "Animate deformation",
                                 variant="secondary",
@@ -3019,6 +3146,7 @@ def build_app() -> gr.Blocks:
                     elem_classes=[
                         "myst-gravity-visuals-col",
                         "myst-gravity-right-panel",
+                        "myst-gravity-right-stack",
                     ],
                 ):
                     with gr.Group(
@@ -3026,6 +3154,7 @@ def build_app() -> gr.Blocks:
                             "vqc-optics-panel",
                             "vqc-gravity-panel",
                             "myst-cube-viewport-frame",
+                            "myst-gravity-cube-panel",
                             "myst-gravity-panel-window",
                         ]
                     ):
@@ -3036,49 +3165,52 @@ def build_app() -> gr.Blocks:
                             value=_init_unit_cell,
                             elem_classes=["vqc-plot3d-panel", "myst-cube-plot-inner"],
                         )
+                    with gr.Group(
+                        elem_classes=[
+                            "vqc-optics-panel",
+                            "vqc-gravity-panel",
+                            "myst-gravity-preset-tui-panel",
+                            "myst-gravity-panel-window",
+                        ]
+                    ):
+                        gr.HTML(GRAVITY_PRESET_TUI_HEADER_HTML)
+                        re_preset_tui = gr.Textbox(
+                            label="Preset metrics",
+                            lines=7,
+                            interactive=False,
+                            value=_init_preset_tui,
+                            elem_classes=[
+                                "vqc-optics-terminal-wrap",
+                                "vqc-optics-terminal",
+                                "myst-gravity-preset-tui",
+                            ],
+                        )
             re_inputs = [
                 re_phi_scale, re_e_scale, re_pi_scale,
                 re_kappa, re_delta_z, re_alpha, re_beta, re_pressure,
                 re_view_elev, re_view_azim,
             ]
-            re_outputs = [re_metrics, unit_cell_header, unit_cell_plot]
+            re_outputs = [re_metrics, unit_cell_header, unit_cell_plot, re_preset_tui]
             gravity_preset_outputs = [
-                re_preset_rigid,
-                re_preset_full,
-                re_preset_kappa_doc,
-                re_preset_kappa_star,
+                *re_quick_presets,
                 animate_deform_btn,
                 re_kappa,
                 re_pressure,
                 *re_outputs,
             ]
             for slider in re_inputs:
-                slider.change(run_residual_explorer, inputs=re_inputs, outputs=re_outputs)
+                slider.change(_run_residual_explorer_ui, inputs=re_inputs, outputs=re_outputs)
             animate_deform_btn.click(
                 _gravity_animate_click,
                 inputs=re_inputs,
                 outputs=gravity_preset_outputs,
             )
-            re_preset_rigid.click(
-                _gravity_preset_rigid_click,
-                inputs=re_inputs,
-                outputs=gravity_preset_outputs,
-            )
-            re_preset_full.click(
-                _gravity_preset_full_click,
-                inputs=re_inputs,
-                outputs=gravity_preset_outputs,
-            )
-            re_preset_kappa_doc.click(
-                _gravity_preset_kappa_doc_click,
-                inputs=re_inputs,
-                outputs=gravity_preset_outputs,
-            )
-            re_preset_kappa_star.click(
-                _gravity_preset_kappa_star_click,
-                inputs=re_inputs,
-                outputs=gravity_preset_outputs,
-            )
+            for slot, preset_btn in enumerate(re_quick_presets):
+                preset_btn.click(
+                    _make_gravity_quick_preset_click(slot),
+                    inputs=re_inputs,
+                    outputs=gravity_preset_outputs,
+                )
 
         newhere_outputs = [panel_newhere, tab_newhere_btn, newhere_open, panel_claims, tab_claims_btn, claims_open]
         claims_outputs = [panel_claims, tab_claims_btn, claims_open, panel_newhere, tab_newhere_btn, newhere_open]
@@ -3115,7 +3247,7 @@ def build_app() -> gr.Blocks:
         def _bind_nav(btn: gr.Button, page: str, *, refresh_gravity: bool = False) -> None:
             if refresh_gravity:
                 btn.click(lambda: _nav_to_page(page), outputs=nav_outputs).then(
-                    run_residual_explorer, inputs=re_inputs, outputs=re_outputs
+                    _run_residual_explorer_ui, inputs=re_inputs, outputs=re_outputs
                 )
             else:
                 btn.click(lambda: _nav_to_page(page), outputs=nav_outputs)
