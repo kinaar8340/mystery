@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import base64
 import io
 import os
 import tempfile
@@ -995,6 +996,47 @@ def figure_to_viewport_numpy(fig: plt.Figure, *, dpi: int = 150) -> np.ndarray:
         print(f"[ERROR] figure_to_viewport_numpy failed: {exc}", flush=True)
         traceback.print_exc()
         return unit_cell_error_placeholder_numpy()
+
+
+def unit_cell_error_placeholder_html() -> str:
+    """Red placeholder <img> when viewport conversion fails."""
+    placeholder = unit_cell_error_placeholder_numpy()
+    buf = io.BytesIO()
+    from PIL import Image as PILImage
+
+    PILImage.fromarray(placeholder).save(buf, format="PNG")
+    b64 = base64.b64encode(buf.getvalue()).decode("ascii")
+    return (
+        '<div class="myst-unit-cell-viewport-img-wrap myst-unit-cell-viewport-error">'
+        f'<img src="data:image/png;base64,{b64}" '
+        'alt="Viewport error placeholder" class="myst-unit-cell-viewport-img" />'
+        "</div>"
+    )
+
+
+def figure_to_viewport_img_html(fig: plt.Figure, *, dpi: int = 100) -> str:
+    """Matplotlib figure → inline base64 PNG for gr.HTML (no /tmp file URLs on HF)."""
+    print(f"[DEBUG] figure_to_viewport_img_html: dpi={dpi}", flush=True)
+    try:
+        pil_img = figure_to_pil_image(fig, dpi=dpi)
+        buf = io.BytesIO()
+        pil_img.save(buf, format="PNG")
+        b64 = base64.b64encode(buf.getvalue()).decode("ascii")
+        print(
+            f"[DEBUG] figure_to_viewport_img_html: b64_len={len(b64)} "
+            f"pil_size={pil_img.size}",
+            flush=True,
+        )
+        return (
+            '<div class="myst-unit-cell-viewport-img-wrap">'
+            f'<img src="data:image/png;base64,{b64}" '
+            'alt="Unit cell viewport" class="myst-unit-cell-viewport-img" />'
+            "</div>"
+        )
+    except Exception as exc:
+        print(f"[ERROR] figure_to_viewport_img_html failed: {exc}", flush=True)
+        traceback.print_exc()
+        return unit_cell_error_placeholder_html()
 
 
 def get_unit_cell_viewport_pil_image(

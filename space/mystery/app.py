@@ -37,9 +37,8 @@ from demo_core import (
     get_build_label,
     is_hf_space,
     build_unit_cell_viewport_header_html,
-    export_unit_cell_numpy_for_gradio,
-    figure_to_viewport_numpy,
-    unit_cell_error_placeholder_numpy,
+    figure_to_viewport_img_html,
+    unit_cell_error_placeholder_html,
     render_unit_cell_deformation_video,
     residual_from_scales,
     run_analysis,
@@ -3394,15 +3393,35 @@ footer {{ visibility: hidden; }}
     -webkit-backdrop-filter: blur(6px);
     box-sizing: border-box !important;
 }}
-.gradio-container #unit-cell-main-view img {{
+.gradio-container #unit-cell-main-view,
+.gradio-container #unit-cell-main-view .myst-unit-cell-viewport-html,
+.gradio-container #unit-cell-main-view .html-container {{
+    min-height: 550px !important;
+    width: 100% !important;
+}}
+.gradio-container #unit-cell-main-view .myst-unit-cell-viewport-img-wrap {{
+    width: 100% !important;
+    min-height: 520px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: rgba(0, 0, 0, 0.85) !important;
+    border-radius: 6px !important;
+    padding: 4px !important;
+    box-sizing: border-box !important;
+}}
+.gradio-container #unit-cell-main-view img,
+.gradio-container #unit-cell-main-view .myst-unit-cell-viewport-img {{
     width: 100% !important;
     height: auto !important;
-    min-height: 0 !important;
+    min-height: 120px !important;
     max-height: 550px !important;
     padding: 0 !important;
     background-color: transparent !important;
     object-fit: contain !important;
     display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
     box-sizing: border-box !important;
 }}
 .gradio-container #unit-cell-main-view .wrap,
@@ -3908,14 +3927,17 @@ def _gravity_tui_for_preset(
 
 
 def _gravity_static_image_update(fig: object) -> object:
-    """RGB numpy array for gr.Image (type=numpy) — no temp-file URLs on HF Spaces."""
+    """Inline base64 PNG HTML for gr.HTML — avoids broken Gradio file URLs on HF Spaces."""
     if fig is gr.skip():
         print("[DEBUG] _gravity_static_image_update: gr.skip()", flush=True)
         return gr.skip()
-    print("[DEBUG] _gravity_static_image_update: converting figure to numpy", flush=True)
-    arr = figure_to_viewport_numpy(fig, dpi=_UNIT_CELL_IMAGE_DPI)
-    print(f"[DEBUG] _gravity_static_image_update: returning shape={arr.shape}", flush=True)
-    return arr
+    print("[DEBUG] _gravity_static_image_update: converting figure to HTML img", flush=True)
+    html = figure_to_viewport_img_html(fig, dpi=_UNIT_CELL_IMAGE_DPI)
+    print(
+        f"[DEBUG] _gravity_static_image_update: returning HTML len={len(html)}",
+        flush=True,
+    )
+    return html
 
 
 def _gravity_clear_video_update() -> dict:
@@ -4313,11 +4335,12 @@ def _make_gravity_quick_preset_click(slot: int):
         )
         if fig is None:
             outputs = list(outputs)
-            outputs[21] = unit_cell_error_placeholder_numpy()
+            outputs[21] = unit_cell_error_placeholder_html()
         image_out = outputs[21]
-        if hasattr(image_out, "shape"):
+        if isinstance(image_out, str):
             print(
-                f"[DEBUG] preset_click_unified: image shape={image_out.shape}",
+                f"[DEBUG] preset_click_unified: Returning HTML to Gradio, "
+                f"len={len(image_out)}",
                 flush=True,
             )
         else:
@@ -4646,12 +4669,12 @@ def build_app() -> gr.Blocks:
         _init_re_metrics, _init_unit_cell_header, _init_unit_cell_fig = run_residual_explorer(
             1.0, 1.0, 1.0, KAPPA_DOC, 0.1, 1.0, 1.0, 0.35, 22.0, 45.0
         )
-        _init_unit_cell_image = export_unit_cell_numpy_for_gradio(
+        _init_unit_cell_viewport_html = figure_to_viewport_img_html(
             _init_unit_cell_fig,
             dpi=_UNIT_CELL_IMAGE_DPI,
         )
         print(
-            f"[DEBUG] init unit cell image shape={_init_unit_cell_image.shape}",
+            f"[DEBUG] init unit cell viewport html len={len(_init_unit_cell_viewport_html)}",
             flush=True,
         )
         _init_preset_tui = _format_gravity_menu_tui_html()
@@ -4966,16 +4989,13 @@ def build_app() -> gr.Blocks:
                         _init_unit_cell_header,
                         elem_classes=["myst-cube-viewport-header-slot"],
                     )
-                    unit_cell_image = gr.Image(
-                        label=None,
-                        show_label=False,
-                        type="numpy",
-                        interactive=False,
-                        scale=1,
-                        height=550,
+                    unit_cell_image = gr.HTML(
+                        _init_unit_cell_viewport_html,
                         elem_id="unit-cell-main-view",
-                        value=_init_unit_cell_image,
-                        elem_classes=["myst-unit-cell-main-image", "gradio-image"],
+                        elem_classes=[
+                            "myst-unit-cell-main-image",
+                            "myst-unit-cell-viewport-html",
+                        ],
                     )
                     gr.HTML(
                         """
@@ -5022,11 +5042,14 @@ def build_app() -> gr.Blocks:
                 inputs=[re_edit_params],
                 outputs=[re_edit_params, edit_params_btn, *re_inputs],
             )
+            # .release() not .change() — preset slider gr.update() must not re-fire explorer.
+            gravity_manual_inputs = [*gravity_dial_inputs, re_edit_params]
             for slider in re_inputs:
-                slider.change(
-                    _run_residual_explorer_ui,
-                    inputs=gravity_dial_inputs,
+                slider.release(
+                    _run_residual_explorer_ui_manual,
+                    inputs=gravity_manual_inputs,
                     outputs=re_outputs,
+                    show_progress="hidden",
                 )
             gravity_immediate_outputs = [
                 *gravity_preset_btn_outputs,
@@ -5120,7 +5143,7 @@ def build_app() -> gr.Blocks:
         claims_minimize_btn.click(_minimize_claims, outputs=claims_outputs[:3])
         demo.load(_stream_term_boot, outputs=term_keypad_outputs)
         demo.load(
-            lambda: _init_unit_cell_image,
+            lambda: _init_unit_cell_viewport_html,
             outputs=[unit_cell_image],
             show_progress=False,
         )
