@@ -3431,7 +3431,7 @@ footer {{ visibility: hidden; }}
 .gradio-container #unit-cell-viewport .gradio-plot,
 .gradio-container #unit-cell-viewport .plot-container {{
     height: 100% !important;
-    min-height: 800px !important;
+    min-height: 950px !important;
     width: 100% !important;
     max-height: none !important;
     background-color: #000000 !important;
@@ -3439,9 +3439,9 @@ footer {{ visibility: hidden; }}
 }}
 .gradio-container #unit-cell-viewport .plot-container img {{
     width: 100% !important;
-    height: 100% !important;
+    height: auto !important;
     max-height: none !important;
-    object-fit: fill !important;
+    object-fit: contain !important;
     display: block !important;
 }}
 @media (max-width: 768px) {{
