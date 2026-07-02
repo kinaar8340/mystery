@@ -1903,30 +1903,39 @@ footer {{ visibility: hidden; }}
     padding: 0 0.35rem 0.5rem !important;
 }}
 .gradio-container .myst-gravity-split {{
+    display: grid !important;
+    grid-template-columns: minmax(16rem, 36%) minmax(0, 1fr) !important;
+    grid-template-rows: 1fr !important;
     align-items: stretch !important;
     gap: 0.75rem !important;
     width: 100% !important;
     min-height: calc(100vh - 10.5rem) !important;
+    box-sizing: border-box !important;
 }}
+/* Grid cells: override global .block {{ width:100% }} that forces row wrap */
 .gradio-container .myst-gravity-split > .column,
 .gradio-container .myst-gravity-split > .block,
-.gradio-container .myst-gravity-split > .form {{
+.gradio-container .myst-gravity-split > .form,
+.gradio-container .myst-gravity-split > .gr-box {{
     min-width: 0 !important;
+    min-height: 0 !important;
     height: 100% !important;
-}}
-.gradio-container .myst-gravity-controls-col {{
-    flex: 0 1 36% !important;
-    max-width: none !important;
-    min-width: 17.5rem !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
 }}
 .gradio-container .myst-gravity-controls-col .vqc-gravity-panel.vqc-optics-panel {{
     height: 100% !important;
+    width: 100% !important;
 }}
 .gradio-container .myst-gravity-visuals-col {{
-    flex: 1 1 64% !important;
-    max-width: none !important;
     align-items: stretch !important;
     align-self: stretch !important;
+}}
+.gradio-container .myst-gravity-visuals-col .myst-cube-viewport-frame {{
+    width: 100% !important;
+    max-width: 100% !important;
 }}
 .gradio-container .myst-gravity-page .myst-cube-viewport-frame.vqc-optics-panel {{
     width: 100% !important;
@@ -2080,11 +2089,11 @@ footer {{ visibility: hidden; }}
     font-size: 0.94rem !important;
     line-height: 1.5 !important;
 }}
-@media (max-width: 900px) {{
-    .gradio-container .myst-gravity-controls-col,
-    .gradio-container .myst-gravity-visuals-col {{
-        max-width: 100% !important;
-        flex: 1 1 100% !important;
+@media (max-width: 768px) {{
+    .gradio-container .myst-gravity-split {{
+        grid-template-columns: 1fr !important;
+        grid-template-rows: auto auto !important;
+        min-height: auto !important;
     }}
 }}
 @media (max-width: 640px) {{
