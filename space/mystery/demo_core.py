@@ -968,6 +968,77 @@ def _ease_in_out_cubic(t: float) -> float:
     return 1.0 - (-2.0 * t + 2.0) ** 3 / 2.0
 
 
+def _deformation_pressure_loop(n_forward: int = 24) -> list[float]:
+    """Ping-pong 0 → 1 → 0 pressure path for seamless video loops."""
+    sweep_t = np.linspace(0.0, 1.0, max(4, int(n_forward)))
+    forward = [_ease_in_out_cubic(float(t)) for t in sweep_t]
+    reverse = list(reversed(forward[:-1]))
+    return forward + reverse
+
+
+def _figure_to_rgb(fig: plt.Figure, *, dpi: int = 96) -> np.ndarray:
+    """Rasterize a matplotlib figure to a fixed-size RGB frame."""
+    from PIL import Image
+
+    buf = io.BytesIO()
+    fig.savefig(
+        buf,
+        format="png",
+        dpi=dpi,
+        facecolor=fig.get_facecolor(),
+        bbox_inches=None,
+        pad_inches=0,
+    )
+    buf.seek(0)
+    return np.asarray(Image.open(buf).convert("RGB"))
+
+
+def _encode_loop_video(rgb_frames: list[np.ndarray], *, fps: int = 12) -> str:
+    """Write frames to H.264 mp4 (browser-playable); fall back to looping GIF."""
+    if not rgb_frames:
+        raise ValueError("no frames to encode")
+
+    with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as tmp:
+        mp4_path = tmp.name
+
+    try:
+        import imageio.v2 as imageio
+
+        writer = imageio.get_writer(
+            mp4_path,
+            fps=fps,
+            codec="libx264",
+            quality=8,
+            pixelformat="yuv420p",
+            macro_block_size=1,
+        )
+        try:
+            for frame in rgb_frames:
+                writer.append_data(frame)
+        finally:
+            writer.close()
+        return mp4_path
+    except Exception:
+        try:
+            os.unlink(mp4_path)
+        except OSError:
+            pass
+
+    from PIL import Image
+
+    with tempfile.NamedTemporaryFile(suffix=".gif", delete=False) as tmp:
+        gif_path = tmp.name
+    pil_frames = [Image.fromarray(frame) for frame in rgb_frames]
+    pil_frames[0].save(
+        gif_path,
+        save_all=True,
+        append_images=pil_frames[1:],
+        duration=max(1, int(1000 / fps)),
+        loop=0,
+    )
+    return gif_path
+
+
 def build_unit_cell_figure(
     delta_z: float = 0.15,
     delta_side: float = 0.08,
@@ -1332,6 +1403,89 @@ def stream_unit_cell_deformation(
     )
     final_km["phase"] = "hold"
     yield metrics, header, fig, final_km
+
+
+def render_unit_cell_deformation_video(
+    phi_sq_scale: float,
+    e_sq_scale: float,
+    pi_sq_scale: float,
+    kappa: float,
+    delta_z: float,
+    alpha: float,
+    beta: float,
+    deform_pressure: float = 0.35,
+    view_elev: float = 22.0,
+    view_azim: float = 45.0,
+    *,
+    fps: int = 12,
+    dpi: int = 96,
+    progress=None,
+) -> tuple[str, str, str, plt.Figure, dict[str, float | int | str | None]]:
+    """Render a seamless deformation loop (mp4/gif) for smooth Gradio playback."""
+    r_val = residual_from_scales(phi_sq_scale, e_sq_scale, pi_sq_scale)
+    d_side = delta_side_contraction(delta_z, r_val, kappa, alpha=alpha, beta=beta)
+    side = abs(d_side) * 0.5
+    hold = float(np.clip(deform_pressure, 0.0, 1.0))
+    pressures = _deformation_pressure_loop()
+    total_frames = len(pressures)
+    rgb_frames: list[np.ndarray] = []
+
+    for frame_idx, pressure_val in enumerate(pressures, start=1):
+        if progress is not None:
+            progress(frame_idx / total_frames, desc=f"Rendering frame {frame_idx}/{total_frames}")
+        p = float(pressure_val)
+        fig = build_unit_cell_figure(
+            delta_z=delta_z,
+            delta_side=side,
+            r_val=r_val,
+            pressure=p,
+            view_elev=view_elev,
+            view_azim=view_azim,
+            show_curvature_grid=False,
+            dpi=dpi,
+        )
+        rgb_frames.append(_figure_to_rgb(fig, dpi=dpi))
+        plt.close(fig)
+
+    if progress is not None:
+        progress(0.98, desc="Encoding loop video…")
+    video_path = _encode_loop_video(rgb_frames, fps=fps)
+
+    metrics, header, fig = run_residual_explorer(
+        phi_sq_scale,
+        e_sq_scale,
+        pi_sq_scale,
+        kappa,
+        delta_z,
+        alpha,
+        beta,
+        deform_pressure=hold,
+        view_elev=view_elev,
+        view_azim=view_azim,
+    )
+    final_km = deformation_key_metrics(
+        phi_sq_scale,
+        e_sq_scale,
+        pi_sq_scale,
+        kappa,
+        delta_z,
+        alpha,
+        beta,
+        hold,
+        frame_idx=total_frames,
+        total_frames=total_frames,
+    )
+    final_km["phase"] = "loop"
+    metrics = (
+        f"{metrics}\n\n"
+        f"=== DEFORMATION LOOP ===\n"
+        f"Frames rendered       : {total_frames} @ {fps} fps\n"
+        f"Playback              : seamless 0→1→0 loop\n"
+        f"Hold pressure         : {hold * 100:.1f}%"
+    )
+    if progress is not None:
+        progress(1.0, desc="Loop ready")
+    return video_path, metrics, header, fig, final_km
 
 
 PROBE_SCRIPTS: tuple[tuple[str, str], ...] = (

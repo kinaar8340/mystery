@@ -23,6 +23,8 @@ cat > "$DST/requirements.txt" <<'EOF'
 numpy>=1.24.0,<3.0.0
 scipy>=1.10.0
 matplotlib>=3.7.0
+imageio>=2.34.0
+imageio-ffmpeg>=0.5.0
 plotly>=5.18.0
 pydantic==2.10.6
 requests>=2.31.0

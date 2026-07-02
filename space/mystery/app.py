@@ -39,7 +39,7 @@ from demo_core import (
     residual_from_scales,
     run_analysis,
     run_residual_explorer,
-    stream_unit_cell_deformation,
+    render_unit_cell_deformation_video,
     terminal_directory_help,
     terminal_figures_index,
     terminal_keypad_map,
@@ -2000,14 +2000,37 @@ footer {{ visibility: hidden; }}
     overflow: hidden !important;
     line-height: 1.15 !important;
 }}
-.gradio-container .myst-gravity-cube-panel > .block.myst-cube-plot-inner,
-.gradio-container .myst-gravity-cube-panel .myst-cube-plot-inner,
-.gradio-container .myst-gravity-cube-panel .myst-cube-plot-inner.block {{
+.gradio-container .myst-gravity-cube-panel > .column.myst-cube-viewport-media,
+.gradio-container .myst-gravity-cube-panel .myst-cube-viewport-media {{
     flex: 1 1 auto !important;
     min-height: clamp(18rem, 42vh, 28rem) !important;
     height: auto !important;
     max-height: none !important;
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
     overflow: hidden !important;
+    box-sizing: border-box !important;
+}}
+.gradio-container .myst-gravity-cube-panel .myst-cube-viewport-media .myst-cube-plot-inner,
+.gradio-container .myst-gravity-cube-panel .myst-cube-viewport-media .myst-cube-plot-inner.block,
+.gradio-container .myst-gravity-cube-panel .myst-cube-viewport-media .myst-cube-anim-video,
+.gradio-container .myst-gravity-cube-panel .myst-cube-viewport-media .myst-cube-anim-video.block {{
+    flex: 1 1 auto !important;
+    min-height: clamp(18rem, 42vh, 28rem) !important;
+    height: auto !important;
+    max-height: none !important;
+    width: 100% !important;
+    overflow: hidden !important;
+}}
+.gradio-container .myst-gravity-cube-panel .myst-cube-viewport-media .myst-cube-anim-video video {{
+    width: 100% !important;
+    height: 100% !important;
+    max-height: clamp(16rem, 38vh, 26rem) !important;
+    object-fit: contain !important;
+    object-position: center center !important;
+    background: #000000 !important;
+    display: block !important;
 }}
 .gradio-container .myst-gravity-cube-panel > .column.myst-gravity-preset-tui-section,
 .gradio-container .myst-gravity-cube-panel .myst-gravity-preset-tui-section,
@@ -2248,6 +2271,7 @@ footer {{ visibility: hidden; }}
     width: 100% !important;
     max-width: none !important;
 }}
+.gradio-container .myst-gravity-page .myst-cube-viewport-frame .myst-cube-viewport-media,
 .gradio-container .myst-gravity-page .myst-cube-viewport-frame .myst-cube-plot-inner {{
     flex: 1 1 auto !important;
     min-height: clamp(18rem, 42vh, 28rem) !important;
@@ -2591,12 +2615,15 @@ def _format_gravity_preset_tui_html(
     preset_num = active_slot + 1
     profile = _GRAVITY_PRESET_SLOT_LABELS.get(active_slot)
     if key_metrics:
-        frame_idx = key_metrics.get("frame_idx")
-        total_frames = key_metrics.get("total_frames")
-        if frame_idx is not None and total_frames:
-            status = f"ANIMATE — FRAME {int(frame_idx)}/{int(total_frames)}"
+        if key_metrics.get("phase") == "loop":
+            status = "LOOP — DEFORMATION VIDEO"
         else:
-            status = status_label or "ANIMATE"
+            frame_idx = key_metrics.get("frame_idx")
+            total_frames = key_metrics.get("total_frames")
+            if frame_idx is not None and total_frames:
+                status = f"ANIMATE — FRAME {int(frame_idx)}/{int(total_frames)}"
+            else:
+                status = status_label or "ANIMATE"
     elif status_label:
         status = status_label
     elif profile:
@@ -2655,7 +2682,7 @@ def _run_residual_explorer_ui(
     view_elev: float,
     view_azim: float,
     active_preset: int,
-) -> tuple[str, str, object, str]:
+) -> tuple[str, str, object, dict, str]:
     metrics, header, fig = run_residual_explorer(
         phi_sq_scale,
         e_sq_scale,
@@ -2681,7 +2708,26 @@ def _run_residual_explorer_ui(
         view_azim,
     )
     tui = _format_gravity_preset_tui_html(int(active_preset), dials)
-    return metrics, header, fig, tui
+    return metrics, header, fig, _gravity_hide_video_update(), tui
+
+
+def _gravity_hide_video_update() -> dict:
+    return gr.update(visible=False, value=None)
+
+
+def _gravity_show_video_update(video_path: str) -> dict:
+    return gr.update(value=video_path, visible=True, autoplay=True)
+
+
+def _gravity_viewport_media(
+    fig: object,
+    video_update: dict,
+    *,
+    show_video: bool = False,
+) -> tuple[object, dict]:
+    if show_video:
+        return gr.skip(), video_update
+    return fig, _gravity_hide_video_update()
 
 
 def _gravity_preset_btn_classes(key: str, active: str) -> list[str]:
@@ -2709,9 +2755,17 @@ def _gravity_explorer_outputs(
     metrics: str,
     header: str,
     fig: object,
+    video_update: dict,
     tui: str,
     active_slot: int,
+    *,
+    show_video: bool = False,
 ) -> tuple:
+    plot_out, video_out = _gravity_viewport_media(
+        fig,
+        video_update,
+        show_video=show_video,
+    )
     return (
         *_gravity_preset_btn_updates(active_key),
         dials["phi"],
@@ -2726,7 +2780,8 @@ def _gravity_explorer_outputs(
         dials["azim"],
         metrics,
         header,
-        fig,
+        plot_out,
+        video_out,
         tui,
         active_slot,
     )
@@ -2804,36 +2859,17 @@ def _make_gravity_quick_preset_click(slot: int):
             view_azim,
         )
         return _gravity_explorer_outputs(
-            str(active_slot), dials, metrics, header, fig, tui, active_slot
+            str(active_slot),
+            dials,
+            metrics,
+            header,
+            fig,
+            _gravity_hide_video_update(),
+            tui,
+            active_slot,
         )
 
     return handler
-
-
-def _gravity_animate_frame_yield(
-    fig: object,
-    tui: str,
-    pressure: float,
-) -> tuple:
-    """Stream-friendly yield: plot + TUI + pressure only — avoids layout reflow."""
-    return (
-        *_gravity_preset_btn_updates("animate"),
-        gr.skip(),
-        gr.skip(),
-        gr.skip(),
-        gr.skip(),
-        gr.skip(),
-        gr.skip(),
-        gr.skip(),
-        pressure,
-        gr.skip(),
-        gr.skip(),
-        gr.skip(),
-        gr.skip(),
-        fig,
-        tui,
-        gr.skip(),
-    )
 
 
 def _gravity_animate_click(
@@ -2848,6 +2884,7 @@ def _gravity_animate_click(
     view_elev: float,
     view_azim: float,
     active_preset: int,
+    progress: gr.Progress = gr.Progress(track_tqdm=False),
 ):
     dials = _gravity_dial_bundle(
         phi_sq_scale,
@@ -2861,9 +2898,8 @@ def _gravity_animate_click(
         view_elev,
         view_azim,
     )
-    last_pack: tuple[str, str, object, str, dict[str, float | int | str | None]] | None = None
     try:
-        for metrics, header, fig, key_metrics in stream_unit_cell_deformation(
+        video_path, metrics, header, fig, key_metrics = render_unit_cell_deformation_video(
             phi_sq_scale,
             e_sq_scale,
             pi_sq_scale,
@@ -2874,37 +2910,41 @@ def _gravity_animate_click(
             deform_pressure,
             view_elev,
             view_azim,
-        ):
-            pressure = float(key_metrics["pressure"])
-            dials["pressure"] = pressure
-            tui = _format_gravity_preset_tui_html(
-                int(active_preset),
-                dials,
-                key_metrics=key_metrics,
-            )
-            last_pack = (metrics, header, fig, tui, key_metrics)
-            yield _gravity_animate_frame_yield(fig, tui, pressure)
+            progress=progress,
+        )
+        dials["pressure"] = float(key_metrics["pressure"])
+        tui = _format_gravity_preset_tui_html(
+            int(active_preset),
+            dials,
+            key_metrics=key_metrics,
+        )
+        return _gravity_explorer_outputs(
+            "animate",
+            dials,
+            metrics,
+            header,
+            fig,
+            _gravity_show_video_update(video_path),
+            tui,
+            int(active_preset),
+            show_video=True,
+        )
     except Exception as exc:
-        logger.exception("gravity animate stream failed")
+        logger.exception("gravity animate render failed")
         err_metrics = f"Animation error: {exc}"
         err_tui = _format_gravity_preset_tui_html(
             int(active_preset),
             dials,
             status_label="ANIMATE ERROR",
         )
-        yield _gravity_animate_frame_yield(gr.skip(), err_tui, dials["pressure"])
-        return
-    if last_pack is not None:
-        metrics, header, fig, tui, key_metrics = last_pack
-        dials["pressure"] = float(key_metrics["pressure"])
-        tui = _format_gravity_preset_tui_html(int(active_preset), dials)
-        yield _gravity_explorer_outputs(
-            str(int(active_preset)),
+        return _gravity_explorer_outputs(
+            "animate",
             dials,
-            metrics,
-            header,
-            fig,
-            tui,
+            err_metrics,
+            gr.skip(),
+            gr.skip(),
+            _gravity_hide_video_update(),
+            err_tui,
             int(active_preset),
         )
 
@@ -3478,12 +3518,28 @@ def build_app() -> gr.Blocks:
                         ]
                     ):
                         unit_cell_header = gr.HTML(_init_unit_cell_header)
-                        unit_cell_plot = gr.Plot(
-                            label=None,
-                            show_label=False,
-                            value=_init_unit_cell,
-                            elem_classes=["vqc-plot3d-panel", "myst-cube-plot-inner"],
-                        )
+                        with gr.Column(elem_classes=["myst-cube-viewport-media"]):
+                            unit_cell_plot = gr.Plot(
+                                label=None,
+                                show_label=False,
+                                value=_init_unit_cell,
+                                elem_classes=[
+                                    "vqc-plot3d-panel",
+                                    "myst-cube-plot-inner",
+                                    "myst-cube-plot-static",
+                                ],
+                            )
+                            unit_cell_video = gr.Video(
+                                label=None,
+                                show_label=False,
+                                visible=False,
+                                interactive=False,
+                                autoplay=True,
+                                loop=True,
+                                format="mp4",
+                                buttons=[],
+                                elem_classes=["myst-cube-anim-video"],
+                            )
                         with gr.Column(elem_classes=["myst-gravity-preset-tui-section"]):
                             gr.HTML(GRAVITY_PRESET_TUI_HEADER_HTML)
                             re_preset_tui = gr.HTML(
@@ -3495,7 +3551,13 @@ def build_app() -> gr.Blocks:
                 re_kappa, re_delta_z, re_alpha, re_beta, re_pressure,
                 re_view_elev, re_view_azim,
             ]
-            re_outputs = [re_metrics, unit_cell_header, unit_cell_plot, re_preset_tui]
+            re_outputs = [
+                re_metrics,
+                unit_cell_header,
+                unit_cell_plot,
+                unit_cell_video,
+                re_preset_tui,
+            ]
             gravity_preset_inputs = [*re_inputs, re_active_preset]
             gravity_preset_outputs = [
                 *re_quick_presets,
@@ -3515,7 +3577,6 @@ def build_app() -> gr.Blocks:
                 inputs=gravity_preset_inputs,
                 outputs=gravity_preset_outputs,
                 show_progress="full",
-                concurrency_limit=None,
             )
             for slot, preset_btn in enumerate(re_quick_presets):
                 preset_btn.click(
