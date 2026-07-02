@@ -3431,7 +3431,7 @@ footer {{ visibility: hidden; }}
 .gradio-container #unit-cell-viewport .gradio-plot,
 .gradio-container #unit-cell-viewport .plot-container {{
     height: 100% !important;
-    min-height: 950px !important;
+    min-height: 900px !important;
     width: 100% !important;
     max-height: none !important;
     background-color: #000000 !important;
