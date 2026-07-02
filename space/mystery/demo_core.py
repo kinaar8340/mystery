@@ -1063,6 +1063,52 @@ def figure_to_viewport_pil(fig: plt.Figure, *, dpi: int = 100):
         return unit_cell_error_placeholder_pil()
 
 
+def unit_cell_error_placeholder_dict() -> dict:
+    """Red placeholder as Gradio Image dict with inline base64 url."""
+    from PIL import Image as PILImage
+
+    buf = io.BytesIO()
+    PILImage.fromarray(unit_cell_error_placeholder_numpy()).save(buf, format="PNG")
+    b64 = base64.b64encode(buf.getvalue()).decode("ascii")
+    return {
+        "url": f"data:image/png;base64,{b64}",
+        "mime_type": "image/png",
+        "orig_name": "unit_cell_error.png",
+    }
+
+
+def figure_to_viewport_image_dict(fig: plt.Figure, *, dpi: int = 100) -> dict:
+    """Matplotlib figure → Gradio Image dict with inline base64 url (HF-safe)."""
+    print(f"[DEBUG] figure_to_viewport_image_dict: dpi={dpi}", flush=True)
+    try:
+        buf = io.BytesIO()
+        fig.savefig(
+            buf,
+            format="png",
+            dpi=dpi,
+            facecolor=fig.get_facecolor(),
+            bbox_inches="tight",
+            pad_inches=0.02,
+        )
+        plt.close(fig)
+        buf.seek(0)
+        b64 = base64.b64encode(buf.getvalue()).decode("ascii")
+        data_url = f"data:image/png;base64,{b64}"
+        print(
+            f"[DEBUG] figure_to_viewport_image_dict: b64_len={len(b64)}",
+            flush=True,
+        )
+        return {
+            "url": data_url,
+            "mime_type": "image/png",
+            "orig_name": "unit_cell_viewport.png",
+        }
+    except Exception as exc:
+        print(f"[ERROR] figure_to_viewport_image_dict failed: {exc}", flush=True)
+        traceback.print_exc()
+        return unit_cell_error_placeholder_dict()
+
+
 def figure_to_viewport_img_html(fig: plt.Figure, *, dpi: int = 100) -> str:
     """Matplotlib figure → inline base64 PNG for gr.HTML (no /tmp file URLs on HF)."""
     print(f"[DEBUG] figure_to_viewport_img_html: dpi={dpi}", flush=True)
