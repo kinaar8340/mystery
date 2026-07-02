@@ -37,7 +37,7 @@ from demo_core import (
     get_build_label,
     is_hf_space,
     build_unit_cell_viewport_header_html,
-    export_unit_cell_pil_for_gradio,
+    export_unit_cell_numpy_for_gradio,
     render_unit_cell_deformation_video,
     residual_from_scales,
     run_analysis,
@@ -3869,10 +3869,19 @@ def _gravity_tui_for_preset(
 
 
 def _gravity_static_image_update(fig: object) -> object:
-    """PIL Image for gr.Image (type=pil) — no temp-file URLs on HF Spaces."""
+    """RGB numpy array for gr.Image (type=numpy) — no temp-file URLs on HF Spaces."""
     if fig is gr.skip():
+        print("[DEBUG] _gravity_static_image_update: gr.skip()", flush=True)
         return gr.skip()
-    return export_unit_cell_pil_for_gradio(fig, dpi=_UNIT_CELL_IMAGE_DPI)
+    print("[DEBUG] _gravity_static_image_update: converting figure to numpy", flush=True)
+    try:
+        arr = export_unit_cell_numpy_for_gradio(fig, dpi=_UNIT_CELL_IMAGE_DPI)
+        print(f"[DEBUG] _gravity_static_image_update: ok shape={arr.shape}", flush=True)
+        return arr
+    except Exception as exc:
+        print(f"[DEBUG] _gravity_static_image_update: FAILED {exc!r}", flush=True)
+        logger.exception("unit cell image conversion failed")
+        raise
 
 
 def _gravity_clear_video_update() -> dict:
@@ -3923,6 +3932,7 @@ def _run_residual_explorer_ui(
     slot = int(active_preset)
     tui = _gravity_tui_for_preset(slot, dials)
     control_levels = _format_gravity_control_panel_html(dials, slot)
+    print(f"[DEBUG] _run_residual_explorer_ui: preset={slot}", flush=True)
     return (
         metrics,
         header,
@@ -4188,6 +4198,7 @@ def _make_gravity_quick_preset_click(slot: int):
         _active_preset: int,
         edit_params_enabled: bool,
     ):
+        print(f"[DEBUG] preset_click handler: slot={slot}", flush=True)
         dials, metrics, header, fig, tui, active_slot = _gravity_quick_preset_apply(
             slot,
             phi_sq_scale,
@@ -4531,9 +4542,13 @@ def build_app() -> gr.Blocks:
         _init_re_metrics, _init_unit_cell_header, _init_unit_cell_fig = run_residual_explorer(
             1.0, 1.0, 1.0, KAPPA_DOC, 0.1, 1.0, 1.0, 0.35, 22.0, 45.0
         )
-        _init_unit_cell_image = export_unit_cell_pil_for_gradio(
+        _init_unit_cell_image = export_unit_cell_numpy_for_gradio(
             _init_unit_cell_fig,
             dpi=_UNIT_CELL_IMAGE_DPI,
+        )
+        print(
+            f"[DEBUG] init unit cell image shape={_init_unit_cell_image.shape}",
+            flush=True,
         )
         _init_preset_tui = _format_gravity_menu_tui_html()
         _init_control_levels = _format_gravity_control_panel_html(_GRAVITY_HOME_DIALS, 0)
@@ -4848,7 +4863,7 @@ def build_app() -> gr.Blocks:
                     unit_cell_image = gr.Image(
                         label=None,
                         show_label=False,
-                        type="pil",
+                        type="numpy",
                         interactive=False,
                         scale=1,
                         height=550,

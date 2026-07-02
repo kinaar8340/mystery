@@ -939,21 +939,37 @@ def export_figure_for_gradio(fig: plt.Figure, *, dpi: int = 80) -> str:
 
 
 def figure_to_pil_image(fig: plt.Figure, *, dpi: int = 150):
-    """Matplotlib figure → PIL Image (reliable for gr.Image type='pil' on HF Spaces)."""
+    """Matplotlib figure → PIL Image."""
     import io
 
     from PIL import Image as PILImage
 
+    print(f"[DEBUG] figure_to_pil_image: rendering dpi={dpi}", flush=True)
     buf = io.BytesIO()
     fig.savefig(buf, format="png", dpi=dpi, facecolor=fig.get_facecolor())
     plt.close(fig)
     buf.seek(0)
-    return PILImage.open(buf).copy()
+    pil_img = PILImage.open(buf).copy()
+    print(f"[DEBUG] figure_to_pil_image: PIL size={pil_img.size}", flush=True)
+    return pil_img
+
+
+def figure_to_numpy_rgb(fig: plt.Figure, *, dpi: int = 150) -> np.ndarray:
+    """Matplotlib figure → RGB numpy array for gr.Image(type='numpy')."""
+    pil_img = figure_to_pil_image(fig, dpi=dpi)
+    rgb = np.asarray(pil_img.convert("RGB"))
+    print(f"[DEBUG] figure_to_numpy_rgb: shape={rgb.shape}", flush=True)
+    return rgb
 
 
 def export_unit_cell_pil_for_gradio(fig: plt.Figure, *, dpi: int = 150):
     """PIL image for gr.Image — avoids /tmp filepath serving issues on Spaces."""
     return figure_to_pil_image(fig, dpi=dpi)
+
+
+def export_unit_cell_numpy_for_gradio(fig: plt.Figure, *, dpi: int = 150) -> np.ndarray:
+    """RGB numpy array for gr.Image — most reliable on HF Spaces."""
+    return figure_to_numpy_rgb(fig, dpi=dpi)
 
 
 def get_unit_cell_viewport_pil_image(
@@ -983,7 +999,10 @@ def get_unit_cell_viewport_pil_image(
         view_elev,
         view_azim,
     )
-    return export_unit_cell_pil_for_gradio(fig, dpi=dpi)
+    print("[DEBUG] get_unit_cell_viewport_pil_image: building figure", flush=True)
+    pil_img = export_unit_cell_pil_for_gradio(fig, dpi=dpi)
+    print(f"[DEBUG] get_unit_cell_viewport_pil_image: done size={pil_img.size}", flush=True)
+    return pil_img
 
 
 def _ease_in_out_cubic(t: float) -> float:
