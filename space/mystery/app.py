@@ -1004,11 +1004,59 @@ WALLPAPER_HEAD = f"""
     window.addEventListener('load', mountWallpaper);
 }})();
 (function() {{
+    function fixUnitCellViewportLayout() {{
+        var imgRoot = document.getElementById('unit-cell-main-view');
+        if (imgRoot) {{
+            imgRoot.style.setProperty('display', 'block', 'important');
+            imgRoot.style.setProperty('visibility', 'visible', 'important');
+            imgRoot.style.setProperty('opacity', '1', 'important');
+            imgRoot.style.setProperty('height', '550px', 'important');
+            imgRoot.style.setProperty('min-height', '550px', 'important');
+            imgRoot.style.setProperty('width', '100%', 'important');
+            imgRoot.style.setProperty('overflow', 'visible', 'important');
+            imgRoot.querySelectorAll('.wrap, .image-container, .gr-image').forEach(function(el) {{
+                el.style.setProperty('display', 'block', 'important');
+                el.style.setProperty('height', '550px', 'important');
+                el.style.setProperty('min-height', '550px', 'important');
+                el.style.setProperty('width', '100%', 'important');
+                el.style.setProperty('overflow', 'visible', 'important');
+            }});
+            imgRoot.querySelectorAll('img').forEach(function(img) {{
+                img.style.setProperty('display', 'block', 'important');
+                img.style.setProperty('visibility', 'visible', 'important');
+                img.style.setProperty('opacity', '1', 'important');
+                img.style.setProperty('height', '550px', 'important');
+                img.style.setProperty('min-height', '550px', 'important');
+                img.style.setProperty('width', '100%', 'important');
+                img.style.setProperty('object-fit', 'contain', 'important');
+            }});
+        }}
+        var vidRoot = document.getElementById('unit-cell-animation');
+        if (vidRoot) {{
+            vidRoot.style.setProperty('display', 'block', 'important');
+            vidRoot.style.setProperty('visibility', 'visible', 'important');
+            vidRoot.style.setProperty('height', '320px', 'important');
+            vidRoot.style.setProperty('min-height', '320px', 'important');
+            vidRoot.style.setProperty('width', '100%', 'important');
+            vidRoot.style.setProperty('overflow', 'visible', 'important');
+            vidRoot.querySelectorAll('.wrap, .video-container, .gr-video, video').forEach(function(el) {{
+                el.style.setProperty('display', 'block', 'important');
+                el.style.setProperty('height', '320px', 'important');
+                el.style.setProperty('min-height', '320px', 'important');
+                el.style.setProperty('width', '100%', 'important');
+            }});
+        }}
+        document.querySelectorAll('.myst-unit-cell-viewport-slot, .myst-unit-cell-animation-slot').forEach(function(slot) {{
+            slot.style.setProperty('overflow', 'visible', 'important');
+            slot.style.setProperty('height', 'auto', 'important');
+        }});
+    }}
     function fixUnitCellImageUrls() {{
         var origin = window.location.origin;
         var gradioRoot = (window.gradio_config && window.gradio_config.root) || '';
         var root = document.getElementById('unit-cell-main-view');
         if (!root) return;
+        fixUnitCellViewportLayout();
         root.querySelectorAll('img').forEach(function(img) {{
             var src = img.getAttribute('src') || '';
             if (!src || src.indexOf('data:') === 0 || src.indexOf('blob:') === 0) return;
@@ -1039,10 +1087,14 @@ WALLPAPER_HEAD = f"""
     }}
     function bootImageFix() {{
         fixUnitCellImageUrls();
+        fixUnitCellViewportLayout();
         if (window.__mystUnitCellImgObs) return;
-        window.__mystUnitCellImgObs = new MutationObserver(fixUnitCellImageUrls);
+        window.__mystUnitCellImgObs = new MutationObserver(function() {{
+            fixUnitCellImageUrls();
+            fixUnitCellViewportLayout();
+        }});
         window.__mystUnitCellImgObs.observe(document.body, {{
-            subtree: true, childList: true, attributes: true, attributeFilter: ['src']
+            subtree: true, childList: true, attributes: true, attributeFilter: ['src', 'style', 'class']
         }});
     }}
     if (document.body) bootImageFix();
@@ -3587,6 +3639,160 @@ footer {{ visibility: hidden; }}
         min-height: min(70vh, var(--myst-viewport-plot-height, calc(100dvh - 12.5rem))) !important;
     }}
 }}
+/* === HF SPACE VIEWPORT SURVIVAL (class-based; avoids :has() + flex collapse) === */
+.gradio-container .myst-gravity-visuals-col.myst-gravity-image-viewport {{
+    flex: 0 0 auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.35rem !important;
+}}
+.gradio-container .myst-gravity-image-viewport.myst-gravity-right-panel,
+.gradio-container .myst-gravity-image-viewport.myst-gravity-right-stack {{
+    overflow: visible !important;
+    min-height: 0 !important;
+    height: auto !important;
+}}
+.gradio-container .myst-unit-cell-viewport-slot,
+.gradio-container .myst-unit-cell-viewport-slot.block,
+.gradio-container .myst-unit-cell-viewport-slot > .form {{
+    flex: 0 0 auto !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 550px !important;
+    max-height: none !important;
+    overflow: visible !important;
+    display: block !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    background: #000000 !important;
+    box-shadow: none !important;
+}}
+.gradio-container .myst-unit-cell-animation-slot,
+.gradio-container .myst-unit-cell-animation-slot.block,
+.gradio-container .myst-unit-cell-animation-slot > .form {{
+    flex: 0 0 auto !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 320px !important;
+    max-height: none !important;
+    overflow: visible !important;
+    display: block !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    background: rgba(20, 20, 20, 0.65) !important;
+    box-shadow: none !important;
+}}
+.gradio-container #unit-cell-main-view,
+.gradio-container .myst-unit-cell-viewport-image,
+.gradio-container .myst-unit-cell-main-image,
+.gradio-container .block.myst-unit-cell-viewport-image,
+.gradio-container .block.myst-unit-cell-main-image {{
+    flex: 0 0 auto !important;
+    width: 100% !important;
+    max-width: 550px !important;
+    height: 550px !important;
+    min-height: 550px !important;
+    max-height: 550px !important;
+    overflow: visible !important;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    position: relative !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    border: none !important;
+    background: #000000 !important;
+    box-shadow: none !important;
+}}
+.gradio-container #unit-cell-main-view .wrap,
+.gradio-container #unit-cell-main-view .image-container,
+.gradio-container #unit-cell-main-view .gr-image,
+.gradio-container .myst-unit-cell-viewport-image .wrap,
+.gradio-container .myst-unit-cell-viewport-image .image-container,
+.gradio-container .myst-unit-cell-viewport-image .gr-image,
+.gradio-container .myst-unit-cell-main-image .wrap,
+.gradio-container .myst-unit-cell-main-image .image-container,
+.gradio-container .myst-unit-cell-main-image .gr-image {{
+    width: 100% !important;
+    height: 550px !important;
+    min-height: 550px !important;
+    max-height: 550px !important;
+    overflow: visible !important;
+    display: block !important;
+    flex: none !important;
+    background: #000000 !important;
+}}
+.gradio-container #unit-cell-main-view img,
+.gradio-container .myst-unit-cell-viewport-image img,
+.gradio-container .myst-unit-cell-main-image img,
+.gradio-container .myst-unit-cell-viewport-image .gr-image img,
+.gradio-container .myst-unit-cell-main-image .gr-image img {{
+    width: 100% !important;
+    height: 550px !important;
+    min-height: 550px !important;
+    max-height: 550px !important;
+    object-fit: contain !important;
+    object-position: center center !important;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    background: #000000 !important;
+}}
+.gradio-container #unit-cell-animation,
+.gradio-container .myst-unit-cell-animation,
+.gradio-container .block.myst-unit-cell-animation {{
+    flex: 0 0 auto !important;
+    width: 100% !important;
+    height: 320px !important;
+    min-height: 320px !important;
+    max-height: none !important;
+    overflow: visible !important;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    background: rgba(20, 20, 20, 0.65) !important;
+    box-shadow: none !important;
+}}
+.gradio-container #unit-cell-animation .wrap,
+.gradio-container #unit-cell-animation .video-container,
+.gradio-container .myst-unit-cell-animation .wrap,
+.gradio-container .myst-unit-cell-animation .video-container,
+.gradio-container .myst-unit-cell-animation .gr-video {{
+    width: 100% !important;
+    height: 320px !important;
+    min-height: 320px !important;
+    max-height: none !important;
+    overflow: visible !important;
+    display: block !important;
+    flex: none !important;
+}}
+.gradio-container #unit-cell-animation video,
+.gradio-container .myst-unit-cell-animation video {{
+    width: 100% !important;
+    height: 320px !important;
+    min-height: 320px !important;
+    max-height: none !important;
+    object-fit: contain !important;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}}
+.gradio-container .myst-gravity-image-viewport .myst-cube-viewport-header-slot {{
+    flex: 0 0 auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+}}
 """
 
 
@@ -5046,41 +5252,45 @@ def build_app() -> gr.Blocks:
                         _init_unit_cell_header,
                         elem_classes=["myst-cube-viewport-header-slot"],
                     )
-                    unit_cell_image = gr.Image(
-                        value=_init_unit_cell_numpy,
-                        label=None,
-                        show_label=False,
-                        type="numpy",
-                        image_mode="RGB",
-                        interactive=False,
-                        height=550,
-                        width=550,
-                        show_download_button=False,
-                        show_share_button=False,
-                        show_fullscreen_button=False,
-                        elem_id="unit-cell-main-view",
-                        elem_classes=[
-                            "myst-unit-cell-viewport-image",
-                            "myst-unit-cell-main-image",
-                        ],
-                    )
+                    with gr.Column(elem_classes=["myst-unit-cell-viewport-slot"]):
+                        unit_cell_image = gr.Image(
+                            value=_init_unit_cell_numpy,
+                            label=None,
+                            show_label=False,
+                            type="numpy",
+                            image_mode="RGB",
+                            interactive=False,
+                            container=False,
+                            height=550,
+                            width=550,
+                            show_download_button=False,
+                            show_share_button=False,
+                            show_fullscreen_button=False,
+                            elem_id="unit-cell-main-view",
+                            elem_classes=[
+                                "myst-unit-cell-viewport-image",
+                                "myst-unit-cell-main-image",
+                            ],
+                        )
                     gr.HTML(
                         """
                         <div style="margin: 12px 0 6px 0; font-weight: 600; color: #aaa;">Animation Output</div>
                         """
                     )
-                    unit_cell_video = gr.Video(
-                        label=None,
-                        show_label=False,
-                        interactive=False,
-                        autoplay=True,
-                        loop=True,
-                        height=320,
-                        scale=1,
-                        format="mp4",
-                        elem_id="unit-cell-animation",
-                        elem_classes=["myst-unit-cell-animation", "gradio-video"],
-                    )
+                    with gr.Column(elem_classes=["myst-unit-cell-animation-slot"]):
+                        unit_cell_video = gr.Video(
+                            label=None,
+                            show_label=False,
+                            interactive=False,
+                            container=False,
+                            autoplay=True,
+                            loop=True,
+                            height=320,
+                            scale=1,
+                            format="mp4",
+                            elem_id="unit-cell-animation",
+                            elem_classes=["myst-unit-cell-animation", "gradio-video"],
+                        )
             re_inputs = [
                 re_phi_scale, re_e_scale, re_pi_scale,
                 re_kappa, re_delta_z, re_alpha, re_beta, re_pressure,
