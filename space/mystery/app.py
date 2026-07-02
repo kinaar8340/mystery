@@ -1929,7 +1929,7 @@ footer {{
     min-height: 360px;
 }}
 .gradio-container .myst-cube-viewport-media .vqc-plot3d-panel .plot-container {{
-    min-height: 0 !important;
+    min-height: var(--myst-viewport-min-height, clamp(14rem, 42vh, 28rem)) !important;
     height: 100% !important;
 }}
 .gradio-container .gr-video .empty,
@@ -1964,7 +1964,7 @@ footer {{ visibility: hidden; }}
 }}
 .gradio-container .myst-cube-viewport-media .plot-container,
 .gradio-container #mystery-viewport .plot-container {{
-    min-height: 0 !important;
+    min-height: var(--myst-viewport-min-height, clamp(14rem, 42vh, 28rem)) !important;
     height: 100% !important;
 }}
 .gradio-container .myst-gravity-page .vqc-plot3d-panel,
@@ -2377,7 +2377,7 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-gravity-cube-panel > .block:has(.myst-cube-viewport-media),
 .gradio-container .myst-gravity-cube-panel > .block:has(.myst-cube-viewport-media-slot) {{
     flex: 1 1 0 !important;
-    min-height: 0 !important;
+    min-height: var(--myst-viewport-min-height, clamp(14rem, 42vh, 28rem)) !important;
     height: 100% !important;
     width: 100% !important;
     display: flex !important;
@@ -2406,7 +2406,7 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-gravity-cube-panel .column.myst-cube-viewport-media,
 .gradio-container .myst-gravity-cube-panel .column.myst-cube-viewport-media-slot {{
     flex: 1 1 0 !important;
-    min-height: 0 !important;
+    min-height: var(--myst-viewport-min-height, clamp(14rem, 42vh, 28rem)) !important;
     max-height: 100% !important;
     overflow: hidden !important;
 }}
@@ -2430,12 +2430,12 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-gravity-cube-panel .myst-cube-viewport-media {{
     position: relative !important;
     flex: 1 1 0 !important;
-    min-height: 0 !important;
+    min-height: var(--myst-viewport-min-height, clamp(14rem, 42vh, 28rem)) !important;
     height: 100% !important;
     max-height: 100% !important;
     width: 100% !important;
-    display: grid !important;
-    grid-template: minmax(0, 1fr) / minmax(0, 1fr) !important;
+    display: flex !important;
+    flex-direction: column !important;
     overflow: hidden !important;
     box-sizing: border-box !important;
     padding: 0 !important;
@@ -2452,18 +2452,17 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-gravity-cube-panel .myst-cube-viewport-media > .block.myst-cube-anim-video,
 .gradio-container .myst-gravity-cube-panel .myst-cube-viewport-media .myst-cube-plot-inner.block,
 .gradio-container .myst-gravity-cube-panel .myst-cube-viewport-media .myst-cube-anim-video.block {{
-    grid-area: 1 / 1 / 2 / 2 !important;
-    position: relative !important;
+    position: absolute !important;
+    inset: 0 !important;
     width: 100% !important;
     height: 100% !important;
-    min-height: 0 !important;
+    min-height: var(--myst-viewport-min-height, clamp(14rem, 42vh, 28rem)) !important;
     max-height: 100% !important;
     margin: 0 !important;
     padding: 0.2rem 0.3rem 0.3rem !important;
     overflow: hidden !important;
     box-sizing: border-box !important;
-    flex: 1 1 0 !important;
-    align-self: stretch !important;
+    flex: none !important;
     visibility: visible !important;
     opacity: 1 !important;
     z-index: 2 !important;
@@ -2490,7 +2489,7 @@ footer {{ visibility: hidden; }}
     height: 100% !important;
     max-width: 100% !important;
     max-height: 100% !important;
-    object-fit: cover !important;
+    object-fit: contain !important;
     object-position: center center !important;
     background: #000000 !important;
     display: block !important;
@@ -2688,7 +2687,7 @@ footer {{ visibility: hidden; }}
     max-width: 100% !important;
     height: 100% !important;
     max-height: 100% !important;
-    min-height: 0 !important;
+    min-height: var(--myst-viewport-min-height, clamp(14rem, 42vh, 28rem)) !important;
     align-self: stretch !important;
     margin: 0 !important;
     overflow: hidden !important;
@@ -2841,17 +2840,17 @@ footer {{ visibility: hidden; }}
 }}
 .gradio-container .myst-gravity-page .myst-cube-viewport-frame .myst-cube-viewport-media {{
     flex: 1 1 0 !important;
-    min-height: 0 !important;
+    min-height: var(--myst-viewport-min-height, clamp(14rem, 42vh, 28rem)) !important;
     height: 100% !important;
     max-height: 100% !important;
     overflow: hidden !important;
-    display: grid !important;
-    grid-template: minmax(0, 1fr) / minmax(0, 1fr) !important;
+    display: flex !important;
+    flex-direction: column !important;
     position: relative !important;
 }}
 .gradio-container .myst-gravity-page .myst-cube-viewport-frame > .block:has(.myst-cube-viewport-media) {{
     flex: 1 1 0 !important;
-    min-height: 0 !important;
+    min-height: var(--myst-viewport-min-height, clamp(14rem, 42vh, 28rem)) !important;
     height: 100% !important;
     display: flex !important;
     flex-direction: column !important;
@@ -2972,16 +2971,16 @@ footer {{ visibility: hidden; }}
     background: rgba(0, 0, 0, 0.22) !important;
     border: 1px solid #4a3818 !important;
     border-radius: 8px !important;
-    flex: 1 1 0 !important;
-    min-height: 0 !important;
+    flex: none !important;
+    min-height: var(--myst-viewport-min-height, clamp(14rem, 42vh, 28rem)) !important;
     height: 100% !important;
     max-height: 100% !important;
     display: flex !important;
     flex-direction: column !important;
     overflow: hidden !important;
     box-sizing: border-box !important;
-    position: relative !important;
-    grid-area: 1 / 1 / 2 / 2 !important;
+    position: absolute !important;
+    inset: 0 !important;
     z-index: 2 !important;
 }}
 .gradio-container .myst-gravity-page .myst-cube-viewport-frame .myst-cube-plot-inner .label-wrap span {{
@@ -3030,43 +3029,29 @@ footer {{ visibility: hidden; }}
     max-height: 100% !important;
     margin: 0 !important;
     display: block !important;
-    object-fit: cover !important;
+    object-fit: contain !important;
     object-position: center center !important;
 }}
-.gradio-container #mystery-viewport,
-.gradio-container #mystery-viewport.block,
-.gradio-container #mystery-viewport > .wrap,
-.gradio-container #mystery-viewport .wrap,
-.gradio-container .myst-cube-viewport-media #mystery-viewport,
 .gradio-container .myst-cube-viewport-media .myst-cube-plot-inner.block,
-.gradio-container .myst-cube-viewport-media .myst-cube-plot-inner.block > .wrap {{
-    flex: 1 1 0 !important;
+.gradio-container .myst-cube-viewport-media .myst-cube-plot-inner.block > .wrap,
+.gradio-container .myst-cube-viewport-media #mystery-viewport,
+.gradio-container .myst-cube-viewport-media #mystery-viewport .wrap {{
     width: 100% !important;
     height: 100% !important;
-    min-height: 0 !important;
+    min-height: var(--myst-viewport-min-height, clamp(14rem, 42vh, 28rem)) !important;
     max-height: 100% !important;
     display: flex !important;
     flex-direction: column !important;
-    align-items: stretch !important;
-    justify-content: stretch !important;
     box-sizing: border-box !important;
 }}
-.gradio-container .myst-cube-viewport-media #mystery-viewport .plot-container,
-.gradio-container .myst-cube-viewport-media .myst-cube-plot-inner .plot-container {{
-    flex: 1 1 0 !important;
+.gradio-container .myst-cube-viewport-media .myst-cube-plot-inner .plot-container img,
+.gradio-container .myst-cube-viewport-media #mystery-viewport .plot-container img {{
     width: 100% !important;
     height: 100% !important;
-    min-height: 0 !important;
-    max-height: 100% !important;
-}}
-.gradio-container .myst-cube-viewport-media #mystery-viewport .plot-container img,
-.gradio-container .myst-cube-viewport-media .myst-cube-plot-inner .plot-container img {{
-    width: 100% !important;
-    height: 100% !important;
-    min-height: 0 !important;
+    min-height: var(--myst-viewport-min-height, clamp(14rem, 42vh, 28rem)) !important;
     max-width: 100% !important;
     max-height: 100% !important;
-    object-fit: cover !important;
+    object-fit: contain !important;
     object-position: center center !important;
 }}
 .gradio-container .myst-gravity-cube-panel .myst-cube-viewport-media .plot-container {{
@@ -4749,14 +4734,10 @@ def build_app() -> gr.Blocks:
                         ]
                     ):
                         unit_cell_header = gr.HTML(_init_unit_cell_header)
-                        with gr.Column(
-                            scale=1,
-                            elem_classes=["myst-cube-viewport-media", "myst-cube-viewport-media-slot"],
-                        ):
+                        with gr.Column(elem_classes=["myst-cube-viewport-media", "myst-cube-viewport-media-slot"]):
                             unit_cell_plot = gr.Plot(
                                 label=None,
                                 show_label=False,
-                                scale=1,
                                 elem_id="mystery-viewport",
                                 value=_init_unit_cell,
                                 elem_classes=[
@@ -4772,7 +4753,6 @@ def build_app() -> gr.Blocks:
                                 interactive=False,
                                 autoplay=True,
                                 loop=False,
-                                scale=1,
                                 format="mp4",
                                 elem_classes=["myst-cube-anim-video"],
                             )
