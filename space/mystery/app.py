@@ -818,28 +818,27 @@ def _close_links_panels() -> tuple:
 
 
 def _nav_to_page(page: str) -> tuple:
-    """Switch between demo, figures, and gravity screens; refresh Source tab highlights."""
+    """Switch between demo, figures, gravity, and readme; refresh Source tab highlights."""
     on_demo = page == "demo"
     on_anim = page == "animations"
     on_gravity = page == "gravity"
+    on_readme = page == "readme"
     closed = _close_links_panels()
     tab_gravity = _source_tab_btn_update(active=on_gravity)
+    tab_readme = _source_tab_btn_update(active=on_readme)
     tab_demo = _home_tab_update(on_demo_page=on_demo)
     tab_anim = _source_tab_btn_update(active=on_anim)
+    page_tabs = (tab_gravity, tab_readme, tab_demo, tab_anim)
     return (
         gr.update(visible=on_demo),
         gr.update(visible=on_anim),
         gr.update(visible=on_gravity),
-        tab_gravity,
-        tab_demo,
-        tab_anim,
+        gr.update(visible=on_readme),
+        *page_tabs,
         *closed,
-        tab_gravity,
-        tab_demo,
-        tab_anim,
-        tab_gravity,
-        tab_demo,
-        tab_anim,
+        *page_tabs,
+        *page_tabs,
+        *page_tabs,
         page,
     )
 
@@ -1152,75 +1151,72 @@ footer {{
     padding: 0 !important;
     margin: 0 !important;
 }}
-.gradio-container .vqc-source-tabs-row button.vqc-source-tab.secondary,
-.gradio-container .vqc-source-tabs-row button.vqc-source-tab.secondary:hover,
-.gradio-container .vqc-source-tabs-row button.vqc-source-tab.secondary:focus {{
-    border: none !important;
-    outline: none !important;
-    background: transparent !important;
-    box-shadow: none !important;
-}}
 .gradio-container .vqc-source-label {{
-    color: #e8e0f8 !important;
+    color: #ffffff !important;
     font-size: 0.92rem !important;
     font-weight: 600 !important;
-    margin-right: 0.15rem !important;
+    margin-right: 0.35rem !important;
     line-height: 1.2 !important;
 }}
 .gradio-container .vqc-source-tab,
 .gradio-container .vqc-source-tabs-row button.vqc-source-tab,
 .gradio-container .vqc-source-tabs-row button.vqc-source-tab span,
 .gradio-container .vqc-nav-cell a.vqc-source-tab {{
-    display: inline !important;
-    padding: 0 !important;
-    border: none !important;
-    border-radius: 0 !important;
-    background: transparent !important;
-    background-color: transparent !important;
-    box-shadow: none !important;
-    color: {_VQC_MATRIX_GREEN} !important;
-    -webkit-text-fill-color: {_VQC_MATRIX_GREEN} !important;
-    text-decoration: underline !important;
-    text-decoration-color: {_VQC_MATRIX_GREEN} !important;
-    text-underline-offset: 0.18em !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0.34rem 0.78rem !important;
+    border: 2px solid #6b4f1d !important;
+    border-radius: 8px !important;
+    background: linear-gradient(180deg, #3d2e14 0%, #1f1608 100%) !important;
+    background-color: #2a1f10 !important;
+    box-shadow: inset 0 1px 0 rgba(255, 220, 150, 0.12), 0 2px 4px rgba(0, 0, 0, 0.35) !important;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    text-decoration: none !important;
     font-weight: 600 !important;
-    font-size: 0.92rem !important;
-    line-height: 1.35 !important;
-    letter-spacing: normal !important;
+    font-size: 0.82rem !important;
+    line-height: 1.2 !important;
+    letter-spacing: 0.03em !important;
     text-transform: none !important;
     white-space: nowrap !important;
-    min-height: unset !important;
+    min-height: 2.05rem !important;
     height: auto !important;
     width: auto !important;
     margin: 0 !important;
     opacity: 1 !important;
-    text-shadow: 0 0 6px rgba(51, 255, 102, 0.25) !important;
-    transition: color 0.15s ease, text-decoration-color 0.15s ease, opacity 0.15s ease;
+    text-shadow: none !important;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }}
 .gradio-container a.vqc-source-tab:hover,
 .gradio-container .vqc-source-tabs-row button.vqc-source-tab:not(.active):hover,
 .gradio-container .vqc-source-tabs-row button.vqc-source-tab:not(.active):hover span {{
-    color: #7dff9a !important;
-    -webkit-text-fill-color: #7dff9a !important;
-    text-decoration-color: #7dff9a !important;
-    background: transparent !important;
-    text-decoration: underline !important;
+    color: #fff8e8 !important;
+    -webkit-text-fill-color: #fff8e8 !important;
+    background: linear-gradient(180deg, #6b4f1d 0%, #3d2e14 100%) !important;
+    border-color: #8b6914 !important;
+    text-decoration: none !important;
 }}
 .gradio-container .vqc-source-tabs-row button.vqc-source-tab {{
     cursor: pointer !important;
     font-family: inherit !important;
 }}
+.gradio-container .vqc-source-tabs-row button.vqc-source-tab.secondary,
+.gradio-container .vqc-source-tabs-row button.vqc-source-tab.secondary:hover,
+.gradio-container .vqc-source-tabs-row button.vqc-source-tab.secondary:focus {{
+    border: 2px solid #6b4f1d !important;
+    background: linear-gradient(180deg, #3d2e14 0%, #1f1608 100%) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 220, 150, 0.12), 0 2px 4px rgba(0, 0, 0, 0.35) !important;
+}}
 .gradio-container .vqc-source-tabs-row button.vqc-source-tab:disabled:not(.active),
 .gradio-container .vqc-source-tabs-row button.vqc-source-tab[disabled]:not(.active),
-.gradio-container .vqc-source-tabs-row button.vqc-source-tab.secondary:disabled:not(.active),
 .gradio-container .vqc-source-tabs-row button.vqc-source-tab:disabled:not(.active) span,
 .gradio-container .vqc-source-tabs-row button.vqc-source-tab[disabled]:not(.active) span {{
     cursor: pointer !important;
-    color: {_VQC_MATRIX_GREEN} !important;
-    -webkit-text-fill-color: {_VQC_MATRIX_GREEN} !important;
-    text-decoration-color: {_VQC_MATRIX_GREEN} !important;
-    background: transparent !important;
-    text-decoration: underline !important;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    background: linear-gradient(180deg, #3d2e14 0%, #1f1608 100%) !important;
+    text-decoration: none !important;
 }}
 .gradio-container .vqc-source-tab.active,
 .gradio-container .vqc-source-tabs-row button.vqc-source-tab.active,
@@ -1229,31 +1225,25 @@ footer {{
 .gradio-container .vqc-source-tabs-row button.vqc-source-tab.active:hover,
 .gradio-container .vqc-source-tabs-row button.vqc-source-tab.active:hover span,
 .gradio-container a.vqc-source-tab.active {{
-    color: {_VQC_LOGO_GOLD} !important;
-    -webkit-text-fill-color: {_VQC_LOGO_GOLD} !important;
-    text-decoration-color: {_VQC_LOGO_GOLD} !important;
-    background: transparent !important;
-    text-decoration: underline !important;
-    text-decoration-thickness: 2px !important;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    background: linear-gradient(180deg, #ea580c 0%, #9a3412 100%) !important;
+    border-color: #7c2d12 !important;
+    text-decoration: none !important;
     cursor: default !important;
     opacity: 1 !important;
-    text-shadow: 0 0 8px rgba(201, 162, 39, 0.45) !important;
+    box-shadow: 0 0 10px rgba(234, 88, 12, 0.35), inset 0 1px 0 rgba(255, 220, 150, 0.2) !important;
 }}
 .gradio-container .vqc-source-tabs-row button.vqc-source-tab.active:disabled,
 .gradio-container .vqc-source-tabs-row button.vqc-source-tab.active[disabled],
 .gradio-container .vqc-source-tabs-row button.vqc-source-tab.active:disabled span,
 .gradio-container .vqc-source-tabs-row button.vqc-source-tab.active[disabled] span {{
-    color: {_VQC_LOGO_GOLD} !important;
-    -webkit-text-fill-color: {_VQC_LOGO_GOLD} !important;
-    text-decoration-color: {_VQC_LOGO_GOLD} !important;
-    background: transparent !important;
-    text-decoration: underline !important;
-    text-decoration-thickness: 2px !important;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    background: linear-gradient(180deg, #ea580c 0%, #9a3412 100%) !important;
+    border-color: #7c2d12 !important;
+    text-decoration: none !important;
     cursor: default !important;
-}}
-.gradio-container .vqc-source-tabs-row button.vqc-source-tab.active::before {{
-    content: none !important;
-    display: none !important;
 }}
 .gradio-container a:hover:not(.vqc-source-tab),
 .gradio-container .markdown a:hover:not(.vqc-source-tab),
@@ -1380,7 +1370,7 @@ footer {{
 }}
 .gradio-container .vqc-nav-spreadsheet-row {{
     display: grid !important;
-    grid-template-columns: 4.75rem repeat(5, minmax(4.5rem, 1fr)) !important;
+    grid-template-columns: 4.75rem repeat(6, minmax(3.8rem, 1fr)) !important;
     gap: 0.2rem 0.45rem !important;
     align-items: center !important;
     width: 100% !important;
@@ -1978,6 +1968,13 @@ footer {{ visibility: hidden; }}
     font-size: 0.92rem !important;
     line-height: 1.45 !important;
 }}
+.gradio-container .myst-readme-page {{
+    width: 100% !important;
+}}
+.gradio-container .myst-readme-page .markdown.prose {{
+    font-size: 0.94rem !important;
+    line-height: 1.5 !important;
+}}
 @media (max-width: 900px) {{
     .gradio-container .myst-gravity-controls-col,
     .gradio-container .myst-gravity-visuals-col {{
@@ -1987,7 +1984,7 @@ footer {{ visibility: hidden; }}
 }}
 @media (max-width: 640px) {{
     .gradio-container .vqc-nav-spreadsheet-row {{
-        grid-template-columns: 3.5rem repeat(5, minmax(3.2rem, 1fr)) !important;
+        grid-template-columns: 3.5rem repeat(6, minmax(2.8rem, 1fr)) !important;
         gap: 0.15rem 0.25rem !important;
     }}
     .gradio-container .vqc-source-tab,
@@ -2071,6 +2068,13 @@ def build_app() -> gr.Blocks:
                                     "Gravity",
                                     elem_classes=["vqc-source-tab", "active"],
                                     interactive=False,
+                                    scale=0,
+                                    variant="secondary",
+                                )
+                            with gr.Column(elem_classes=["vqc-nav-cell"], scale=1, min_width=72):
+                                tab_readme_btn = gr.Button(
+                                    "README",
+                                    elem_classes=["vqc-source-tab"],
                                     scale=0,
                                     variant="secondary",
                                 )
@@ -2297,6 +2301,12 @@ def build_app() -> gr.Blocks:
                     scale=0,
                     variant="secondary",
                 )
+                anim_tab_readme_btn = gr.Button(
+                    "README",
+                    elem_classes=["vqc-source-tab"],
+                    scale=0,
+                    variant="secondary",
+                )
                 anim_tab_demo_btn = gr.Button(
                     "Live Probe",
                     elem_classes=["vqc-source-tab"],
@@ -2319,6 +2329,51 @@ def build_app() -> gr.Blocks:
             1.0, 1.0, 1.0, KAPPA_DOC, 0.1, 1.0, 1.0, 0.35, 22.0, 45.0
         )
 
+        with gr.Column(visible=False, elem_classes=["myst-readme-page"]) as page_readme:
+            with gr.Row(elem_classes=["vqc-source-tabs-row", "vqc-animations-nav-row"]):
+                gr.HTML('<span class="vqc-source-label">Source:</span>')
+                readme_tab_gravity_btn = gr.Button(
+                    "Gravity",
+                    elem_classes=["vqc-source-tab"],
+                    scale=0,
+                    variant="secondary",
+                )
+                readme_tab_readme_btn = gr.Button(
+                    "README",
+                    elem_classes=["vqc-source-tab", "active"],
+                    interactive=False,
+                    scale=0,
+                    variant="secondary",
+                )
+                readme_tab_demo_btn = gr.Button(
+                    "Live Probe",
+                    elem_classes=["vqc-source-tab"],
+                    scale=0,
+                    variant="secondary",
+                )
+                readme_tab_anim_btn = gr.Button(
+                    "Figures",
+                    elem_classes=["vqc-source-tab"],
+                    scale=0,
+                    variant="secondary",
+                )
+            gr.HTML(
+                f'<p class="myst-github-banner">Full derivations, probe suite, and JSON outputs: '
+                f'<a href="{GITHUB_URL}" target="_blank" rel="noopener noreferrer">'
+                f'github.com/kinaar8340/mystery</a> · '
+                f'<a href="{GITHUB_URL}#physical-interpretation--emergent-gravity" '
+                f'target="_blank" rel="noopener noreferrer">README § Physical Interpretation</a></p>'
+            )
+            gr.Markdown(PHYSICAL_INTERPRETATION_INTRO_MD)
+            gr.Markdown(PHYSICAL_INTERPRETATION_MATH_MD)
+            gr.Markdown("### Probe hooks")
+            gr.Markdown(PROBE_HOOKS_TABLE_MD)
+            for title, script_url, snippet in PROBE_SNIPPETS:
+                with gr.Accordion(f"{title} — view snippet", open=False):
+                    gr.Markdown(f"Source: [{script_url.split('/')[-1]}]({script_url})")
+                    gr.Code(snippet, language="python", lines=10)
+            gr.Markdown(EXPLORE_FURTHER_MD)
+
         with gr.Column(visible=True, elem_classes=["myst-gravity-page"]) as page_gravity:
             with gr.Row(elem_classes=["vqc-source-tabs-row", "vqc-animations-nav-row"]):
                 gr.HTML('<span class="vqc-source-label">Source:</span>')
@@ -2326,6 +2381,12 @@ def build_app() -> gr.Blocks:
                     "Gravity",
                     elem_classes=["vqc-source-tab", "active"],
                     interactive=False,
+                    scale=0,
+                    variant="secondary",
+                )
+                grav_tab_readme_btn = gr.Button(
+                    "README",
+                    elem_classes=["vqc-source-tab"],
                     scale=0,
                     variant="secondary",
                 )
@@ -2341,13 +2402,6 @@ def build_app() -> gr.Blocks:
                     scale=0,
                     variant="secondary",
                 )
-            gr.HTML(
-                f'<p class="myst-github-banner">Full derivations, probe suite, and JSON outputs: '
-                f'<a href="{GITHUB_URL}" target="_blank" rel="noopener noreferrer">'
-                f'github.com/kinaar8340/mystery</a> · '
-                f'<a href="{GITHUB_URL}#physical-interpretation--emergent-gravity" '
-                f'target="_blank" rel="noopener noreferrer">README § Physical Interpretation</a></p>'
-            )
             with gr.Row(elem_classes=["myst-gravity-split"], equal_height=False):
                 with gr.Column(
                     scale=2,
@@ -2499,14 +2553,11 @@ def build_app() -> gr.Blocks:
                     scale=3,
                     elem_classes=["myst-gravity-visuals-col"],
                 ):
-                    gr.Markdown(PHYSICAL_INTERPRETATION_INTRO_MD)
                     unit_cell_plot = gr.Plot(
                         label="Deformable unit cell — live curvature (no WebGL)",
                         value=_init_unit_cell,
                         elem_classes=["vqc-plot3d-panel"],
                     )
-                    with gr.Accordion("Mathematical formulation", open=False):
-                        gr.Markdown(PHYSICAL_INTERPRETATION_MATH_MD)
             re_inputs = [
                 re_phi_scale, re_e_scale, re_pi_scale,
                 re_kappa, re_delta_z, re_alpha, re_beta, re_pressure,
@@ -2532,13 +2583,6 @@ def build_app() -> gr.Blocks:
             re_preset_kappa_star.click(load_kappa_star, outputs=[re_kappa]).then(
                 run_residual_explorer, inputs=re_inputs, outputs=re_outputs
             )
-            gr.Markdown("### Probe hooks")
-            gr.Markdown(PROBE_HOOKS_TABLE_MD)
-            for title, script_url, snippet in PROBE_SNIPPETS:
-                with gr.Accordion(f"{title} — view snippet", open=False):
-                    gr.Markdown(f"Source: [{script_url.split('/')[-1]}]({script_url})")
-                    gr.Code(snippet, language="python", lines=10)
-            gr.Markdown(EXPLORE_FURTHER_MD)
 
         newhere_outputs = [panel_newhere, tab_newhere_btn, newhere_open, panel_claims, tab_claims_btn, claims_open]
         claims_outputs = [panel_claims, tab_claims_btn, claims_open, panel_newhere, tab_newhere_btn, newhere_open]
@@ -2546,7 +2590,9 @@ def build_app() -> gr.Blocks:
             page_demo,
             page_animations,
             page_gravity,
+            page_readme,
             tab_gravity_btn,
+            tab_readme_btn,
             tab_demo_btn,
             tab_anim_btn,
             panel_newhere,
@@ -2556,28 +2602,44 @@ def build_app() -> gr.Blocks:
             tab_claims_btn,
             claims_open,
             anim_tab_gravity_btn,
+            anim_tab_readme_btn,
             anim_tab_demo_btn,
             anim_tab_anim_btn,
             grav_tab_gravity_btn,
+            grav_tab_readme_btn,
             grav_tab_demo_btn,
             grav_tab_anim_btn,
+            readme_tab_gravity_btn,
+            readme_tab_readme_btn,
+            readme_tab_demo_btn,
+            readme_tab_anim_btn,
             current_page,
         ]
-        tab_demo_btn.click(lambda: _nav_to_page("demo"), outputs=nav_outputs)
-        tab_anim_btn.click(lambda: _nav_to_page("animations"), outputs=nav_outputs)
-        tab_gravity_btn.click(lambda: _nav_to_page("gravity"), outputs=nav_outputs).then(
-            run_residual_explorer, inputs=re_inputs, outputs=re_outputs
-        )
-        anim_tab_demo_btn.click(lambda: _nav_to_page("demo"), outputs=nav_outputs)
-        anim_tab_anim_btn.click(lambda: _nav_to_page("animations"), outputs=nav_outputs)
-        anim_tab_gravity_btn.click(lambda: _nav_to_page("gravity"), outputs=nav_outputs).then(
-            run_residual_explorer, inputs=re_inputs, outputs=re_outputs
-        )
-        grav_tab_demo_btn.click(lambda: _nav_to_page("demo"), outputs=nav_outputs)
-        grav_tab_anim_btn.click(lambda: _nav_to_page("animations"), outputs=nav_outputs)
-        grav_tab_gravity_btn.click(lambda: _nav_to_page("gravity"), outputs=nav_outputs).then(
-            run_residual_explorer, inputs=re_inputs, outputs=re_outputs
-        )
+
+        def _bind_nav(btn: gr.Button, page: str, *, refresh_gravity: bool = False) -> None:
+            if refresh_gravity:
+                btn.click(lambda: _nav_to_page(page), outputs=nav_outputs).then(
+                    run_residual_explorer, inputs=re_inputs, outputs=re_outputs
+                )
+            else:
+                btn.click(lambda: _nav_to_page(page), outputs=nav_outputs)
+
+        _bind_nav(tab_demo_btn, "demo")
+        _bind_nav(tab_anim_btn, "animations")
+        _bind_nav(tab_readme_btn, "readme")
+        _bind_nav(tab_gravity_btn, "gravity", refresh_gravity=True)
+        _bind_nav(anim_tab_demo_btn, "demo")
+        _bind_nav(anim_tab_anim_btn, "animations")
+        _bind_nav(anim_tab_readme_btn, "readme")
+        _bind_nav(anim_tab_gravity_btn, "gravity", refresh_gravity=True)
+        _bind_nav(grav_tab_demo_btn, "demo")
+        _bind_nav(grav_tab_anim_btn, "animations")
+        _bind_nav(grav_tab_readme_btn, "readme")
+        _bind_nav(grav_tab_gravity_btn, "gravity", refresh_gravity=True)
+        _bind_nav(readme_tab_gravity_btn, "gravity", refresh_gravity=True)
+        _bind_nav(readme_tab_demo_btn, "demo")
+        _bind_nav(readme_tab_anim_btn, "animations")
+        _bind_nav(readme_tab_readme_btn, "readme")
         tab_newhere_btn.click(_toggle_newhere, inputs=[newhere_open], outputs=newhere_outputs)
         tab_claims_btn.click(_toggle_claims, inputs=[claims_open], outputs=claims_outputs)
         newhere_minimize_btn.click(_minimize_newhere, outputs=newhere_outputs[:3])

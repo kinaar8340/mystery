@@ -108,7 +108,7 @@ emergent gravity at larger scales.
 **Legend:** \\(T_\\phi, T_e, T_\\pi\\) = quadratic flux/tension · \\(\\delta_z\\) = primary π-face push ·
 \\(\\delta_\\text{side}\\) = compensatory contraction · \\(R = \\phi^2+e^2-\\pi^2\\) imbalance.
 
-The **deformable unit cell** below is server-rendered (no browser WebGL required). Drag **deformation pressure** to bow the π-face concave and pinch the φ/e sides inward; rotate with **view elevation/azimuth**; press **Animate deformation** for a smooth 0→100% curvature sweep with color-coded face modes.
+On the **Gravity** tab, the deformable unit cell is server-rendered (no browser WebGL required). Drag **deformation pressure** to bow the π-face concave and pinch the φ/e sides inward; rotate with **view elevation/azimuth**; press **Animate deformation** for a smooth 0→100% curvature sweep with color-coded face modes.
 """
 
 PHYSICAL_INTERPRETATION_MATH_MD = f"""
