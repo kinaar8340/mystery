@@ -1790,15 +1790,32 @@ footer {{
 .gradio-container .vqc-optics-panel button.vqc-receiver-preset {{
     background: linear-gradient(180deg, #3d2e14 0%, #1f1608 100%) !important;
     border: 2px solid #6b4f1d !important;
-    color: #f5e6c8 !important;
     border-radius: 8px !important;
     font-size: 0.78rem !important;
     letter-spacing: 0.04em !important;
     box-shadow: inset 0 1px 0 rgba(255, 220, 150, 0.15), 0 2px 4px rgba(0, 0, 0, 0.4) !important;
 }}
-.gradio-container .vqc-optics-panel button.vqc-receiver-preset:hover {{
+.gradio-container .vqc-optics-panel button.vqc-receiver-preset,
+.gradio-container .vqc-optics-panel button.vqc-receiver-preset span {{
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+}}
+.gradio-container .vqc-optics-panel button.vqc-receiver-preset:hover,
+.gradio-container .vqc-optics-panel button.vqc-receiver-preset:not(.active):hover,
+.gradio-container .vqc-optics-panel button.vqc-receiver-preset:not(.active):hover span {{
     background: linear-gradient(180deg, #6b4f1d 0%, #3d2e14 100%) !important;
-    color: #fff8e8 !important;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+}}
+.gradio-container .myst-gravity-page .vqc-gravity-panel button.vqc-receiver-preset.active,
+.gradio-container .myst-gravity-page .vqc-gravity-panel button.vqc-receiver-preset.active span,
+.gradio-container .myst-gravity-page .vqc-gravity-panel button.vqc-receiver-preset.active:hover,
+.gradio-container .myst-gravity-page .vqc-gravity-panel button.vqc-receiver-preset.active:hover span {{
+    background: linear-gradient(180deg, #3d2e14 0%, #1f1608 100%) !important;
+    border-color: #6b4f1d !important;
+    color: {_VQC_MATRIX_GREEN} !important;
+    -webkit-text-fill-color: {_VQC_MATRIX_GREEN} !important;
+    box-shadow: inset 0 1px 0 rgba(255, 220, 150, 0.15), 0 2px 4px rgba(0, 0, 0, 0.4) !important;
 }}
 .gradio-container .vqc-optics-panel .vqc-slm-toggle label {{
     color: #c9a227 !important;
@@ -2203,18 +2220,24 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-gravity-page .vqc-gravity-panel button.vqc-receiver-preset {{
     background: linear-gradient(180deg, #3d2e14 0%, #1f1608 100%) !important;
     border: 2px solid #6b4f1d !important;
-    color: #f5e6c8 !important;
-}}
-.gradio-container .myst-gravity-page .vqc-gravity-panel button.vqc-receiver-preset:hover {{
-    background: linear-gradient(180deg, #6b4f1d 0%, #3d2e14 100%) !important;
-    color: #fff8e8 !important;
-}}
-.gradio-container .myst-gravity-page .vqc-gravity-panel button.primary {{
-    background: linear-gradient(180deg, #ea580c 0%, #9a3412 100%) !important;
-    border: 2px solid #7c2d12 !important;
-    color: #fff8e8 !important;
-    font-weight: 700 !important;
+    font-weight: 600 !important;
     letter-spacing: 0.04em !important;
+}}
+.gradio-container .myst-gravity-page .vqc-gravity-panel button.vqc-receiver-preset,
+.gradio-container .myst-gravity-page .vqc-gravity-panel button.vqc-receiver-preset span {{
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+}}
+.gradio-container .myst-gravity-page .vqc-gravity-panel button.vqc-receiver-preset:hover,
+.gradio-container .myst-gravity-page .vqc-gravity-panel button.vqc-receiver-preset:not(.active):hover,
+.gradio-container .myst-gravity-page .vqc-gravity-panel button.vqc-receiver-preset:not(.active):hover span {{
+    background: linear-gradient(180deg, #6b4f1d 0%, #3d2e14 100%) !important;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+}}
+.gradio-container .myst-gravity-page .vqc-gravity-panel button.vqc-receiver-preset.vqc-full-width {{
+    width: 100% !important;
+    margin-top: 0.2rem !important;
 }}
 .gradio-container .myst-gravity-page .vqc-gravity-panel textarea {{
     background: #120c06 !important;
@@ -2279,6 +2302,161 @@ def run_probe(
         logger.exception("run_probe failed for kappa=%r", kappa)
         err = f"Error: {exc}\n\n{traceback.format_exc()}"
         return err, None, None
+
+
+_GRAVITY_PRESET_KEYS = ("rigid", "full", "kappa_doc", "kappa_star", "animate")
+_GRAVITY_PRESET_RELEASE_DELAY_S = 0.35
+
+
+def _gravity_preset_btn_classes(key: str, active: str) -> list[str]:
+    classes = ["vqc-receiver-preset"]
+    if key == "animate":
+        classes.append("vqc-full-width")
+    if key == active:
+        classes.append("active")
+    return classes
+
+
+def _gravity_preset_btn_updates(active: str = "") -> tuple:
+    return tuple(
+        gr.update(
+            elem_classes=_gravity_preset_btn_classes(key, active),
+            variant="secondary",
+        )
+        for key in _GRAVITY_PRESET_KEYS
+    )
+
+
+def _gravity_preset_rigid_click(
+    phi_sq_scale: float,
+    e_sq_scale: float,
+    pi_sq_scale: float,
+    kappa: float,
+    delta_z: float,
+    alpha: float,
+    beta: float,
+    deform_pressure: float,
+    view_elev: float,
+    view_azim: float,
+):
+    result = run_residual_explorer(
+        phi_sq_scale, e_sq_scale, pi_sq_scale, kappa, delta_z, alpha, beta, 0.0, view_elev, view_azim
+    )
+    yield (*_gravity_preset_btn_updates("rigid"), kappa, 0.0, *result)
+    time.sleep(_GRAVITY_PRESET_RELEASE_DELAY_S)
+    yield (*_gravity_preset_btn_updates(), kappa, 0.0, *result)
+
+
+def _gravity_preset_full_click(
+    phi_sq_scale: float,
+    e_sq_scale: float,
+    pi_sq_scale: float,
+    kappa: float,
+    delta_z: float,
+    alpha: float,
+    beta: float,
+    deform_pressure: float,
+    view_elev: float,
+    view_azim: float,
+):
+    result = run_residual_explorer(
+        phi_sq_scale, e_sq_scale, pi_sq_scale, kappa, delta_z, alpha, beta, 1.0, view_elev, view_azim
+    )
+    yield (*_gravity_preset_btn_updates("full"), kappa, 1.0, *result)
+    time.sleep(_GRAVITY_PRESET_RELEASE_DELAY_S)
+    yield (*_gravity_preset_btn_updates(), kappa, 1.0, *result)
+
+
+def _gravity_preset_kappa_doc_click(
+    phi_sq_scale: float,
+    e_sq_scale: float,
+    pi_sq_scale: float,
+    kappa: float,
+    delta_z: float,
+    alpha: float,
+    beta: float,
+    deform_pressure: float,
+    view_elev: float,
+    view_azim: float,
+):
+    new_kappa = load_kappa_doc()
+    result = run_residual_explorer(
+        phi_sq_scale,
+        e_sq_scale,
+        pi_sq_scale,
+        new_kappa,
+        delta_z,
+        alpha,
+        beta,
+        deform_pressure,
+        view_elev,
+        view_azim,
+    )
+    yield (*_gravity_preset_btn_updates("kappa_doc"), new_kappa, deform_pressure, *result)
+    time.sleep(_GRAVITY_PRESET_RELEASE_DELAY_S)
+    yield (*_gravity_preset_btn_updates(), new_kappa, deform_pressure, *result)
+
+
+def _gravity_preset_kappa_star_click(
+    phi_sq_scale: float,
+    e_sq_scale: float,
+    pi_sq_scale: float,
+    kappa: float,
+    delta_z: float,
+    alpha: float,
+    beta: float,
+    deform_pressure: float,
+    view_elev: float,
+    view_azim: float,
+):
+    new_kappa = load_kappa_star()
+    result = run_residual_explorer(
+        phi_sq_scale,
+        e_sq_scale,
+        pi_sq_scale,
+        new_kappa,
+        delta_z,
+        alpha,
+        beta,
+        deform_pressure,
+        view_elev,
+        view_azim,
+    )
+    yield (*_gravity_preset_btn_updates("kappa_star"), new_kappa, deform_pressure, *result)
+    time.sleep(_GRAVITY_PRESET_RELEASE_DELAY_S)
+    yield (*_gravity_preset_btn_updates(), new_kappa, deform_pressure, *result)
+
+
+def _gravity_animate_click(
+    phi_sq_scale: float,
+    e_sq_scale: float,
+    pi_sq_scale: float,
+    kappa: float,
+    delta_z: float,
+    alpha: float,
+    beta: float,
+    deform_pressure: float,
+    view_elev: float,
+    view_azim: float,
+):
+    latch = _gravity_preset_btn_updates("animate")
+    last_result: tuple[str, str, object] | None = None
+    for frame in stream_unit_cell_deformation(
+        phi_sq_scale,
+        e_sq_scale,
+        pi_sq_scale,
+        kappa,
+        delta_z,
+        alpha,
+        beta,
+        deform_pressure,
+        view_elev,
+        view_azim,
+    ):
+        last_result = frame
+        yield (*latch, kappa, deform_pressure, *frame)
+    if last_result is not None:
+        yield (*_gravity_preset_btn_updates(), kappa, deform_pressure, *last_result)
 
 
 def load_kappa_doc() -> float:
@@ -2821,8 +2999,8 @@ def build_app() -> gr.Blocks:
                                 )
                             animate_deform_btn = gr.Button(
                                 "Animate deformation",
-                                variant="primary",
-                                elem_classes=["vqc-full-width"],
+                                variant="secondary",
+                                elem_classes=["vqc-receiver-preset", "vqc-full-width"],
                             )
                         with gr.Column(elem_classes=["myst-gravity-metrics-inner"]):
                             gr.HTML(
@@ -2864,24 +3042,42 @@ def build_app() -> gr.Blocks:
                 re_view_elev, re_view_azim,
             ]
             re_outputs = [re_metrics, unit_cell_header, unit_cell_plot]
+            gravity_preset_outputs = [
+                re_preset_rigid,
+                re_preset_full,
+                re_preset_kappa_doc,
+                re_preset_kappa_star,
+                animate_deform_btn,
+                re_kappa,
+                re_pressure,
+                *re_outputs,
+            ]
             for slider in re_inputs:
                 slider.change(run_residual_explorer, inputs=re_inputs, outputs=re_outputs)
             animate_deform_btn.click(
-                stream_unit_cell_deformation,
+                _gravity_animate_click,
                 inputs=re_inputs,
-                outputs=re_outputs,
+                outputs=gravity_preset_outputs,
             )
-            re_preset_rigid.click(lambda: 0.0, outputs=[re_pressure]).then(
-                run_residual_explorer, inputs=re_inputs, outputs=re_outputs
+            re_preset_rigid.click(
+                _gravity_preset_rigid_click,
+                inputs=re_inputs,
+                outputs=gravity_preset_outputs,
             )
-            re_preset_full.click(lambda: 1.0, outputs=[re_pressure]).then(
-                run_residual_explorer, inputs=re_inputs, outputs=re_outputs
+            re_preset_full.click(
+                _gravity_preset_full_click,
+                inputs=re_inputs,
+                outputs=gravity_preset_outputs,
             )
-            re_preset_kappa_doc.click(load_kappa_doc, outputs=[re_kappa]).then(
-                run_residual_explorer, inputs=re_inputs, outputs=re_outputs
+            re_preset_kappa_doc.click(
+                _gravity_preset_kappa_doc_click,
+                inputs=re_inputs,
+                outputs=gravity_preset_outputs,
             )
-            re_preset_kappa_star.click(load_kappa_star, outputs=[re_kappa]).then(
-                run_residual_explorer, inputs=re_inputs, outputs=re_outputs
+            re_preset_kappa_star.click(
+                _gravity_preset_kappa_star_click,
+                inputs=re_inputs,
+                outputs=gravity_preset_outputs,
             )
 
         newhere_outputs = [panel_newhere, tab_newhere_btn, newhere_open, panel_claims, tab_claims_btn, claims_open]
