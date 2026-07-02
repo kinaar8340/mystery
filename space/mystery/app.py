@@ -4234,7 +4234,8 @@ def build_app() -> gr.Blocks:
                 re_control_levels,
                 re_preset_tui,
             ]
-            gravity_preset_inputs = [*re_inputs, re_active_preset, re_edit_params]
+            gravity_dial_inputs = [*re_inputs, re_active_preset]
+            gravity_preset_inputs = [*gravity_dial_inputs, re_edit_params]
             gravity_preset_btn_outputs = [*re_quick_presets, animate_deform_btn]
             gravity_preset_outputs = [
                 *gravity_preset_btn_outputs,
@@ -4251,7 +4252,7 @@ def build_app() -> gr.Blocks:
             for slider in re_inputs:
                 slider.change(
                     _run_residual_explorer_ui,
-                    inputs=gravity_preset_inputs,
+                    inputs=gravity_dial_inputs,
                     outputs=re_outputs,
                 )
             animate_deform_btn.click(
@@ -4309,7 +4310,7 @@ def build_app() -> gr.Blocks:
             if refresh_gravity:
                 btn.click(lambda: _nav_to_page(page), outputs=nav_outputs).then(
                     _run_residual_explorer_ui,
-                    inputs=gravity_preset_inputs,
+                    inputs=gravity_dial_inputs,
                     outputs=re_outputs,
                 )
             else:
