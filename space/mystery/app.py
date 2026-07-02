@@ -2886,9 +2886,9 @@ _GRAVITY_HOME_DIALS = {
 }
 _GRAVITY_PRESET_SLOT_LABELS = {
     0: "menu · parameter catalog",
-    1: "default · home values",
-    2: "rigid cube",
-    3: "full π bowl + φ/e concave pinch",
+    1: "rigid cube",
+    2: "full π bowl + φ/e concave pinch",
+    3: "full π bowl",
     4: "φ/e concave pinch",
 }
 _GRAVITY_PARAM_CATALOG: tuple[dict[str, object], ...] = (
@@ -2994,8 +2994,7 @@ _GRAVITY_PARAM_CATALOG: tuple[dict[str, object], ...] = (
     },
 )
 _GRAVITY_PRESET_PROFILES: dict[int, dict[str, float]] = {
-    1: dict(_GRAVITY_HOME_DIALS),
-    2: {
+    1: {
         "phi": 1.0,
         "e": 1.0,
         "pi": 1.0,
@@ -3007,7 +3006,7 @@ _GRAVITY_PRESET_PROFILES: dict[int, dict[str, float]] = {
         "elev": 18.0,
         "azim": 36.0,
     },
-    3: {
+    2: {
         "phi": 0.962,
         "e": 1.038,
         "pi": 1.0,
@@ -3018,6 +3017,11 @@ _GRAVITY_PRESET_PROFILES: dict[int, dict[str, float]] = {
         "pressure": 1.0,
         "elev": 30.0,
         "azim": 52.0,
+    },
+    3: {
+        **_GRAVITY_HOME_DIALS,
+        "pressure": 1.0,
+        "dz": 0.18,
     },
     4: {
         **_GRAVITY_HOME_DIALS,
@@ -3161,7 +3165,7 @@ def _format_gravity_control_panel_html(
             '<div class="myst-gravity-level-title">PARAMETER LEVELS</div>'
             '<hr class="myst-gravity-level-rule" />'
             '<p class="myst-gravity-level-hint">'
-            "PRESET 01 — menu loaded in TUI. Select <b>02</b> for default levels."
+            "PRESET 01 — menu loaded in TUI. Select <b>02</b> rigid cube or <b>03</b> full bowl."
             "</p>"
             "</div>"
         )
@@ -3199,7 +3203,7 @@ def _format_gravity_preset_tui_html(
     if active_slot == 0 and key_metrics is None and status_label is None:
         return _format_gravity_menu_tui_html()
     if active_slot == 1 and key_metrics is None and status_label is None:
-        return _format_gravity_values_tui_html(dials, active_slot=1)
+        return _format_gravity_preset_tui_html(active_slot, dials)
     preset_id = _gravity_preset_id(active_slot)
     profile = _GRAVITY_PRESET_SLOT_LABELS.get(active_slot)
     if key_metrics:
@@ -3266,8 +3270,6 @@ def _gravity_tui_for_preset(
         )
     if active_slot == 0:
         return _format_gravity_menu_tui_html()
-    if active_slot == 1:
-        return _format_gravity_values_tui_html(dials, active_slot=1)
     return _format_gravity_preset_tui_html(active_slot, dials)
 
 
