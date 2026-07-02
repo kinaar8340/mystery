@@ -39,7 +39,7 @@ from demo_core import (
     residual_from_scales,
     run_analysis,
     run_residual_explorer,
-    render_unit_cell_deformation_video,
+
     terminal_directory_help,
     terminal_figures_index,
     terminal_keypad_map,
@@ -138,7 +138,7 @@ CONTROL_PANEL_HEADER_HTML = """
 <div class="myst-cube-viewport-header" role="img" aria-label="Gravity control panel">
   <span class="myst-cube-viewport-brand">MYSTERY</span>
   <span class="myst-cube-viewport-title">Gravity Control Panel</span>
-  <span class="myst-cube-viewport-sub">deform · residual · animate</span>
+  <span class="myst-cube-viewport-sub">deform · residual · viewport</span>
 </div>
 """
 
@@ -999,16 +999,7 @@ WALLPAPER_HEAD = f"""
     document.addEventListener('DOMContentLoaded', mountWallpaper);
     window.addEventListener('load', mountWallpaper);
 }})();
-(function() {{
-    function onDeformVideoEnded(event) {{
-        var video = event && event.target;
-        if (!video || video.tagName !== 'VIDEO') return;
-        if (!video.closest('.myst-cube-anim-video')) return;
-        var doneBtn = document.getElementById('myst-anim-done-btn');
-        if (doneBtn) doneBtn.click();
-    }}
-    document.addEventListener('ended', onDeformVideoEnded, true);
-}})();
+
 </script>
 """
 
@@ -3367,105 +3358,67 @@ footer {{ visibility: hidden; }}
     font-size: 0.94rem !important;
     line-height: 1.5 !important;
 }}
-/* === VIEWPORT 50:50 SPLIT (matplotlib plot top + video bottom) === */
-.gradio-container .myst-gravity-viewport-split.myst-gravity-cube-panel,
-.gradio-container .myst-gravity-viewport-split.myst-gravity-panel-window.vqc-optics-panel {{
+/* === FULL VIEWPORT (matplotlib plot only — no animation panel) === */
+.gradio-container .myst-gravity-viewport-full.myst-gravity-cube-panel,
+.gradio-container .myst-gravity-viewport-full.myst-gravity-panel-window.vqc-optics-panel {{
     display: flex !important;
     flex-direction: column !important;
     align-items: stretch !important;
     height: 100% !important;
     min-height: 0 !important;
-    padding: 0.45rem 0.5rem 0.5rem !important;
+    padding: 4px 6px !important;
     overflow: hidden !important;
 }}
-.gradio-container .myst-gravity-viewport-split > .block:has(.myst-gravity-viewport-split-inner),
-.gradio-container .myst-gravity-viewport-split .myst-gravity-viewport-split-inner,
-.gradio-container .myst-gravity-viewport-split .myst-gravity-viewport-split-inner.block {{
-    flex: 1 1 0 !important;
+.gradio-container .myst-gravity-viewport-full > .block,
+.gradio-container .myst-gravity-viewport-full > .column {{
     width: 100% !important;
     min-height: 0 !important;
-    height: 100% !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 0.35rem !important;
-    overflow: hidden !important;
-}}
-.gradio-container .myst-gravity-viewport-split-inner > .gap {{
-    display: none !important;
-    height: 0 !important;
     margin: 0 !important;
     padding: 0 !important;
 }}
-.gradio-container .myst-gravity-viewport-split-inner > .column.myst-gravity-viewport-top,
-.gradio-container .myst-gravity-viewport-split-inner > .column.myst-gravity-viewport-bottom,
-.gradio-container .myst-gravity-viewport-split-inner > .block:has(.myst-gravity-viewport-top),
-.gradio-container .myst-gravity-viewport-split-inner > .block:has(.myst-gravity-viewport-bottom) {{
-    flex: 1 1 50% !important;
-    width: 100% !important;
-    min-height: 0 !important;
-    max-height: 50% !important;
-    height: 50% !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    display: flex !important;
-    flex-direction: column !important;
-    overflow: hidden !important;
-    box-sizing: border-box !important;
-}}
-.gradio-container .myst-gravity-viewport-top .myst-cube-viewport-header-slot,
-.gradio-container .myst-gravity-viewport-top .myst-cube-viewport-header-slot.block {{
+.gradio-container .myst-gravity-viewport-full .myst-cube-viewport-header-slot,
+.gradio-container .myst-gravity-viewport-full .myst-cube-viewport-header-slot.block {{
     flex: 0 0 auto !important;
     max-height: 4.25rem !important;
+    margin-bottom: 0.35rem !important;
     overflow: hidden !important;
 }}
-.gradio-container .myst-gravity-viewport-bottom .myst-gravity-viewport-anim-title-slot {{
-    flex: 0 0 auto !important;
-    margin: 0 0 0.25rem 0 !important;
+.gradio-container .myst-gravity-viewport-full > .block:has(#unit-cell-viewport),
+.gradio-container .column:has(#unit-cell-viewport) {{
+    flex: 1 1 0 !important;
+    min-height: var(--myst-viewport-min-height, 14rem) !important;
+    height: 100% !important;
+    padding: 4px 6px !important;
+    overflow: hidden !important;
 }}
-.gradio-container .myst-gravity-viewport-anim-title {{
-    font-size: 0.78rem !important;
-    font-weight: 600 !important;
-    letter-spacing: 0.06em !important;
-    text-transform: uppercase !important;
-    color: #aaaaaa !important;
-    margin: 0 !important;
-    padding: 0 !important;
-}}
-.gradio-container .myst-gravity-viewport-split #unit-cell-viewport,
-.gradio-container .myst-gravity-viewport-split #unit-cell-viewport.block {{
+.gradio-container .myst-gravity-viewport-full #unit-cell-viewport,
+.gradio-container .myst-gravity-viewport-full #unit-cell-viewport.block,
+.gradio-container .myst-gravity-viewport-full #unit-cell-viewport > div {{
     position: relative !important;
     inset: auto !important;
     flex: 1 1 0 !important;
     width: 100% !important;
-    min-height: 0 !important;
+    min-height: var(--myst-viewport-min-height, 14rem) !important;
     height: 100% !important;
     max-height: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
-    display: flex !important;
-    flex-direction: column !important;
+    display: block !important;
     overflow: hidden !important;
     background: #000000 !important;
     border: 1px solid rgba(107, 79, 29, 0.45) !important;
     border-radius: 6px !important;
 }}
-.gradio-container .myst-gravity-viewport-split #unit-cell-viewport .wrap,
-.gradio-container .myst-gravity-viewport-split #unit-cell-viewport .plot-container {{
-    flex: 1 1 0 !important;
+.gradio-container .myst-gravity-viewport-full #unit-cell-viewport .wrap,
+.gradio-container .myst-gravity-viewport-full #unit-cell-viewport .plot-container {{
     width: 100% !important;
-    min-height: 0 !important;
     height: 100% !important;
-    max-height: 100% !important;
+    min-height: var(--myst-viewport-min-height, 14rem) !important;
     margin: 0 !important;
     padding: 0 !important;
     background: #000000 !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
 }}
-.gradio-container .myst-gravity-viewport-split #unit-cell-viewport .plot-container img {{
+.gradio-container .myst-gravity-viewport-full #unit-cell-viewport .plot-container img {{
     display: block !important;
     width: 100% !important;
     height: 100% !important;
@@ -3473,51 +3426,6 @@ footer {{ visibility: hidden; }}
     max-height: 100% !important;
     object-fit: contain !important;
     object-position: center center !important;
-}}
-.gradio-container .myst-gravity-viewport-split #unit-cell-animation,
-.gradio-container .myst-gravity-viewport-split #unit-cell-animation.block {{
-    position: relative !important;
-    inset: auto !important;
-    flex: 1 1 0 !important;
-    width: 100% !important;
-    min-height: 0 !important;
-    height: 100% !important;
-    max-height: 100% !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    background: #000000 !important;
-    border: 1px solid rgba(107, 79, 29, 0.45) !important;
-    border-radius: 6px !important;
-}}
-.gradio-container .myst-gravity-viewport-split #unit-cell-animation .wrap,
-.gradio-container .myst-gravity-viewport-split #unit-cell-animation .video-container,
-.gradio-container .myst-gravity-viewport-split #unit-cell-animation video {{
-    width: 100% !important;
-    height: 100% !important;
-    min-height: 0 !important;
-    max-height: 100% !important;
-    margin: 0 !important;
-    display: block !important;
-    object-fit: contain !important;
-    background: #000000 !important;
-}}
-.gradio-container .myst-gravity-viewport-split .myst-gravity-anim-status,
-.gradio-container .myst-gravity-viewport-split .myst-gravity-anim-status.block {{
-    flex: 0 0 auto !important;
-    min-height: 0 !important;
-    margin-top: 0.25rem !important;
-}}
-.gradio-container .myst-gravity-viewport-split .myst-gravity-anim-status textarea {{
-    min-height: 1.85rem !important;
-    max-height: 1.85rem !important;
-    font-size: 0.76rem !important;
-    color: #c8c0d8 !important;
-    background: rgba(8, 8, 12, 0.85) !important;
-    border: 1px solid rgba(107, 79, 29, 0.35) !important;
-    border-radius: 6px !important;
 }}
 @media (max-width: 768px) {{
     .gradio-container .myst-gravity-split {{
@@ -3568,7 +3476,7 @@ def run_probe(
 
 
 _GRAVITY_QUICK_PRESET_KEYS = tuple(str(i) for i in range(8))
-_GRAVITY_PRESET_BTN_KEYS = (*_GRAVITY_QUICK_PRESET_KEYS, "animate")
+_GRAVITY_PRESET_BTN_KEYS = _GRAVITY_QUICK_PRESET_KEYS
 _GRAVITY_HOME_DIALS = {
     "phi": 1.0,
     "e": 1.0,
@@ -3948,9 +3856,6 @@ def _gravity_tui_for_preset(
     return _format_gravity_preset_tui_html(active_slot, dials)
 
 
-_GRAVITY_VIEWPORT_IDLE_STATUS = "Ready — interactive 3D viewport active"
-
-
 def _run_residual_explorer_ui(
     phi_sq_scale: float,
     e_sq_scale: float,
@@ -3963,7 +3868,7 @@ def _run_residual_explorer_ui(
     view_elev: float,
     view_azim: float,
     active_preset: int,
-) -> tuple[str, str, object, dict, str, str]:
+) -> tuple[str, str, object, str, str]:
     metrics, header, fig = run_residual_explorer(
         phi_sq_scale,
         e_sq_scale,
@@ -3995,61 +3900,8 @@ def _run_residual_explorer_ui(
         metrics,
         header,
         _gravity_plot_media_update(fig),
-        *_gravity_clear_animation_panel(),
         control_levels,
         tui,
-    )
-
-
-def _gravity_status_update(message: str) -> dict:
-    return gr.update(value=message)
-
-
-def _gravity_clear_video_update() -> dict:
-    return gr.update(value=None)
-
-
-def _gravity_load_video_update(video_path: str) -> dict:
-    return gr.update(value=video_path, autoplay=True, loop=False)
-
-
-def _gravity_clear_animation_panel() -> tuple[dict, dict]:
-    return _gravity_clear_video_update(), _gravity_status_update(_GRAVITY_VIEWPORT_IDLE_STATUS)
-
-
-def _gravity_play_animation_panel(video_path: str) -> tuple[dict, dict]:
-    return (
-        _gravity_load_video_update(video_path),
-        _gravity_status_update("Playing deformation sweep (once)…"),
-    )
-
-
-def _gravity_animation_render_outputs(
-    active_key: str,
-    dials: dict[str, float],
-    metrics: str,
-    header: str,
-    video_update: dict,
-    status_update: dict,
-    tui: str,
-    active_slot: int,
-    *,
-    edit_params_enabled: bool = False,
-) -> tuple:
-    """Animation path: update video + status only; never touch the 3D plot."""
-    return (
-        False,
-        *_gravity_preset_btn_updates(active_key),
-        _gravity_edit_params_btn_update(edit_params_enabled),
-        *_gravity_slider_control_updates(dials, edit_enabled=edit_params_enabled),
-        metrics,
-        header,
-        gr.skip(),
-        video_update,
-        status_update,
-        _format_gravity_control_panel_html(dials, active_slot),
-        tui,
-        active_slot,
     )
 
 
@@ -4061,8 +3913,6 @@ def _gravity_plot_media_update(fig: object) -> dict:
 
 def _gravity_preset_btn_classes(key: str, active: str) -> list[str]:
     classes = ["vqc-receiver-preset", "myst-gravity-quick-preset"]
-    if key == "animate":
-        classes.append("vqc-full-width")
     if key == active:
         classes.append("active")
     return classes
@@ -4083,25 +3933,10 @@ def _gravity_preset_btn_immediate_active(active_key: str) -> tuple:
     return _gravity_preset_btn_updates(active_key)
 
 
-def _gravity_animate_btn_immediate(animate_active: bool, active_preset: int) -> tuple:
-    """Flash animate highlight; playback reset is handled after the video ends."""
-    del animate_active, active_preset
-    return (
-        gr.skip(),
-        *_gravity_preset_btn_immediate_active("animate"),
-        gr.skip(),
-        _gravity_clear_video_update(),
-        _gravity_status_update("Rendering deformation frames (server-side)…"),
-    )
-
-
 def _gravity_preset_click_immediate(slot: int) -> tuple:
-    """Stop any in-flight animation before applying a preset."""
     return (
-        False,
         *_gravity_preset_btn_immediate_active(str(slot)),
         gr.skip(),
-        *_gravity_clear_animation_panel(),
     )
 
 
@@ -4144,24 +3979,18 @@ def _gravity_explorer_outputs(
     metrics: str,
     header: str,
     fig: object,
-    video_update: dict,
-    status_update: dict,
     tui: str,
     active_slot: int,
     *,
     edit_params_enabled: bool = False,
-    update_plot: bool = True,
 ) -> tuple:
-    plot_out = _gravity_plot_media_update(fig) if update_plot else gr.skip()
     return (
         *_gravity_preset_btn_updates(active_key),
         _gravity_edit_params_btn_update(edit_params_enabled),
         *_gravity_slider_control_updates(dials, edit_enabled=edit_params_enabled),
         metrics,
         header,
-        plot_out,
-        video_update,
-        status_update,
+        _gravity_plot_media_update(fig),
         _format_gravity_control_panel_html(dials, active_slot),
         tui,
         active_slot,
@@ -4242,161 +4071,18 @@ def _make_gravity_quick_preset_click(slot: int):
             view_elev,
             view_azim,
         )
-        return (
-            False,
-            *_gravity_explorer_outputs(
-                str(active_slot),
-                dials,
-                metrics,
-                header,
-                fig,
-                *_gravity_clear_animation_panel(),
-                tui,
-                active_slot,
-                edit_params_enabled=edit_params_enabled,
-            ),
-        )
-
-    return handler
-
-
-def _gravity_animation_done(
-    phi_sq_scale: float,
-    e_sq_scale: float,
-    pi_sq_scale: float,
-    kappa: float,
-    delta_z: float,
-    alpha: float,
-    beta: float,
-    deform_pressure: float,
-    view_elev: float,
-    view_azim: float,
-    active_preset: int,
-    edit_params_enabled: bool,
-) -> tuple:
-    """Restore static plot after one-shot deformation video finishes."""
-    dials = _gravity_dial_bundle(
-        phi_sq_scale,
-        e_sq_scale,
-        pi_sq_scale,
-        kappa,
-        delta_z,
-        alpha,
-        beta,
-        deform_pressure,
-        view_elev,
-        view_azim,
-    )
-    slot = int(active_preset)
-    metrics, header, fig = run_residual_explorer(
-        phi_sq_scale,
-        e_sq_scale,
-        pi_sq_scale,
-        kappa,
-        delta_z,
-        alpha,
-        beta,
-        deform_pressure,
-        view_elev,
-        view_azim,
-    )
-    tui = _gravity_tui_for_preset(slot, dials)
-    return (
-        False,
-        *_gravity_explorer_outputs(
-            str(slot),
+        return _gravity_explorer_outputs(
+            str(active_slot),
             dials,
             metrics,
             header,
             fig,
-            *_gravity_clear_animation_panel(),
             tui,
-            slot,
-            edit_params_enabled=bool(edit_params_enabled),
-        ),
-    )
+            active_slot,
+            edit_params_enabled=edit_params_enabled,
+        )
 
-
-def _gravity_animate_toggle_click(
-    phi_sq_scale: float,
-    e_sq_scale: float,
-    pi_sq_scale: float,
-    kappa: float,
-    delta_z: float,
-    alpha: float,
-    beta: float,
-    deform_pressure: float,
-    view_elev: float,
-    view_azim: float,
-    active_preset: int,
-    edit_params_enabled: bool,
-    animate_active: bool,
-    progress: gr.Progress = gr.Progress(track_tqdm=False),
-):
-    del animate_active
-    dials = _gravity_dial_bundle(
-        phi_sq_scale,
-        e_sq_scale,
-        pi_sq_scale,
-        kappa,
-        delta_z,
-        alpha,
-        beta,
-        deform_pressure,
-        view_elev,
-        view_azim,
-    )
-    slot = int(active_preset)
-    try:
-        video_path, metrics, header, fig, key_metrics = render_unit_cell_deformation_video(
-            phi_sq_scale,
-            e_sq_scale,
-            pi_sq_scale,
-            kappa,
-            delta_z,
-            alpha,
-            beta,
-            deform_pressure,
-            view_elev,
-            view_azim,
-            progress=progress,
-        )
-        dials["pressure"] = float(key_metrics["pressure"])
-        tui = _gravity_tui_for_preset(
-            slot,
-            dials,
-            key_metrics=key_metrics,
-        )
-        del fig
-        return _gravity_animation_render_outputs(
-            "animate",
-            dials,
-            metrics,
-            header,
-            *_gravity_play_animation_panel(video_path),
-            tui,
-            slot,
-            edit_params_enabled=bool(edit_params_enabled),
-        )
-    except Exception as exc:
-        logger.exception("gravity animate render failed")
-        err_metrics = f"Animation error: {exc}"
-        err_tui = _gravity_tui_for_preset(
-            slot,
-            dials,
-            status_label="ANIMATE ERROR",
-        )
-        return _gravity_animation_render_outputs(
-            str(slot),
-            dials,
-            err_metrics,
-            gr.skip(),
-            _gravity_clear_video_update(),
-            _gravity_status_update(f"Animation failed: {exc}"),
-            err_tui,
-            slot,
-            edit_params_enabled=bool(edit_params_enabled),
-        )
+    return handler
 
 
 def load_kappa_doc() -> float:
@@ -4982,12 +4668,6 @@ def build_app() -> gr.Blocks:
                                             )
                                         )
                         re_active_preset = gr.State(0)
-                        re_animate_active = gr.State(False)
-                        animate_deform_btn = gr.Button(
-                            "Animate deformation",
-                            variant="secondary",
-                            elem_classes=["vqc-receiver-preset", "vqc-full-width"],
-                        )
                         with gr.Column(
                             elem_classes=[
                                 "myst-gravity-preset-tui-section",
@@ -5001,7 +4681,7 @@ def build_app() -> gr.Blocks:
                                 elem_classes=["myst-gravity-preset-tui-wrap"],
                             )
                 with gr.Column(
-                    scale=8,
+                    scale=7,
                     elem_classes=[
                         "myst-gravity-visuals-col",
                         "myst-gravity-right-panel",
@@ -5015,63 +4695,23 @@ def build_app() -> gr.Blocks:
                             "myst-cube-viewport-frame",
                             "myst-gravity-cube-panel",
                             "myst-gravity-panel-window",
-                            "myst-gravity-viewport-split",
+                            "myst-gravity-viewport-full",
                         ]
                     ):
-                        with gr.Column(
+                        unit_cell_header = gr.HTML(
+                            _init_unit_cell_header,
+                            elem_classes=["myst-cube-viewport-header-slot"],
+                        )
+                        unit_cell_plot = gr.Plot(
+                            label=None,
+                            show_label=False,
                             scale=1,
-                            elem_classes=["myst-gravity-viewport-split-inner"],
-                        ):
-                            with gr.Column(
-                                scale=1,
-                                elem_classes=["myst-gravity-viewport-top"],
-                            ):
-                                unit_cell_header = gr.HTML(
-                                    _init_unit_cell_header,
-                                    elem_classes=["myst-cube-viewport-header-slot"],
-                                )
-                                unit_cell_plot = gr.Plot(
-                                    label=None,
-                                    show_label=False,
-                                    scale=1,
-                                    elem_id="unit-cell-viewport",
-                                    value=_init_unit_cell,
-                                    elem_classes=[
-                                        "vqc-plot3d-panel",
-                                        "myst-cube-plot-static",
-                                    ],
-                                )
-                            with gr.Column(
-                                scale=1,
-                                elem_classes=["myst-gravity-viewport-bottom"],
-                            ):
-                                gr.HTML(
-                                    '<div class="myst-gravity-viewport-anim-title">Animation Output</div>',
-                                    elem_classes=["myst-gravity-viewport-anim-title-slot"],
-                                )
-                                unit_cell_video = gr.Video(
-                                    label=None,
-                                    show_label=False,
-                                    interactive=False,
-                                    autoplay=True,
-                                    loop=False,
-                                    scale=1,
-                                    format="mp4",
-                                    elem_id="unit-cell-animation",
-                                    elem_classes=["myst-cube-anim-video"],
-                                )
-                                anim_status = gr.Textbox(
-                                    label="Status",
-                                    value=_GRAVITY_VIEWPORT_IDLE_STATUS,
-                                    lines=1,
-                                    max_lines=1,
-                                    interactive=False,
-                                    elem_classes=["myst-gravity-anim-status"],
-                                )
-                        anim_done_btn = gr.Button(
-                            "Animation done",
-                            visible=False,
-                            elem_id="myst-anim-done-btn",
+                            elem_id="unit-cell-viewport",
+                            value=_init_unit_cell,
+                            elem_classes=[
+                                "vqc-plot3d-panel",
+                                "myst-cube-plot-static",
+                            ],
                         )
             re_inputs = [
                 re_phi_scale, re_e_scale, re_pi_scale,
@@ -5082,16 +4722,13 @@ def build_app() -> gr.Blocks:
                 re_metrics,
                 unit_cell_header,
                 unit_cell_plot,
-                unit_cell_video,
-                anim_status,
                 re_control_levels,
                 re_preset_tui,
             ]
             gravity_dial_inputs = [*re_inputs, re_active_preset]
             gravity_preset_inputs = [*gravity_dial_inputs, re_edit_params]
-            gravity_preset_btn_outputs = [*re_quick_presets, animate_deform_btn]
+            gravity_preset_btn_outputs = list(re_quick_presets)
             gravity_preset_outputs = [
-                re_animate_active,
                 *gravity_preset_btn_outputs,
                 edit_params_btn,
                 *re_inputs,
@@ -5110,27 +4747,9 @@ def build_app() -> gr.Blocks:
                     outputs=re_outputs,
                 )
             gravity_immediate_outputs = [
-                re_animate_active,
                 *gravity_preset_btn_outputs,
                 unit_cell_plot,
-                unit_cell_video,
-                anim_status,
             ]
-            animate_event = animate_deform_btn.click(
-                _gravity_animate_btn_immediate,
-                inputs=[re_animate_active, re_active_preset],
-                outputs=gravity_immediate_outputs,
-            ).then(
-                _gravity_animate_toggle_click,
-                inputs=[*gravity_preset_inputs, re_animate_active],
-                outputs=gravity_preset_outputs,
-                show_progress="hidden",
-            )
-            anim_done_btn.click(
-                _gravity_animation_done,
-                inputs=gravity_preset_inputs,
-                outputs=gravity_preset_outputs,
-            )
             for slot, preset_btn in enumerate(re_quick_presets):
                 preset_btn.click(
                     lambda s=slot: _gravity_preset_click_immediate(s),
@@ -5139,7 +4758,6 @@ def build_app() -> gr.Blocks:
                     _make_gravity_quick_preset_click(slot),
                     inputs=gravity_preset_inputs,
                     outputs=gravity_preset_outputs,
-                    cancels=[animate_event],
                 )
 
         newhere_outputs = [panel_newhere, tab_newhere_btn, newhere_open, panel_claims, tab_claims_btn, claims_open]
