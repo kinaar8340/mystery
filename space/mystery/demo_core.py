@@ -1044,7 +1044,7 @@ def build_unit_cell_figure(
     view_dist: float = 13.5,
     axis_half: float = 2.75,
     show_curvature_grid: bool = True,
-    dpi: int = 120,
+    dpi: int = 150,
 ) -> plt.Figure:
     """Server-rendered deformable unit cell — bowing π-face, concave φ/e sides."""
     from matplotlib.colors import to_rgba
@@ -1065,8 +1065,8 @@ def build_unit_cell_figure(
     font_axis = 12
     caption_neutral = _UNIT_CELL_LABEL_TEXT
 
-    # Landscape aspect matches the Gravity viewport panel and reduces letterboxing.
-    fig = plt.figure(figsize=(12.0, 8.0), dpi=dpi, facecolor=bg)
+    # Large landscape canvas so Gradio can scale the PNG up without looking tiny.
+    fig = plt.figure(figsize=(14.0, 11.0), dpi=dpi, facecolor=bg)
     ax = fig.add_subplot(111, projection="3d", facecolor=bg)
 
     triangles, tri_colors = _deformed_cube_surface(s, p, delta_z, side)
