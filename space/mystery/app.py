@@ -2888,7 +2888,7 @@ _GRAVITY_PRESET_SLOT_LABELS = {
     0: "menu · parameter catalog",
     1: "default · home values",
     2: "rigid cube",
-    3: "full π bowl",
+    3: "full π bowl + φ/e concave pinch",
     4: "φ/e concave pinch",
 }
 _GRAVITY_PARAM_CATALOG: tuple[dict[str, object], ...] = (
@@ -2996,13 +2996,28 @@ _GRAVITY_PARAM_CATALOG: tuple[dict[str, object], ...] = (
 _GRAVITY_PRESET_PROFILES: dict[int, dict[str, float]] = {
     1: dict(_GRAVITY_HOME_DIALS),
     2: {
-        **_GRAVITY_HOME_DIALS,
+        "phi": 1.0,
+        "e": 1.0,
+        "pi": 1.0,
+        "kappa": KAPPA_DOC,
+        "dz": 0.0,
+        "alpha": 1.0,
+        "beta": 1.0,
         "pressure": 0.0,
+        "elev": 18.0,
+        "azim": 36.0,
     },
     3: {
-        **_GRAVITY_HOME_DIALS,
+        "phi": 0.962,
+        "e": 1.038,
+        "pi": 1.0,
+        "kappa": KAPPA_DOC,
+        "dz": 0.22,
+        "alpha": 1.38,
+        "beta": 1.48,
         "pressure": 1.0,
-        "dz": 0.18,
+        "elev": 30.0,
+        "azim": 52.0,
     },
     4: {
         **_GRAVITY_HOME_DIALS,
@@ -3010,6 +3025,8 @@ _GRAVITY_PRESET_PROFILES: dict[int, dict[str, float]] = {
         "dz": 0.14,
         "alpha": 1.30,
         "beta": 1.40,
+        "phi": 0.975,
+        "e": 1.025,
     },
 }
 
@@ -3333,6 +3350,11 @@ def _gravity_preset_btn_updates(active: str = "") -> tuple:
         )
         for key in _GRAVITY_PRESET_BTN_KEYS
     )
+
+
+def _gravity_preset_btn_immediate_active(active_key: str) -> tuple:
+    """Flash matrix-green active state on the clicked preset before heavy work."""
+    return _gravity_preset_btn_updates(active_key)
 
 
 def _gravity_edit_params_btn_update(enabled: bool) -> dict:
@@ -4211,9 +4233,9 @@ def build_app() -> gr.Blocks:
                 re_preset_tui,
             ]
             gravity_preset_inputs = [*re_inputs, re_active_preset, re_edit_params]
+            gravity_preset_btn_outputs = [*re_quick_presets, animate_deform_btn]
             gravity_preset_outputs = [
-                *re_quick_presets,
-                animate_deform_btn,
+                *gravity_preset_btn_outputs,
                 edit_params_btn,
                 *re_inputs,
                 *re_outputs,
@@ -4231,6 +4253,9 @@ def build_app() -> gr.Blocks:
                     outputs=re_outputs,
                 )
             animate_deform_btn.click(
+                lambda: _gravity_preset_btn_immediate_active("animate"),
+                outputs=gravity_preset_btn_outputs,
+            ).then(
                 _gravity_animate_click,
                 inputs=gravity_preset_inputs,
                 outputs=gravity_preset_outputs,
@@ -4238,6 +4263,9 @@ def build_app() -> gr.Blocks:
             )
             for slot, preset_btn in enumerate(re_quick_presets):
                 preset_btn.click(
+                    lambda s=slot: _gravity_preset_btn_immediate_active(str(s)),
+                    outputs=gravity_preset_btn_outputs,
+                ).then(
                     _make_gravity_quick_preset_click(slot),
                     inputs=gravity_preset_inputs,
                     outputs=gravity_preset_outputs,
