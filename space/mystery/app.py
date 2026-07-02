@@ -2100,11 +2100,52 @@ footer {{ visibility: hidden; }}
     background: linear-gradient(180deg, #1f140a 0%, #0f0a06 100%) !important;
     box-shadow: inset 0 0 14px rgba(0, 0, 0, 0.55) !important;
 }}
-.gradio-container .myst-gravity-presets-panel .myst-gravity-preset-grid {{
-    margin: 0.35rem 0 0.55rem 0 !important;
+.gradio-container .myst-gravity-presets-panel .myst-gravity-preset-grid,
+.gradio-container .myst-gravity-presets-panel .myst-gravity-preset-grid-wrap {{
+    width: 100% !important;
+    margin: 0.35rem 0 0.45rem 0 !important;
+    padding: 0 0.55rem !important;
+    display: block !important;
+    visibility: visible !important;
+    box-sizing: border-box !important;
+}}
+.gradio-container .myst-gravity-presets-panel .myst-gravity-preset-row,
+.gradio-container .myst-gravity-presets-panel .myst-gravity-preset-row.row {{
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 0.32rem !important;
+    width: 100% !important;
+    margin: 0 0 0.32rem 0 !important;
+    padding: 0 !important;
+    visibility: visible !important;
+    min-height: 2.15rem !important;
+}}
+.gradio-container .myst-gravity-presets-panel .myst-gravity-preset-row > .block,
+.gradio-container .myst-gravity-presets-panel .myst-gravity-preset-row > .form,
+.gradio-container .myst-gravity-presets-panel .myst-gravity-preset-row > .column {{
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    min-width: 0 !important;
+    width: 100% !important;
+    min-height: 2rem !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}}
+.gradio-container .myst-gravity-presets-panel button.myst-gravity-quick-preset,
+.gradio-container .myst-gravity-presets-panel button.myst-gravity-quick-preset span {{
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    width: 100% !important;
+    min-height: 2rem !important;
 }}
 .gradio-container .myst-gravity-presets-panel button.vqc-receiver-preset.vqc-full-width {{
-    margin-top: 0.15rem !important;
+    margin: 0.15rem 0.55rem 0.55rem !important;
+    width: calc(100% - 1.1rem) !important;
+    min-height: 2.1rem !important;
 }}
 .gradio-container .myst-gravity-tui-gap {{
     display: block !important;
@@ -3903,24 +3944,23 @@ def build_app() -> gr.Blocks:
                     ):
                         gr.HTML(QUICK_PRESETS_PANEL_HEADER_HTML)
                         re_quick_presets: list[gr.Button] = []
-                        with gr.Column(elem_classes=["myst-gravity-preset-grid"]):
-                            for row_start in (0, 4):
-                                with gr.Row(elem_classes=["myst-gravity-preset-row"]):
-                                    for slot in range(row_start, row_start + 4):
-                                        preset_classes = [
-                                            "vqc-receiver-preset",
-                                            "myst-gravity-quick-preset",
-                                        ]
-                                        if slot == 0:
-                                            preset_classes.append("active")
-                                        re_quick_presets.append(
-                                            gr.Button(
-                                                f"{slot + 1:02d}",
-                                                variant="secondary",
-                                                size="sm",
-                                                elem_classes=preset_classes,
-                                            )
+                        for row_start in (0, 4):
+                            with gr.Row(elem_classes=["myst-gravity-preset-row"]):
+                                for slot in range(row_start, row_start + 4):
+                                    preset_classes = [
+                                        "vqc-receiver-preset",
+                                        "myst-gravity-quick-preset",
+                                    ]
+                                    if slot == 0:
+                                        preset_classes.append("active")
+                                    re_quick_presets.append(
+                                        gr.Button(
+                                            str(slot + 1),
+                                            variant="secondary",
+                                            size="sm",
+                                            elem_classes=preset_classes,
                                         )
+                                    )
                         re_active_preset = gr.State(0)
                         animate_deform_btn = gr.Button(
                             "Animate deformation",
