@@ -142,6 +142,14 @@ CONTROL_PANEL_HEADER_HTML = """
 </div>
 """
 
+QUICK_PRESETS_PANEL_HEADER_HTML = """
+<div class="myst-gravity-presets-header" role="img" aria-label="Quick presets panel">
+  <span class="myst-cube-viewport-brand">MYSTERY</span>
+  <span class="myst-cube-viewport-title">Quick Presets</span>
+  <span class="myst-cube-viewport-sub">one click sets dials</span>
+</div>
+"""
+
 GRAVITY_PRESET_TUI_HEADER_HTML = """
 <div class="myst-gravity-preset-tui-header" role="img" aria-label="Preset metrics terminal">
   <span class="myst-cube-viewport-brand">MYSTERY</span>
@@ -1963,6 +1971,54 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-gravity-right-stack {{
     gap: 0 !important;
 }}
+.gradio-container .myst-gravity-left-stack {{
+    gap: 0.65rem !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+}}
+.gradio-container .myst-gravity-control-panel.myst-gravity-left-frame {{
+    flex: 0 1 auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+}}
+.gradio-container .myst-gravity-presets-panel.myst-gravity-left-frame {{
+    flex: 0 0 auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+    padding-bottom: 0.65rem !important;
+}}
+.gradio-container .myst-gravity-presets-header {{
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.08rem !important;
+    width: 100% !important;
+    margin: 0 0 0.55rem 0 !important;
+    padding: 0.65rem 0.75rem 0.75rem !important;
+    border-bottom: 1px solid rgba(74, 56, 24, 0.65) !important;
+    border-radius: 10px 10px 0 0 !important;
+    background: linear-gradient(180deg, #1f140a 0%, #0f0a06 100%) !important;
+    box-shadow: inset 0 0 14px rgba(0, 0, 0, 0.55) !important;
+}}
+.gradio-container .myst-gravity-presets-panel .myst-gravity-preset-grid {{
+    margin: 0.35rem 0 0.55rem 0 !important;
+}}
+.gradio-container .myst-gravity-presets-panel button.vqc-receiver-preset.vqc-full-width {{
+    margin-top: 0.15rem !important;
+}}
+.gradio-container .myst-gravity-tui-gap {{
+    display: block !important;
+    width: 100% !important;
+    height: 0.85rem !important;
+    min-height: 0.85rem !important;
+    flex: 0 0 0.85rem !important;
+}}
+.gradio-container .myst-gravity-left-tui.myst-gravity-preset-tui-section {{
+    flex: 0 0 auto !important;
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+    border-top: none !important;
+}}
 .gradio-container .myst-gravity-cube-panel {{
     flex: 1 1 0 !important;
     min-height: 0 !important;
@@ -2003,7 +2059,7 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-gravity-cube-panel > .column.myst-cube-viewport-media,
 .gradio-container .myst-gravity-cube-panel .myst-cube-viewport-media {{
     flex: 1 1 auto !important;
-    min-height: clamp(18rem, 42vh, 28rem) !important;
+    min-height: clamp(22rem, 52vh, 36rem) !important;
     height: auto !important;
     max-height: none !important;
     width: 100% !important;
@@ -2017,7 +2073,7 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-gravity-cube-panel .myst-cube-viewport-media .myst-cube-anim-video,
 .gradio-container .myst-gravity-cube-panel .myst-cube-viewport-media .myst-cube-anim-video.block {{
     flex: 1 1 auto !important;
-    min-height: clamp(18rem, 42vh, 28rem) !important;
+    min-height: clamp(22rem, 52vh, 36rem) !important;
     height: auto !important;
     max-height: none !important;
     width: 100% !important;
@@ -2026,20 +2082,11 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-gravity-cube-panel .myst-cube-viewport-media .myst-cube-anim-video video {{
     width: 100% !important;
     height: 100% !important;
-    max-height: clamp(16rem, 38vh, 26rem) !important;
+    max-height: clamp(20rem, 48vh, 34rem) !important;
     object-fit: contain !important;
     object-position: center center !important;
     background: #000000 !important;
     display: block !important;
-}}
-.gradio-container .myst-gravity-cube-panel > .column.myst-gravity-preset-tui-section,
-.gradio-container .myst-gravity-cube-panel .myst-gravity-preset-tui-section,
-.gradio-container .myst-gravity-cube-panel .myst-gravity-preset-tui-section.block {{
-    flex: 0 0 auto !important;
-    height: 14.75rem !important;
-    min-height: 14.75rem !important;
-    max-height: 14.75rem !important;
-    overflow: hidden !important;
 }}
 .gradio-container .myst-gravity-preset-tui-section {{
     flex: 0 0 auto !important;
@@ -2191,12 +2238,12 @@ footer {{ visibility: hidden; }}
     margin: 0 0 0.55rem 0 !important;
 }}
 .gradio-container .myst-gravity-left-frame .myst-gravity-controls-accordion .accordion {{
-    max-height: 52% !important;
+    max-height: min(52vh, 28rem) !important;
     overflow-y: auto !important;
 }}
 .gradio-container .myst-gravity-left-frame .myst-gravity-metrics-inner {{
-    flex: 1 1 0 !important;
-    min-height: 0 !important;
+    flex: 0 0 auto !important;
+    min-height: 10rem !important;
     display: flex !important;
     flex-direction: column !important;
     overflow: hidden !important;
@@ -3345,6 +3392,7 @@ def build_app() -> gr.Blocks:
                     elem_classes=[
                         "myst-gravity-controls-col",
                         "myst-gravity-left-panel",
+                        "myst-gravity-left-stack",
                     ],
                 ):
                     with gr.Group(
@@ -3353,6 +3401,7 @@ def build_app() -> gr.Blocks:
                             "vqc-gravity-panel",
                             "myst-gravity-left-frame",
                             "myst-gravity-panel-window",
+                            "myst-gravity-control-panel",
                         ]
                     ):
                         gr.HTML(CONTROL_PANEL_HEADER_HTML)
@@ -3458,48 +3507,72 @@ def build_app() -> gr.Blocks:
                                     label="β (residual coupling)",
                                     elem_classes=["vqc-optics-dial-wrap"],
                                 )
-                            gr.HTML(
-                                '<p class="vqc-optics-presets-label">'
-                                "Quick presets — one click sets dials"
-                                "</p>"
-                            )
-                            re_quick_presets: list[gr.Button] = []
-                            with gr.Column(elem_classes=["myst-gravity-preset-grid"]):
-                                for row_start in (0, 4):
-                                    with gr.Row(elem_classes=["myst-gravity-preset-row"]):
-                                        for slot in range(row_start, row_start + 4):
-                                            preset_classes = [
-                                                "vqc-receiver-preset",
-                                                "myst-gravity-quick-preset",
-                                            ]
-                                            if slot == 0:
-                                                preset_classes.append("active")
-                                            re_quick_presets.append(
-                                                gr.Button(
-                                                    str(slot + 1),
-                                                    variant="secondary",
-                                                    size="sm",
-                                                    elem_classes=preset_classes,
-                                                )
+                            with gr.Column(elem_classes=["myst-gravity-metrics-inner"]):
+                                gr.HTML(
+                                    '<p class="vqc-optics-presets-label" style="margin-top:0;">'
+                                    "Explorer metrics — live readout"
+                                    "</p>"
+                                )
+                                re_metrics = gr.Textbox(
+                                    label="Residual explorer",
+                                    lines=12,
+                                    interactive=False,
+                                    value=_init_re_metrics,
+                                )
+                    with gr.Group(
+                        elem_classes=[
+                            "vqc-optics-panel",
+                            "vqc-gravity-panel",
+                            "myst-gravity-left-frame",
+                            "myst-gravity-panel-window",
+                            "myst-gravity-presets-panel",
+                        ]
+                    ):
+                        gr.HTML(QUICK_PRESETS_PANEL_HEADER_HTML)
+                        re_quick_presets: list[gr.Button] = []
+                        with gr.Column(elem_classes=["myst-gravity-preset-grid"]):
+                            for row_start in (0, 4):
+                                with gr.Row(elem_classes=["myst-gravity-preset-row"]):
+                                    for slot in range(row_start, row_start + 4):
+                                        preset_classes = [
+                                            "vqc-receiver-preset",
+                                            "myst-gravity-quick-preset",
+                                        ]
+                                        if slot == 0:
+                                            preset_classes.append("active")
+                                        re_quick_presets.append(
+                                            gr.Button(
+                                                str(slot + 1),
+                                                variant="secondary",
+                                                size="sm",
+                                                elem_classes=preset_classes,
                                             )
-                            re_active_preset = gr.State(0)
-                            animate_deform_btn = gr.Button(
-                                "Animate deformation",
-                                variant="secondary",
-                                elem_classes=["vqc-receiver-preset", "vqc-full-width"],
-                            )
-                        with gr.Column(elem_classes=["myst-gravity-metrics-inner"]):
-                            gr.HTML(
-                                '<p class="vqc-optics-presets-label" style="margin-top:0;">'
-                                "Explorer metrics — live readout"
-                                "</p>"
-                            )
-                            re_metrics = gr.Textbox(
-                                label="Residual explorer",
-                                lines=12,
-                                interactive=False,
-                                value=_init_re_metrics,
-                            )
+                                        )
+                        re_active_preset = gr.State(0)
+                        animate_deform_btn = gr.Button(
+                            "Animate deformation",
+                            variant="secondary",
+                            elem_classes=["vqc-receiver-preset", "vqc-full-width"],
+                        )
+                    gr.HTML(
+                        '<div class="myst-gravity-tui-gap" aria-hidden="true"></div>',
+                        elem_classes=["myst-gravity-tui-gap-wrap"],
+                    )
+                    with gr.Group(
+                        elem_classes=[
+                            "vqc-optics-panel",
+                            "vqc-gravity-panel",
+                            "myst-gravity-left-frame",
+                            "myst-gravity-panel-window",
+                            "myst-gravity-preset-tui-section",
+                            "myst-gravity-left-tui",
+                        ]
+                    ):
+                        gr.HTML(GRAVITY_PRESET_TUI_HEADER_HTML)
+                        re_preset_tui = gr.HTML(
+                            _init_preset_tui,
+                            elem_classes=["myst-gravity-preset-tui-wrap"],
+                        )
                 with gr.Column(
                     scale=8,
                     elem_classes=[
@@ -3538,12 +3611,6 @@ def build_app() -> gr.Blocks:
                                 loop=True,
                                 format="mp4",
                                 elem_classes=["myst-cube-anim-video"],
-                            )
-                        with gr.Column(elem_classes=["myst-gravity-preset-tui-section"]):
-                            gr.HTML(GRAVITY_PRESET_TUI_HEADER_HTML)
-                            re_preset_tui = gr.HTML(
-                                _init_preset_tui,
-                                elem_classes=["myst-gravity-preset-tui-wrap"],
                             )
             re_inputs = [
                 re_phi_scale, re_e_scale, re_pi_scale,
