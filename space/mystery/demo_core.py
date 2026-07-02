@@ -489,9 +489,9 @@ def format_residual_explorer(
 
 
 _UNIT_CELL_MATRIX_GREEN = "#33ff66"
-_UNIT_CELL_LIGHT_RED = "#ff8a8a"
-_UNIT_CELL_LIGHT_GREEN = "#7dff9a"
-_UNIT_CELL_LIGHT_BLUE = "#93c5fd"
+_UNIT_CELL_RED = "#e63946"
+_UNIT_CELL_GREEN = "#22c55e"
+_UNIT_CELL_BLUE = "#2563eb"
 
 
 def build_unit_cell_figure(
@@ -507,9 +507,9 @@ def build_unit_cell_figure(
     r_show = R if r_val is None else r_val
     side = abs(delta_side)
     matrix_green = _UNIT_CELL_MATRIX_GREEN
-    light_red = _UNIT_CELL_LIGHT_RED
-    light_green = _UNIT_CELL_LIGHT_GREEN
-    light_blue = _UNIT_CELL_LIGHT_BLUE
+    eq_red = _UNIT_CELL_RED
+    eq_green = _UNIT_CELL_GREEN
+    eq_blue = _UNIT_CELL_BLUE
 
     fig = plt.figure(figsize=(8, 6.5), dpi=120, facecolor="#0a0818")
     ax = fig.add_subplot(111, projection="3d", facecolor="#120c18")
@@ -525,10 +525,10 @@ def build_unit_cell_figure(
     ax.add_collection3d(
         Poly3DCollection(
             faces,
-            facecolors=light_blue,
+            facecolors=eq_blue,
             edgecolors=matrix_green,
             linewidths=2.0,
-            alpha=0.2,
+            alpha=0.1,
         )
     )
     cube_edges = (
@@ -557,15 +557,15 @@ def build_unit_cell_figure(
         )
 
     arrow_kw = dict(arrow_length_ratio=0.28, linewidth=2.2)
-    ax.quiver(0, 0, s + 0.1, 0, 0, -delta_z * 2.0, color=light_blue, **arrow_kw)
-    ax.quiver(-s - 0.1, 0, 0, side * 2.0, 0, 0, color=light_red, **arrow_kw)
-    ax.quiver(s + 0.1, 0, 0, -side * 2.0, 0, 0, color=light_green, **arrow_kw)
+    ax.quiver(0, 0, s + 0.1, 0, 0, -delta_z * 2.0, color=eq_blue, **arrow_kw)
+    ax.quiver(-s - 0.1, 0, 0, side * 2.0, 0, 0, color=eq_red, **arrow_kw)
+    ax.quiver(s + 0.1, 0, 0, -side * 2.0, 0, 0, color=eq_green, **arrow_kw)
 
-    ax.text(1.55, 0, 0, r"$T_\phi \propto \phi^2$", color=light_red, fontsize=10, ha="center")
-    ax.text(0, 1.55, 0, r"$T_e \propto e^2$", color=light_green, fontsize=10, ha="center")
-    ax.text(0, 0, 1.55, r"$T_\pi \propto \pi^2$", color=light_blue, fontsize=10, ha="center")
-    ax.text(0, 0, -0.35, r"$\delta_\mathrm{side}$ (inward)", color=light_green, fontsize=9, ha="center")
-    ax.text(0, -1.35, 0, r"$\delta_z$ (push)", color=light_blue, fontsize=9, ha="center")
+    ax.text(1.55, 0, 0, r"$T_\phi \propto \phi^2$", color=eq_red, fontsize=10, ha="center")
+    ax.text(0, 1.55, 0, r"$T_e \propto e^2$", color=eq_green, fontsize=10, ha="center")
+    ax.text(0, 0, 1.55, r"$T_\pi \propto \pi^2$", color=eq_blue, fontsize=10, ha="center")
+    ax.text(0, 0, -0.35, r"$\delta_\mathrm{side}$ (inward)", color=eq_green, fontsize=9, ha="center")
+    ax.text(0, -1.35, 0, r"$\delta_z$ (push)", color=eq_blue, fontsize=9, ha="center")
 
     from matplotlib.patches import FancyBboxPatch
 
@@ -586,13 +586,13 @@ def build_unit_cell_figure(
     )
     caption_segments = (
         (0.17, "R = ", "#e8e0f8"),
-        (0.215, r"$\phi^2$", light_red),
+        (0.215, r"$\phi^2$", eq_red),
         (0.255, " + ", "#e8e0f8"),
-        (0.275, r"$e^2$", light_green),
+        (0.275, r"$e^2$", eq_green),
         (0.305, " − ", "#e8e0f8"),
-        (0.325, r"$\pi^2$", light_blue),
+        (0.325, r"$\pi^2$", eq_blue),
         (0.355, f" ≈ {r_show:+.3f} drives net ", "#e8e0f8"),
-        (0.545, r"$\delta_\mathrm{side}$", light_green),
+        (0.545, r"$\delta_\mathrm{side}$", eq_green),
         (0.595, " contraction", "#e8e0f8"),
     )
     for x_pos, label, label_color in caption_segments:
