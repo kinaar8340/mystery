@@ -1007,8 +1007,8 @@ HFB_CSS = f"""
 :root, :root .dark {{
     --myst-control-bar-height: 1.54rem;
     --myst-button-height: 26px;
-    --myst-viewport-min-height: max(800px, calc(100dvh - 9rem));
-    --myst-viewport-plot-height: max(800px, calc(100dvh - 9rem));
+    --myst-viewport-min-height: 18rem;
+    --myst-viewport-plot-height: 650px;
     --myst-viewport-aspect: 7 / 5;
     --body-background-fill: transparent !important;
     --background-fill-primary: transparent !important;
@@ -3358,111 +3358,9 @@ footer {{ visibility: hidden; }}
     font-size: 0.94rem !important;
     line-height: 1.5 !important;
 }}
-/* === SINGLE FULL VIEWPORT (matplotlib gr.Plot — edge-to-edge, not Plotly) === */
-.gradio-container .myst-gravity-visuals-col,
-.gradio-container .myst-gravity-split > .column.myst-gravity-visuals-col {{
-    height: 100% !important;
-    min-height: max(800px, calc(100dvh - 9rem)) !important;
-    flex: 1 1 0 !important;
-}}
-.gradio-container .myst-gravity-viewport-full.myst-gravity-cube-panel.myst-gravity-panel-window.vqc-optics-panel {{
-    display: grid !important;
-    grid-template-rows: auto minmax(max(800px, calc(100dvh - 9rem)), 1fr) !important;
-    grid-template-columns: minmax(0, 1fr) !important;
-    width: 100% !important;
-    height: 100% !important;
-    min-height: max(800px, calc(100dvh - 9rem)) !important;
-    margin: 0 !important;
-    padding: 6px 8px !important;
-    overflow: hidden !important;
-}}
-.gradio-container .myst-gravity-viewport-full > .block:has(.myst-cube-viewport-header-fixed),
-.gradio-container .myst-gravity-viewport-full .myst-cube-viewport-header-slot {{
-    grid-row: 1 !important;
-    flex: 0 0 auto !important;
-    max-height: 4.25rem !important;
-    overflow: hidden !important;
-    margin: 0 0 6px 0 !important;
-    padding: 0 !important;
-}}
-.gradio-container .myst-gravity-viewport-full > .block:has(.myst-cube-viewport-media),
-.gradio-container .myst-gravity-viewport-full > .block:has(.myst-cube-viewport-media-slot),
-.gradio-container .myst-gravity-viewport-full > .column.myst-cube-viewport-media,
-.gradio-container .myst-gravity-viewport-full > .column.myst-cube-viewport-media-slot,
-.gradio-container .column:has(#unit-cell-viewport) {{
-    grid-row: 2 !important;
-    flex: 1 1 0 !important;
-    width: 100% !important;
-    height: 100% !important;
-    min-height: max(800px, calc(100dvh - 9rem)) !important;
-    max-height: 100% !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    overflow: hidden !important;
-    display: flex !important;
-    flex-direction: column !important;
-}}
-.gradio-container .myst-gravity-viewport-full .myst-cube-viewport-media,
-.gradio-container .myst-gravity-viewport-full .myst-cube-viewport-media-slot {{
-    position: relative !important;
-    flex: 1 1 0 !important;
-    width: 100% !important;
-    height: 100% !important;
-    min-height: max(800px, calc(100dvh - 9rem)) !important;
-    overflow: hidden !important;
-}}
-.gradio-container #unit-cell-viewport,
-.gradio-container #unit-cell-viewport.block,
-.gradio-container #unit-cell-viewport > div,
-.gradio-container .myst-gravity-viewport-full .myst-cube-viewport-media .myst-cube-plot-inner.block,
-.gradio-container .myst-gravity-viewport-full .myst-cube-viewport-media #unit-cell-viewport {{
-    position: absolute !important;
-    inset: 0 !important;
-    width: 100% !important;
-    height: 100% !important;
-    min-height: max(800px, calc(100dvh - 9rem)) !important;
-    max-height: 100% !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    display: block !important;
-    flex: none !important;
-    overflow: hidden !important;
-    z-index: 2 !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    background: #000000 !important;
-    border: none !important;
-    border-radius: 0 !important;
-}}
-.gradio-container #unit-cell-viewport .wrap,
-.gradio-container #unit-cell-viewport .plot-container,
-.gradio-container #unit-cell-viewport .form,
-.gradio-container .myst-gravity-viewport-full .myst-cube-viewport-media .myst-cube-plot-inner .plot-container {{
-    display: block !important;
-    width: 100% !important;
-    height: 100% !important;
-    min-height: max(800px, calc(100dvh - 9rem)) !important;
-    max-height: 100% !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    flex: none !important;
-    overflow: hidden !important;
-    box-sizing: border-box !important;
-    background-color: #000000 !important;
-}}
-.gradio-container #unit-cell-viewport .plot-container img,
-.gradio-container .myst-gravity-viewport-full .myst-cube-viewport-media .myst-cube-plot-inner .plot-container img {{
-    display: block !important;
-    width: 100% !important;
-    height: 100% !important;
-    min-height: max(800px, calc(100dvh - 9rem)) !important;
-    max-width: 100% !important;
-    max-height: 100% !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    flex: none !important;
-    object-fit: contain !important;
-    object-position: center center !important;
+/* === MINIMAL VIEWPORT (matplotlib gr.Plot only) === */
+.gradio-container #unit-cell-viewport {{
+    min-height: 650px;
 }}
 @media (max-width: 768px) {{
     .gradio-container .myst-gravity-split {{
@@ -3905,8 +3803,8 @@ def _run_residual_explorer_ui(
     view_elev: float,
     view_azim: float,
     active_preset: int,
-) -> tuple[str, str, object, str, str]:
-    metrics, header, fig = run_residual_explorer(
+) -> tuple[str, object, str, str]:
+    metrics, _header, fig = run_residual_explorer(
         phi_sq_scale,
         e_sq_scale,
         pi_sq_scale,
@@ -3935,7 +3833,6 @@ def _run_residual_explorer_ui(
     control_levels = _format_gravity_control_panel_html(dials, slot)
     return (
         metrics,
-        header,
         _gravity_plot_media_update(fig),
         control_levels,
         tui,
@@ -4014,7 +3911,6 @@ def _gravity_explorer_outputs(
     active_key: str,
     dials: dict[str, float],
     metrics: str,
-    header: str,
     fig: object,
     tui: str,
     active_slot: int,
@@ -4026,7 +3922,6 @@ def _gravity_explorer_outputs(
         _gravity_edit_params_btn_update(edit_params_enabled),
         *_gravity_slider_control_updates(dials, edit_enabled=edit_params_enabled),
         metrics,
-        header,
         _gravity_plot_media_update(fig),
         _format_gravity_control_panel_html(dials, active_slot),
         tui,
@@ -4095,7 +3990,7 @@ def _make_gravity_quick_preset_click(slot: int):
         _active_preset: int,
         edit_params_enabled: bool,
     ):
-        dials, metrics, header, fig, tui, active_slot = _gravity_quick_preset_apply(
+        dials, metrics, _header, fig, tui, active_slot = _gravity_quick_preset_apply(
             slot,
             phi_sq_scale,
             e_sq_scale,
@@ -4112,7 +4007,6 @@ def _make_gravity_quick_preset_click(slot: int):
             str(active_slot),
             dials,
             metrics,
-            header,
             fig,
             tui,
             active_slot,
@@ -4718,45 +4612,22 @@ def build_app() -> gr.Blocks:
                                 elem_classes=["myst-gravity-preset-tui-wrap"],
                             )
                 with gr.Column(
-                    scale=8,
+                    scale=6,
                     elem_classes=[
                         "myst-gravity-visuals-col",
                         "myst-gravity-right-panel",
-                        "myst-gravity-right-stack",
                     ],
                 ):
-                    with gr.Group(
-                        elem_classes=[
-                            "vqc-optics-panel",
-                            "vqc-gravity-panel",
-                            "myst-cube-viewport-frame",
-                            "myst-gravity-cube-panel",
-                            "myst-gravity-panel-window",
-                            "myst-gravity-viewport-full",
-                        ]
-                    ):
-                        unit_cell_header = gr.HTML(
-                            _init_unit_cell_header,
-                            elem_classes=["myst-cube-viewport-header-slot"],
-                        )
-                        with gr.Column(
-                            elem_classes=[
-                                "myst-cube-viewport-media",
-                                "myst-cube-viewport-media-slot",
-                            ],
-                        ):
-                            unit_cell_plot = gr.Plot(
-                                label=None,
-                                show_label=False,
-                                scale=1,
-                                elem_id="unit-cell-viewport",
-                                value=_init_unit_cell,
-                                elem_classes=[
-                                    "vqc-plot3d-panel",
-                                    "myst-cube-plot-inner",
-                                    "myst-cube-plot-static",
-                                ],
-                            )
+                    gr.HTML(
+                        "<h3 style='margin: 4px 0 10px 0; color: #dddddd;'>UNIT CELL VIEWPORT</h3>"
+                    )
+                    unit_cell_plot = gr.Plot(
+                        label=None,
+                        show_label=False,
+                        scale=1,
+                        elem_id="unit-cell-viewport",
+                        value=_init_unit_cell,
+                    )
             re_inputs = [
                 re_phi_scale, re_e_scale, re_pi_scale,
                 re_kappa, re_delta_z, re_alpha, re_beta, re_pressure,
@@ -4764,7 +4635,6 @@ def build_app() -> gr.Blocks:
             ]
             re_outputs = [
                 re_metrics,
-                unit_cell_header,
                 unit_cell_plot,
                 re_control_levels,
                 re_preset_tui,
