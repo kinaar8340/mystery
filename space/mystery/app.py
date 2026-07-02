@@ -1974,36 +1974,97 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-gravity-left-stack {{
     flex: 1 1 0 !important;
     min-height: 0 !important;
-    gap: 0.65rem !important;
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: stretch !important;
+    height: 100% !important;
+    gap: 0.55rem !important;
+    overflow: hidden !important;
+    display: grid !important;
+    grid-template-rows: minmax(0, 1fr) auto 0.85rem auto !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    align-content: start !important;
+}}
+.gradio-container .myst-gravity-left-stack > .gap {{
+    display: none !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
 }}
 .gradio-container .myst-gravity-left-stack > .block,
-.gradio-container .myst-gravity-left-stack > .form,
-.gradio-container .myst-gravity-left-stack > .group {{
-    flex: 0 0 auto !important;
-    height: auto !important;
+.gradio-container .myst-gravity-left-stack > .form {{
     min-height: 0 !important;
     width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
 }}
+.gradio-container .myst-gravity-left-stack > .block:has(.myst-gravity-left-control-slot),
+.gradio-container .myst-gravity-left-stack > .block:has(.myst-gravity-control-panel) {{
+    grid-row: 1 !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    align-self: stretch !important;
+}}
+.gradio-container .myst-gravity-left-stack > .block:has(.myst-gravity-left-presets-slot),
+.gradio-container .myst-gravity-left-stack > .block:has(.myst-gravity-presets-panel) {{
+    grid-row: 2 !important;
+    align-self: stretch !important;
+    overflow: visible !important;
+}}
+.gradio-container .myst-gravity-left-stack > .block:has(.myst-gravity-left-tui-gap-slot) {{
+    grid-row: 3 !important;
+    align-self: stretch !important;
+}}
+.gradio-container .myst-gravity-left-stack > .block:has(.myst-gravity-left-tui-slot),
+.gradio-container .myst-gravity-left-stack > .block:has(.myst-gravity-left-tui) {{
+    grid-row: 4 !important;
+    align-self: stretch !important;
+    overflow: visible !important;
+}}
+.gradio-container .myst-gravity-left-stack > .column.myst-gravity-left-control-slot {{
+    grid-row: 1 !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+}}
+.gradio-container .myst-gravity-left-stack > .column.myst-gravity-left-presets-slot {{
+    grid-row: 2 !important;
+}}
+.gradio-container .myst-gravity-left-stack > .column.myst-gravity-left-tui-slot {{
+    grid-row: 4 !important;
+}}
+.gradio-container .myst-gravity-left-control-slot,
 .gradio-container .myst-gravity-control-panel.myst-gravity-left-frame {{
-    flex: 0 0 auto !important;
+    flex: 0 1 auto !important;
     height: auto !important;
     min-height: 0 !important;
     max-height: none !important;
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
 }}
+.gradio-container .myst-gravity-left-presets-slot,
 .gradio-container .myst-gravity-presets-panel.myst-gravity-left-frame {{
     flex: 0 0 auto !important;
     height: auto !important;
     min-height: 0 !important;
     max-height: none !important;
+    width: 100% !important;
     padding-bottom: 0.65rem !important;
     overflow: visible !important;
     visibility: visible !important;
     display: flex !important;
+    flex-direction: column !important;
+}}
+.gradio-container .myst-gravity-left-tui-slot,
+.gradio-container .myst-gravity-left-tui.myst-gravity-left-frame {{
+    flex: 0 0 auto !important;
+    height: auto !important;
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: visible !important;
 }}
 .gradio-container .myst-gravity-presets-header {{
     display: flex !important;
@@ -2036,6 +2097,13 @@ footer {{ visibility: hidden; }}
     margin-top: 0 !important;
     padding-top: 0 !important;
     border-top: none !important;
+    min-height: 13.5rem !important;
+}}
+.gradio-container .myst-gravity-left-tui-slot .myst-gravity-preset-tui-wrap,
+.gradio-container .myst-gravity-left-tui-slot .myst-gravity-preset-tui-wrap.block {{
+    min-height: 9.25rem !important;
+    display: block !important;
+    visibility: visible !important;
 }}
 .gradio-container .myst-gravity-cube-panel {{
     flex: 1 1 0 !important;
@@ -3409,7 +3477,7 @@ def build_app() -> gr.Blocks:
                     scale=0,
                     variant="secondary",
                 )
-            with gr.Row(elem_classes=["myst-gravity-split"], equal_height=True):
+            with gr.Row(elem_classes=["myst-gravity-split"], equal_height=False):
                 with gr.Column(
                     scale=5,
                     min_width=280,
@@ -3419,13 +3487,14 @@ def build_app() -> gr.Blocks:
                         "myst-gravity-left-stack",
                     ],
                 ):
-                    with gr.Group(
+                    with gr.Column(
                         elem_classes=[
                             "vqc-optics-panel",
                             "vqc-gravity-panel",
                             "myst-gravity-left-frame",
                             "myst-gravity-panel-window",
                             "myst-gravity-control-panel",
+                            "myst-gravity-left-control-slot",
                         ]
                     ):
                         gr.HTML(CONTROL_PANEL_HEADER_HTML)
@@ -3543,13 +3612,14 @@ def build_app() -> gr.Blocks:
                                     interactive=False,
                                     value=_init_re_metrics,
                                 )
-                    with gr.Group(
+                    with gr.Column(
                         elem_classes=[
                             "vqc-optics-panel",
                             "vqc-gravity-panel",
                             "myst-gravity-left-frame",
                             "myst-gravity-panel-window",
                             "myst-gravity-presets-panel",
+                            "myst-gravity-left-presets-slot",
                         ]
                     ):
                         gr.HTML(QUICK_PRESETS_PANEL_HEADER_HTML)
@@ -3580,9 +3650,12 @@ def build_app() -> gr.Blocks:
                         )
                     gr.HTML(
                         '<div class="myst-gravity-tui-gap" aria-hidden="true"></div>',
-                        elem_classes=["myst-gravity-tui-gap-wrap"],
+                        elem_classes=[
+                            "myst-gravity-tui-gap-wrap",
+                            "myst-gravity-left-tui-gap-slot",
+                        ],
                     )
-                    with gr.Group(
+                    with gr.Column(
                         elem_classes=[
                             "vqc-optics-panel",
                             "vqc-gravity-panel",
@@ -3590,6 +3663,7 @@ def build_app() -> gr.Blocks:
                             "myst-gravity-panel-window",
                             "myst-gravity-preset-tui-section",
                             "myst-gravity-left-tui",
+                            "myst-gravity-left-tui-slot",
                         ]
                     ):
                         gr.HTML(GRAVITY_PRESET_TUI_HEADER_HTML)
