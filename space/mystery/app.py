@@ -37,8 +37,7 @@ from demo_core import (
     get_build_label,
     is_hf_space,
     build_unit_cell_viewport_header_html,
-    figure_to_viewport_numpy,
-    unit_cell_error_placeholder_numpy,
+
     render_unit_cell_deformation_video,
     residual_from_scales,
     run_analysis,
@@ -3368,7 +3367,7 @@ footer {{ visibility: hidden; }}
     font-size: 0.94rem !important;
     line-height: 1.5 !important;
 }}
-/* === UNIT CELL VIEWPORT — gr.Image (PIL), solid black, no wallpaper bleed === */
+/* === UNIT CELL VIEWPORT — gr.Plot (matplotlib), solid black === */
 .gradio-container .myst-gravity-image-viewport {{
     display: flex !important;
     flex-direction: column !important;
@@ -3393,8 +3392,8 @@ footer {{ visibility: hidden; }}
 }}
 .gradio-container #unit-cell-main-view,
 .gradio-container #unit-cell-main-view.block,
-.gradio-container #unit-cell-main-view .gr-image,
-.gradio-container #unit-cell-main-view .gradio-image {{
+.gradio-container #unit-cell-main-view .gr-plot,
+.gradio-container #unit-cell-main-view .plot-container {{
     height: 550px !important;
     min-height: 550px !important;
     max-height: 550px !important;
@@ -3404,7 +3403,16 @@ footer {{ visibility: hidden; }}
     margin: 0 !important;
     overflow: hidden !important;
 }}
-.gradio-container #unit-cell-main-view .image-container,
+.gradio-container #unit-cell-main-view .plot-container .main-svg,
+.gradio-container #unit-cell-main-view .plot-container img {{
+    width: 100% !important;
+    height: auto !important;
+    max-height: 550px !important;
+    object-fit: contain !important;
+    object-position: center center !important;
+    display: block !important;
+    background: #000000 !important;
+}}
 .gradio-container #unit-cell-main-view .wrap,
 .gradio-container #unit-cell-main-view .wrap.center,
 .gradio-container #unit-cell-main-view .wrap.center.full,
@@ -3414,25 +3422,9 @@ footer {{ visibility: hidden; }}
     height: 550px !important;
     min-height: 550px !important;
     width: 100% !important;
-    max-width: 100% !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
     background: #000000 !important;
     padding: 0 !important;
     margin: 0 !important;
-    overflow: hidden !important;
-}}
-.gradio-container #unit-cell-main-view img {{
-    width: 100% !important;
-    height: 100% !important;
-    max-height: 550px !important;
-    object-fit: contain !important;
-    object-position: center center !important;
-    display: block !important;
-    background: #000000 !important;
-    opacity: 1 !important;
-    visibility: visible !important;
 }}
 /* Lower animation video — #unit-cell-animation */
 .gradio-container #unit-cell-animation,
@@ -3490,7 +3482,7 @@ footer {{ visibility: hidden; }}
 /* Viewport + video: solid opaque — wallpaper must not bleed through */
 .gradio-container #unit-cell-main-view,
 .gradio-container #unit-cell-main-view.block,
-.gradio-container #unit-cell-main-view .image-container,
+.gradio-container #unit-cell-main-view .plot-container,
 .gradio-container #unit-cell-animation,
 .gradio-container #unit-cell-animation.block,
 .gradio-container .myst-cube-viewport-header-slot {{
@@ -3929,19 +3921,16 @@ def _gravity_tui_for_preset(
 
 
 def _gravity_static_image_update(fig: object) -> object:
-    """Raw RGB numpy for gr.Image(type='numpy') — avoids /tmp file URLs on HF Spaces."""
+    """Matplotlib Figure for gr.Plot — Gradio renders inline (no /tmp file URLs)."""
     if fig is gr.skip():
         print("[DEBUG] _gravity_static_image_update: gr.skip()", flush=True)
         return gr.skip()
-    print("[DEBUG] _gravity_static_image_update: converting figure to numpy", flush=True)
-    arr = figure_to_viewport_numpy(fig, dpi=_UNIT_CELL_IMAGE_DPI)
     print(
-        f"[DEBUG] _gravity_static_image_update: returning ndarray shape={arr.shape} "
-        f"dtype={arr.dtype}",
+        f"[DEBUG] _gravity_static_image_update: returning matplotlib Figure "
+        f"{type(fig).__name__}",
         flush=True,
     )
-    # Return raw array — NOT gr.update() (that writes /tmp paths the browser cannot load).
-    return arr
+    return fig
 
 
 def _gravity_clear_video_update() -> dict:
@@ -4339,12 +4328,12 @@ def _make_gravity_quick_preset_click(slot: int):
         )
         if fig is None:
             outputs = list(outputs)
-            outputs[21] = unit_cell_error_placeholder_numpy()
+            outputs[21] = gr.skip()
         image_out = outputs[21]
-        if hasattr(image_out, "shape"):
+        if image_out is not gr.skip() and not isinstance(image_out, dict):
             print(
-                f"[DEBUG] preset_click_unified: Returning ndarray to Gradio, "
-                f"shape={image_out.shape}",
+                f"[DEBUG] preset_click_unified: Returning Figure to gr.Plot, "
+                f"type={type(image_out).__name__}",
                 flush=True,
             )
         else:
@@ -4673,12 +4662,9 @@ def build_app() -> gr.Blocks:
         _init_re_metrics, _init_unit_cell_header, _init_unit_cell_fig = run_residual_explorer(
             1.0, 1.0, 1.0, KAPPA_DOC, 0.1, 1.0, 1.0, 0.35, 22.0, 45.0
         )
-        _init_unit_cell_numpy = figure_to_viewport_numpy(
-            _init_unit_cell_fig,
-            dpi=_UNIT_CELL_IMAGE_DPI,
-        )
         print(
-            f"[DEBUG] init unit cell ndarray shape={_init_unit_cell_numpy.shape}",
+            f"[DEBUG] init unit cell matplotlib Figure ready "
+            f"{type(_init_unit_cell_fig).__name__}",
             flush=True,
         )
         _init_preset_tui = _format_gravity_menu_tui_html()
@@ -4993,18 +4979,14 @@ def build_app() -> gr.Blocks:
                         _init_unit_cell_header,
                         elem_classes=["myst-cube-viewport-header-slot"],
                     )
-                    unit_cell_image = gr.Image(
+                    unit_cell_image = gr.Plot(
                         label=None,
                         show_label=False,
-                        type="numpy",
-                        interactive=False,
-                        height=550,
                         elem_id="unit-cell-main-view",
-                        value=_init_unit_cell_numpy,
-                        show_download_button=False,
+                        value=_init_unit_cell_fig,
                         elem_classes=[
-                            "myst-unit-cell-main-image",
-                            "myst-unit-cell-viewport-image",
+                            "myst-unit-cell-main-plot",
+                            "myst-unit-cell-viewport-plot",
                         ],
                     )
                     gr.HTML(
@@ -5152,8 +5134,14 @@ def build_app() -> gr.Blocks:
         newhere_minimize_btn.click(_minimize_newhere, outputs=newhere_outputs[:3])
         claims_minimize_btn.click(_minimize_claims, outputs=claims_outputs[:3])
         demo.load(_stream_term_boot, outputs=term_keypad_outputs)
+        def _reload_init_unit_cell_plot() -> object:
+            _m, _h, fig = run_residual_explorer(
+                1.0, 1.0, 1.0, KAPPA_DOC, 0.1, 1.0, 1.0, 0.35, 22.0, 45.0
+            )
+            return fig
+
         demo.load(
-            lambda: _init_unit_cell_numpy,
+            _reload_init_unit_cell_plot,
             outputs=[unit_cell_image],
             show_progress=False,
         )
