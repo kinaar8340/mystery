@@ -808,14 +808,18 @@ def _external_tab_html(label: str, url: str, tab_id: str) -> str:
 
 
 def _source_tab_btn_update(*, active: bool) -> gr.Update:
-    """Animations tab — orange only when that page is open; otherwise green."""
+    """Source tab — matrix-green label when active; default brown body either way."""
     if active:
-        return gr.update(interactive=False, elem_classes=["vqc-source-tab", "active"])
+        return gr.update(
+            interactive=False,
+            elem_classes=["vqc-source-tab", "active"],
+            variant="secondary",
+        )
     return gr.update(interactive=True, elem_classes=["vqc-source-tab"], variant="secondary")
 
 
 def _home_tab_update(*, on_demo_page: bool) -> gr.Update:
-    """Live demo tab: orange on demo page, green link back from Animations."""
+    """Live demo tab — matrix-green label when on demo page."""
     if on_demo_page:
         return gr.update(interactive=False, elem_classes=["vqc-source-tab", "active"], variant="secondary")
     return gr.update(interactive=True, elem_classes=["vqc-source-tab"], variant="secondary")
@@ -1241,23 +1245,23 @@ footer {{
 .gradio-container .vqc-source-tabs-row button.vqc-source-tab.active:hover,
 .gradio-container .vqc-source-tabs-row button.vqc-source-tab.active:hover span,
 .gradio-container a.vqc-source-tab.active {{
-    color: #ffffff !important;
-    -webkit-text-fill-color: #ffffff !important;
-    background: linear-gradient(180deg, #ea580c 0%, #9a3412 100%) !important;
-    border-color: #7c2d12 !important;
+    color: {_VQC_MATRIX_GREEN} !important;
+    -webkit-text-fill-color: {_VQC_MATRIX_GREEN} !important;
+    background: linear-gradient(180deg, #3d2e14 0%, #1f1608 100%) !important;
+    border-color: #6b4f1d !important;
     text-decoration: none !important;
     cursor: default !important;
     opacity: 1 !important;
-    box-shadow: 0 0 10px rgba(234, 88, 12, 0.35), inset 0 1px 0 rgba(255, 220, 150, 0.2) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 220, 150, 0.12), 0 2px 4px rgba(0, 0, 0, 0.35) !important;
 }}
 .gradio-container .vqc-source-tabs-row button.vqc-source-tab.active:disabled,
 .gradio-container .vqc-source-tabs-row button.vqc-source-tab.active[disabled],
 .gradio-container .vqc-source-tabs-row button.vqc-source-tab.active:disabled span,
 .gradio-container .vqc-source-tabs-row button.vqc-source-tab.active[disabled] span {{
-    color: #ffffff !important;
-    -webkit-text-fill-color: #ffffff !important;
-    background: linear-gradient(180deg, #ea580c 0%, #9a3412 100%) !important;
-    border-color: #7c2d12 !important;
+    color: {_VQC_MATRIX_GREEN} !important;
+    -webkit-text-fill-color: {_VQC_MATRIX_GREEN} !important;
+    background: linear-gradient(180deg, #3d2e14 0%, #1f1608 100%) !important;
+    border-color: #6b4f1d !important;
     text-decoration: none !important;
     cursor: default !important;
 }}

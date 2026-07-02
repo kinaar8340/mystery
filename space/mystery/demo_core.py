@@ -489,9 +489,11 @@ def format_residual_explorer(
 
 
 _UNIT_CELL_MATRIX_GREEN = "#33ff66"
+_UNIT_CELL_GOLD = "#c9a227"
 _UNIT_CELL_RED = "#e63946"
 _UNIT_CELL_GREEN = "#22c55e"
 _UNIT_CELL_BLUE = "#2563eb"
+_UNIT_CELL_LABEL_TEXT = "#ffffff"
 
 
 def _lerp3(
@@ -819,16 +821,18 @@ def _draw_leader_label(
     anchor: tuple[float, float, float],
     label_pos: tuple[float, float, float],
     text: str,
-    color: str,
+    line_color: str,
     *,
+    text_color: str | None = None,
     fontsize: float = 12,
 ) -> None:
-    """Leader line from cube anchor to offset label (solid, color-matched)."""
+    """Leader line (phase-colored) from cube anchor to offset label (white text)."""
+    label_color = _UNIT_CELL_LABEL_TEXT if text_color is None else text_color
     ax.plot(
         [anchor[0], label_pos[0]],
         [anchor[1], label_pos[1]],
         [anchor[2], label_pos[2]],
-        color=color,
+        color=line_color,
         linewidth=2.0,
         linestyle="-",
         solid_capstyle="round",
@@ -840,7 +844,7 @@ def _draw_leader_label(
         label_pos[1],
         label_pos[2],
         text,
-        color=color,
+        color=label_color,
         fontsize=fontsize,
         ha="center",
         va="center",
@@ -876,7 +880,7 @@ def build_unit_cell_figure(
     r_show = R if r_val is None else r_val
     side = abs(delta_side)
     p = float(np.clip(pressure, 0.0, 1.0))
-    matrix_green = _UNIT_CELL_MATRIX_GREEN
+    edge_gold = _UNIT_CELL_GOLD
     eq_red = _UNIT_CELL_RED
     eq_green = _UNIT_CELL_GREEN
     eq_blue = _UNIT_CELL_BLUE
@@ -888,7 +892,7 @@ def build_unit_cell_figure(
     font_tick = 10
     font_title = 13
     font_axis = 12
-    caption_neutral = "#ffffff"
+    caption_neutral = _UNIT_CELL_LABEL_TEXT
 
     fig = plt.figure(figsize=(9.6, 7.0), dpi=dpi, facecolor=bg)
     ax = fig.add_subplot(111, projection="3d", facecolor=bg)
@@ -910,7 +914,7 @@ def build_unit_cell_figure(
                 gx,
                 gy,
                 gz,
-                color=matrix_green,
+                color=edge_gold,
                 linewidth=0.85,
                 alpha=grid_alpha,
                 zorder=4,
@@ -921,7 +925,7 @@ def build_unit_cell_figure(
             xs,
             ys,
             zs,
-            color=matrix_green,
+            color=edge_gold,
             linewidth=2.2,
             solid_capstyle="round",
             alpha=1.0,
@@ -1019,7 +1023,7 @@ def build_unit_cell_figure(
             boxstyle="round,pad=0.008",
             transform=fig.transFigure,
             facecolor="#000000",
-            edgecolor=matrix_green,
+            edgecolor=edge_gold,
             linewidth=1.2,
             alpha=1.0,
             zorder=4,
@@ -1027,13 +1031,13 @@ def build_unit_cell_figure(
     )
     caption_segments = (
         (0.17, "R = ", caption_neutral),
-        (0.215, r"$\phi^2$", eq_red),
+        (0.215, r"$\phi^2$", caption_neutral),
         (0.255, " + ", caption_neutral),
-        (0.275, r"$e^2$", eq_green),
+        (0.275, r"$e^2$", caption_neutral),
         (0.305, " − ", caption_neutral),
-        (0.325, r"$\pi^2$", eq_blue),
+        (0.325, r"$\pi^2$", caption_neutral),
         (0.355, f" ≈ {r_show:+.3f} drives net ", caption_neutral),
-        (0.545, r"$\delta_\mathrm{side}$", eq_green),
+        (0.545, r"$\delta_\mathrm{side}$", caption_neutral),
         (0.595, " contraction", caption_neutral),
     )
     for x_pos, label, label_color in caption_segments:
