@@ -3412,7 +3412,14 @@ def _run_residual_explorer_ui(
     slot = int(active_preset)
     tui = _gravity_tui_for_preset(slot, dials)
     control_levels = _format_gravity_control_panel_html(dials, slot)
-    return metrics, header, fig, _gravity_hide_video_update(), control_levels, tui
+    return (
+        metrics,
+        header,
+        _gravity_plot_media_update(fig),
+        _gravity_hide_video_update(),
+        control_levels,
+        tui,
+    )
 
 
 def _gravity_hide_video_update() -> dict:
