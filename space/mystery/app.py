@@ -1967,16 +1967,24 @@ footer {{ visibility: hidden; }}
     flex: 1 1 0 !important;
     min-height: 0 !important;
     overflow: hidden !important;
-    display: grid !important;
-    grid-template-rows: auto minmax(0, 1fr) 14.75rem !important;
-    grid-template-columns: 1fr !important;
-    align-content: stretch !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0 !important;
 }}
 .gradio-container .myst-gravity-cube-panel > .block,
+.gradio-container .myst-gravity-cube-panel > .column,
 .gradio-container .myst-gravity-cube-panel > .form {{
-    display: contents !important;
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 0 0 auto !important;
     min-height: 0 !important;
     width: 100% !important;
+    box-sizing: border-box !important;
+}}
+.gradio-container .myst-gravity-cube-panel > .block:not(.myst-cube-plot-inner) {{
+    flex: 0 0 auto !important;
+    overflow: hidden !important;
 }}
 .gradio-container .myst-gravity-cube-panel .myst-cube-viewport-header {{
     flex: 0 0 auto !important;
@@ -1992,14 +2000,16 @@ footer {{ visibility: hidden; }}
     overflow: hidden !important;
     line-height: 1.15 !important;
 }}
+.gradio-container .myst-gravity-cube-panel > .block.myst-cube-plot-inner,
 .gradio-container .myst-gravity-cube-panel .myst-cube-plot-inner,
 .gradio-container .myst-gravity-cube-panel .myst-cube-plot-inner.block {{
-    flex: 1 1 0 !important;
-    min-height: 0 !important;
-    height: 100% !important;
+    flex: 1 1 auto !important;
+    min-height: clamp(18rem, 42vh, 28rem) !important;
+    height: auto !important;
     max-height: none !important;
     overflow: hidden !important;
 }}
+.gradio-container .myst-gravity-cube-panel > .column.myst-gravity-preset-tui-section,
 .gradio-container .myst-gravity-cube-panel .myst-gravity-preset-tui-section,
 .gradio-container .myst-gravity-cube-panel .myst-gravity-preset-tui-section.block {{
     flex: 0 0 auto !important;
@@ -2239,8 +2249,8 @@ footer {{ visibility: hidden; }}
     max-width: none !important;
 }}
 .gradio-container .myst-gravity-page .myst-cube-viewport-frame .myst-cube-plot-inner {{
-    flex: 1 1 0 !important;
-    min-height: 0 !important;
+    flex: 1 1 auto !important;
+    min-height: clamp(18rem, 42vh, 28rem) !important;
 }}
 .gradio-container .myst-gravity-page .myst-cube-viewport-header {{
     display: flex !important;
@@ -2332,9 +2342,9 @@ footer {{ visibility: hidden; }}
     background: rgba(0, 0, 0, 0.22) !important;
     border: 1px solid #4a3818 !important;
     border-radius: 10px !important;
-    flex: 1 1 0 !important;
-    min-height: 0 !important;
-    height: 100% !important;
+    flex: 1 1 auto !important;
+    min-height: clamp(18rem, 42vh, 28rem) !important;
+    height: auto !important;
     display: flex !important;
     flex-direction: column !important;
     overflow: hidden !important;
@@ -2348,11 +2358,11 @@ footer {{ visibility: hidden; }}
     font-weight: 700 !important;
 }}
 .gradio-container .myst-gravity-page .myst-cube-viewport-frame .plot-container {{
-    flex: 1 1 0 !important;
+    flex: 1 1 auto !important;
     width: 100% !important;
-    min-height: 0 !important;
-    height: 100% !important;
-    max-height: 100% !important;
+    min-height: clamp(16rem, 38vh, 26rem) !important;
+    height: auto !important;
+    max-height: none !important;
     border: 2px inset #5c4a1f !important;
     border-radius: 8px !important;
     background-color: #000000 !important;
