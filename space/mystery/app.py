@@ -2332,7 +2332,7 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-gravity-cube-panel > .block:has(.myst-cube-viewport-media-slot) {{
     flex: 1 1 0 !important;
     min-height: 0 !important;
-    height: 0 !important;
+    height: 100% !important;
     width: 100% !important;
     display: flex !important;
     flex-direction: column !important;
@@ -2384,7 +2384,7 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-gravity-cube-panel .myst-cube-viewport-media {{
     position: relative !important;
     flex: 1 1 0 !important;
-    min-height: 0 !important;
+    min-height: 14rem !important;
     height: 100% !important;
     max-height: 100% !important;
     width: 100% !important;
@@ -2597,8 +2597,10 @@ footer {{ visibility: hidden; }}
     width: 100% !important;
     margin: 0 !important;
     padding: 0 0.3rem 0 !important;
-    display: flex !important;
-    flex-direction: column !important;
+    display: grid !important;
+    grid-template-rows: auto minmax(14rem, 1fr) !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    align-content: stretch !important;
     box-sizing: border-box !important;
     overflow: hidden !important;
 }}
@@ -2612,15 +2614,28 @@ footer {{ visibility: hidden; }}
     margin: 0 !important;
     padding: 0 !important;
 }}
+.gradio-container .myst-gravity-cube-panel.myst-gravity-panel-window > .block:not(:has(.myst-cube-viewport-media)):not(:has(.myst-cube-viewport-media-slot)) {{
+    grid-row: 1 !important;
+    flex: unset !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+}}
+.gradio-container .myst-gravity-cube-panel.myst-gravity-panel-window > .block:has(.myst-cube-viewport-media),
+.gradio-container .myst-gravity-cube-panel.myst-gravity-panel-window > .block:has(.myst-cube-viewport-media-slot) {{
+    grid-row: 2 !important;
+    flex: unset !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+}}
 .gradio-container .myst-gravity-cube-panel.myst-gravity-panel-window > .column.myst-cube-viewport-media-slot {{
-    flex: 1 1 0 !important;
+    grid-row: 2 !important;
     height: 100% !important;
     min-height: 0 !important;
     align-self: stretch !important;
-}}
-.gradio-container .myst-gravity-cube-panel.myst-gravity-panel-window > .block:has(.myst-cube-viewport-header),
-.gradio-container .myst-gravity-cube-panel.myst-gravity-panel-window > .block:has(.html-container) {{
-    flex: 0 0 auto !important;
 }}
 .gradio-container .myst-gravity-left-frame .myst-gravity-controls-accordion {{
     flex: 0 0 auto !important;
@@ -2753,7 +2768,7 @@ footer {{ visibility: hidden; }}
 }}
 .gradio-container .myst-gravity-page .myst-cube-viewport-frame .myst-cube-viewport-media {{
     flex: 1 1 0 !important;
-    min-height: 0 !important;
+    min-height: 14rem !important;
     height: 100% !important;
     max-height: 100% !important;
     overflow: hidden !important;
@@ -2764,6 +2779,7 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-gravity-page .myst-cube-viewport-frame > .block:has(.myst-cube-viewport-media) {{
     flex: 1 1 0 !important;
     min-height: 0 !important;
+    height: 100% !important;
     display: flex !important;
     flex-direction: column !important;
     overflow: hidden !important;
