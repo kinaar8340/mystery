@@ -3537,7 +3537,6 @@ def build_app() -> gr.Blocks:
                                 autoplay=True,
                                 loop=True,
                                 format="mp4",
-                                buttons=[],
                                 elem_classes=["myst-cube-anim-video"],
                             )
                         with gr.Column(elem_classes=["myst-gravity-preset-tui-section"]):
