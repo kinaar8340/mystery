@@ -132,14 +132,6 @@ GRAVITY_OPTICS_LOGO_HTML = """
 </div>
 """
 
-CUBE_VIEWPORT_HEADER_HTML = """
-<div class="myst-cube-viewport-header" role="img" aria-label="Unit cell viewport">
-  <span class="myst-cube-viewport-brand">MYSTERY</span>
-  <span class="myst-cube-viewport-title">Unit Cell Viewport</span>
-  <span class="myst-cube-viewport-sub">π bowl · φ/e concave · live curvature</span>
-</div>
-"""
-
 CONTROL_PANEL_HEADER_HTML = """
 <div class="myst-cube-viewport-header" role="img" aria-label="Gravity control panel">
   <span class="myst-cube-viewport-brand">MYSTERY</span>
@@ -2075,10 +2067,60 @@ footer {{ visibility: hidden; }}
     font-weight: 700 !important;
     text-transform: uppercase !important;
 }}
-.gradio-container .myst-cube-viewport-sub {{
+.gradio-container .myst-cube-viewport-sub,
+.gradio-container .myst-cube-viewport-tag {{
     font-size: 0.64rem !important;
-    letter-spacing: 0.18em !important;
-    color: #9a8458 !important;
+    letter-spacing: 0.14em !important;
+    color: #e8d4a8 !important;
+    text-transform: uppercase !important;
+    font-weight: 600 !important;
+}}
+.gradio-container .myst-cube-viewport-status {{
+    font-size: 0.78rem !important;
+    letter-spacing: 0.04em !important;
+    color: #ffffff !important;
+    font-weight: 600 !important;
+    margin-top: 0.12rem !important;
+}}
+.gradio-container .myst-cube-viewport-legend {{
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 0.45rem 0.85rem !important;
+    width: 100% !important;
+    margin-top: 0.42rem !important;
+    padding-top: 0.38rem !important;
+    border-top: 1px solid rgba(74, 56, 24, 0.45) !important;
+}}
+.gradio-container .myst-cube-legend-item {{
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.28rem !important;
+    font-size: 0.68rem !important;
+    letter-spacing: 0.03em !important;
+}}
+.gradio-container .myst-cube-legend-swatch {{
+    font-size: 0.72rem !important;
+    line-height: 1 !important;
+}}
+.gradio-container .myst-cube-legend-label {{
+    color: #ffffff !important;
+    opacity: 0.88 !important;
+}}
+.gradio-container .myst-cube-viewport-equation {{
+    width: 100% !important;
+    margin-top: 0.42rem !important;
+    padding: 0.34rem 0.55rem !important;
+    border: 1px solid #c9a227 !important;
+    border-radius: 6px !important;
+    background: rgba(0, 0, 0, 0.45) !important;
+    color: #ffffff !important;
+    font-size: 0.72rem !important;
+    letter-spacing: 0.03em !important;
+    font-weight: 600 !important;
+    text-align: center !important;
+}}
+.gradio-container .myst-gravity-page .myst-cube-viewport-frame .myst-cube-plot-inner .label-wrap {{
+    display: none !important;
 }}
 .gradio-container .myst-gravity-page .myst-cube-viewport-frame .myst-cube-plot-inner,
 .gradio-container .myst-gravity-page .myst-cube-viewport-frame .myst-cube-plot-inner.block {{
@@ -2550,7 +2592,7 @@ def build_app() -> gr.Blocks:
             gr.HTML(_figures_grid_html())
             gr.Markdown(_figures_links_md())
 
-        _init_re_metrics, _init_unit_cell = run_residual_explorer(
+        _init_re_metrics, _init_unit_cell_header, _init_unit_cell = run_residual_explorer(
             1.0, 1.0, 1.0, KAPPA_DOC, 0.1, 1.0, 1.0, 0.35, 22.0, 45.0
         )
 
@@ -2809,9 +2851,10 @@ def build_app() -> gr.Blocks:
                             "myst-gravity-panel-window",
                         ]
                     ):
-                        gr.HTML(CUBE_VIEWPORT_HEADER_HTML)
+                        unit_cell_header = gr.HTML(_init_unit_cell_header)
                         unit_cell_plot = gr.Plot(
-                            label="Deformable unit cell (no WebGL)",
+                            label=None,
+                            show_label=False,
                             value=_init_unit_cell,
                             elem_classes=["vqc-plot3d-panel", "myst-cube-plot-inner"],
                         )
@@ -2820,7 +2863,7 @@ def build_app() -> gr.Blocks:
                 re_kappa, re_delta_z, re_alpha, re_beta, re_pressure,
                 re_view_elev, re_view_azim,
             ]
-            re_outputs = [re_metrics, unit_cell_plot]
+            re_outputs = [re_metrics, unit_cell_header, unit_cell_plot]
             for slider in re_inputs:
                 slider.change(run_residual_explorer, inputs=re_inputs, outputs=re_outputs)
             animate_deform_btn.click(

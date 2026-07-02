@@ -493,7 +493,56 @@ _UNIT_CELL_GOLD = "#c9a227"
 _UNIT_CELL_RED = "#e63946"
 _UNIT_CELL_GREEN = "#22c55e"
 _UNIT_CELL_BLUE = "#2563eb"
+_UNIT_CELL_BOTTOM_CONVEX = "#5a9ef2"
 _UNIT_CELL_LABEL_TEXT = "#ffffff"
+
+
+def _deform_pressure_hint(pressure: float) -> str:
+    p = float(np.clip(pressure, 0.0, 1.0))
+    if p < 0.04:
+        return "rigid cube"
+    if p < 0.45:
+        return "mild bow + side pinch"
+    if p < 0.8:
+        return "π bowl concave · φ/e sides curving inward"
+    return "full concave bowl + compensatory bottom convex bulge"
+
+
+def build_unit_cell_viewport_header_html(
+    *,
+    pressure: float,
+    r_val: float | None = None,
+) -> str:
+    """Frame-layer header: brand, status, legend, and residual equation bar."""
+    p = float(np.clip(pressure, 0.0, 1.0))
+    r_show = R if r_val is None else r_val
+    hint = _deform_pressure_hint(p)
+    swatch_alpha = 0.55 + 0.45 * p
+    legend_items = (
+        (_UNIT_CELL_BLUE, "π bowl (concave)"),
+        (_UNIT_CELL_RED, "φ face pinch"),
+        (_UNIT_CELL_GREEN, "e face pinch"),
+        (_UNIT_CELL_BOTTOM_CONVEX, "bottom convex"),
+    )
+    legend_html = "".join(
+        (
+            f'<span class="myst-cube-legend-item">'
+            f'<span class="myst-cube-legend-swatch" style="color:{color};opacity:{swatch_alpha:.2f}">■</span>'
+            f'<span class="myst-cube-legend-label">{label}</span>'
+            f"</span>"
+        )
+        for color, label in legend_items
+    )
+    return f"""<div class="myst-cube-viewport-header" role="img" aria-label="Unit cell viewport">
+  <span class="myst-cube-viewport-brand">MYSTERY</span>
+  <span class="myst-cube-viewport-title">Unit Cell Viewport</span>
+  <span class="myst-cube-viewport-tag">Deformable unit cell · no WebGL</span>
+  <span class="myst-cube-viewport-status">pressure {p * 100:.0f}% · {hint}</span>
+  <div class="myst-cube-viewport-legend" aria-label="Deformation legend">{legend_html}</div>
+  <div class="myst-cube-viewport-equation" aria-label="Residual equation">
+    R = φ² + e² − π² ≈ {r_show:+.3f} drives net δ<sub>side</sub> contraction
+  </div>
+</div>"""
 
 
 def _lerp3(
@@ -877,7 +926,6 @@ def build_unit_cell_figure(
     from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
     s = 1.0
-    r_show = R if r_val is None else r_val
     side = abs(delta_side)
     p = float(np.clip(pressure, 0.0, 1.0))
     edge_gold = _UNIT_CELL_GOLD
@@ -888,9 +936,7 @@ def build_unit_cell_figure(
     bg = "#000000"
     font_main = 12
     font_small = 11
-    font_caption = 11
     font_tick = 10
-    font_title = 13
     font_axis = 12
     caption_neutral = _UNIT_CELL_LABEL_TEXT
 
@@ -1012,47 +1058,6 @@ def build_unit_cell_figure(
         fontsize=font_small,
     )
 
-    from matplotlib.patches import FancyBboxPatch
-
-    caption_y = 0.085
-    fig.add_artist(
-        FancyBboxPatch(
-            (0.14, 0.055),
-            0.72,
-            0.05,
-            boxstyle="round,pad=0.008",
-            transform=fig.transFigure,
-            facecolor="#000000",
-            edgecolor=edge_gold,
-            linewidth=1.2,
-            alpha=1.0,
-            zorder=4,
-        )
-    )
-    caption_segments = (
-        (0.17, "R = ", caption_neutral),
-        (0.215, r"$\phi^2$", caption_neutral),
-        (0.255, " + ", caption_neutral),
-        (0.275, r"$e^2$", caption_neutral),
-        (0.305, " − ", caption_neutral),
-        (0.325, r"$\pi^2$", caption_neutral),
-        (0.355, f" ≈ {r_show:+.3f} drives net ", caption_neutral),
-        (0.545, r"$\delta_\mathrm{side}$", caption_neutral),
-        (0.595, " contraction", caption_neutral),
-    )
-    for x_pos, label, label_color in caption_segments:
-        fig.text(
-            x_pos,
-            caption_y,
-            label,
-            transform=fig.transFigure,
-            ha="left",
-            color=label_color,
-            fontsize=font_caption,
-            alpha=1.0,
-            zorder=6,
-        )
-
     ax.set_xlim(-2.6, 2.6)
     ax.set_ylim(-2.6, 2.6)
     ax.set_zlim(-2.6, 2.6)
@@ -1068,53 +1073,7 @@ def build_unit_cell_figure(
     azim = float(view_azim) % 360.0
     ax.view_init(elev=elev, azim=azim)
 
-    if p < 0.04:
-        deform_hint = "rigid cube"
-    elif p < 0.45:
-        deform_hint = "mild bow + side pinch"
-    elif p < 0.8:
-        deform_hint = "π bowl concave · φ/e sides curving inward"
-    else:
-        deform_hint = "full concave bowl + compensatory bottom convex bulge"
-
-    ax.set_title(
-        f"Deformable unit cell — pressure {p * 100:.0f}% · {deform_hint}",
-        color=caption_neutral,
-        fontsize=font_title,
-        pad=14,
-    )
-
-    legend_y = 0.94
-    legend_items = (
-        (0.16, r"$\pi$ bowl (concave)", eq_blue),
-        (0.38, r"$\phi$ face pinch", eq_red),
-        (0.56, r"$e$ face pinch", eq_green),
-        (0.74, "bottom convex", (0.35, 0.62, 0.95)),
-    )
-    for x_pos, label, color in legend_items:
-        fig.text(
-            x_pos,
-            legend_y,
-            "■",
-            transform=fig.transFigure,
-            ha="center",
-            color=color,
-            fontsize=font_small,
-            alpha=0.55 + 0.45 * p,
-            zorder=6,
-        )
-        fig.text(
-            x_pos + 0.02,
-            legend_y,
-            label,
-            transform=fig.transFigure,
-            ha="left",
-            color=caption_neutral,
-            fontsize=font_caption - 1,
-            alpha=0.75,
-            zorder=6,
-        )
-    fig.tight_layout()
+    fig.subplots_adjust(left=0.0, right=1.0, top=1.0, bottom=0.0)
     return fig
 
 
@@ -1129,8 +1088,8 @@ def run_residual_explorer(
     deform_pressure: float = 0.35,
     view_elev: float = 22.0,
     view_azim: float = 45.0,
-) -> tuple[str, plt.Figure]:
-    """Return explorer metrics text and updated deformable unit-cell figure."""
+) -> tuple[str, str, plt.Figure]:
+    """Return explorer metrics, viewport header HTML, and unit-cell figure."""
     r_val = residual_from_scales(phi_sq_scale, e_sq_scale, pi_sq_scale)
     d_side = delta_side_contraction(delta_z, r_val, kappa, alpha=alpha, beta=beta)
     metrics = format_residual_explorer(
@@ -1159,7 +1118,8 @@ def run_residual_explorer(
         view_elev=view_elev,
         view_azim=view_azim,
     )
-    return metrics, fig
+    header = build_unit_cell_viewport_header_html(pressure=p, r_val=r_val)
+    return metrics, header, fig
 
 
 def stream_unit_cell_deformation(
@@ -1191,7 +1151,7 @@ def stream_unit_cell_deformation(
     frame_idx = 0
     prev_fig: plt.Figure | None = None
 
-    def _yield_frame(metrics_text: str, pressure_val: float) -> tuple[str, plt.Figure]:
+    def _yield_frame(metrics_text: str, pressure_val: float) -> tuple[str, str, plt.Figure]:
         nonlocal prev_fig
         fig = build_unit_cell_figure(
             delta_z=delta_z,
@@ -1205,7 +1165,11 @@ def stream_unit_cell_deformation(
         if prev_fig is not None:
             plt.close(prev_fig)
         prev_fig = fig
-        return metrics_text, fig
+        header = build_unit_cell_viewport_header_html(
+            pressure=pressure_val,
+            r_val=r_val,
+        )
+        return metrics_text, header, fig
 
     for pressure in eased:
         frame_idx += 1
