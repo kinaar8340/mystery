@@ -1949,6 +1949,10 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-gravity-page .vqc-plot3d-panel img {{
     background-color: #000000 !important;
 }}
+.gradio-container:has(.myst-gravity-page) {{
+    overflow: hidden !important;
+    max-height: 100vh !important;
+}}
 .gradio-container .myst-gravity-page {{
     width: 100% !important;
     max-width: none !important;
@@ -1981,9 +1985,9 @@ footer {{ visibility: hidden; }}
     align-items: stretch !important;
     gap: 0.5rem !important;
     width: 100% !important;
-    height: calc(100vh - 4.1rem) !important;
+    height: calc(100vh - 3.8rem) !important;
     min-height: 0 !important;
-    max-height: calc(100vh - 4.1rem) !important;
+    max-height: calc(100vh - 3.8rem) !important;
     box-sizing: border-box !important;
     margin: 0 !important;
     padding: 0 !important;
@@ -2303,8 +2307,8 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-gravity-cube-panel .myst-cube-viewport-media {{
     position: relative !important;
     flex: 1 1 0 !important;
-    min-height: min(36vh, 22rem) !important;
-    height: auto !important;
+    min-height: 0 !important;
+    height: 100% !important;
     max-height: 100% !important;
     width: 100% !important;
     display: flex !important;
@@ -2325,17 +2329,17 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-gravity-cube-panel .myst-cube-viewport-media > .block.myst-cube-anim-video,
 .gradio-container .myst-gravity-cube-panel .myst-cube-viewport-media .myst-cube-plot-inner.block,
 .gradio-container .myst-gravity-cube-panel .myst-cube-viewport-media .myst-cube-anim-video.block {{
-    position: relative !important;
-    inset: auto !important;
+    position: absolute !important;
+    inset: 0 !important;
     width: 100% !important;
     height: 100% !important;
-    min-height: min(34vh, 20rem) !important;
+    min-height: 0 !important;
     max-height: 100% !important;
     margin: 0 !important;
     padding: 0.2rem 0.3rem 0.3rem !important;
     overflow: hidden !important;
     box-sizing: border-box !important;
-    flex: 1 1 0 !important;
+    flex: none !important;
     visibility: visible !important;
     opacity: 1 !important;
     z-index: 2 !important;
@@ -2346,11 +2350,14 @@ footer {{ visibility: hidden; }}
     z-index: 3 !important;
 }}
 .gradio-container .myst-gravity-cube-panel .myst-cube-viewport-media > .block[style*="display: none"],
-.gradio-container .myst-gravity-cube-panel .myst-cube-viewport-media > .block.hidden {{
+.gradio-container .myst-gravity-cube-panel .myst-cube-viewport-media > .block.hidden,
+.gradio-container .myst-gravity-cube-panel .myst-cube-viewport-media > .block[hidden] {{
     display: none !important;
     visibility: hidden !important;
     pointer-events: none !important;
     min-height: 0 !important;
+    height: 0 !important;
+    overflow: hidden !important;
 }}
 .gradio-container .myst-gravity-cube-panel .myst-cube-viewport-media .myst-cube-anim-video .wrap,
 .gradio-container .myst-gravity-cube-panel .myst-cube-viewport-media .myst-cube-anim-video .video-container,
@@ -2512,7 +2519,7 @@ footer {{ visibility: hidden; }}
     min-height: 0 !important;
     width: 100% !important;
     margin: 0 !important;
-    padding: 0 0.4rem 0.45rem !important;
+    padding: 0 0.35rem 0.2rem !important;
     display: flex !important;
     flex-direction: column !important;
     box-sizing: border-box !important;
@@ -2524,8 +2531,8 @@ footer {{ visibility: hidden; }}
 }}
 .gradio-container .myst-gravity-cube-panel.myst-gravity-panel-window > .column.myst-cube-viewport-media-slot {{
     flex: 1 1 0 !important;
-    height: auto !important;
-    min-height: min(36vh, 22rem) !important;
+    height: 100% !important;
+    min-height: 0 !important;
     align-self: stretch !important;
 }}
 .gradio-container .myst-gravity-cube-panel.myst-gravity-panel-window > .block:has(.myst-cube-viewport-header),
@@ -2652,18 +2659,19 @@ footer {{ visibility: hidden; }}
 }}
 .gradio-container .myst-gravity-page .myst-cube-viewport-frame .myst-cube-viewport-media {{
     flex: 1 1 0 !important;
-    min-height: min(36vh, 22rem) !important;
-    height: auto !important;
+    min-height: 0 !important;
+    height: 100% !important;
     max-height: 100% !important;
     overflow: hidden !important;
     display: flex !important;
     flex-direction: column !important;
+    position: relative !important;
 }}
 .gradio-container .myst-gravity-page .myst-cube-viewport-frame .myst-cube-plot-inner {{
-    min-height: min(34vh, 20rem) !important;
+    min-height: 0 !important;
     max-height: 100% !important;
     height: 100% !important;
-    flex: 1 1 0 !important;
+    flex: none !important;
 }}
 .gradio-container .myst-gravity-page .myst-cube-viewport-frame .myst-cube-viewport-header {{
     display: flex !important;
@@ -2774,15 +2782,16 @@ footer {{ visibility: hidden; }}
     background: rgba(0, 0, 0, 0.22) !important;
     border: 1px solid #4a3818 !important;
     border-radius: 8px !important;
-    flex: 1 1 0 !important;
-    min-height: min(34vh, 20rem) !important;
+    flex: none !important;
+    min-height: 0 !important;
     height: 100% !important;
     max-height: 100% !important;
     display: flex !important;
     flex-direction: column !important;
     overflow: hidden !important;
     box-sizing: border-box !important;
-    position: relative !important;
+    position: absolute !important;
+    inset: 0 !important;
     z-index: 2 !important;
 }}
 .gradio-container .myst-gravity-page .myst-cube-viewport-frame .myst-cube-plot-inner .label-wrap span {{
@@ -2795,7 +2804,7 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-gravity-page .myst-cube-viewport-frame .plot-container {{
     flex: 1 1 0 !important;
     width: 100% !important;
-    min-height: min(30vh, 18rem) !important;
+    min-height: 0 !important;
     height: 100% !important;
     max-height: 100% !important;
     border: 2px inset #5c4a1f !important;
@@ -3552,10 +3561,30 @@ def _gravity_preset_btn_immediate_active(active_key: str) -> tuple:
 
 
 def _gravity_animate_btn_immediate(animate_active: bool, active_preset: int) -> tuple:
-    """Latch animate on start; restore prior preset highlight when stopping."""
+    """Latch animate on start; immediately restore plot when stopping."""
     if animate_active:
-        return _gravity_preset_btn_immediate_active(str(int(active_preset)))
-    return _gravity_preset_btn_immediate_active("animate")
+        return (
+            False,
+            *_gravity_preset_btn_immediate_active(str(int(active_preset))),
+            gr.update(visible=True),
+            _gravity_hide_video_update(),
+        )
+    return (
+        gr.skip(),
+        *_gravity_preset_btn_immediate_active("animate"),
+        gr.skip(),
+        gr.skip(),
+    )
+
+
+def _gravity_preset_click_immediate(slot: int) -> tuple:
+    """Stop any in-flight animation before applying a preset."""
+    return (
+        False,
+        *_gravity_preset_btn_immediate_active(str(slot)),
+        gr.update(visible=True),
+        _gravity_hide_video_update(),
+    )
 
 
 def _gravity_edit_params_btn_update(enabled: bool) -> dict:
@@ -4506,10 +4535,16 @@ def build_app() -> gr.Blocks:
                     inputs=gravity_dial_inputs,
                     outputs=re_outputs,
                 )
-            animate_deform_btn.click(
+            gravity_immediate_outputs = [
+                re_animate_active,
+                *gravity_preset_btn_outputs,
+                unit_cell_plot,
+                unit_cell_video,
+            ]
+            animate_event = animate_deform_btn.click(
                 _gravity_animate_btn_immediate,
                 inputs=[re_animate_active, re_active_preset],
-                outputs=gravity_preset_btn_outputs,
+                outputs=gravity_immediate_outputs,
             ).then(
                 _gravity_animate_toggle_click,
                 inputs=[*gravity_preset_inputs, re_animate_active],
@@ -4518,12 +4553,13 @@ def build_app() -> gr.Blocks:
             )
             for slot, preset_btn in enumerate(re_quick_presets):
                 preset_btn.click(
-                    lambda s=slot: _gravity_preset_btn_immediate_active(str(s)),
-                    outputs=gravity_preset_btn_outputs,
+                    lambda s=slot: _gravity_preset_click_immediate(s),
+                    outputs=gravity_immediate_outputs,
                 ).then(
                     _make_gravity_quick_preset_click(slot),
                     inputs=gravity_preset_inputs,
                     outputs=gravity_preset_outputs,
+                    cancels=[animate_event],
                 )
 
         newhere_outputs = [panel_newhere, tab_newhere_btn, newhere_open, panel_claims, tab_claims_btn, claims_open]
