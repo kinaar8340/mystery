@@ -1061,8 +1061,15 @@ body::before {{
     max-width: 100% !important;
     min-height: 0 !important;
     height: auto !important;
+    padding: 0.3rem 0.5rem 0.15rem !important;
     background: transparent !important;
     background-color: transparent !important;
+    box-sizing: border-box !important;
+}}
+.gradio-container .main,
+.gradio-container .main > .wrap {{
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
 }}
 footer {{
     background: transparent !important;
@@ -1109,6 +1116,9 @@ footer {{
     background: transparent !important;
     border: none !important;
     box-shadow: none !important;
+}}
+.gradio-container .myst-gravity-page .vqc-source-tabs-row {{
+    margin: 0.12rem 0 0.03rem 0 !important;
 }}
 .gradio-container .vqc-source-nav-row {{
     margin: 0 0 0.1rem 0 !important;
@@ -1510,6 +1520,9 @@ footer {{
 .gradio-container .vqc-animations-nav-row {{
     margin: 0.35rem 0 0.65rem 0 !important;
 }}
+.gradio-container .myst-gravity-page .vqc-animations-nav-row {{
+    margin: 0.12rem 0 0.22rem 0 !important;
+}}
 .gradio-container .vqc-optics-panel .vqc-optics-terminal textarea {{
     min-height: 13.5rem !important;
     white-space: pre !important;
@@ -1876,6 +1889,8 @@ footer {{
     width: 100% !important;
     max-width: 100% !important;
     margin: 0 auto !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
     min-height: 0 !important;
     height: auto !important;
 }}
@@ -1937,30 +1952,41 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-gravity-page {{
     width: 100% !important;
     max-width: none !important;
-    padding: 0 0.5rem 0.35rem !important;
-    height: calc(100vh - 8rem) !important;
-    min-height: calc(100vh - 8rem) !important;
-    max-height: calc(100vh - 8rem) !important;
+    padding: 0 0.25rem 0.1rem !important;
+    height: calc(100vh - 3.25rem) !important;
+    min-height: calc(100vh - 3.25rem) !important;
+    max-height: calc(100vh - 3.25rem) !important;
     overflow: hidden !important;
     box-sizing: border-box !important;
+    gap: 0 !important;
+}}
+.gradio-container .myst-gravity-page > .gap {{
+    display: none !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
 }}
 .gradio-container .myst-gravity-page > .block {{
     background: transparent !important;
     border: none !important;
     box-shadow: none !important;
     padding: 0 !important;
+    margin: 0 !important;
 }}
 .gradio-container .myst-gravity-split {{
     display: grid !important;
     grid-template-columns: minmax(260px, 30%) minmax(0, 1fr) !important;
     grid-template-rows: 1fr !important;
     align-items: stretch !important;
-    gap: 0.65rem !important;
+    gap: 0.5rem !important;
     width: 100% !important;
-    height: calc(100vh - 9.5rem) !important;
-    min-height: 32rem !important;
-    max-height: calc(100vh - 9.5rem) !important;
+    height: calc(100vh - 4.1rem) !important;
+    min-height: 34rem !important;
+    max-height: calc(100vh - 4.1rem) !important;
     box-sizing: border-box !important;
+    margin: 0 !important;
+    padding: 0 !important;
 }}
 .gradio-container .myst-gravity-left-panel,
 .gradio-container .myst-gravity-right-panel {{
@@ -2066,7 +2092,7 @@ footer {{ visibility: hidden; }}
     padding: 0 0.55rem 0.5rem !important;
     gap: 0 !important;
     display: grid !important;
-    grid-template-rows: auto minmax(14rem, 1fr) !important;
+    grid-template-rows: auto minmax(16rem, 1fr) !important;
     grid-template-columns: minmax(0, 1fr) !important;
     overflow: hidden !important;
     background: linear-gradient(180deg, #1a1008 0%, #0a0604 100%) !important;
@@ -2100,7 +2126,7 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-gravity-presets-tui-card .myst-gravity-left-tui-slot,
 .gradio-container .myst-gravity-presets-tui-card .myst-gravity-preset-tui-section {{
     grid-row: 2 !important;
-    min-height: 14rem !important;
+    min-height: 16rem !important;
     height: 100% !important;
     width: 100% !important;
     display: flex !important;
@@ -2252,7 +2278,7 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-gravity-cube-panel .myst-cube-viewport-media {{
     position: relative !important;
     flex: 1 1 0 !important;
-    min-height: clamp(20rem, 50vh, 38rem) !important;
+    min-height: clamp(22rem, 58vh, 44rem) !important;
     height: 0 !important;
     max-height: 100% !important;
     width: 100% !important;
@@ -2277,7 +2303,7 @@ footer {{ visibility: hidden; }}
     inset: 0 !important;
     width: 100% !important;
     height: 100% !important;
-    min-height: clamp(18rem, 46vh, 36rem) !important;
+    min-height: clamp(20rem, 54vh, 42rem) !important;
     max-height: 100% !important;
     margin: 0 !important;
     padding: 0.2rem 0.3rem 0.3rem !important;
@@ -2467,7 +2493,7 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-gravity-cube-panel.myst-gravity-panel-window > .column.myst-cube-viewport-media-slot {{
     flex: 1 1 0 !important;
     height: 0 !important;
-    min-height: clamp(20rem, 50vh, 38rem) !important;
+    min-height: clamp(22rem, 58vh, 44rem) !important;
 }}
 .gradio-container .myst-gravity-left-frame .myst-gravity-controls-accordion {{
     flex: 0 0 auto !important;
@@ -2576,7 +2602,7 @@ footer {{ visibility: hidden; }}
 }}
 .gradio-container .myst-gravity-page .myst-cube-viewport-frame .myst-cube-viewport-media {{
     flex: 1 1 0 !important;
-    min-height: clamp(20rem, 50vh, 38rem) !important;
+    min-height: clamp(22rem, 58vh, 44rem) !important;
     height: 0 !important;
     max-height: 100% !important;
     overflow: hidden !important;
@@ -2696,7 +2722,7 @@ footer {{ visibility: hidden; }}
     border: 1px solid #4a3818 !important;
     border-radius: 8px !important;
     flex: 1 1 0 !important;
-    min-height: clamp(18rem, 46vh, 36rem) !important;
+    min-height: clamp(20rem, 54vh, 42rem) !important;
     height: 100% !important;
     max-height: 100% !important;
     display: flex !important;
@@ -2714,7 +2740,7 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-gravity-page .myst-cube-viewport-frame .plot-container {{
     flex: 1 1 0 !important;
     width: 100% !important;
-    min-height: clamp(16rem, 42vh, 34rem) !important;
+    min-height: clamp(18rem, 50vh, 40rem) !important;
     height: 100% !important;
     max-height: 100% !important;
     border: 2px inset #5c4a1f !important;
@@ -2921,6 +2947,23 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-gravity-visuals-col .markdown.prose {{
     font-size: 0.92rem !important;
     line-height: 1.45 !important;
+}}
+.gradio-container .myst-app-footer,
+.gradio-container .myst-app-footer.block {{
+    margin: 0.08rem 0 0 !important;
+    padding: 0.1rem 0.25rem !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}}
+.gradio-container .myst-app-footer .markdown,
+.gradio-container .myst-app-footer .prose,
+.gradio-container .myst-app-footer p {{
+    margin: 0 !important;
+    padding: 0 !important;
+    font-size: 0.66rem !important;
+    line-height: 1.2 !important;
+    color: #9a90b8 !important;
 }}
 .gradio-container .myst-readme-page {{
     width: 100% !important;
@@ -4493,7 +4536,8 @@ def build_app() -> gr.Blocks:
 
         gr.Markdown(
             "Research notebook — emergent signature, not forced identity · "
-            f"[Mystery repo]({GITHUB_URL}) · [TOE parent]({TOE_URL})"
+            f"[Mystery repo]({GITHUB_URL}) · [TOE parent]({TOE_URL})",
+            elem_classes=["myst-app-footer"],
         )
     return demo
 
