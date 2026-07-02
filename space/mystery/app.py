@@ -132,6 +132,14 @@ GRAVITY_OPTICS_LOGO_HTML = """
 </div>
 """
 
+CUBE_VIEWPORT_HEADER_HTML = """
+<div class="myst-cube-viewport-header" role="img" aria-label="Unit cell viewport">
+  <span class="myst-cube-viewport-brand">MYSTERY</span>
+  <span class="myst-cube-viewport-title">Unit Cell Viewport</span>
+  <span class="myst-cube-viewport-sub">π bowl · φ/e concave · live curvature</span>
+</div>
+"""
+
 # Client-side CSS phosphor scan — no server streaming loop (HF-safe).
 SIGNAL_SCANNER_HTML = f"""
 <div class="myst-signal-scan" role="img" aria-label="Phosphor signal scan">
@@ -1904,7 +1912,81 @@ footer {{ visibility: hidden; }}
     max-width: 28rem !important;
 }}
 .gradio-container .myst-gravity-visuals-col {{
-    flex: 1 1 28rem !important;
+    flex: 1 1 24rem !important;
+    max-width: 34rem !important;
+    align-items: center !important;
+}}
+.gradio-container .myst-gravity-page .myst-cube-viewport-frame.vqc-optics-panel {{
+    width: 100% !important;
+    max-width: 32rem !important;
+    margin: 0 auto !important;
+    padding: 0 0.75rem 0.85rem !important;
+}}
+.gradio-container .myst-gravity-page .myst-cube-viewport-header {{
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.08rem !important;
+    width: 100% !important;
+    margin: 0 0 0.55rem 0 !important;
+    padding: 0.65rem 0.75rem 0.75rem !important;
+    border-bottom: 1px solid rgba(74, 56, 24, 0.65) !important;
+    border-radius: 10px 10px 0 0 !important;
+    background: linear-gradient(180deg, #1f140a 0%, #0f0a06 100%) !important;
+    box-shadow: inset 0 0 14px rgba(0, 0, 0, 0.55) !important;
+}}
+.gradio-container .myst-cube-viewport-brand {{
+    font-size: 0.58rem !important;
+    letter-spacing: 0.28em !important;
+    color: #c9a227 !important;
+    font-weight: 700 !important;
+}}
+.gradio-container .myst-cube-viewport-title {{
+    font-size: 1rem !important;
+    letter-spacing: 0.1em !important;
+    color: #f5e6c8 !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+}}
+.gradio-container .myst-cube-viewport-sub {{
+    font-size: 0.64rem !important;
+    letter-spacing: 0.18em !important;
+    color: #9a8458 !important;
+}}
+.gradio-container .myst-gravity-page .myst-cube-viewport-frame .myst-cube-plot-inner,
+.gradio-container .myst-gravity-page .myst-cube-viewport-frame .myst-cube-plot-inner.block {{
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0.45rem 0.55rem 0.55rem !important;
+    background: rgba(0, 0, 0, 0.22) !important;
+    border: 1px solid #4a3818 !important;
+    border-radius: 10px !important;
+}}
+.gradio-container .myst-gravity-page .myst-cube-viewport-frame .myst-cube-plot-inner .label-wrap span {{
+    color: #e8d4a8 !important;
+    font-size: 0.76rem !important;
+    letter-spacing: 0.08em !important;
+    text-transform: uppercase !important;
+    font-weight: 700 !important;
+}}
+.gradio-container .myst-gravity-page .myst-cube-viewport-frame .plot-container {{
+    min-height: 280px !important;
+    max-height: 340px !important;
+    border: 2px inset #5c4a1f !important;
+    border-radius: 8px !important;
+    background-color: #000000 !important;
+    padding: 0.25rem !important;
+    box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.75) !important;
+}}
+.gradio-container .myst-gravity-page .myst-cube-viewport-frame .plot-container img,
+.gradio-container .myst-gravity-page .myst-cube-viewport-frame .plot-container canvas {{
+    max-height: 320px !important;
+    width: auto !important;
+    max-width: 100% !important;
+    margin: 0 auto !important;
+    display: block !important;
+    object-fit: contain !important;
 }}
 .gradio-container .myst-gravity-page .vqc-gravity-panel.vqc-optics-panel {{
     background: linear-gradient(165deg, #2a1810 0%, #1a1008 38%, #120c06 100%) !important;
@@ -1961,9 +2043,7 @@ footer {{ visibility: hidden; }}
     color: #ffb347 !important;
     font-family: "Courier New", Courier, monospace !important;
 }}
-.gradio-container .myst-gravity-visuals-col .vqc-plot3d-panel .plot-container {{
-    min-height: 420px !important;
-}}
+
 .gradio-container .myst-gravity-visuals-col .markdown.prose {{
     font-size: 0.92rem !important;
     line-height: 1.45 !important;
@@ -1991,8 +2071,12 @@ footer {{ visibility: hidden; }}
     .gradio-container .vqc-source-tabs-row button.vqc-source-tab {{
         font-size: 0.78rem !important;
     }}
-    .gradio-container .myst-gravity-page .plot-container {{
-        min-height: 280px !important;
+    .gradio-container .myst-gravity-page .myst-cube-viewport-frame {{
+        max-width: 100% !important;
+    }}
+    .gradio-container .myst-gravity-page .myst-cube-viewport-frame .plot-container {{
+        min-height: 240px !important;
+        max-height: 300px !important;
     }}
 }}
 """
@@ -2553,11 +2637,19 @@ def build_app() -> gr.Blocks:
                     scale=3,
                     elem_classes=["myst-gravity-visuals-col"],
                 ):
-                    unit_cell_plot = gr.Plot(
-                        label="Deformable unit cell — live curvature (no WebGL)",
-                        value=_init_unit_cell,
-                        elem_classes=["vqc-plot3d-panel"],
-                    )
+                    with gr.Group(
+                        elem_classes=[
+                            "vqc-optics-panel",
+                            "vqc-gravity-panel",
+                            "myst-cube-viewport-frame",
+                        ]
+                    ):
+                        gr.HTML(CUBE_VIEWPORT_HEADER_HTML)
+                        unit_cell_plot = gr.Plot(
+                            label="Deformable unit cell (no WebGL)",
+                            value=_init_unit_cell,
+                            elem_classes=["vqc-plot3d-panel", "myst-cube-plot-inner"],
+                        )
             re_inputs = [
                 re_phi_scale, re_e_scale, re_pi_scale,
                 re_kappa, re_delta_z, re_alpha, re_beta, re_pressure,

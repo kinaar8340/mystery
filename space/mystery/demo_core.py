@@ -890,7 +890,7 @@ def build_unit_cell_figure(
     font_axis = 12
     caption_neutral = "#ffffff"
 
-    fig = plt.figure(figsize=(8, 6.5), dpi=dpi, facecolor=bg)
+    fig = plt.figure(figsize=(6.2, 5.0), dpi=dpi, facecolor=bg)
     ax = fig.add_subplot(111, projection="3d", facecolor=bg)
 
     triangles, tri_colors = _deformed_cube_surface(s, p, delta_z, side)
