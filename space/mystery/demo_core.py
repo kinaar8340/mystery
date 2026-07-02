@@ -521,7 +521,7 @@ def _plotly_arrow(
 def build_unit_cell_plotly(
     delta_z: float = 0.15,
     delta_side: float = 0.08,
-) -> dict:
+):
     """Interactive 3D unit cell: semi-transparent cube, tensions, δ_z / δ_side arrows."""
     import plotly.graph_objects as go
 
@@ -661,7 +661,7 @@ def build_unit_cell_plotly(
         legend=dict(font=dict(color="#e8e0f8"), bgcolor="rgba(18,10,28,0.7)"),
         height=420,
     )
-    return fig.to_plotly_json()
+    return fig
 
 
 def run_residual_explorer(
@@ -672,7 +672,7 @@ def run_residual_explorer(
     delta_z: float,
     alpha: float,
     beta: float,
-) -> tuple[str, dict]:
+) -> tuple[str, object]:
     """Return explorer metrics text and updated Plotly unit-cell figure."""
     r_val = residual_from_scales(phi_sq_scale, e_sq_scale, pi_sq_scale)
     d_side = delta_side_contraction(delta_z, r_val, kappa, alpha=alpha, beta=beta)
