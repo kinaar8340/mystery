@@ -985,11 +985,25 @@ def unit_cell_error_placeholder_numpy(
     return placeholder
 
 
-def figure_to_viewport_numpy(fig: plt.Figure, *, dpi: int = 150) -> np.ndarray:
+def figure_to_viewport_numpy(fig: plt.Figure, *, dpi: int = 100) -> np.ndarray:
     """Matplotlib figure → RGB numpy for gr.Image(type='numpy'); never raises."""
     print(f"[DEBUG] figure_to_viewport_numpy: dpi={dpi}", flush=True)
     try:
-        arr = export_unit_cell_numpy_for_gradio(fig, dpi=dpi)
+        buf = io.BytesIO()
+        fig.savefig(
+            buf,
+            format="png",
+            dpi=dpi,
+            facecolor=fig.get_facecolor(),
+            bbox_inches="tight",
+            pad_inches=0.02,
+        )
+        plt.close(fig)
+        buf.seek(0)
+        from PIL import Image as PILImage
+
+        pil_img = PILImage.open(buf).convert("RGB")
+        arr = np.asarray(pil_img)
         print(f"[DEBUG] figure_to_viewport_numpy: shape={arr.shape}", flush=True)
         return arr
     except Exception as exc:

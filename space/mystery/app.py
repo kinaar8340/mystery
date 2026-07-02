@@ -37,8 +37,8 @@ from demo_core import (
     get_build_label,
     is_hf_space,
     build_unit_cell_viewport_header_html,
-    figure_to_viewport_pil,
-    unit_cell_error_placeholder_pil,
+    figure_to_viewport_numpy,
+    unit_cell_error_placeholder_numpy,
     render_unit_cell_deformation_video,
     residual_from_scales,
     run_analysis,
@@ -3929,17 +3929,19 @@ def _gravity_tui_for_preset(
 
 
 def _gravity_static_image_update(fig: object) -> object:
-    """PIL image for gr.Image(type='pil') — native Gradio image rendering on HF Spaces."""
+    """Raw RGB numpy for gr.Image(type='numpy') — avoids /tmp file URLs on HF Spaces."""
     if fig is gr.skip():
         print("[DEBUG] _gravity_static_image_update: gr.skip()", flush=True)
         return gr.skip()
-    print("[DEBUG] _gravity_static_image_update: converting figure to PIL", flush=True)
-    pil_img = figure_to_viewport_pil(fig, dpi=_UNIT_CELL_IMAGE_DPI)
+    print("[DEBUG] _gravity_static_image_update: converting figure to numpy", flush=True)
+    arr = figure_to_viewport_numpy(fig, dpi=_UNIT_CELL_IMAGE_DPI)
     print(
-        f"[DEBUG] _gravity_static_image_update: returning PIL size={pil_img.size}",
+        f"[DEBUG] _gravity_static_image_update: returning ndarray shape={arr.shape} "
+        f"dtype={arr.dtype}",
         flush=True,
     )
-    return gr.update(value=pil_img)
+    # Return raw array — NOT gr.update() (that writes /tmp paths the browser cannot load).
+    return arr
 
 
 def _gravity_clear_video_update() -> dict:
@@ -4337,19 +4339,12 @@ def _make_gravity_quick_preset_click(slot: int):
         )
         if fig is None:
             outputs = list(outputs)
-            outputs[21] = gr.update(value=unit_cell_error_placeholder_pil())
+            outputs[21] = unit_cell_error_placeholder_numpy()
         image_out = outputs[21]
-        if hasattr(image_out, "size"):
+        if hasattr(image_out, "shape"):
             print(
-                f"[DEBUG] preset_click_unified: Returning PIL to Gradio, "
-                f"size={image_out.size}",
-                flush=True,
-            )
-        elif isinstance(image_out, dict) and "value" in image_out:
-            val = image_out.get("value")
-            size = getattr(val, "size", None)
-            print(
-                f"[DEBUG] preset_click_unified: Returning gr.update PIL, size={size}",
+                f"[DEBUG] preset_click_unified: Returning ndarray to Gradio, "
+                f"shape={image_out.shape}",
                 flush=True,
             )
         else:
@@ -4678,12 +4673,12 @@ def build_app() -> gr.Blocks:
         _init_re_metrics, _init_unit_cell_header, _init_unit_cell_fig = run_residual_explorer(
             1.0, 1.0, 1.0, KAPPA_DOC, 0.1, 1.0, 1.0, 0.35, 22.0, 45.0
         )
-        _init_unit_cell_pil = figure_to_viewport_pil(
+        _init_unit_cell_numpy = figure_to_viewport_numpy(
             _init_unit_cell_fig,
             dpi=_UNIT_CELL_IMAGE_DPI,
         )
         print(
-            f"[DEBUG] init unit cell PIL size={_init_unit_cell_pil.size}",
+            f"[DEBUG] init unit cell ndarray shape={_init_unit_cell_numpy.shape}",
             flush=True,
         )
         _init_preset_tui = _format_gravity_menu_tui_html()
@@ -5001,11 +4996,11 @@ def build_app() -> gr.Blocks:
                     unit_cell_image = gr.Image(
                         label=None,
                         show_label=False,
-                        type="pil",
+                        type="numpy",
                         interactive=False,
                         height=550,
                         elem_id="unit-cell-main-view",
-                        value=_init_unit_cell_pil,
+                        value=_init_unit_cell_numpy,
                         show_download_button=False,
                         elem_classes=[
                             "myst-unit-cell-main-image",
@@ -5158,7 +5153,7 @@ def build_app() -> gr.Blocks:
         claims_minimize_btn.click(_minimize_claims, outputs=claims_outputs[:3])
         demo.load(_stream_term_boot, outputs=term_keypad_outputs)
         demo.load(
-            lambda: _init_unit_cell_pil,
+            lambda: _init_unit_cell_numpy,
             outputs=[unit_cell_image],
             show_progress=False,
         )
@@ -5185,6 +5180,7 @@ def main() -> None:
 
     on_hf = bool(os.environ.get("SPACE_ID"))
     port = int(os.environ.get("GRADIO_SERVER_PORT", "7860"))
+    space_id = os.environ.get("SPACE_ID", "")
 
     launch_kwargs: dict = {
         "server_name": "0.0.0.0",
@@ -5196,6 +5192,9 @@ def main() -> None:
         # SSR can swallow button .click() events on HF Spaces — disable for reliable presets.
         "ssr_mode": False,
     }
+    gradio_root = os.environ.get("GRADIO_ROOT_PATH", "").strip()
+    if on_hf and gradio_root:
+        launch_kwargs["root_path"] = gradio_root
 
     demo.queue(default_concurrency_limit=2).launch(**launch_kwargs)
 
