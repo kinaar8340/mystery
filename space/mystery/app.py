@@ -38,7 +38,6 @@ from demo_core import (
     is_hf_space,
     build_unit_cell_viewport_header_html,
     export_unit_cell_image_for_gradio,
-    get_unit_cell_viewport_image,
     render_unit_cell_deformation_video,
     residual_from_scales,
     run_analysis,
