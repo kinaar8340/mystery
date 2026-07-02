@@ -16,11 +16,16 @@ from demo_core import (
     BOOT_QUOTE_STRING,
     CLAIMS_MD,
     E_OVER_PI,
+    EXPLORE_FURTHER_MD,
     FIGURE_URLS,
     FIGURES_INTRO_MD,
     GITHUB_URL,
     HF_SPACE_URL,
     KAPPA_DOC,
+    PHYSICAL_INTERPRETATION_INTRO_MD,
+    PHYSICAL_INTERPRETATION_MATH_MD,
+    PROBE_HOOKS_TABLE_MD,
+    PROBE_SNIPPETS,
     R,
     ONBOARDING_MD,
     kappa_star,
@@ -28,9 +33,11 @@ from demo_core import (
     TERM_KEY_ACTIONS,
     TOE_URL,
     WALLPAPER_URL,
+    build_unit_cell_plotly,
     get_build_label,
     is_hf_space,
     run_analysis,
+    run_residual_explorer,
     terminal_directory_help,
     terminal_figures_index,
     terminal_keypad_map,
@@ -803,17 +810,25 @@ def _close_links_panels() -> tuple:
 
 
 def _nav_to_page(page: str) -> tuple:
-    """Switch between demo and animations screens; refresh Source tab highlights."""
+    """Switch between demo, figures, and gravity screens; refresh Source tab highlights."""
     on_demo = page == "demo"
+    on_anim = page == "animations"
+    on_gravity = page == "gravity"
     closed = _close_links_panels()
     return (
         gr.update(visible=on_demo),
-        gr.update(visible=not on_demo),
+        gr.update(visible=on_anim),
+        gr.update(visible=on_gravity),
         _home_tab_update(on_demo_page=on_demo),
-        _source_tab_btn_update(active=not on_demo),
+        _source_tab_btn_update(active=on_anim),
+        _source_tab_btn_update(active=on_gravity),
         *closed,
         _home_tab_update(on_demo_page=on_demo),
-        _source_tab_btn_update(active=not on_demo),
+        _source_tab_btn_update(active=on_anim),
+        _source_tab_btn_update(active=on_gravity),
+        _home_tab_update(on_demo_page=on_demo),
+        _source_tab_btn_update(active=on_anim),
+        _source_tab_btn_update(active=on_gravity),
         page,
     )
 
@@ -915,8 +930,17 @@ def _build_vqc_theme() -> gr.themes.Base:
     )
 
 
+INIT_BANNER_HTML = """
+<div id="myst-init-banner" class="myst-init-banner" role="status" aria-live="polite">
+  <p class="myst-init-title">Initializing Mystery φ · e · π probe…</p>
+  <p class="myst-init-sub">Loading constants, keypad, and analysis pipeline.
+  If Hugging Face shows &ldquo;Fetching metadata&rdquo;, the container is still starting.</p>
+</div>
+"""
+
 # Wallpaper: #vqc-wallpaper (body child) + body::before fallback — cover, fixed to viewport.
 WALLPAPER_HEAD = f"""
+{INIT_BANNER_HTML}
 <style id="vqc-wallpaper-style">
 #vqc-wallpaper {{
     position: fixed !important;
@@ -945,6 +969,16 @@ WALLPAPER_HEAD = f"""
     if (document.body) mountWallpaper();
     document.addEventListener('DOMContentLoaded', mountWallpaper);
     window.addEventListener('load', mountWallpaper);
+}})();
+(function() {{
+    function hideInitBanner() {{
+        var b = document.getElementById('myst-init-banner');
+        if (b) b.style.display = 'none';
+    }}
+    document.addEventListener('DOMContentLoaded', function() {{
+        setTimeout(hideInitBanner, 1200);
+    }});
+    window.addEventListener('load', hideInitBanner);
 }})();
 </script>
 """
@@ -1845,6 +1879,64 @@ footer {{
     background: transparent !important;
 }}
 footer {{ visibility: hidden; }}
+.myst-init-banner {{
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 99999 !important;
+    padding: 0.85rem 1.1rem !important;
+    background: linear-gradient(180deg, rgba(18, 10, 28, 0.96), rgba(10, 8, 24, 0.92)) !important;
+    border-bottom: 1px solid rgba(201, 162, 39, 0.45) !important;
+    text-align: center !important;
+    pointer-events: none !important;
+}}
+.myst-init-title {{
+    margin: 0 !important;
+    color: #f5e6c8 !important;
+    font-weight: 700 !important;
+    font-size: 0.95rem !important;
+}}
+.myst-init-sub {{
+    margin: 0.25rem 0 0 0 !important;
+    color: #a89ec8 !important;
+    font-size: 0.82rem !important;
+}}
+.gradio-container .myst-gravity-page .markdown table {{
+    display: block !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    max-width: 100% !important;
+}}
+.gradio-container .myst-gravity-page pre,
+.gradio-container .myst-ascii-block {{
+    overflow-x: auto !important;
+    font-size: 0.72rem !important;
+    line-height: 1.35 !important;
+}}
+.gradio-container .myst-github-banner {{
+    padding: 0.55rem 0.75rem !important;
+    border: 1px solid rgba(201, 162, 39, 0.35) !important;
+    border-radius: 8px !important;
+    background: rgba(18, 10, 28, 0.55) !important;
+    margin-bottom: 0.5rem !important;
+}}
+.gradio-container .myst-gravity-page .plot-container {{
+    min-height: 360px !important;
+}}
+@media (max-width: 640px) {{
+    .gradio-container .vqc-nav-spreadsheet-row {{
+        grid-template-columns: 3.5rem repeat(5, minmax(3.2rem, 1fr)) !important;
+        gap: 0.15rem 0.25rem !important;
+    }}
+    .gradio-container .vqc-source-tab,
+    .gradio-container .vqc-source-tabs-row button.vqc-source-tab {{
+        font-size: 0.78rem !important;
+    }}
+    .gradio-container .myst-gravity-page .plot-container {{
+        min-height: 280px !important;
+    }}
+}}
 """
 
 
@@ -1943,7 +2035,12 @@ def build_app() -> gr.Blocks:
                                     variant="secondary",
                                 )
                             with gr.Column(elem_classes=["vqc-nav-cell"], scale=1, min_width=72):
-                                gr.HTML('<span class="vqc-nav-cell-empty" aria-hidden="true">&nbsp;</span>')
+                                tab_gravity_btn = gr.Button(
+                                    "Gravity",
+                                    elem_classes=["vqc-source-tab"],
+                                    scale=0,
+                                    variant="secondary",
+                                )
                         with gr.Row(elem_classes=["vqc-nav-spreadsheet-row"]):
                             gr.HTML('<span class="vqc-source-label vqc-nav-row-label">Links:</span>')
                             with gr.Column(elem_classes=["vqc-nav-cell"], scale=1, min_width=72):
@@ -2146,18 +2243,109 @@ def build_app() -> gr.Blocks:
                     scale=0,
                     variant="secondary",
                 )
+                anim_tab_gravity_btn = gr.Button(
+                    "Gravity",
+                    elem_classes=["vqc-source-tab"],
+                    scale=0,
+                    variant="secondary",
+                )
             gr.Markdown("## Reference figures")
             gr.Markdown(FIGURES_INTRO_MD_LOCAL)
             gr.HTML(_figures_grid_html())
             gr.Markdown(_figures_links_md())
+
+        with gr.Column(visible=False, elem_classes=["myst-gravity-page"]) as page_gravity:
+            with gr.Row(elem_classes=["vqc-source-tabs-row", "vqc-animations-nav-row"]):
+                gr.HTML('<span class="vqc-source-label">Source:</span>')
+                grav_tab_demo_btn = gr.Button(
+                    "Live Probe",
+                    elem_classes=["vqc-source-tab"],
+                    scale=0,
+                    variant="secondary",
+                )
+                grav_tab_anim_btn = gr.Button(
+                    "Figures",
+                    elem_classes=["vqc-source-tab"],
+                    scale=0,
+                    variant="secondary",
+                )
+                grav_tab_gravity_btn = gr.Button(
+                    "Gravity",
+                    elem_classes=["vqc-source-tab", "active"],
+                    interactive=False,
+                    scale=0,
+                    variant="secondary",
+                )
+            gr.HTML(
+                f'<p class="myst-github-banner">Full derivations, probe suite, and JSON outputs: '
+                f'<a href="{GITHUB_URL}" target="_blank" rel="noopener noreferrer">'
+                f'github.com/kinaar8340/mystery</a> · '
+                f'<a href="{GITHUB_URL}#physical-interpretation--emergent-gravity" '
+                f'target="_blank" rel="noopener noreferrer">README § Physical Interpretation</a></p>'
+            )
+            gr.Markdown(PHYSICAL_INTERPRETATION_INTRO_MD)
+            unit_cell_plot = gr.Plot(
+                label="Interactive unit cell — drag to rotate",
+                value=build_unit_cell_plotly(),
+                elem_classes=["vqc-plot3d-panel"],
+            )
+            gr.Markdown(PHYSICAL_INTERPRETATION_MATH_MD)
+            gr.Markdown("### Residual explorer")
+            gr.Markdown(
+                "Tweak φ², e², and π² scale factors to see how **R**, **B(κ)**, and **δ_side** respond. "
+                "Defaults recover the canonical φ, e, π values at scale 1.0."
+            )
+            with gr.Row():
+                re_phi_scale = gr.Slider(
+                    0.90, 1.10, value=1.0, step=0.001, label="φ² scale",
+                )
+                re_e_scale = gr.Slider(
+                    0.90, 1.10, value=1.0, step=0.001, label="e² scale",
+                )
+                re_pi_scale = gr.Slider(
+                    0.90, 1.10, value=1.0, step=0.001, label="π² scale",
+                )
+            with gr.Row():
+                re_kappa = gr.Slider(
+                    0.70, 0.95, value=KAPPA_DOC, step=0.001,
+                    label="κ (holonomy-gap parameter)",
+                )
+                re_delta_z = gr.Slider(
+                    0.0, 0.5, value=0.1, step=0.01, label="δ_z (primary push)",
+                )
+            with gr.Row():
+                re_alpha = gr.Slider(0.0, 2.0, value=1.0, step=0.05, label="α (geometry factor)")
+                re_beta = gr.Slider(0.0, 2.0, value=1.0, step=0.05, label="β (residual coupling)")
+            re_metrics = gr.Textbox(label="Explorer metrics", lines=16, interactive=False)
+            re_inputs = [
+                re_phi_scale, re_e_scale, re_pi_scale,
+                re_kappa, re_delta_z, re_alpha, re_beta,
+            ]
+            re_outputs = [re_metrics, unit_cell_plot]
+            for slider in re_inputs:
+                slider.change(run_residual_explorer, inputs=re_inputs, outputs=re_outputs)
+            page_gravity.load(
+                run_residual_explorer,
+                inputs=re_inputs,
+                outputs=re_outputs,
+            )
+            gr.Markdown("### Probe hooks")
+            gr.Markdown(PROBE_HOOKS_TABLE_MD)
+            for title, script_url, snippet in PROBE_SNIPPETS:
+                with gr.Accordion(f"{title} — view snippet", open=False):
+                    gr.Markdown(f"Source: [{script_url.split('/')[-1]}]({script_url})")
+                    gr.Code(snippet, language="python", lines=10)
+            gr.Markdown(EXPLORE_FURTHER_MD)
 
         newhere_outputs = [panel_newhere, tab_newhere_btn, newhere_open, panel_claims, tab_claims_btn, claims_open]
         claims_outputs = [panel_claims, tab_claims_btn, claims_open, panel_newhere, tab_newhere_btn, newhere_open]
         nav_outputs = [
             page_demo,
             page_animations,
+            page_gravity,
             tab_demo_btn,
             tab_anim_btn,
+            tab_gravity_btn,
             panel_newhere,
             tab_newhere_btn,
             newhere_open,
@@ -2166,12 +2354,21 @@ def build_app() -> gr.Blocks:
             claims_open,
             anim_tab_demo_btn,
             anim_tab_anim_btn,
+            anim_tab_gravity_btn,
+            grav_tab_demo_btn,
+            grav_tab_anim_btn,
+            grav_tab_gravity_btn,
             current_page,
         ]
         tab_demo_btn.click(lambda: _nav_to_page("demo"), outputs=nav_outputs)
         tab_anim_btn.click(lambda: _nav_to_page("animations"), outputs=nav_outputs)
+        tab_gravity_btn.click(lambda: _nav_to_page("gravity"), outputs=nav_outputs)
         anim_tab_demo_btn.click(lambda: _nav_to_page("demo"), outputs=nav_outputs)
         anim_tab_anim_btn.click(lambda: _nav_to_page("animations"), outputs=nav_outputs)
+        anim_tab_gravity_btn.click(lambda: _nav_to_page("gravity"), outputs=nav_outputs)
+        grav_tab_demo_btn.click(lambda: _nav_to_page("demo"), outputs=nav_outputs)
+        grav_tab_anim_btn.click(lambda: _nav_to_page("animations"), outputs=nav_outputs)
+        grav_tab_gravity_btn.click(lambda: _nav_to_page("gravity"), outputs=nav_outputs)
         tab_newhere_btn.click(_toggle_newhere, inputs=[newhere_open], outputs=newhere_outputs)
         tab_claims_btn.click(_toggle_claims, inputs=[claims_open], outputs=claims_outputs)
         newhere_minimize_btn.click(_minimize_newhere, outputs=newhere_outputs[:3])

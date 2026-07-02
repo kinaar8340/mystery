@@ -46,7 +46,7 @@ vortex geometry. This Space runs the **core numerical checks** interactively.
 ### Three steps (60 seconds)
 1. **Adjust κ** on the slider (documented κ = 0.85 is marked).
 2. **Run analysis** — read metrics for R, B(κ), κ*, and angle/369 tens.
-3. **View figures** — φ-e-π triangle comparison and κ sweep (open **Figures** tab).
+3. **Open Gravity** — 3D unit cell, residual explorer, and probe hooks; or **Figures** for reference plots.
 
 ### What the metrics mean
 | Metric | Plain English |
@@ -82,6 +82,139 @@ FIGURE_URLS = (
     f"{GITHUB_URL}/raw/main/docs/figures/residual_kappa_sweep.png",
     f"{GITHUB_URL}/raw/main/docs/figures/vortex_369_clock.png",
     f"{GITHUB_URL}/raw/main/docs/figures/conduit_angular_histogram.png",
+)
+
+W_G_TARGET = 350.0 / PI
+
+GITHUB_SCRIPTS = {
+    "pde": f"{GITHUB_URL}/blob/main/scripts/pde_relaxation_probe.py",
+    "conduit": f"{GITHUB_URL}/blob/main/scripts/conduit_probe.py",
+    "meta": f"{GITHUB_URL}/blob/main/scripts/meta_optimize_phi_probe.py",
+}
+
+PHYSICAL_INTERPRETATION_INTRO_MD = """
+## Physical Interpretation & Emergent Gravity
+
+In the gauged Hopf lattice, gravity is not fundamental but arises as a **secondary geometric effect**
+from local flux imbalance under orthogonal stress.
+
+### Unit-cell intuition
+
+Consider a flexible unit cell whose internal opposing flux rotors maintain equilibrium. Orthogonal
+pressure on one face disturbs rotor balance; because the lattice is flux-conserving and topologically
+constrained (Hopf fibration), compensatory **side contraction** appears — the geometric signature of
+emergent gravity at larger scales.
+
+**Legend:** \\(T_\\phi, T_e, T_\\pi\\) = quadratic flux/tension · \\(\\delta_z\\) = primary π-face push ·
+\\(\\delta_\\text{side}\\) = compensatory contraction · \\(R = \\phi^2+e^2-\\pi^2\\) imbalance.
+
+Use the **interactive 3D unit cell** below (drag to rotate; arrows update with the Residual explorer).
+"""
+
+PHYSICAL_INTERPRETATION_MATH_MD = f"""
+### Mathematical formulation
+
+Orthogonal scales: \\(l_\\phi \\propto \\sqrt{{\\phi}}\\), \\(l_e \\propto \\sqrt{{e}}\\),
+\\(l_\\pi \\propto \\sqrt{{\\pi}}\\). Quadratic tensions: \\(T_\\phi \\propto \\phi^2\\),
+\\(T_e \\propto e^2\\), \\(T_\\pi \\propto \\pi^2\\).
+
+\\[
+R = \\phi^2 + e^2 - \\pi^2 \\approx +0.137486
+\\]
+
+When orthogonal pressure along the \\(\\pi\\) direction produces primary deformation \\(\\delta_z\\),
+the lattice responds with compensatory side contraction:
+
+\\[
+\\delta_\\text{{side}} \\approx \\alpha \\cdot \\delta_z + \\beta \\cdot R \\cdot f(\\kappa)
+\\]
+
+*The second term represents the net inward contraction driven by the residual \\(R\\).*
+Take \\(f(\\kappa) \\propto B(\\kappa) = \\pi^2(e/\\pi - \\kappa)\\).
+
+#### Holonomy-gap tie-in
+
+\\[
+B(\\kappa) = \\pi^2 \\left( \\frac{{e}}{{\\pi}} - \\kappa \\right)
+\\]
+
+At \\(\\kappa^* = e/\\pi - R/\\pi^2 \\approx 0.8513\\), \\(B(\\kappa^*) = R\\) exactly.
+See [residual_scaling.md]({GITHUB_URL}/blob/main/notes/residual_scaling.md).
+
+### 4D extension
+
+A phase/holonomy scale \\(350/\\pi \\approx {W_G_TARGET:.2f}\\) lies close to the locked
+\\(W_g \\approx 111.89\\) from meta-optimization — suggesting \\(R\\) couples spatial side-suction
+to rotor-phase winding along the Hopf fiber in 4D.
+
+**Canonical write-up:**
+[README § Physical Interpretation]({GITHUB_URL}#physical-interpretation--emergent-gravity)
+"""
+
+PROBE_HOOKS_TABLE_MD = f"""
+| Probe | Hook | Script |
+|-------|------|--------|
+| **PDE relaxation** | Seed Hopfion ICs with orthogonal deformation bias under \\(\\delta_z\\) | [pde_relaxation_probe.py]({GITHUB_SCRIPTS['pde']}) |
+| **Conduit** | Inject \\(R \\cdot B(\\kappa)\\) as holonomy source; monitor \\(W_g\\) drift | [conduit_probe.py]({GITHUB_SCRIPTS['conduit']}) |
+| **Meta-optimizer** | Add deformation energy \\(\\propto R\\); check \\(\\kappa \\to \\kappa^*\\) | [meta_optimize_phi_probe.py]({GITHUB_SCRIPTS['meta']}) |
+"""
+
+EXPLORE_FURTHER_MD = f"""
+### How to explore further
+
+1. **Clone the repo** — [`git clone {GITHUB_URL}.git`]({GITHUB_URL}) and run `python run_all.py` for the full 11-probe suite.
+2. **Read the canonical section** — [Physical Interpretation & Emergent Gravity]({GITHUB_URL}#physical-interpretation--emergent-gravity) in the README.
+3. **Try the probe hooks** — expand the accordions above; snippets drop into existing `scripts/` files.
+4. **Parent TOE stack** — [kinaar8340/toe]({TOE_URL}) for conduit PDE and meta-optimizer depth.
+5. **Tune interactively** — use the **Residual explorer** sliders on this tab to stress-test \\(R\\), \\(B(\\kappa)\\), and \\(\\delta_\\text{{side}}\\).
+"""
+
+PROBE_SNIPPETS: tuple[tuple[str, str, str], ...] = (
+    (
+        "PDE relaxation — holonomy source at IC + in time loop",
+        GITHUB_SCRIPTS["pde"],
+        """from _common import PHI, E, PI
+
+R = PHI**2 + E**2 - PI**2
+kappa = 0.8513
+B_kappa = PI**2 * (E / PI - kappa)
+beta = 0.1
+
+z = np.linspace(0, 1, nx, endpoint=False)
+theta += beta * R * B_kappa * np.sin(2 * np.pi * z)[:, None, None]
+
+holonomy_source = -beta * R * B_kappa * np.sin(theta)
+rhs = D * lap + cot_term + delta_omega + gauge + burst + holonomy_source
+theta += dt * rhs""",
+    ),
+    (
+        "Conduit — seed at κ* and log residual–winding coupling",
+        GITHUB_SCRIPTS["conduit"],
+        """from _common import PHI, E, PI
+
+R = PHI**2 + E**2 - PI**2
+kappa_star = E / PI - R / PI**2
+B_kappa = PI**2 * (E / PI - kappa_star)
+
+stats = conduit.monitor_topological_winding(n_samples=128)
+report = {
+    "R": R,
+    "B_kappa": B_kappa,
+    "kappa_star": kappa_star,
+    "residual_coupling": R * B_kappa,
+    "geometric_winding": stats.get("geometric_winding"),
+    "w_g_target": 350.0 / PI,
+}""",
+    ),
+    (
+        "Meta-optimizer — deformation penalty on holonomy gap",
+        GITHUB_SCRIPTS["meta"],
+        """R = PHI**2 + E**2 - PI**2
+kappa = trial.suggest_float("kappa", 0.80, 0.90)
+B_kappa = PI**2 * (E / PI - kappa)
+deformation_cost = (B_kappa - R) ** 2
+objective = base_loss + w_def * deformation_cost  # w_def ≈ 0.01""",
+    ),
 )
 
 
@@ -283,6 +416,271 @@ def run_analysis(kappa: float) -> tuple[str, str | None, str | None]:
     tri_path = plot_triangle_comparison(tri, out_dir)
     sweep_path = plot_kappa_sweep(float(kappa), out_dir)
     return format_metrics(float(kappa)), tri_path, sweep_path
+
+
+def residual_from_scales(
+    phi_sq_scale: float = 1.0,
+    e_sq_scale: float = 1.0,
+    pi_sq_scale: float = 1.0,
+) -> float:
+    """Pythagorean residual with per-term scale factors (explore sensitivity)."""
+    return float(
+        phi_sq_scale * PHI**2 + e_sq_scale * E**2 - pi_sq_scale * PI**2
+    )
+
+
+def kappa_star_from_r(r: float) -> float:
+    return float(E_OVER_PI - r / PI**2)
+
+
+def delta_side_contraction(
+    delta_z: float,
+    r: float,
+    kappa: float,
+    *,
+    alpha: float = 1.0,
+    beta: float = 1.0,
+) -> float:
+    """δ_side ≈ α·δ_z + β·R·B(κ) with f(κ) ∝ B(κ)."""
+    return float(alpha * delta_z + beta * r * bound(kappa))
+
+
+def format_residual_explorer(
+    phi_sq_scale: float,
+    e_sq_scale: float,
+    pi_sq_scale: float,
+    kappa: float,
+    delta_z: float,
+    alpha: float,
+    beta: float,
+) -> str:
+    r_val = residual_from_scales(phi_sq_scale, e_sq_scale, pi_sq_scale)
+    k_star = kappa_star_from_r(r_val)
+    b_k = bound(kappa)
+    d_side = delta_side_contraction(delta_z, r_val, kappa, alpha=alpha, beta=beta)
+    rel_err = 100 * abs(r_val) / PI**2
+    gap = b_k - r_val
+    return "\n".join(
+        [
+            "=== Residual Explorer ===",
+            "",
+            f"φ² scale       : {phi_sq_scale:.4f}   →  {phi_sq_scale * PHI**2:.6f}",
+            f"e² scale       : {e_sq_scale:.4f}   →  {e_sq_scale * E**2:.6f}",
+            f"π² scale       : {pi_sq_scale:.4f}   →  {pi_sq_scale * PI**2:.6f}",
+            "",
+            f"R              : {r_val:+.8f}",
+            f"Rel. error     : {rel_err:.4f}%",
+            "",
+            f"κ              : {kappa:.4f}",
+            f"κ* (nulls gap) : {k_star:.6f}",
+            f"B(κ)           : {b_k:.6f}",
+            f"B(κ) − R       : {gap:+.6f}",
+            "",
+            f"δ_z (push)     : {delta_z:.4f}",
+            f"α, β           : {alpha:.3f}, {beta:.3f}",
+            f"δ_side         : {d_side:.6f}",
+            f"  α·δ_z term   : {alpha * delta_z:.6f}",
+            f"  β·R·B(κ)     : {beta * r_val * b_k:.6f}",
+            "",
+            f"W_g target     : {W_G_TARGET:.4f}  (350/π)",
+            f"350/π vs W_g   : meta-opt W_g ≈ 111.89",
+        ]
+    )
+
+
+def _plotly_arrow(
+    fig,
+    start: tuple[float, float, float],
+    direction: tuple[float, float, float],
+    *,
+    color: str,
+    name: str,
+    width: int = 6,
+) -> None:
+    import plotly.graph_objects as go
+
+    end = (
+        start[0] + direction[0],
+        start[1] + direction[1],
+        start[2] + direction[2],
+    )
+    fig.add_trace(
+        go.Scatter3d(
+            x=[start[0], end[0]],
+            y=[start[1], end[1]],
+            z=[start[2], end[2]],
+            mode="lines+markers",
+            name=name,
+            line=dict(color=color, width=width),
+            marker=dict(size=[3, 8], color=color, symbol=["circle", "diamond"]),
+            hovertemplate=f"{name}<extra></extra>",
+        )
+    )
+
+
+def build_unit_cell_plotly(
+    delta_z: float = 0.15,
+    delta_side: float = 0.08,
+) -> dict:
+    """Interactive 3D unit cell: semi-transparent cube, tensions, δ_z / δ_side arrows."""
+    import plotly.graph_objects as go
+
+    s = 1.0
+    verts = [
+        (-s, -s, -s),
+        (s, -s, -s),
+        (s, s, -s),
+        (-s, s, -s),
+        (-s, -s, s),
+        (s, -s, s),
+        (s, s, s),
+        (-s, s, s),
+    ]
+    x, y, z = zip(*verts)
+    # Two triangles per cube face (vertex indices).
+    i = (0, 0, 4, 4, 0, 0, 2, 2, 0, 0, 1, 1)
+    j = (1, 2, 5, 6, 3, 7, 3, 6, 4, 5, 5, 6)
+    k = (2, 3, 6, 7, 7, 4, 6, 7, 5, 1, 6, 2)
+    edges = (
+        (0, 1),
+        (1, 2),
+        (2, 3),
+        (3, 0),
+        (4, 5),
+        (5, 6),
+        (6, 7),
+        (7, 4),
+        (0, 4),
+        (1, 5),
+        (2, 6),
+        (3, 7),
+    )
+    fig = go.Figure()
+    fig.add_trace(
+        go.Mesh3d(
+            x=x,
+            y=y,
+            z=z,
+            i=i,
+            j=j,
+            k=k,
+            color="#8ecae6",
+            opacity=0.28,
+            flatshading=True,
+            hoverinfo="skip",
+            showlegend=False,
+        )
+    )
+    for i_edge, j_edge in edges:
+        fig.add_trace(
+            go.Scatter3d(
+                x=[verts[i_edge][0], verts[j_edge][0]],
+                y=[verts[i_edge][1], verts[j_edge][1]],
+                z=[verts[i_edge][2], verts[j_edge][2]],
+                mode="lines",
+                line=dict(color="#457b9d", width=5),
+                showlegend=False,
+                hoverinfo="skip",
+            )
+        )
+
+    tension_labels = (
+        (1.55, 0.0, 0.0, "T<sub>φ</sub> ∝ φ²", "#c9a227"),
+        (0.0, 1.55, 0.0, "T<sub>e</sub> ∝ e²", "#2a9d8f"),
+        (0.0, 0.0, 1.55, "T<sub>π</sub> ∝ π²", "#e63946"),
+    )
+    for tx, ty, tz, label, color in tension_labels:
+        fig.add_trace(
+            go.Scatter3d(
+                x=[tx],
+                y=[ty],
+                z=[tz],
+                mode="text",
+                text=[label],
+                textfont=dict(color=color, size=12),
+                showlegend=False,
+                hoverinfo="skip",
+            )
+        )
+
+    _plotly_arrow(
+        fig,
+        (0.0, 0.0, s + 0.05),
+        (0.0, 0.0, -delta_z * 2.5),
+        color="#c9a227",
+        name="δ_z — π-face push",
+    )
+    _plotly_arrow(
+        fig,
+        (-s - 0.05, 0.0, 0.0),
+        (delta_side * 2.5, 0.0, 0.0),
+        color="#457b9d",
+        name="δ_side — φ-face",
+    )
+    _plotly_arrow(
+        fig,
+        (s + 0.05, 0.0, 0.0),
+        (-delta_side * 2.5, 0.0, 0.0),
+        color="#2a9d8f",
+        name="δ_side — e-face",
+    )
+
+    fig.add_trace(
+        go.Scatter3d(
+            x=[0],
+            y=[0],
+            z=[0],
+            mode="markers+text",
+            name="R imbalance",
+            marker=dict(size=6, color="#e63946"),
+            text=[f"R ≈ {R:+.3f}"],
+            textposition="bottom center",
+            textfont=dict(color="#e63946", size=12),
+            hovertemplate="R = φ²+e²−π²<extra></extra>",
+        )
+    )
+
+    fig.update_layout(
+        title=dict(
+            text=(
+                f"Unit cell deformation — R = φ²+e²−π² ≈ {R:+.3f} drives net δ_side contraction"
+            ),
+            font=dict(color="#e8e0f8", size=13),
+        ),
+        paper_bgcolor="rgba(10, 8, 24, 0)",
+        plot_bgcolor="rgba(10, 8, 24, 0)",
+        scene=dict(
+            xaxis=dict(title="φ-face", color="#a89ec8", gridcolor="rgba(255,255,255,0.08)"),
+            yaxis=dict(title="e-face", color="#a89ec8", gridcolor="rgba(255,255,255,0.08)"),
+            zaxis=dict(title="π-face", color="#a89ec8", gridcolor="rgba(255,255,255,0.08)"),
+            bgcolor="rgba(10, 8, 24, 0.35)",
+            aspectmode="cube",
+            camera=dict(eye=dict(x=1.6, y=1.6, z=1.1)),
+        ),
+        margin=dict(l=0, r=0, t=40, b=0),
+        legend=dict(font=dict(color="#e8e0f8"), bgcolor="rgba(18,10,28,0.7)"),
+        height=420,
+    )
+    return fig.to_plotly_json()
+
+
+def run_residual_explorer(
+    phi_sq_scale: float,
+    e_sq_scale: float,
+    pi_sq_scale: float,
+    kappa: float,
+    delta_z: float,
+    alpha: float,
+    beta: float,
+) -> tuple[str, dict]:
+    """Return explorer metrics text and updated Plotly unit-cell figure."""
+    r_val = residual_from_scales(phi_sq_scale, e_sq_scale, pi_sq_scale)
+    d_side = delta_side_contraction(delta_z, r_val, kappa, alpha=alpha, beta=beta)
+    metrics = format_residual_explorer(
+        phi_sq_scale, e_sq_scale, pi_sq_scale, kappa, delta_z, alpha, beta
+    )
+    fig = build_unit_cell_plotly(delta_z=delta_z, delta_side=abs(d_side) * 0.5)
+    return metrics, fig
 
 
 PROBE_SCRIPTS: tuple[tuple[str, str], ...] = (
