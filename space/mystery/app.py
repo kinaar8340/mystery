@@ -1004,6 +1004,7 @@ WALLPAPER_HEAD = f"""
 
 HFB_CSS = f"""
 :root, :root .dark {{
+    --myst-control-bar-height: 2.05rem;
     --body-background-fill: transparent !important;
     --background-fill-primary: transparent !important;
     --background-fill-secondary: transparent !important;
@@ -1218,8 +1219,9 @@ footer {{
     letter-spacing: 0.03em !important;
     text-transform: none !important;
     white-space: nowrap !important;
-    min-height: 2.05rem !important;
-    height: auto !important;
+    min-height: var(--myst-control-bar-height, 2.05rem) !important;
+    height: var(--myst-control-bar-height, 2.05rem) !important;
+    box-sizing: border-box !important;
     width: auto !important;
     margin: 0 !important;
     opacity: 1 !important;
@@ -2208,7 +2210,7 @@ footer {{ visibility: hidden; }}
     margin: 0 0 0.24rem 0 !important;
     padding: 0 0.45rem !important;
     visibility: visible !important;
-    min-height: 2rem !important;
+    min-height: var(--myst-control-bar-height, 2.05rem) !important;
 }}
 .gradio-container .myst-gravity-presets-panel .myst-gravity-preset-row > .block,
 .gradio-container .myst-gravity-presets-panel .myst-gravity-preset-row > .form,
@@ -2218,10 +2220,12 @@ footer {{ visibility: hidden; }}
     opacity: 1 !important;
     min-width: 0 !important;
     width: 100% !important;
-    min-height: 2rem !important;
+    min-height: var(--myst-control-bar-height, 2.05rem) !important;
     margin: 0 !important;
     padding: 0 !important;
 }}
+.gradio-container .myst-gravity-page button.myst-gravity-quick-preset,
+.gradio-container .myst-gravity-page button.myst-gravity-quick-preset span,
 .gradio-container .myst-gravity-presets-panel button.myst-gravity-quick-preset,
 .gradio-container .myst-gravity-presets-panel button.myst-gravity-quick-preset span {{
     display: inline-flex !important;
@@ -2230,12 +2234,39 @@ footer {{ visibility: hidden; }}
     visibility: visible !important;
     opacity: 1 !important;
     width: 100% !important;
-    min-height: 2rem !important;
+    min-height: var(--myst-control-bar-height, 2.05rem) !important;
+    height: var(--myst-control-bar-height, 2.05rem) !important;
+    box-sizing: border-box !important;
+    padding: 0.34rem 0.5rem !important;
+    font-size: 0.82rem !important;
+    line-height: 1.2 !important;
 }}
-.gradio-container .myst-gravity-presets-panel button.vqc-receiver-preset.vqc-full-width {{
+.gradio-container .myst-gravity-page button.vqc-receiver-preset.vqc-full-width,
+.gradio-container .myst-gravity-presets-panel button.vqc-receiver-preset.vqc-full-width,
+.gradio-container .myst-gravity-presets-tui-card button.vqc-receiver-preset.vqc-full-width {{
     margin: 0.1rem 0.45rem 0.35rem !important;
     width: calc(100% - 0.9rem) !important;
-    min-height: 2rem !important;
+    min-height: var(--myst-control-bar-height, 2.05rem) !important;
+    height: var(--myst-control-bar-height, 2.05rem) !important;
+    box-sizing: border-box !important;
+    padding: 0.34rem 0.78rem !important;
+    font-size: 0.82rem !important;
+    line-height: 1.2 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}}
+.gradio-container .myst-gravity-page .myst-gravity-controls-accordion > .label-wrap {{
+    min-height: var(--myst-control-bar-height, 2.05rem) !important;
+    height: var(--myst-control-bar-height, 2.05rem) !important;
+    padding: 0 0.75rem !important;
+    display: flex !important;
+    align-items: center !important;
+    box-sizing: border-box !important;
+}}
+.gradio-container .myst-gravity-page .myst-gravity-controls-accordion > .label-wrap span {{
+    line-height: 1.2 !important;
+    font-size: 0.82rem !important;
 }}
 .gradio-container .myst-gravity-presets-tui-card .myst-gravity-preset-tui-section {{
     flex: 1 1 auto !important;
@@ -2280,8 +2311,37 @@ footer {{ visibility: hidden; }}
     min-height: 0 !important;
     max-height: none !important;
 }}
+.gradio-container .myst-gravity-cube-panel > .block:has(.myst-cube-viewport-media),
+.gradio-container .myst-gravity-cube-panel > .block:has(.myst-cube-viewport-media-slot) {{
+    flex: 1 1 0 !important;
+    min-height: 0 !important;
+    height: auto !important;
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}}
+.gradio-container .myst-gravity-cube-panel > .block:has(.myst-cube-viewport-media) > .form,
+.gradio-container .myst-gravity-cube-panel > .block:has(.myst-cube-viewport-media-slot) > .form {{
+    flex: 1 1 0 !important;
+    min-height: 0 !important;
+    height: 100% !important;
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}}
 .gradio-container .myst-gravity-cube-panel > .column.myst-cube-viewport-media,
-.gradio-container .myst-gravity-cube-panel > .column.myst-cube-viewport-media-slot {{
+.gradio-container .myst-gravity-cube-panel > .column.myst-cube-viewport-media-slot,
+.gradio-container .myst-gravity-cube-panel .column.myst-cube-viewport-media,
+.gradio-container .myst-gravity-cube-panel .column.myst-cube-viewport-media-slot {{
     flex: 1 1 0 !important;
     min-height: 0 !important;
     max-height: 100% !important;
@@ -2307,8 +2367,8 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-gravity-cube-panel .myst-cube-viewport-media {{
     position: relative !important;
     flex: 1 1 0 !important;
-    min-height: 0 !important;
-    height: 100% !important;
+    min-height: 14rem !important;
+    height: 0 !important;
     max-height: 100% !important;
     width: 100% !important;
     display: flex !important;
@@ -2531,8 +2591,8 @@ footer {{ visibility: hidden; }}
 }}
 .gradio-container .myst-gravity-cube-panel.myst-gravity-panel-window > .column.myst-cube-viewport-media-slot {{
     flex: 1 1 0 !important;
-    height: 100% !important;
-    min-height: 0 !important;
+    height: 0 !important;
+    min-height: 14rem !important;
     align-self: stretch !important;
 }}
 .gradio-container .myst-gravity-cube-panel.myst-gravity-panel-window > .block:has(.myst-cube-viewport-header),
@@ -2589,8 +2649,13 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-gravity-controls-col .myst-gravity-controls-accordion > .label-wrap {{
     background: linear-gradient(180deg, #1f140a 0%, #0f0a06 100%) !important;
     border-bottom: 1px solid rgba(74, 56, 24, 0.65) !important;
-    padding: 0.55rem 0.75rem !important;
+    padding: 0 0.75rem !important;
     margin: 0 !important;
+    min-height: var(--myst-control-bar-height, 2.05rem) !important;
+    height: var(--myst-control-bar-height, 2.05rem) !important;
+    display: flex !important;
+    align-items: center !important;
+    box-sizing: border-box !important;
 }}
 .gradio-container .myst-gravity-controls-col .myst-gravity-controls-accordion > .label-wrap span {{
     color: #f5e6c8 !important;
@@ -2659,13 +2724,20 @@ footer {{ visibility: hidden; }}
 }}
 .gradio-container .myst-gravity-page .myst-cube-viewport-frame .myst-cube-viewport-media {{
     flex: 1 1 0 !important;
-    min-height: 0 !important;
-    height: 100% !important;
+    min-height: 14rem !important;
+    height: 0 !important;
     max-height: 100% !important;
     overflow: hidden !important;
     display: flex !important;
     flex-direction: column !important;
     position: relative !important;
+}}
+.gradio-container .myst-gravity-page .myst-cube-viewport-frame > .block:has(.myst-cube-viewport-media) {{
+    flex: 1 1 0 !important;
+    min-height: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
 }}
 .gradio-container .myst-gravity-page .myst-cube-viewport-frame .myst-cube-plot-inner {{
     min-height: 0 !important;
