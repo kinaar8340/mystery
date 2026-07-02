@@ -106,6 +106,35 @@ def _patch_gradio_client_bool_schema() -> None:
 
 _patch_gradio_client_bool_schema()
 
+
+def _patch_gradio_asyncio_helpers() -> None:
+    """Gradio 5.12 safe_get_lock() returns None on Python 3.14+ (no implicit event loop)."""
+    try:
+        import asyncio
+
+        import gradio.queueing as gradio_queueing
+        import gradio.utils as gradio_utils
+
+        if getattr(gradio_utils, "_myst_asyncio_patch", False):
+            return
+
+        def safe_get_lock() -> asyncio.Lock:
+            return asyncio.Lock()
+
+        def safe_get_stop_event() -> asyncio.Event:
+            return asyncio.Event()
+
+        gradio_utils.safe_get_lock = safe_get_lock
+        gradio_utils.safe_get_stop_event = safe_get_stop_event
+        gradio_queueing.safe_get_lock = safe_get_lock
+        gradio_utils._myst_asyncio_patch = True
+        logger.info("Patched gradio asyncio lock/event helpers for Python 3.14+")
+    except Exception:
+        logger.warning("Could not patch gradio asyncio helpers", exc_info=True)
+
+
+_patch_gradio_asyncio_helpers()
+
 _VQC_ACCENT = "#c9a227"  # mystery gold — primary accent
 _VQC_HF_RUNNING = "#1ed760"
 _VQC_FIELD_FILL = "rgba(18, 10, 28, 0.52)"
@@ -5373,7 +5402,8 @@ def main() -> None:
 
     on_hf = bool(os.environ.get("SPACE_ID"))
     port = int(os.environ.get("GRADIO_SERVER_PORT", "7860"))
-    space_id = os.environ.get("SPACE_ID", "")
+    share_env = os.environ.get("GRADIO_SHARE", "").strip().lower()
+    share_local = share_env in {"1", "true", "yes", "on"}
 
     launch_kwargs: dict = {
         "server_name": "0.0.0.0",
@@ -5381,7 +5411,7 @@ def main() -> None:
         "show_error": True,
         "show_api": False,
         "inbrowser": False,
-        "share": False if on_hf else True,
+        "share": share_local if not on_hf else False,
         # SSR can swallow button .click() events on HF Spaces — disable for reliable presets.
         "ssr_mode": False,
     }

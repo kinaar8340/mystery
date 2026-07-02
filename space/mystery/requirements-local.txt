@@ -1,0 +1,11 @@
+# Local dev on Python 3.13+ (bud has 3.14; HF Space uses 3.12).
+# Skips pydantic==2.10.6 — that pin fails to build on 3.14; Gradio brings a compatible pydantic.
+numpy>=1.24.0,<3.0.0
+scipy>=1.10.0
+matplotlib>=3.7.0
+imageio>=2.34.0
+imageio-ffmpeg>=0.5.0
+plotly>=5.18.0
+requests>=2.31.0
+audioop-lts>=0.2.1; python_version >= "3.13"
+gradio==5.12.0
