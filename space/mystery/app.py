@@ -3424,24 +3424,22 @@ footer {{ visibility: hidden; }}
     opacity: 1 !important;
     background: #000000 !important;
 }}
-/* === DEBUG: transparent layers to troubleshoot viewport clipping (temporary) === */
+/* === TARGETED FIX: stretch matplotlib img to viewport height (last wins) === */
 .gradio-container #unit-cell-viewport,
-.gradio-container #unit-cell-viewport > div,
 .gradio-container #unit-cell-viewport .wrap,
 .gradio-container #unit-cell-viewport .gr-plot,
 .gradio-container #unit-cell-viewport .gradio-plot,
-.gradio-container #unit-cell-viewport .plot-container,
-.gradio-container #unit-cell-viewport .plot-container img,
-.gradio-container .myst-gravity-viewport-full .myst-cube-viewport-media,
-.gradio-container #unit-cell-viewport.vqc-plot3d-panel,
-.gradio-container #unit-cell-viewport.myst-cube-plot-inner {{
-    background-color: rgba(255, 0, 0, 0.15) !important;
-    border: 1px dashed red !important;
+.gradio-container #unit-cell-viewport .plot-container {{
+    height: 100% !important;
+    min-height: 800px !important;
+    width: 100% !important;
+    max-height: none !important;
+    background-color: #000000 !important;
     box-sizing: border-box !important;
 }}
 .gradio-container #unit-cell-viewport .plot-container img {{
     width: 100% !important;
-    height: auto !important;
+    height: 100% !important;
     max-height: none !important;
     object-fit: contain !important;
     display: block !important;
