@@ -2464,6 +2464,32 @@ _GRAVITY_HOME_DIALS = {
     "elev": 22.0,
     "azim": 45.0,
 }
+_GRAVITY_PRESET_SLOT_LABELS = {
+    0: "home · default startup",
+    1: "rigid cube",
+    2: "full π bowl",
+    3: "φ/e concave pinch",
+}
+_GRAVITY_PRESET_PROFILES: dict[int, dict[str, float]] = {
+    0: dict(_GRAVITY_HOME_DIALS),
+    1: {
+        **_GRAVITY_HOME_DIALS,
+        "pressure": 0.0,
+    },
+    2: {
+        **_GRAVITY_HOME_DIALS,
+        "pressure": 1.0,
+        "dz": 0.18,
+        "pi": 1.0,
+    },
+    3: {
+        **_GRAVITY_HOME_DIALS,
+        "pressure": 0.68,
+        "dz": 0.14,
+        "alpha": 1.30,
+        "beta": 1.40,
+    },
+}
 
 
 def _gravity_dial_bundle(
@@ -2499,7 +2525,13 @@ def _format_gravity_preset_tui_html(
     status_label: str | None = None,
 ) -> str:
     preset_num = active_slot + 1
-    status = status_label or f"PRESET {preset_num}"
+    profile = _GRAVITY_PRESET_SLOT_LABELS.get(active_slot)
+    if status_label:
+        status = status_label
+    elif profile:
+        status = f"PRESET {preset_num} — {profile}"
+    else:
+        status = f"PRESET {preset_num}"
     lines = (
         f"φ² scale                  {dials['phi']:.3f}",
         f"e² scale                  {dials['e']:.3f}",
@@ -2623,8 +2655,8 @@ def _gravity_quick_preset_apply(
     view_elev: float,
     view_azim: float,
 ) -> tuple[dict[str, float], str, str, object, str, int]:
-    if slot == 0:
-        dials = dict(_GRAVITY_HOME_DIALS)
+    if slot in _GRAVITY_PRESET_PROFILES:
+        dials = dict(_GRAVITY_PRESET_PROFILES[slot])
     else:
         dials = _gravity_dial_bundle(
             phi_sq_scale,
@@ -2638,14 +2670,6 @@ def _gravity_quick_preset_apply(
             view_elev,
             view_azim,
         )
-        if slot == 1:
-            dials["pressure"] = 0.0
-        elif slot == 2:
-            dials["pressure"] = 1.0
-        elif slot == 3:
-            dials["kappa"] = load_kappa_doc()
-        elif slot == 4:
-            dials["kappa"] = load_kappa_star()
     metrics, header, fig = run_residual_explorer(
         dials["phi"],
         dials["e"],
