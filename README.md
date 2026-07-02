@@ -11,7 +11,7 @@ Quantified research notebook exploring the near-Pythagorean triangle formed by �
 
 **Status:** Compatible emergent signature — not an exact identity, not forced by invariants, not contradicted by simulation.
 
-**Project stage:** Early research notebook (June 2026) — low visibility so far. The [Hugging Face demo](https://huggingface.co/spaces/kinaar111/mystery) is browser-oriented (κ slider, triangle plots, CLI terminal); full probe depth, derivations, and JSON outputs live in this repo.
+**Project stage:** Early research notebook (June 2026) — low visibility so far. The [Hugging Face Space](https://huggingface.co/spaces/kinaar111/mystery) opens on the **Gravity** tab (unit-cell presets, deformation animation, preset TUI); **Live Probe** keeps the κ slider and triangle plots. Full probe depth, derivations, and JSON outputs live in this repo.
 
 ---
 
@@ -71,6 +71,25 @@ Regenerate: `python run_all.py` → `outputs/`
 
 ---
 
+## Hugging Face Space
+
+| Resource | URL |
+|----------|-----|
+| Live demo | [huggingface.co/spaces/kinaar111/mystery](https://huggingface.co/spaces/kinaar111/mystery) |
+| Deploy guide | [`docs/HF_SPACE.md`](docs/HF_SPACE.md) |
+
+**Gravity tab (default):** two-column layout — QUICK PRESETs (catalog + rigid cube + bowl/pinch variants), Preset Metrics TUI, optional deformation MP4, Manual Edit latch for sliders.
+
+**Deploy** (sync bundle → GitHub push → HF rsync):
+
+```bash
+bash scripts/deploy_hf_space.sh
+```
+
+Sync only: `bash scripts/sync_hf_space.sh`
+
+---
+
 ## Quick start
 
 ```bash
@@ -93,6 +112,8 @@ cd ../mystery && .venv/bin/python run_all.py
 
 | Script | Purpose |
 |--------|---------|
+| `scripts/deploy_hf_space.sh` | Sync → GitHub commit/push → HF Space rsync/deploy |
+| `scripts/sync_hf_space.sh` | Regenerate `space/mystery/` bundle (build_info, requirements, HF README) |
 | `phi_e_pi_analysis.py` | High-precision φ²+e²≈π², triangle angles, 30-60-90 comparison |
 | `hopf_constant_bridge.py` | κ, W_g, θ_crit, φ_b vs e/π and transcendental ratios |
 | `vortex_369_clock.py` | 3-6-9 positional geometry, Rodin mod-9, clock dial |
@@ -123,6 +144,7 @@ Triangle angles: φ→31.0°, e→59.9°, π→89.1° — near 30-60-90, not exa
 
 | Doc | Contents |
 |-----|----------|
+| [`docs/HF_SPACE.md`](docs/HF_SPACE.md) | Git + HF deploy workflow, Gravity tab layout, preset slots |
 | [`notes/angle_derivation.md`](notes/angle_derivation.md) | Step-by-step law-of-cosines angles; 369 tens; interpretive vs computed |
 | [`notes/emergent_signatures.md`](notes/emergent_signatures.md) | Probe results and overall assessment |
 | [`notes/synthesis.md`](notes/synthesis.md) | Original thought-experiment synthesis |

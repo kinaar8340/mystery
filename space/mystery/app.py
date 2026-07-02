@@ -2182,12 +2182,6 @@ footer {{ visibility: hidden; }}
     width: calc(100% - 0.9rem) !important;
     min-height: 2rem !important;
 }}
-.gradio-container .myst-gravity-tui-gap {{
-    display: none !important;
-    height: 0 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-}}
 .gradio-container .myst-gravity-presets-tui-card .myst-gravity-preset-tui-section {{
     flex: 1 1 auto !important;
     margin: 0 !important;
@@ -3239,29 +3233,6 @@ def _format_gravity_menu_tui_html() -> str:
         "<u>ACTIVE STATUS: PRESET 01 — MENU · PARAMETER CATALOG</u>"
         "</div>"
         '<div class="myst-preset-tui-key-label">Preset menu description — table of contents</div>'
-        f'<pre class="myst-preset-tui-lines">{body}</pre>'
-        "</div>"
-    )
-
-
-def _format_gravity_values_tui_html(
-    dials: dict[str, float],
-    *,
-    active_slot: int = 1,
-    status_label: str | None = None,
-) -> str:
-    preset_id = _gravity_preset_id(active_slot)
-    profile = _GRAVITY_PRESET_SLOT_LABELS.get(active_slot, "values")
-    status = status_label or f"PRESET {preset_id} — {profile.upper()}"
-    lines = [
-        f"{spec['label']:<26} {_gravity_param_display(spec, float(dials[str(spec['key'])]))}"
-        for spec in _GRAVITY_PARAM_CATALOG
-    ]
-    body = "\n".join(lines)
-    return (
-        '<div class="myst-preset-tui-serial myst-preset-tui-values">'
-        f'<div class="myst-preset-tui-status"><u>ACTIVE STATUS: {status}</u></div>'
-        '<div class="myst-preset-tui-key-label">Default parameter values — live loadout</div>'
         f'<pre class="myst-preset-tui-lines">{body}</pre>'
         "</div>"
     )

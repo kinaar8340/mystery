@@ -22,5 +22,8 @@
 
 | Space | URL |
 |-------|-----|
+| **Mystery** (φ-e-π) | https://huggingface.co/spaces/kinaar111/mystery |
 | Orbital Braille VQC | https://huggingface.co/spaces/kinaar111/orbital-braille-vqc |
 | Hopf Flux Bubble | https://huggingface.co/spaces/kinaar111/hopf-flux-bubble |
+
+Deploy Mystery Space: `bash scripts/deploy_hf_space.sh` — see [`docs/HF_SPACE.md`](../docs/HF_SPACE.md).

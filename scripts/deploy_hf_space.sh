@@ -15,7 +15,7 @@ if git diff --cached --quiet; then
   echo "No staged changes"
   GH_SHA="$(git rev-parse HEAD)"
 else
-  git commit -m "feat(hf-space): Mystery φ-e-π probe with CLI terminal UI"
+  git commit -m "chore: sync HF Space bundle — Gravity presets, docs, housekeeping"
   GH_SHA="$(git rev-parse HEAD)"
 fi
 echo "GitHub SHA: $GH_SHA"
@@ -52,7 +52,7 @@ if git diff --cached --quiet; then
   HF_SHA="$(git rev-parse HEAD)"
   HF_PUSH="no changes"
 else
-  git commit -m "feat: Mystery φ-e-π probe — CLI terminal + keypad UI"
+  git commit -m "feat: Gravity tab — unit-cell presets, deformation animation, updated README"
   HF_SHA="$(git rev-parse HEAD)"
   git push origin main
   HF_PUSH="OK"
