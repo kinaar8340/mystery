@@ -488,6 +488,12 @@ def format_residual_explorer(
     )
 
 
+_UNIT_CELL_MATRIX_GREEN = "#33ff66"
+_UNIT_CELL_LIGHT_RED = "#ff8a8a"
+_UNIT_CELL_LIGHT_GREEN = "#7dff9a"
+_UNIT_CELL_LIGHT_BLUE = "#93c5fd"
+
+
 def build_unit_cell_figure(
     delta_z: float = 0.15,
     delta_side: float = 0.08,
@@ -500,6 +506,10 @@ def build_unit_cell_figure(
     s = 1.0
     r_show = R if r_val is None else r_val
     side = abs(delta_side)
+    matrix_green = _UNIT_CELL_MATRIX_GREEN
+    light_red = _UNIT_CELL_LIGHT_RED
+    light_green = _UNIT_CELL_LIGHT_GREEN
+    light_blue = _UNIT_CELL_LIGHT_BLUE
 
     fig = plt.figure(figsize=(8, 6.5), dpi=120, facecolor="#0a0818")
     ax = fig.add_subplot(111, projection="3d", facecolor="#120c18")
@@ -515,34 +525,87 @@ def build_unit_cell_figure(
     ax.add_collection3d(
         Poly3DCollection(
             faces,
-            facecolors="#8ecae6",
-            edgecolors="#457b9d",
-            linewidths=1.2,
-            alpha=0.38,
+            facecolors=light_blue,
+            edgecolors=matrix_green,
+            linewidths=2.0,
+            alpha=0.2,
         )
     )
+    cube_edges = (
+        ((-s, -s, -s), (s, -s, -s)),
+        ((s, -s, -s), (s, s, -s)),
+        ((s, s, -s), (-s, s, -s)),
+        ((-s, s, -s), (-s, -s, -s)),
+        ((-s, -s, s), (s, -s, s)),
+        ((s, -s, s), (s, s, s)),
+        ((s, s, s), (-s, s, s)),
+        ((-s, s, s), (-s, -s, s)),
+        ((-s, -s, -s), (-s, -s, s)),
+        ((s, -s, -s), (s, -s, s)),
+        ((s, s, -s), (s, s, s)),
+        ((-s, s, -s), (-s, s, s)),
+    )
+    for (x0, y0, z0), (x1, y1, z1) in cube_edges:
+        ax.plot(
+            [x0, x1],
+            [y0, y1],
+            [z0, z1],
+            color=matrix_green,
+            linewidth=2.2,
+            solid_capstyle="round",
+            zorder=5,
+        )
 
     arrow_kw = dict(arrow_length_ratio=0.28, linewidth=2.2)
-    ax.quiver(0, 0, s + 0.1, 0, 0, -delta_z * 2.0, color="#c9a227", **arrow_kw)
-    ax.quiver(-s - 0.1, 0, 0, side * 2.0, 0, 0, color="#457b9d", **arrow_kw)
-    ax.quiver(s + 0.1, 0, 0, -side * 2.0, 0, 0, color="#2a9d8f", **arrow_kw)
+    ax.quiver(0, 0, s + 0.1, 0, 0, -delta_z * 2.0, color=light_blue, **arrow_kw)
+    ax.quiver(-s - 0.1, 0, 0, side * 2.0, 0, 0, color=light_red, **arrow_kw)
+    ax.quiver(s + 0.1, 0, 0, -side * 2.0, 0, 0, color=light_green, **arrow_kw)
 
-    ax.text(1.55, 0, 0, r"$T_\phi \propto \phi^2$", color="#c9a227", fontsize=10, ha="center")
-    ax.text(0, 1.55, 0, r"$T_e \propto e^2$", color="#2a9d8f", fontsize=10, ha="center")
-    ax.text(0, 0, 1.55, r"$T_\pi \propto \pi^2$", color="#e63946", fontsize=10, ha="center")
-    ax.text(0, 0, -0.35, r"$\delta_\mathrm{side}$ (inward)", color="#457b9d", fontsize=9, ha="center")
-    ax.text(0, -1.35, 0, r"$\delta_z$ (push)", color="#c9a227", fontsize=9, ha="center")
+    ax.text(1.55, 0, 0, r"$T_\phi \propto \phi^2$", color=light_red, fontsize=10, ha="center")
+    ax.text(0, 1.55, 0, r"$T_e \propto e^2$", color=light_green, fontsize=10, ha="center")
+    ax.text(0, 0, 1.55, r"$T_\pi \propto \pi^2$", color=light_blue, fontsize=10, ha="center")
+    ax.text(0, 0, -0.35, r"$\delta_\mathrm{side}$ (inward)", color=light_green, fontsize=9, ha="center")
+    ax.text(0, -1.35, 0, r"$\delta_z$ (push)", color=light_blue, fontsize=9, ha="center")
 
-    ax.text2D(
-        0.5,
-        0.03,
-        f"R = φ²+e²−π² ≈ {r_show:+.3f} drives net δ_side contraction",
-        transform=ax.transAxes,
-        ha="center",
-        color="#f5e6c8",
-        fontsize=9,
-        bbox=dict(boxstyle="round", facecolor="#2a1838", alpha=0.9, edgecolor="#6a4c93"),
+    from matplotlib.patches import FancyBboxPatch
+
+    caption_y = 0.085
+    fig.add_artist(
+        FancyBboxPatch(
+            (0.14, 0.055),
+            0.72,
+            0.05,
+            boxstyle="round,pad=0.008",
+            transform=fig.transFigure,
+            facecolor="#2a1838",
+            edgecolor=matrix_green,
+            linewidth=1.2,
+            alpha=0.9,
+            zorder=4,
+        )
     )
+    caption_segments = (
+        (0.17, "R = ", "#e8e0f8"),
+        (0.215, r"$\phi^2$", light_red),
+        (0.255, " + ", "#e8e0f8"),
+        (0.275, r"$e^2$", light_green),
+        (0.305, " − ", "#e8e0f8"),
+        (0.325, r"$\pi^2$", light_blue),
+        (0.355, f" ≈ {r_show:+.3f} drives net ", "#e8e0f8"),
+        (0.545, r"$\delta_\mathrm{side}$", light_green),
+        (0.595, " contraction", "#e8e0f8"),
+    )
+    for x_pos, label, label_color in caption_segments:
+        fig.text(
+            x_pos,
+            caption_y,
+            label,
+            transform=fig.transFigure,
+            ha="left",
+            color=label_color,
+            fontsize=9,
+            zorder=6,
+        )
 
     ax.set_xlim(-2, 2)
     ax.set_ylim(-2, 2)
