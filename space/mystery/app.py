@@ -3362,31 +3362,47 @@ footer {{ visibility: hidden; }}
     line-height: 1.5 !important;
 }}
 /* === UNIT CELL gr.Image + gr.Video viewport (last wins) === */
-.gradio-container .myst-gravity-image-viewport {{
-    padding: 4px 6px !important;
+.gradio-container .myst-gravity-image-viewport,
+.gradio-container .myst-gravity-image-viewport > .block,
+.gradio-container .myst-gravity-image-viewport .wrap {{
+    padding: 4px !important;
     background: #000000 !important;
 }}
+.gradio-container .myst-gravity-image-viewport .gradio-image,
+.gradio-container .myst-gravity-image-viewport .gradio-video,
+.gradio-container .myst-gravity-image-viewport .gr-image,
+.gradio-container .myst-gravity-image-viewport .gr-video,
 .gradio-container #unit-cell-main-view,
+.gradio-container #unit-cell-animation,
 .gradio-container #unit-cell-main-view .wrap,
+.gradio-container #unit-cell-animation .wrap,
 .gradio-container #unit-cell-main-view .image-container,
-.gradio-container .myst-unit-cell-main-image .image-container {{
+.gradio-container #unit-cell-animation .video-container {{
     width: 100% !important;
+    min-height: 0 !important;
+    padding: 4px !important;
     background-color: #000000 !important;
+    box-sizing: border-box !important;
 }}
+.gradio-container #unit-cell-main-view,
+.gradio-container #unit-cell-main-view.block {{
+    min-height: 550px !important;
+}}
+.gradio-container #unit-cell-animation,
+.gradio-container #unit-cell-animation.block {{
+    min-height: 320px !important;
+}}
+.gradio-container .gradio-image img,
+.gradio-container .gradio-video video,
+.gradio-container .gr-image img,
+.gradio-container .gr-video video,
 .gradio-container #unit-cell-main-view img,
-.gradio-container .myst-unit-cell-main-image img {{
+.gradio-container #unit-cell-animation video {{
     width: 100% !important;
-    height: auto !important;
+    height: 100% !important;
     max-height: none !important;
     object-fit: contain !important;
     display: block !important;
-    background-color: #000000 !important;
-}}
-.gradio-container #unit-cell-animation,
-.gradio-container #unit-cell-animation .wrap,
-.gradio-container #unit-cell-animation video,
-.gradio-container .myst-unit-cell-animation video {{
-    width: 100% !important;
     background-color: #000000 !important;
 }}
 @media (max-width: 768px) {{
@@ -4787,7 +4803,7 @@ def build_app() -> gr.Blocks:
                 ):
                     gr.HTML(
                         """
-                        <div style="margin-bottom: 10px;">
+                        <div style="margin-bottom: 8px;">
                           <div style="font-weight: 600; font-size: 16px; color: #ddd;">UNIT CELL VIEWPORT</div>
                           <div style="font-size: 12px; color: #aaa;">Deformable Unit Cell • No WebGL</div>
                         </div>
@@ -4797,23 +4813,20 @@ def build_app() -> gr.Blocks:
                         _init_unit_cell_header,
                         elem_classes=["myst-cube-viewport-header-slot"],
                     )
-                    with gr.Row():
-                        unit_cell_image = gr.Image(
-                            label="Deformable Unit Cell",
-                            show_label=False,
-                            type="filepath",
-                            interactive=False,
-                            scale=1,
-                            height=520,
-                            elem_id="unit-cell-main-view",
-                            value=_init_unit_cell_image,
-                            elem_classes=["myst-unit-cell-main-image"],
-                        )
+                    unit_cell_image = gr.Image(
+                        label=None,
+                        show_label=False,
+                        type="filepath",
+                        interactive=False,
+                        scale=1,
+                        height=550,
+                        elem_id="unit-cell-main-view",
+                        value=_init_unit_cell_image,
+                        elem_classes=["myst-unit-cell-main-image", "gradio-image"],
+                    )
                     gr.HTML(
                         """
-                        <div style="margin: 14px 0 6px 0;">
-                          <div style="font-weight: 600; font-size: 14px; color: #aaa;">Animation Output</div>
-                        </div>
+                        <div style="margin: 12px 0 6px 0; font-weight: 600; color: #aaa;">Animation Output</div>
                         """
                     )
                     unit_cell_video = gr.Video(
@@ -4826,7 +4839,7 @@ def build_app() -> gr.Blocks:
                         scale=1,
                         format="mp4",
                         elem_id="unit-cell-animation",
-                        elem_classes=["myst-unit-cell-animation"],
+                        elem_classes=["myst-unit-cell-animation", "gradio-video"],
                     )
             re_inputs = [
                 re_phi_scale, re_e_scale, re_pi_scale,
