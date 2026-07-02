@@ -143,9 +143,8 @@ CONTROL_PANEL_HEADER_HTML = """
 """
 
 QUICK_PRESETS_PANEL_HEADER_HTML = """
-<div class="myst-gravity-presets-header myst-gravity-presets-header-compact" role="img" aria-label="Quick presets panel">
-  <span class="myst-cube-viewport-title">QUICK PRESETS</span>
-  <span class="myst-cube-viewport-sub">one click sets dials</span>
+<div class="myst-gravity-presets-header myst-gravity-presets-header-compact myst-gravity-presets-header-single" role="img" aria-label="Quick presets panel">
+  <span class="myst-cube-viewport-title">QUICK PRESETs</span>
 </div>
 """
 
@@ -2067,7 +2066,7 @@ footer {{ visibility: hidden; }}
     padding: 0 0.55rem 0.5rem !important;
     gap: 0 !important;
     display: grid !important;
-    grid-template-rows: auto minmax(11rem, 1fr) !important;
+    grid-template-rows: auto minmax(14rem, 1fr) !important;
     grid-template-columns: minmax(0, 1fr) !important;
     overflow: hidden !important;
     background: linear-gradient(180deg, #1a1008 0%, #0a0604 100%) !important;
@@ -2101,12 +2100,19 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-gravity-presets-tui-card .myst-gravity-left-tui-slot,
 .gradio-container .myst-gravity-presets-tui-card .myst-gravity-preset-tui-section {{
     grid-row: 2 !important;
-    min-height: 11rem !important;
+    min-height: 14rem !important;
     height: 100% !important;
     width: 100% !important;
     display: flex !important;
     flex-direction: column !important;
     overflow: hidden !important;
+}}
+.gradio-container .myst-gravity-presets-header.myst-gravity-presets-header-single {{
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0.32rem 0.65rem 0.38rem !important;
+    gap: 0 !important;
 }}
 .gradio-container .myst-gravity-presets-header.myst-gravity-presets-header-compact {{
     align-items: center !important;
@@ -2193,7 +2199,7 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-gravity-presets-tui-card .myst-gravity-left-tui-slot .myst-gravity-preset-tui-wrap,
 .gradio-container .myst-gravity-presets-tui-card .myst-gravity-left-tui-slot .myst-gravity-preset-tui-wrap.block {{
     flex: 1 1 0 !important;
-    min-height: 9.5rem !important;
+    min-height: 12rem !important;
     height: 100% !important;
     max-height: 100% !important;
     display: block !important;
@@ -2339,7 +2345,7 @@ footer {{ visibility: hidden; }}
     flex: 1 1 0 !important;
     width: calc(100% - 0.9rem) !important;
     height: 100% !important;
-    min-height: 9.5rem !important;
+    min-height: 12rem !important;
     max-height: 100% !important;
     margin: 0.3rem 0.45rem 0.4rem !important;
     padding: 0.5rem 0.6rem !important;
@@ -2361,7 +2367,7 @@ footer {{ visibility: hidden; }}
     padding: 0 !important;
 }}
 .gradio-container .myst-preset-tui-serial {{
-    min-height: 12rem !important;
+    min-height: 11rem !important;
     font-family: "Courier New", Courier, monospace !important;
     font-size: 0.78rem !important;
     line-height: 1.55 !important;
@@ -2480,13 +2486,18 @@ footer {{ visibility: hidden; }}
     max-width: 100% !important;
     margin: 0 0 0.4rem 0 !important;
 }}
-.gradio-container .myst-gravity-left-frame .myst-gravity-controls-accordion .accordion {{
+.gradio-container .myst-gravity-left-frame .myst-gravity-levels-accordion .accordion {{
     max-height: min(34vh, 20rem) !important;
     overflow-y: auto !important;
 }}
 .gradio-container .myst-gravity-left-frame .myst-gravity-manual-edit-accordion {{
     flex: 0 0 auto !important;
     margin: 0 !important;
+    overflow: visible !important;
+}}
+.gradio-container .myst-gravity-left-frame .myst-gravity-manual-edit-accordion .accordion {{
+    max-height: none !important;
+    overflow: visible !important;
 }}
 .gradio-container .myst-gravity-left-frame .myst-gravity-manual-edit-accordion .myst-cube-viewport-header {{
     margin-top: 0.15rem !important;
