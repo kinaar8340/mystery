@@ -1719,6 +1719,182 @@ def build_unit_cell_figure(
     return fig
 
 
+def _rgba_to_plotly_color(rgba: tuple[float, float, float, float]) -> str:
+    r, g, b, a = rgba
+    return f"rgba({int(r * 255)},{int(g * 255)},{int(b * 255)},{float(a):.3f})"
+
+
+def _plotly_camera_from_view(
+    elev: float,
+    azim: float,
+    *,
+    radius: float = 2.35,
+) -> dict[str, dict[str, float]]:
+    elev_rad = np.deg2rad(float(elev))
+    azim_rad = np.deg2rad(float(azim))
+    x = radius * np.cos(elev_rad) * np.cos(azim_rad)
+    y = radius * np.sin(elev_rad)
+    z = radius * np.cos(elev_rad) * np.sin(azim_rad)
+    return {
+        "eye": {"x": float(x), "y": float(y), "z": float(z)},
+        "center": {"x": 0.0, "y": 0.0, "z": 0.0},
+        "up": {"x": 0.0, "y": 1.0, "z": 0.0},
+    }
+
+
+def build_unit_cell_plotly_figure(
+    delta_z: float = 0.15,
+    delta_side: float = 0.08,
+    *,
+    r_val: float | None = None,
+    pressure: float = 1.0,
+    view_elev: float = UNIT_CELL_VIEW_ELEV,
+    view_azim: float = UNIT_CELL_VIEW_AZIM,
+    axis_half: float = UNIT_CELL_AXIS_HALF,
+    show_curvature_grid: bool = True,
+):
+    """Interactive Plotly unit-cell mesh for Render preset detail view."""
+    import plotly.graph_objects as go
+
+    _ = r_val
+    s = 1.0
+    side = abs(delta_side)
+    p = float(np.clip(pressure, 0.0, 1.0))
+    triangles, tri_colors = _deformed_cube_surface(s, p, delta_z, side)
+
+    xs: list[float] = []
+    ys: list[float] = []
+    zs: list[float] = []
+    i_idx: list[int] = []
+    j_idx: list[int] = []
+    k_idx: list[int] = []
+    face_colors: list[str] = []
+    for tri, rgba in zip(triangles, tri_colors, strict=True):
+        base = len(xs)
+        for vtx in tri:
+            xs.append(float(vtx[0]))
+            ys.append(float(vtx[1]))
+            zs.append(float(vtx[2]))
+        i_idx.append(base)
+        j_idx.append(base + 1)
+        k_idx.append(base + 2)
+        face_colors.append(_rgba_to_plotly_color(rgba))
+
+    traces: list[go.Mesh3d | go.Scatter3d] = [
+        go.Mesh3d(
+            x=xs,
+            y=ys,
+            z=zs,
+            i=i_idx,
+            j=j_idx,
+            k=k_idx,
+            facecolor=face_colors,
+            flatshading=True,
+            lighting=dict(ambient=0.55, diffuse=0.85, specular=0.25, roughness=0.5),
+            lightposition=dict(x=2, y=4, z=3),
+            hoverinfo="skip",
+            showscale=False,
+        )
+    ]
+
+    if show_curvature_grid and p > 0.02:
+        grid_alpha = 0.25 + 0.55 * p
+        for grid_line in _deformed_face_curvature_grid(s, p, delta_z, side):
+            gx, gy, gz = zip(*grid_line, strict=True)
+            traces.append(
+                go.Scatter3d(
+                    x=list(gx),
+                    y=list(gy),
+                    z=list(gz),
+                    mode="lines",
+                    line=dict(
+                        color=f"rgba(201,162,39,{grid_alpha:.3f})",
+                        width=2,
+                    ),
+                    hoverinfo="skip",
+                    showlegend=False,
+                )
+            )
+
+    for edge_pts in _deformed_cube_edge_polylines(s, p, delta_z, side):
+        ex, ey, ez = zip(*edge_pts, strict=True)
+        traces.append(
+            go.Scatter3d(
+                x=list(ex),
+                y=list(ey),
+                z=list(ez),
+                mode="lines",
+                line=dict(color=_UNIT_CELL_GOLD, width=5),
+                hoverinfo="skip",
+                showlegend=False,
+            )
+        )
+
+    half = float(max(2.0, axis_half))
+    fig = go.Figure(data=traces)
+    fig.update_layout(
+        paper_bgcolor="#000000",
+        plot_bgcolor="#000000",
+        margin=dict(l=0, r=0, t=0, b=0, pad=0),
+        autosize=True,
+        scene=dict(
+            xaxis=dict(range=[-half, half], visible=False, showbackground=False),
+            yaxis=dict(range=[-half, half], visible=False, showbackground=False),
+            zaxis=dict(range=[-half, half], visible=False, showbackground=False),
+            aspectmode="cube",
+            camera=_plotly_camera_from_view(view_elev, view_azim),
+            dragmode="orbit",
+        ),
+        showlegend=False,
+        uirevision="mystery-unit-cell",
+    )
+    return fig
+
+
+def run_residual_explorer_plotly(
+    phi_sq_scale: float,
+    e_sq_scale: float,
+    pi_sq_scale: float,
+    kappa: float,
+    delta_z: float,
+    alpha: float,
+    beta: float,
+    deform_pressure: float = 0.35,
+    view_elev: float = UNIT_CELL_VIEW_ELEV,
+    view_azim: float = UNIT_CELL_VIEW_AZIM,
+):
+    """Return an interactive Plotly unit-cell figure for preset detail view."""
+    r_val = residual_from_scales(phi_sq_scale, e_sq_scale, pi_sq_scale)
+    d_side = delta_side_contraction(delta_z, r_val, kappa, alpha=alpha, beta=beta)
+    return build_unit_cell_plotly_figure(
+        delta_z=delta_z,
+        delta_side=abs(d_side) * 0.5,
+        r_val=r_val,
+        pressure=deform_pressure,
+        view_elev=view_elev,
+        view_azim=view_azim,
+    )
+
+
+def plotly_figure_to_render_detail_html(fig) -> str:
+    """Embed a responsive Plotly figure for the Render preset detail page."""
+    import plotly.io as pio
+
+    div = pio.to_html(
+        fig,
+        full_html=False,
+        include_plotlyjs="cdn",
+        config={
+            "responsive": True,
+            "displayModeBar": True,
+            "scrollZoom": True,
+            "displaylogo": False,
+        },
+        div_id="myst-render-detail-plotly",
+    )
+    return f'<div class="myst-render-detail-plotly-wrap">{div}</div>'
+
+
 def run_residual_explorer(
     phi_sq_scale: float,
     e_sq_scale: float,

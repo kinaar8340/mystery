@@ -44,6 +44,8 @@ from demo_core import (
     render_unit_cell_deformation_video,
     residual_from_scales,
     run_residual_explorer,
+    run_residual_explorer_plotly,
+    plotly_figure_to_render_detail_html,
 
     terminal_directory_help,
     terminal_figures_index,
@@ -1298,6 +1300,18 @@ WALLPAPER_HEAD = f"""
         var btn = document.getElementById('myst-render-cell-btn-' + slot);
         if (btn) btn.click();
     }}
+    function mystResizeRenderDetailPlot() {{
+        var host = document.querySelector('.myst-render-detail-plot-host');
+        if (!host) return;
+        var plotDiv = host.querySelector('.plotly-graph-div, #myst-render-detail-plotly');
+        if (!plotDiv || !window.Plotly) return;
+        var h = Math.max(480, Math.round(host.getBoundingClientRect().height));
+        plotDiv.style.height = h + 'px';
+        plotDiv.style.width = '100%';
+        try {{
+            window.Plotly.Plots.resize(plotDiv);
+        }} catch (_err) {{}}
+    }}
     function mystBindRenderGridClicks() {{
         document.querySelectorAll('.myst-render-cell-clickable[data-slot]').forEach(function(cell) {{
             if (cell.dataset.mystBound === '1') return;
@@ -1312,6 +1326,12 @@ WALLPAPER_HEAD = f"""
                 }}
             }});
         }});
+        if (document.querySelector('.myst-render-detail-wrap')) {{
+            requestAnimationFrame(function() {{
+                mystResizeRenderDetailPlot();
+                requestAnimationFrame(mystResizeRenderDetailPlot);
+            }});
+        }}
     }}
     function bootRenderGridClicks() {{
         mystBindRenderGridClicks();
@@ -1325,6 +1345,9 @@ WALLPAPER_HEAD = f"""
                 subtree: true, childList: true, attributes: true
             }});
         }}
+        window.addEventListener('resize', function() {{
+            requestAnimationFrame(mystResizeRenderDetailPlot);
+        }});
     }}
     if (document.body) bootRenderGridClicks();
     document.addEventListener('DOMContentLoaded', bootRenderGridClicks);
@@ -4842,48 +4865,97 @@ footer {{ visibility: hidden; }}
         0 0 0 2px rgba(212, 175, 55, 0.45),
         inset 0 0 10px rgba(212, 175, 55, 0.12) !important;
 }}
+.gradio-container .myst-render-page .myst-render-catalog-host:not(.hide):not(.hidden) {{
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    height: calc(100dvh - 7rem) !important;
+    display: flex !important;
+    flex-direction: column !important;
+}}
+.gradio-container .myst-render-page .myst-render-panel-host,
+.gradio-container .myst-render-page .myst-render-panel-host .html-container,
+.gradio-container .myst-render-page #myst-render-grid-host,
+.gradio-container .myst-render-page #myst-render-grid-host .html-container {{
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    height: 100% !important;
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+}}
 .gradio-container .myst-render-page .myst-render-detail-wrap {{
     width: 100% !important;
-    min-height: calc(100dvh - 8.5rem) !important;
+    height: 100% !important;
+    min-height: 0 !important;
     flex: 1 1 auto !important;
     display: flex !important;
     flex-direction: column !important;
 }}
 .gradio-container .myst-render-page .myst-render-detail-panel {{
     flex: 1 1 auto !important;
-    min-height: calc(100dvh - 9.5rem) !important;
+    min-height: 0 !important;
+    height: 100% !important;
     display: flex !important;
     flex-direction: column !important;
-    padding: 0.55rem 0.62rem 0.65rem !important;
+    gap: 0.15rem !important;
+    padding: 0.22rem 0.28rem 0.24rem !important;
     background: rgba(0, 0, 0, {_MYST_STATUS_PANEL_ALPHA}) !important;
     border: 2px inset rgba(92, 74, 31, {_MYST_STATUS_PANEL_ALPHA}) !important;
     box-sizing: border-box !important;
 }}
 .gradio-container .myst-render-page .myst-render-detail-title {{
-    font-size: 1.02rem !important;
+    flex: 0 0 auto !important;
+    font-size: 0.9rem !important;
     font-weight: 700 !important;
     letter-spacing: 0.05em !important;
     color: #f5e6c8 !important;
     text-transform: uppercase !important;
+    margin: 0 !important;
+    padding: 0.08rem 0.1rem !important;
+    line-height: 1.2 !important;
+}}
+.gradio-container .myst-render-page .myst-render-detail-panel .myst-gravity-level-rule {{
+    flex: 0 0 auto !important;
+    margin: 0.1rem 0 0.12rem 0 !important;
 }}
 .gradio-container .myst-render-page .myst-render-detail-plot-host {{
     flex: 1 1 auto !important;
-    min-height: calc(100dvh - 12rem) !important;
+    min-height: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
     display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
+    align-items: stretch !important;
+    justify-content: stretch !important;
     overflow: hidden !important;
     background: #000000 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}}
+.gradio-container .myst-render-page .myst-render-detail-plotly-wrap,
+.gradio-container .myst-render-page .myst-render-detail-plot-host .plotly-graph-div,
+.gradio-container .myst-render-page .myst-render-detail-plot-host .js-plotly-plot,
+.gradio-container .myst-render-page .myst-render-detail-plot-host #myst-render-detail-plotly {{
+    flex: 1 1 auto !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: calc(100dvh - 8.25rem) !important;
+    max-height: none !important;
+}}
+.gradio-container .myst-render-page .myst-render-detail-plot-host .modebar {{
+    right: 0.35rem !important;
+    top: 0.2rem !important;
 }}
 .gradio-container .myst-render-page .myst-render-detail-plot-host .myst-unit-cell-viewport-inner {{
     width: 100% !important;
     height: 100% !important;
-    min-height: calc(100dvh - 12rem) !important;
+    min-height: 0 !important;
     max-height: none !important;
 }}
 .gradio-container .myst-render-page .myst-render-detail-plot-host img {{
+    width: 100% !important;
+    height: 100% !important;
     max-width: 100% !important;
-    max-height: calc(100dvh - 12rem) !important;
+    max-height: 100% !important;
     object-fit: contain !important;
 }}
 .gradio-container .myst-render-page .myst-render-preset-panel {{
@@ -6019,8 +6091,10 @@ def _render_preset_plot_html(slot: int, *, dpi: int = _RENDER_GRID_IMAGE_DPI) ->
 
 
 def _render_preset_detail_plot_html(slot: int) -> str:
-    """High-resolution plot for the Render preset detail view."""
-    return _render_preset_plot_html(slot, dpi=_RENDER_DETAIL_IMAGE_DPI)
+    """Interactive Plotly plot for the Render preset detail view."""
+    dials = _gravity_preset_dials_for_slot(slot)
+    fig = run_residual_explorer_plotly(*_dials_to_explorer_args(dials))
+    return plotly_figure_to_render_detail_html(fig)
 
 
 def _format_render_cell_html(
