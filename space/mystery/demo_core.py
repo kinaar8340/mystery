@@ -1097,17 +1097,28 @@ _VIEWPORT_IMG_STYLE = (
 )
 
 
+UNIT_CELL_VIEWPORT_EMPTY_HTML = (
+    '<div class="myst-unit-cell-viewport-inner" '
+    'style="width:100%;max-width:550px;height:550px;background:#000000;"></div>'
+)
+
+
 def _viewport_img_wrap_html(src: str, *, error: bool = False) -> str:
-    """Shared viewport wrapper — same DOM for local base64 and HF file URLs."""
+    """Inner viewport markup — gr.HTML block carries elem_id unit-cell-main-view."""
     error_cls = " myst-unit-cell-viewport-error" if error else ""
     return (
-        '<div id="unit-cell-main-view" class="myst-unit-cell-viewport-img-wrap '
-        f'myst-unit-cell-viewport-html{error_cls}" style="{_VIEWPORT_WRAP_STYLE}">'
-        f'<img src="{src}" alt="Unit cell viewport" '
+        f'<div class="myst-unit-cell-viewport-inner myst-unit-cell-viewport-img-wrap{error_cls}" '
+        f'style="{_VIEWPORT_WRAP_STYLE}">'
+        f'<img src="{src}" alt="Deformable unit cell viewport" '
         f'class="myst-unit-cell-viewport-img" style="{_VIEWPORT_IMG_STYLE}" '
         'loading="eager" decoding="sync" />'
         "</div>"
     )
+
+
+def _viewport_file_url_html(file_path: str, *, error: bool = False) -> str:
+    """HF Spaces — plain img via Gradio-served /gradio_api/file= URL."""
+    return _viewport_img_wrap_html(f"/gradio_api/file={file_path}", error=error)
 
 
 def numpy_viewport_to_html(arr: np.ndarray) -> str:
@@ -1260,6 +1271,28 @@ def unit_cell_error_placeholder_filepath() -> str:
         tmp_path = tmp.name
     PILImage.fromarray(unit_cell_error_placeholder_numpy()).save(tmp_path, format="PNG")
     return tmp_path
+
+
+def figure_to_viewport_file_html(fig: plt.Figure, *, dpi: int = 100) -> str:
+    """Matplotlib figure → gr.HTML with /gradio_api/file= PNG (HF Spaces)."""
+    print(f"[DEBUG] figure_to_viewport_file_html: dpi={dpi}", flush=True)
+    try:
+        path = figure_to_viewport_filepath(fig, dpi=dpi)
+        html = _viewport_file_url_html(path)
+        print(
+            f"[DEBUG] figure_to_viewport_file_html: path={path} bytes={len(html)}",
+            flush=True,
+        )
+        return html
+    except Exception as exc:
+        print(f"[ERROR] figure_to_viewport_file_html failed: {exc}", flush=True)
+        traceback.print_exc()
+        return unit_cell_error_placeholder_file_html()
+
+
+def unit_cell_error_placeholder_file_html() -> str:
+    """Red placeholder gr.HTML via Gradio file URL."""
+    return _viewport_file_url_html(unit_cell_error_placeholder_filepath(), error=True)
 
 
 def figure_to_viewport_gradio_pil(fig: plt.Figure, *, dpi: int = 100):
