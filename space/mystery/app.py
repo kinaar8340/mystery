@@ -1826,6 +1826,21 @@ footer {{
     color: #B85C00 !important;
     -webkit-text-fill-color: #B85C00 !important;
 }}
+/* Gravity child nav — uniform sizing + matrix-green active (matches main nav) */
+#myst-gravity-child-nav button.myst-status-preset-btn,
+#myst-gravity-child-nav button.myst-gravity-preset-btn,
+#myst-gravity-child-nav button.myst-gravity-nav-back-btn {{
+    min-height: 2.05rem !important;
+    height: 2.05rem !important;
+    min-width: 82px !important;
+    padding: 0 12px !important;
+    font-size: 0.95rem !important;
+    font-weight: 600 !important;
+}}
+#myst-gravity-child-nav button.vqc-source-tab.active {{
+    color: {_VQC_MATRIX_GREEN} !important;
+    -webkit-text-fill-color: {_VQC_MATRIX_GREEN} !important;
+}}
 .gradio-container a:hover:not(.vqc-source-tab),
 .gradio-container .markdown a:hover:not(.vqc-source-tab),
 .gradio-container .prose a:hover:not(.vqc-source-tab) {{
@@ -5626,8 +5641,10 @@ _GRAVITY_TUI_MENU_FOCUS_MAX = 9
 _UNIT_CELL_IMAGE_DPI = 100
 _RENDER_GRID_IMAGE_DPI = 100
 _RENDER_DETAIL_IMAGE_DPI = 120
-# Index of unit_cell_image within gravity_preset_outputs (16 keypad + 2 edit btns + 20 sliders).
-_GRAVITY_PRESET_IMAGE_OUT_INDEX = 41
+# Index of unit_cell_image within gravity_preset_outputs
+# (16 keypad + 1 back + 9 child nav + 2 edit btns + 20 sliders + …).
+_GRAVITY_PRESET_IMAGE_OUT_INDEX = 51
+_GRAVITY_CHILD_NAV_LETTERS: tuple[str, ...] = tuple(chr(ord("A") + i) for i in range(9))
 _GRAVITY_HOME_DIALS = {
     "phi": 1.0,
     "e": 1.0,
@@ -6221,9 +6238,12 @@ def _gravity_keypad_label(key: str) -> str:
 
 
 def _gravity_preset_tui_short_label(slot: int) -> str:
+    slot = int(slot)
+    if slot in _RENDER_PRESET_LABELS:
+        return _RENDER_PRESET_LABELS[slot].title()
     return _GRAVITY_PRESET_TUI_LABELS.get(
-        int(slot),
-        _GRAVITY_PRESET_SLOT_LABELS.get(int(slot), "Preset"),
+        slot,
+        _GRAVITY_PRESET_SLOT_LABELS.get(slot, "Preset"),
     )
 
 
@@ -6306,6 +6326,34 @@ def _gravity_keypad_btn_updates(
         )
         for key in _GRAVITY_KEYPAD_ALL_KEYS
     )
+
+
+def _gravity_child_nav_btn_classes(letter: str, active_slot: int) -> list[str]:
+    classes = ["vqc-source-tab", "myst-status-preset-btn", "myst-gravity-preset-btn"]
+    slot = ord(letter) - ord("A")
+    if 0 <= int(active_slot) < len(_GRAVITY_CHILD_NAV_LETTERS) and slot == int(active_slot):
+        classes.append("active")
+    return classes
+
+
+def _gravity_child_nav_btn_updates(active_slot: int = -1) -> tuple:
+    active = int(active_slot)
+    return tuple(
+        gr.update(
+            elem_classes=_gravity_child_nav_btn_classes(letter, active),
+            interactive=not (
+                0 <= active < len(_GRAVITY_CHILD_NAV_LETTERS)
+                and (ord(letter) - ord("A")) == active
+            ),
+            variant="secondary",
+        )
+        for letter in _GRAVITY_CHILD_NAV_LETTERS
+    )
+
+
+def _gravity_child_nav_output_updates(active_slot: int = -1) -> tuple:
+    """Back button skip + A–I child nav updates for gravity_preset_outputs."""
+    return (gr.skip(), *_gravity_child_nav_btn_updates(active_slot))
 
 
 def _gravity_tui_viewport_open(scroll_px: int) -> str:
@@ -6848,6 +6896,46 @@ def _render_sub_nav_render_btn_update(
         elem_classes=classes,
         variant="secondary",
     )
+
+
+def _place_gravity_child_nav_row() -> dict[str, gr.Button]:
+    """Gravity child nav — horizontal A–I row matching Render sub-nav style."""
+    buttons: dict[str, gr.Button] = {}
+    with gr.Row(
+        elem_id="myst-gravity-child-nav",
+        elem_classes=[
+            "myst-render-preset-nav-wrap",
+            "vqc-nav-spreadsheet-row",
+            "vqc-status-preset-nav-row",
+        ],
+    ):
+        back_btn = gr.Button(
+            "Back",
+            elem_id="myst-gravity-nav-back-btn",
+            elem_classes=[
+                "vqc-source-tab",
+                "myst-status-preset-btn",
+                "myst-gravity-nav-back-btn",
+            ],
+            scale=0,
+            min_width=82,
+            variant="secondary",
+        )
+        buttons["back"] = back_btn
+        for letter in _GRAVITY_CHILD_NAV_LETTERS:
+            buttons[letter] = gr.Button(
+                letter,
+                elem_id=f"myst-gravity-preset-btn-{letter}",
+                elem_classes=[
+                    "vqc-source-tab",
+                    "myst-status-preset-btn",
+                    "myst-gravity-preset-btn",
+                ],
+                scale=0,
+                min_width=82,
+                variant="secondary",
+            )
+    return buttons
 
 
 def _place_render_sub_nav_row(
@@ -7580,8 +7668,10 @@ def _gravity_explorer_outputs(
         grid_active_slot=active_slot,
         dials=_gravity_preset_dials_for_slot(zoom_slot) if zoom_slot >= 0 else None,
     )
+    child_active = int(active_slot) if 0 <= int(active_slot) < len(_GRAVITY_CHILD_NAV_LETTERS) else -1
     return (
         *_gravity_preset_btn_updates(active_key),
+        *_gravity_child_nav_output_updates(child_active),
         edit_btn,
         edit_btn,
         *slider_updates,
@@ -7737,12 +7827,18 @@ def _gravity_menu_to_preset_outputs(
     active_nav: str = "",
 ) -> tuple:
     """Menu-only TUI refresh packed into gravity_preset_outputs shape."""
+    child_active = (
+        int(active_preset)
+        if 0 <= int(active_preset) < len(_GRAVITY_CHILD_NAV_LETTERS)
+        else -1
+    )
     return _gravity_preset_handler_outputs(
         (
             *_gravity_keypad_btn_updates(
                 active_numeric=active_numeric,
                 active_nav=active_nav,
             ),
+            *_gravity_child_nav_output_updates(child_active),
             gr.skip(),
             gr.skip(),
             *([gr.skip()] * 20),
@@ -8060,8 +8156,8 @@ def _gravity_quick_preset_apply(
     view_elev: float,
     view_azim: float,
 ) -> tuple[dict[str, float], str, str, object, str, int]:
-    if slot == 0:
-        dials = dict(_GRAVITY_HOME_DIALS)
+    if 0 <= slot < _STATUS_GRID_PRESET_COUNT:
+        dials = _render_preset_dials_for_slot(slot)
     elif slot in _GRAVITY_PRESET_PROFILES:
         dials = dict(_GRAVITY_PRESET_PROFILES[slot])
     else:
@@ -8803,6 +8899,13 @@ def build_app() -> gr.Blocks:
             grav_tab_readme_btn = _grav_nav["readme"]
             grav_tab_anim_btn = _grav_nav["animations"]
             grav_tab_status_btn = _grav_nav["status"]
+            _place_status_gap_row(slot="after-main-nav", half_height=True)
+            gravity_child_nav = _place_gravity_child_nav_row()
+            gravity_back_btn = gravity_child_nav["back"]
+            gravity_letter_btns = {
+                letter: gravity_child_nav[letter] for letter in _GRAVITY_CHILD_NAV_LETTERS
+            }
+            _place_status_gap_row(slot="after-preset-nav")
             with gr.Row(elem_classes=["myst-gravity-split"], equal_height=True):
                 with gr.Column(
                     scale=3,
@@ -9068,9 +9171,14 @@ def build_app() -> gr.Blocks:
             gravity_preset_btn_outputs = [
                 re_gravity_keypad[key] for key in _GRAVITY_KEYPAD_ALL_KEYS
             ]
+            gravity_child_nav_outputs = [
+                gravity_back_btn,
+                *[gravity_letter_btns[letter] for letter in _GRAVITY_CHILD_NAV_LETTERS],
+            ]
             gravity_tui_nav_inputs = [*re_inputs, re_active_preset, gravity_tui_state]
             gravity_preset_outputs = [
                 *gravity_preset_btn_outputs,
+                *gravity_child_nav_outputs,
                 edit_params_btn,
                 edit_edit_params_btn,
                 *re_inputs,
@@ -9153,6 +9261,22 @@ def build_app() -> gr.Blocks:
             for slot, preset_btn in enumerate(re_quick_presets):
                 preset_btn.click(
                     _make_gravity_keypad_digit_click(slot),
+                    inputs=gravity_menu_inputs,
+                    outputs=gravity_preset_outputs,
+                    show_progress="hidden",
+                    cancels=preset_cancel_events,
+                )
+            gravity_back_btn.click(
+                _gravity_keypad_stop_apply,
+                inputs=gravity_menu_inputs,
+                outputs=gravity_preset_outputs,
+                show_progress="hidden",
+                cancels=preset_cancel_events,
+            )
+            for letter, btn in gravity_letter_btns.items():
+                slot = ord(letter) - ord("A")
+                btn.click(
+                    _make_gravity_quick_preset_click(slot),
                     inputs=gravity_menu_inputs,
                     outputs=gravity_preset_outputs,
                     show_progress="hidden",
