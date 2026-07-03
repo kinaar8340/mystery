@@ -11,7 +11,7 @@ Quantified research notebook exploring the near-Pythagorean triangle formed by �
 
 **Status:** Compatible emergent signature — not an exact identity, not forced by invariants, not contradicted by simulation.
 
-**Project stage:** Early research notebook (June 2026) — low visibility so far. The [Hugging Face Space](https://huggingface.co/spaces/kinaar111/mystery) opens on the **Gravity** tab (unit-cell presets, deformation animation, preset TUI); **Live Probe** keeps the κ slider and triangle plots. Full probe depth, derivations, and JSON outputs live in this repo.
+**Project stage:** Early research notebook (June 2026) — low visibility so far. The [Hugging Face Space](https://huggingface.co/spaces/kinaar111/mystery) opens on the **Gravity** tab (unit-cell presets, deformation animation, preset TUI) with **Presets**, **README**, and **Figures** tabs for the preset grid, in-app summary, and reference plots. Full probe depth, derivations, and JSON outputs live in this repo.
 
 ---
 

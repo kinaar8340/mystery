@@ -48,7 +48,7 @@ python_version: 3.12
 app_file: app.py
 pinned: false
 license: mit
-short_description: φ²+e²≈π² — Gravity unit-cell presets + Live Probe
+short_description: φ²+e²≈π² — Gravity unit-cell presets & figures
 ---
 
 # Mystery — φ, e, π Emergent Signature
@@ -59,7 +59,7 @@ short_description: φ²+e²≈π² — Gravity unit-cell presets + Live Probe
 
 **Browser demo** of the Mystery research notebook: near-Pythagorean triangle φ²+e²≈π², holonomy-gap scaling B(κ), unit-cell deformation, and 30-60-90 / 3-6-9 comparisons.
 
-Opens on the **Gravity** tab — two-column preset explorer with live TUI metrics and optional deformation animation. **Live Probe** keeps the κ slider, triangle plots, and matrix terminal from [orbital-braille-vqc](https://huggingface.co/spaces/kinaar111/orbital-braille-vqc).
+Opens on the **Gravity** tab — two-column preset explorer with live TUI metrics and optional deformation animation. **Figures** tab shows reference plots from the probe suite; UI styling follows [orbital-braille-vqc](https://huggingface.co/spaces/kinaar111/orbital-braille-vqc).
 
 > Full 11-probe suite runs locally: [`run_all.py`](https://github.com/kinaar8340/mystery)
 
@@ -81,12 +81,13 @@ Opens on the **Gravity** tab — two-column preset explorer with live TUI metric
 
 ---
 
-## Live Probe tab
+## Other tabs
 
-1. Tune **κ** (κ_doc = 0.85 marked).
-2. Click **Run analysis** → metrics + triangle / κ-sweep plots.
-3. Use the **matrix terminal** and keypad for build info and help.
-4. **Figures** tab — reference plots from the probe suite.
+| Tab | Contents |
+|-----|----------|
+| **Presets** | Nine-slot preset grid with per-preset metrics and edit drawer |
+| **README** | In-app project summary and probe hooks |
+| **Figures** | φ-e-π triangle, κ sweep, 3-6-9 clock, Conduit angular histograms |
 
 ---
 

@@ -64,7 +64,7 @@ Writes:
 
 ```
 space/mystery/
-├── app.py          # Gradio UI (Gravity tab, Live Probe, Figures, CLI terminal)
+├── app.py          # Gradio UI (Gravity, Presets, README, Figures)
 ├── demo_core.py    # φ-e-π metrics, unit-cell 3D plot, deformation MP4 renderer
 ├── build_info.py   # Auto-generated build stamp
 ├── requirements.txt
@@ -80,8 +80,8 @@ Cover image is served from GitHub raw (`mystery_image.png` at repo root) — HF 
 | Tab | Contents |
 |-----|----------|
 | **Gravity** (default) | Two-column unit-cell explorer — presets, TUI metrics, deformation animation |
+| **Presets** | Nine-slot preset grid with per-preset metrics and edit drawer |
 | **README** | In-app project summary |
-| **Live Probe** | κ slider, Run analysis, matrix terminal + keypad |
 | **Figures** | Reference plots from the probe suite |
 
 ### Gravity tab layout

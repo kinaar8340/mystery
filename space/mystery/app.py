@@ -43,7 +43,6 @@ from demo_core import (
     unit_cell_error_placeholder_html,
     render_unit_cell_deformation_video,
     residual_from_scales,
-    run_analysis,
     run_residual_explorer,
 
     terminal_directory_help,
@@ -77,7 +76,7 @@ def _figures_links_md() -> str:
             strict=True,
         )
     )
-    return f"{links} · same plots as **Run analysis** on the **Live Probe** tab."
+    return links
 
 logger = logging.getLogger(__name__)
 
@@ -860,13 +859,12 @@ _MAIN_NAV_TAB_SPECS = (
     ("gravity", "Gravity"),
     ("status", "Presets"),
     ("readme", "README"),
-    ("demo", "Live Probe"),
     ("animations", "Figures"),
 )
 
 
 def _place_main_nav_row(active_page: str) -> dict[str, gr.Button]:
-    """Mystery: spreadsheet nav — one compact row of five main tabs."""
+    """Mystery: spreadsheet nav — one compact row of four main tabs."""
     buttons: dict[str, gr.Button] = {}
     with gr.Row(
         elem_classes=[
@@ -1014,13 +1012,6 @@ def _source_tab_btn_update(*, active: bool) -> gr.Update:
     return gr.update(interactive=True, elem_classes=["vqc-source-tab"], variant="secondary")
 
 
-def _home_tab_update(*, on_demo_page: bool) -> gr.Update:
-    """Live demo tab — matrix-green label when on demo page."""
-    if on_demo_page:
-        return gr.update(interactive=False, elem_classes=["vqc-source-tab", "active"], variant="secondary")
-    return gr.update(interactive=True, elem_classes=["vqc-source-tab"], variant="secondary")
-
-
 def _close_links_panels() -> tuple:
     """Hide both Links-bar panels and reset their tab highlights."""
     return (
@@ -1074,8 +1065,7 @@ def _nav_to_status_page(current_page: str, content_open: bool) -> tuple:
 
 
 def _nav_to_page(page: str) -> tuple:
-    """Switch between demo, figures, gravity, readme, status, and edit; refresh nav highlights."""
-    on_demo = page == "demo"
+    """Switch between figures, gravity, readme, status, and edit; refresh nav highlights."""
     on_anim = page == "animations"
     on_gravity = page == "gravity"
     on_readme = page == "readme"
@@ -1083,12 +1073,10 @@ def _nav_to_page(page: str) -> tuple:
     closed = _close_links_panels()
     tab_gravity = _source_tab_btn_update(active=on_gravity)
     tab_readme = _source_tab_btn_update(active=on_readme)
-    tab_demo = _home_tab_update(on_demo_page=on_demo)
     tab_anim = _source_tab_btn_update(active=on_anim)
     tab_status = _source_tab_btn_update(active=on_status)
-    page_tabs = (tab_gravity, tab_readme, tab_demo, tab_anim, tab_status)
+    page_tabs = (tab_gravity, tab_readme, tab_anim, tab_status)
     return (
-        gr.update(visible=on_demo),
         gr.update(visible=on_anim),
         gr.update(visible=on_gravity),
         gr.update(visible=on_readme),
@@ -4969,22 +4957,6 @@ footer {{ visibility: hidden; }}
 
 """
 
-def run_probe(
-    kappa: float,
-    progress: gr.Progress = gr.Progress(track_tqdm=False),
-) -> tuple[str, str | None, str | None]:
-    try:
-        progress(0.1, desc="Computing φ-e-π triangle…")
-        progress(0.5, desc="Rendering κ sweep…")
-        metrics, tri_path, sweep_path = run_analysis(float(kappa))
-        progress(1.0, desc="Done")
-        return metrics, tri_path, sweep_path
-    except Exception as exc:
-        logger.exception("run_probe failed for kappa=%r", kappa)
-        err = f"Error: {exc}\n\n{traceback.format_exc()}"
-        return err, None, None
-
-
 _GRAVITY_KEYPAD_NUMERIC_KEYS = tuple(str(i) for i in range(10))
 _GRAVITY_KEYPAD_NAV_KEYS = ("up", "right", "left", "down", "enter", "stop")
 _GRAVITY_KEYPAD_LAYOUT: tuple[tuple[str, str, str, str], ...] = (
@@ -7059,16 +7031,6 @@ def _make_gravity_quick_preset_click(
     return handler
 
 
-def load_kappa_doc() -> float:
-    return KAPPA_DOC
-
-
-def load_kappa_star() -> float:
-    from demo_core import kappa_star
-
-    return kappa_star()
-
-
 def build_app() -> gr.Blocks:
     for static_dir in wallpaper_static_paths():
         gr.set_static_paths(paths=[str(static_dir)])
@@ -7104,257 +7066,42 @@ def build_app() -> gr.Blocks:
                     variant="secondary",
                 )
             gr.Markdown(ONBOARDING_MD)
-        with gr.Column(visible=False) as page_demo:
-            with gr.Group(elem_classes=["vqc-optics-panel"]):
-                with gr.Row(elem_classes=["vqc-optics-panel-header"]):
-                    gr.HTML(OPTICS_LOGO_HTML)
-                    with gr.Column(elem_classes=["vqc-optics-panel-nav"], scale=1):
-                        with gr.Row(
-                            elem_classes=["vqc-nav-spreadsheet-row", "vqc-nav-spreadsheet-row-8"],
-                        ):
-                            gr.HTML('<span class="vqc-source-label vqc-nav-row-label">Mystery:</span>')
-                            with gr.Column(elem_classes=["vqc-nav-cell"], scale=1, min_width=72):
-                                tab_gravity_btn = gr.Button(
-                                    "Gravity",
-                                    elem_classes=["vqc-source-tab", "active"],
-                                    interactive=False,
-                                    scale=0,
-                                    variant="secondary",
-                                )
-                            with gr.Column(elem_classes=["vqc-nav-cell"], scale=1, min_width=72):
-                                tab_status_btn = gr.Button(
-                                    "Presets",
-                                    elem_classes=["vqc-source-tab"],
-                                    scale=0,
-                                    variant="secondary",
-                                )
-                            with gr.Column(elem_classes=["vqc-nav-cell"], scale=1, min_width=72):
-                                tab_readme_btn = gr.Button(
-                                    "README",
-                                    elem_classes=["vqc-source-tab"],
-                                    scale=0,
-                                    variant="secondary",
-                                )
-                            with gr.Column(elem_classes=["vqc-nav-cell"], scale=1, min_width=72):
-                                tab_demo_btn = gr.Button(
-                                    "Live Probe",
-                                    elem_classes=["vqc-source-tab"],
-                                    scale=0,
-                                    variant="secondary",
-                                )
-                            with gr.Column(elem_classes=["vqc-nav-cell"], scale=1, min_width=72):
-                                tab_anim_btn = gr.Button(
-                                    "Figures",
-                                    elem_classes=["vqc-source-tab"],
-                                    scale=0,
-                                    variant="secondary",
-                                )
-                            with gr.Column(elem_classes=["vqc-nav-cell"], scale=1, min_width=72):
-                                tab_claims_btn = gr.Button(
-                                    "Claims",
-                                    elem_classes=["vqc-source-tab"],
-                                    scale=0,
-                                    variant="secondary",
-                                )
-                            with gr.Column(elem_classes=["vqc-nav-cell"], scale=1, min_width=72):
-                                tab_newhere_btn = gr.Button(
-                                    "New here?",
-                                    elem_classes=["vqc-source-tab"],
-                                    scale=0,
-                                    variant="secondary",
-                                )
-                        with gr.Row(
-                            elem_classes=["vqc-nav-spreadsheet-row", "vqc-nav-spreadsheet-row-8"],
-                        ):
-                            gr.HTML('<span class="vqc-source-label vqc-nav-row-label">Links:</span>')
-                            with gr.Column(elem_classes=["vqc-nav-cell"], scale=1, min_width=72):
-                                gr.HTML(_external_tab_html("GitHub", GITHUB_URL, "github"))
-                            with gr.Column(elem_classes=["vqc-nav-cell"], scale=1, min_width=72):
-                                gr.HTML(_external_tab_html("TOE parent", TOE_URL, "toe"))
-                            for _ in range(6):
-                                with gr.Column(elem_classes=["vqc-nav-cell"], scale=1, min_width=72):
-                                    gr.HTML(
-                                        '<span class="vqc-nav-cell-empty" aria-hidden="true">&nbsp;</span>'
-                                    )
-                optics_terminal = gr.Textbox(
-                    label="Matrix status display — selection menu · d-pad nav",
-                    value="",
-                    lines=14,
-                    max_lines=24,
-                    interactive=False,
-                    elem_classes=["vqc-optics-terminal-wrap", "vqc-optics-terminal"],
-                )
-                term_signal_scan = gr.HTML(SIGNAL_SCANNER_HTML, visible=False, elem_classes=["myst-signal-host"])
-                term_active_key = gr.State("")
-                term_ui_state = gr.State(_default_term_ui_state())
-                term_all_btns: dict[str, gr.Button] = {}
-                _dpad_row_labels = {
-                    "dpad_select": "enter",
-                    "dpad_up": "▲",
-                    "dpad_down": "▼",
-                    "dpad_left": "◀",
-                    "dpad_right": "▶",
-                    "clear": "clear",
-                }
-
-                with gr.Column(elem_classes=["vqc-optics-keypad"]):
-                    with gr.Row(elem_classes=["vqc-optics-dpad-row"], equal_height=True):
-                        for nav_key in TERM_NAV_KEYS:
-                            term_all_btns[nav_key] = gr.Button(
-                                _dpad_row_labels[nav_key],
-                                elem_classes=_term_key_btn_classes(nav_key, ""),
-                                scale=1,
-                                variant="secondary",
-                            )
-                    with gr.Row(elem_classes=["vqc-optics-prog-row"], equal_height=True):
-                        for index in range(1, 13):
-                            key_id = _term_key_id(index)
-                            term_all_btns[key_id] = gr.Button(
-                                _term_keypad_label(index),
-                                elem_classes=_term_key_btn_classes(key_id, ""),
-                                scale=1,
-                                variant="secondary",
-                            )
-                    with gr.Row(elem_classes=["vqc-optics-prog-row"], equal_height=True):
-                        for index in range(13, 25):
-                            key_id = _term_key_id(index)
-                            term_all_btns[key_id] = gr.Button(
-                                _term_keypad_label(index),
-                                elem_classes=_term_key_btn_classes(key_id, ""),
-                                scale=1,
-                                variant="secondary",
-                            )
-                term_keypad_outputs = [
-                    optics_terminal,
-                    term_signal_scan,
-                    *[term_all_btns[key_id] for key_id in TERM_KEYPAD_CONTROL_ORDER],
-                    term_active_key,
-                    term_ui_state,
-                ]
-                with gr.Row(elem_classes=["vqc-optics-dial-row"]):
-                    kappa = gr.Slider(
-                        0.70,
-                        0.95,
-                        value=KAPPA_DOC,
-                        step=0.001,
-                        label="κ (holonomy-gap parameter)",
-                        info="Documented κ = 0.85 · κ* = e/π − R/π² ≈ 0.8513 nulls B(κ)−R",
-                        elem_classes=["vqc-optics-dial-wrap"],
-                    )
-                gr.HTML(
-                    '<p class="vqc-optics-presets-label">'
-                    "κ presets — one click sets slider and runs analysis"
-                    "</p>"
-                )
-                with gr.Row():
-                    preset_kappa_doc = gr.Button(
-                        "κ_doc = 0.85",
-                        variant="secondary",
-                        size="sm",
-                        elem_classes=["vqc-receiver-preset"],
-                    )
-                    preset_kappa_star = gr.Button(
-                        "κ* (exact null)",
-                        variant="secondary",
-                        size="sm",
-                        elem_classes=["vqc-receiver-preset"],
-                    )
-                    preset_e_over_pi = gr.Button(
-                        "e/π",
-                        variant="secondary",
-                        size="sm",
-                        elem_classes=["vqc-receiver-preset"],
-                    )
-            # Shared cancels list — stops in-flight terminal streams on new keypress.
-            term_cancels: list = []
-
-            def _bind_term_event(btn: gr.Button, fn, *, inputs: list) -> None:
-                term_cancels.append(
-                    btn.click(
-                        fn,
-                        inputs=inputs,
-                        outputs=term_keypad_outputs,
-                        cancels=term_cancels,
-                    )
-                )
-
-            scan_key = _term_key_id(8)
-            _bind_term_event(
-                term_all_btns[scan_key],
-                _make_activate_signal_scan(scan_key),
-                inputs=[term_ui_state],
+        with gr.Column(visible=False, elem_classes=["myst-gravity-wired-hidden"]):
+            tab_gravity_btn = gr.Button(
+                "Gravity",
+                elem_classes=["vqc-source-tab"],
+                variant="secondary",
             )
-            _bind_term_event(
-                term_all_btns["clear"],
-                _make_term_clear_click("clear"),
-                inputs=[optics_terminal, term_ui_state],
+            tab_status_btn = gr.Button(
+                "Presets",
+                elem_classes=["vqc-source-tab"],
+                variant="secondary",
             )
-            for hold_key in TERM_DPAD_HOLD_KEYS:
-                _bind_term_event(
-                    term_all_btns[hold_key],
-                    _make_term_dpad_click(hold_key),
-                    inputs=[optics_terminal, term_ui_state],
-                )
-            _bind_term_event(
-                term_all_btns[TERM_KEYPAD_HOME_KEY],
-                _make_term_home_momentary(),
-                inputs=[term_active_key, term_ui_state],
+            tab_readme_btn = gr.Button(
+                "README",
+                elem_classes=["vqc-source-tab"],
+                variant="secondary",
             )
-            for index in range(1, TERM_KEYPAD_COUNT + 1):
-                key_id = _term_key_id(index)
-                if index == 1 or index == 8:
-                    continue
-                if index in TERM_KEYPAD_DEFINED:
-                    action = TERM_KEYPAD_DEFINED[index]
-                    _bind_term_event(
-                        term_all_btns[key_id],
-                        _make_term_stream_click(
-                            key_id,
-                            TERM_KEYPAD_STREAMERS[action],
-                            menu_action=action,
-                        ),
-                        inputs=[term_ui_state],
-                    )
-                else:
-                    _bind_term_event(
-                        term_all_btns[key_id],
-                        _make_term_latch_click(key_id),
-                        inputs=[optics_terminal, term_ui_state],
-                    )
-
-            run_btn = gr.Button("Run analysis", variant="primary", elem_classes=["vqc-full-width"])
-            with gr.Row(equal_height=True):
-                with gr.Column(scale=1):
-                    metrics = gr.Textbox(label="Metrics", lines=18)
-                with gr.Column(scale=2):
-                    figure_triangle = gr.Image(
-                        label="φ-e-π triangle vs 30-60-90",
-                        type="filepath",
-                        elem_classes=["vqc-figure-panel"],
-                    )
-            figure_sweep = gr.Image(
-                label="κ sweep — B(κ) vs R",
-                type="filepath",
-                elem_classes=["vqc-figure-panel"],
+            tab_anim_btn = gr.Button(
+                "Figures",
+                elem_classes=["vqc-source-tab"],
+                variant="secondary",
             )
-            run_outputs = [metrics, figure_triangle, figure_sweep]
-
-            run_btn.click(run_probe, inputs=[kappa], outputs=run_outputs)
-            preset_kappa_doc.click(load_kappa_doc, outputs=[kappa]).then(
-                run_probe, inputs=[kappa], outputs=run_outputs
+            tab_claims_btn = gr.Button(
+                "Claims",
+                elem_classes=["vqc-source-tab"],
+                variant="secondary",
             )
-            preset_kappa_star.click(load_kappa_star, outputs=[kappa]).then(
-                run_probe, inputs=[kappa], outputs=run_outputs
-            )
-            preset_e_over_pi.click(lambda: float(E_OVER_PI), outputs=[kappa]).then(
-                run_probe, inputs=[kappa], outputs=run_outputs
+            tab_newhere_btn = gr.Button(
+                "New here?",
+                elem_classes=["vqc-source-tab"],
+                variant="secondary",
             )
 
         with gr.Column(visible=False, elem_classes=["vqc-animations-page"]) as page_animations:
             _anim_nav = _place_main_nav_row("animations")
             anim_tab_gravity_btn = _anim_nav["gravity"]
             anim_tab_readme_btn = _anim_nav["readme"]
-            anim_tab_demo_btn = _anim_nav["demo"]
             anim_tab_anim_btn = _anim_nav["animations"]
             anim_tab_status_btn = _anim_nav["status"]
             gr.Markdown("## Reference figures")
@@ -7377,7 +7124,6 @@ def build_app() -> gr.Blocks:
             _readme_nav = _place_main_nav_row("readme")
             readme_tab_gravity_btn = _readme_nav["gravity"]
             readme_tab_readme_btn = _readme_nav["readme"]
-            readme_tab_demo_btn = _readme_nav["demo"]
             readme_tab_anim_btn = _readme_nav["animations"]
             readme_tab_status_btn = _readme_nav["status"]
             gr.HTML(
@@ -7403,7 +7149,6 @@ def build_app() -> gr.Blocks:
             _status_nav = _place_main_nav_row("status")
             status_tab_gravity_btn = _status_nav["gravity"]
             status_tab_readme_btn = _status_nav["readme"]
-            status_tab_demo_btn = _status_nav["demo"]
             status_tab_anim_btn = _status_nav["animations"]
             status_tab_status_btn = _status_nav["status"]
             _place_status_gap_row(slot="after-main-nav", half_height=True)
@@ -7558,7 +7303,6 @@ def build_app() -> gr.Blocks:
             _edit_nav = _place_main_nav_row("edit")
             edit_tab_gravity_btn = _edit_nav["gravity"]
             edit_tab_readme_btn = _edit_nav["readme"]
-            edit_tab_demo_btn = _edit_nav["demo"]
             edit_tab_anim_btn = _edit_nav["animations"]
             edit_tab_status_btn = _edit_nav["status"]
             with gr.Column(
@@ -7698,7 +7442,6 @@ def build_app() -> gr.Blocks:
             _grav_nav = _place_main_nav_row("gravity")
             grav_tab_gravity_btn = _grav_nav["gravity"]
             grav_tab_readme_btn = _grav_nav["readme"]
-            grav_tab_demo_btn = _grav_nav["demo"]
             grav_tab_anim_btn = _grav_nav["animations"]
             grav_tab_status_btn = _grav_nav["status"]
             with gr.Row(elem_classes=["myst-gravity-split"], equal_height=True):
@@ -8165,7 +7908,6 @@ def build_app() -> gr.Blocks:
         newhere_outputs = [panel_newhere, tab_newhere_btn, newhere_open, panel_claims, tab_claims_btn, claims_open]
         claims_outputs = [panel_claims, tab_claims_btn, claims_open, panel_newhere, tab_newhere_btn, newhere_open]
         nav_outputs = [
-            page_demo,
             page_animations,
             page_gravity,
             page_readme,
@@ -8173,7 +7915,6 @@ def build_app() -> gr.Blocks:
             page_edit,
             tab_gravity_btn,
             tab_readme_btn,
-            tab_demo_btn,
             tab_anim_btn,
             tab_status_btn,
             panel_newhere,
@@ -8184,27 +7925,22 @@ def build_app() -> gr.Blocks:
             claims_open,
             anim_tab_gravity_btn,
             anim_tab_readme_btn,
-            anim_tab_demo_btn,
             anim_tab_anim_btn,
             anim_tab_status_btn,
             grav_tab_gravity_btn,
             grav_tab_readme_btn,
-            grav_tab_demo_btn,
             grav_tab_anim_btn,
             grav_tab_status_btn,
             readme_tab_gravity_btn,
             readme_tab_readme_btn,
-            readme_tab_demo_btn,
             readme_tab_anim_btn,
             readme_tab_status_btn,
             status_tab_gravity_btn,
             status_tab_readme_btn,
-            status_tab_demo_btn,
             status_tab_anim_btn,
             status_tab_status_btn,
             edit_tab_gravity_btn,
             edit_tab_readme_btn,
-            edit_tab_demo_btn,
             edit_tab_anim_btn,
             edit_tab_status_btn,
             current_page,
@@ -8239,41 +7975,34 @@ def build_app() -> gr.Blocks:
                 show_progress="hidden",
             )
 
-        _bind_nav(tab_demo_btn, "demo")
         _bind_nav(tab_anim_btn, "animations")
         _bind_nav(tab_readme_btn, "readme")
         _bind_status_nav(tab_status_btn)
         _bind_nav(tab_gravity_btn, "gravity", refresh_gravity=True)
-        _bind_nav(anim_tab_demo_btn, "demo")
         _bind_nav(anim_tab_anim_btn, "animations")
         _bind_nav(anim_tab_readme_btn, "readme")
         _bind_status_nav(anim_tab_status_btn)
         _bind_nav(anim_tab_gravity_btn, "gravity", refresh_gravity=True)
-        _bind_nav(grav_tab_demo_btn, "demo")
         _bind_nav(grav_tab_anim_btn, "animations")
         _bind_nav(grav_tab_readme_btn, "readme")
         _bind_status_nav(grav_tab_status_btn)
         _bind_nav(grav_tab_gravity_btn, "gravity", refresh_gravity=True)
         _bind_nav(readme_tab_gravity_btn, "gravity", refresh_gravity=True)
-        _bind_nav(readme_tab_demo_btn, "demo")
         _bind_nav(readme_tab_anim_btn, "animations")
         _bind_nav(readme_tab_readme_btn, "readme")
         _bind_status_nav(readme_tab_status_btn)
         _bind_nav(status_tab_gravity_btn, "gravity", refresh_gravity=True)
         _bind_nav(status_tab_readme_btn, "readme")
-        _bind_nav(status_tab_demo_btn, "demo")
         _bind_nav(status_tab_anim_btn, "animations")
         _bind_status_nav(status_tab_status_btn)
         _bind_nav(edit_tab_gravity_btn, "gravity", refresh_gravity=True)
         _bind_nav(edit_tab_readme_btn, "readme")
-        _bind_nav(edit_tab_demo_btn, "demo")
         _bind_nav(edit_tab_anim_btn, "animations")
         _bind_status_nav(edit_tab_status_btn)
         tab_newhere_btn.click(_toggle_newhere, inputs=[newhere_open], outputs=newhere_outputs)
         tab_claims_btn.click(_toggle_claims, inputs=[claims_open], outputs=claims_outputs)
         newhere_minimize_btn.click(_minimize_newhere, outputs=newhere_outputs[:3])
         claims_minimize_btn.click(_minimize_claims, outputs=claims_outputs[:3])
-        demo.load(_stream_term_boot, outputs=term_keypad_outputs)
         demo.load(
             lambda: (
                 _init_unit_cell_html
