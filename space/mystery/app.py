@@ -3414,12 +3414,45 @@ footer {{ visibility: hidden; }}
     width: 100% !important;
     overflow: visible !important;
 }}
-.gradio-container .myst-gravity-visuals-col,
-.gradio-container .myst-unit-cell-image-row,
-.gradio-container .myst-unit-cell-image-row > .form {{
+.gradio-container .myst-gravity-visuals-col {{
     min-width: 0 !important;
     width: 100% !important;
     overflow: visible !important;
+}}
+/* Image row — prevent unequal-height flex from squishing viewport to 0 */
+.gradio-container .myst-unit-cell-image-row,
+.gradio-container .myst-unit-cell-image-row.row,
+.gradio-container .row.myst-unit-cell-image-row,
+.gradio-container .myst-unit-cell-image-row.block,
+.gradio-container .myst-unit-cell-image-row > .form,
+.gradio-container .myst-unit-cell-image-row > .form > .block {{
+    height: 550px !important;
+    min-height: 550px !important;
+    max-height: 550px !important;
+    flex: 0 0 550px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    align-items: stretch !important;
+    align-self: stretch !important;
+    overflow: visible !important;
+}}
+.gradio-container .myst-unit-cell-image-row .gradio-html,
+.gradio-container .myst-unit-cell-image-row #unit-cell-main-view,
+.gradio-container .myst-unit-cell-image-row #unit-cell-main-view.block,
+.gradio-container .myst-unit-cell-image-row #unit-cell-main-view.gradio-html,
+.gradio-container .myst-unit-cell-image-row .myst-unit-cell-viewport-image,
+.gradio-container .myst-unit-cell-image-row .html-container,
+.gradio-container .myst-unit-cell-image-row .prose {{
+    height: 100% !important;
+    min-height: 550px !important;
+    max-height: 550px !important;
+    width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    margin: 0 auto !important;
+    box-sizing: border-box !important;
 }}
 .gradio-container #unit-cell-main-view,
 .gradio-container #unit-cell-main-view.block,
@@ -3917,12 +3950,11 @@ def figure_to_viewport_file_html(path: str, *, png_bytes: int | None = None) -> 
     size = png_bytes if png_bytes is not None else os.path.getsize(path)
     html = (
         '<div class="myst-unit-cell-viewport-inner" '
-        'style="width:100%;max-width:550px;height:550px;min-height:550px;'
+        'style="height:550px;width:100%;max-width:550px;min-height:550px;'
         'background:#000000;display:flex;align-items:center;justify-content:center;'
         'overflow:hidden;box-sizing:border-box;">'
         f'<img src="/gradio_api/file={path}" '
-        'style="max-width:100%;max-height:100%;width:auto;height:auto;'
-        'object-fit:contain;display:block;margin:0 auto;" '
+        'style="max-width:100%;max-height:100%;object-fit:contain;display:block;" '
         'alt="Unit cell viewport" loading="eager" decoding="sync" />'
         "</div>"
     )
