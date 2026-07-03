@@ -1235,36 +1235,36 @@ WALLPAPER_HEAD = f"""
     window.addEventListener('load', mountWallpaper);
 }})();
 (function() {{
-    function mystSyncPlotToTui() {{
-        var tui = document.querySelector('.myst-gravity-preset-tui-section');
-        var plotRow = document.querySelector('.myst-unit-cell-image-row');
-        var videoRow = document.querySelector('.myst-unit-cell-video-row');
-        if (!tui || !plotRow) return;
-        var plotTop = plotRow.getBoundingClientRect().top;
-        var tuiBottom = tui.getBoundingClientRect().bottom;
-        var videoH = 0;
-        if (videoRow) {{
-            var vid = videoRow.querySelector('video');
-            if (vid && vid.getAttribute('src')) {{
-                videoH = videoRow.getBoundingClientRect().height + 8;
-            }}
-        }}
-        var target = Math.max(638, Math.round(tuiBottom - plotTop - videoH));
-        document.documentElement.style.setProperty('--myst-unit-cell-plot-height', target + 'px');
+    function mystSyncVisorHeight() {{
+        var visor = document.querySelector('.myst-unit-cell-visor');
+        var leftCard = document.querySelector('.myst-gravity-presets-tui-card');
+        var page = document.querySelector('.myst-gravity-page');
+        if (!visor) return;
+        var top = visor.getBoundingClientRect().top;
+        var anchorBottom = leftCard
+            ? leftCard.getBoundingClientRect().bottom
+            : (page ? page.getBoundingClientRect().bottom : window.innerHeight);
+        var target = Math.max(638, Math.round(anchorBottom - top));
+        document.documentElement.style.setProperty('--myst-unit-cell-visor-height', target + 'px');
         var vp = document.getElementById('unit-cell-main-view');
         if (vp) {{
-            vp.style.setProperty('height', target + 'px', 'important');
-            vp.style.setProperty('min-height', target + 'px', 'important');
-            vp.style.setProperty('max-height', target + 'px', 'important');
+            vp.style.setProperty('height', '100%', 'important');
+            vp.style.setProperty('min-height', '100%', 'important');
+            vp.style.setProperty('max-height', '100%', 'important');
             vp.style.setProperty('max-width', '100%', 'important');
+        }}
+        var vid = visor.querySelector('video');
+        if (vid) {{
+            vid.style.setProperty('height', '100%', 'important');
+            vid.style.setProperty('max-height', '100%', 'important');
         }}
     }}
     function mystReflowViewport() {{
-        mystSyncPlotToTui();
+        mystSyncVisorHeight();
         var vp = document.getElementById('unit-cell-main-view');
-        var row = document.querySelector('.myst-unit-cell-image-row');
+        var visor = document.querySelector('.myst-unit-cell-visor');
         if (vp) void vp.offsetHeight;
-        if (row) void row.offsetHeight;
+        if (visor) void visor.offsetHeight;
         window.dispatchEvent(new Event('resize'));
     }}
     function bootViewportReflow() {{
@@ -1275,9 +1275,10 @@ WALLPAPER_HEAD = f"""
             requestAnimationFrame(mystReflowViewport);
         }});
         var roots = [
-            document.querySelector('.myst-unit-cell-image-row'),
+            document.querySelector('.myst-unit-cell-visor'),
             document.querySelector('.myst-gravity-preset-tui-section'),
             document.querySelector('.myst-gravity-presets-tui-card'),
+            document.querySelector('.myst-gravity-page'),
         ];
         roots.forEach(function(root) {{
             if (!root) return;
@@ -1288,6 +1289,12 @@ WALLPAPER_HEAD = f"""
         window.addEventListener('resize', function() {{
             requestAnimationFrame(mystReflowViewport);
         }});
+        document.addEventListener('ended', function(e) {{
+            var t = e.target;
+            if (!t || !t.matches || !t.matches('.myst-unit-cell-visor video')) return;
+            t.removeAttribute('src');
+            requestAnimationFrame(mystReflowViewport);
+        }}, true);
     }}
     if (document.body) bootViewportReflow();
     document.addEventListener('DOMContentLoaded', bootViewportReflow);
@@ -1304,6 +1311,7 @@ HFB_CSS = f"""
     --myst-viewport-plot-height: 700px;
     --myst-viewport-aspect: 7 / 5;
     --myst-unit-cell-plot-height: 31rem;
+    --myst-unit-cell-visor-height: 31rem;
     --body-background-fill: transparent !important;
     --background-fill-primary: transparent !important;
     --background-fill-secondary: transparent !important;
@@ -4800,12 +4808,13 @@ footer {{ visibility: hidden; }}
     width: 100% !important;
     overflow: visible !important;
 }}
-.gradio-container .myst-unit-cell-image-row,
-.gradio-container .row.myst-unit-cell-image-row {{
-    height: var(--myst-unit-cell-plot-height, 31rem) !important;
-    min-height: var(--myst-unit-cell-plot-height, 31rem) !important;
+.gradio-container .myst-unit-cell-visor,
+.gradio-container .row.myst-unit-cell-visor {{
+    position: relative !important;
+    height: var(--myst-unit-cell-visor-height, var(--myst-unit-cell-plot-height, 31rem)) !important;
+    min-height: var(--myst-unit-cell-visor-height, var(--myst-unit-cell-plot-height, 31rem)) !important;
     max-height: none !important;
-    flex: 1 1 var(--myst-unit-cell-plot-height, 31rem) !important;
+    flex: 1 1 var(--myst-unit-cell-visor-height, 31rem) !important;
     flex-shrink: 1 !important;
     width: 100% !important;
     min-width: 0 !important;
@@ -4813,39 +4822,71 @@ footer {{ visibility: hidden; }}
     align-self: stretch !important;
     box-sizing: border-box !important;
     overflow: hidden !important;
-}}
-.gradio-container .myst-unit-cell-video-row,
-.gradio-container .row.myst-unit-cell-video-row {{
-    align-items: stretch !important;
-    align-self: stretch !important;
-    box-sizing: border-box !important;
-    overflow: hidden !important;
-    height: 0 !important;
-    min-height: 0 !important;
-    max-height: 0 !important;
-    flex: 0 0 0 !important;
+    background: #000000 !important;
     margin: 0 !important;
     padding: 0 !important;
-    border: none !important;
+}}
+.gradio-container .myst-unit-cell-visor-slot {{
+    position: relative !important;
+    flex: 1 1 0 !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    width: 100% !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+}}
+.gradio-container .myst-unit-cell-visor .myst-unit-cell-visor-image,
+.gradio-container .myst-unit-cell-visor .myst-unit-cell-visor-image.block,
+.gradio-container .myst-unit-cell-visor .myst-unit-cell-visor-video,
+.gradio-container .myst-unit-cell-visor .myst-unit-cell-visor-video.block {{
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 100% !important;
+    max-height: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+    background: #000000 !important;
+}}
+.gradio-container .myst-unit-cell-visor .myst-unit-cell-visor-image,
+.gradio-container .myst-unit-cell-visor .myst-unit-cell-visor-image.block {{
+    z-index: 1 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+    transition: opacity 0.15s ease !important;
+}}
+.gradio-container .myst-unit-cell-visor .myst-unit-cell-visor-video,
+.gradio-container .myst-unit-cell-visor .myst-unit-cell-visor-video.block {{
+    z-index: 2 !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    transition: opacity 0.15s ease !important;
+}}
+.gradio-container .myst-unit-cell-visor:has(video[src]) .myst-unit-cell-visor-image,
+.gradio-container .myst-unit-cell-visor:has(video[src]) .myst-unit-cell-visor-image.block {{
+    opacity: 0 !important;
     visibility: hidden !important;
     pointer-events: none !important;
 }}
-.gradio-container .myst-unit-cell-video-row:has(video[src]),
-.gradio-container .row.myst-unit-cell-video-row:has(video[src]) {{
-    height: 320px !important;
-    min-height: 320px !important;
-    max-height: 320px !important;
-    flex: 0 0 320px !important;
+.gradio-container .myst-unit-cell-visor:has(video[src]) .myst-unit-cell-visor-video,
+.gradio-container .myst-unit-cell-visor:has(video[src]) .myst-unit-cell-visor-video.block {{
+    opacity: 1 !important;
     visibility: visible !important;
     pointer-events: auto !important;
-    overflow: visible !important;
 }}
-.gradio-container .myst-unit-cell-image-row > .form,
-.gradio-container .myst-unit-cell-image-row > .form > .block,
-.gradio-container .myst-unit-cell-image-row .gradio-html,
-.gradio-container .myst-unit-cell-image-row .myst-unit-cell-viewport-image,
-.gradio-container .myst-unit-cell-image-row .html-container,
-.gradio-container .myst-unit-cell-image-row .prose {{
+.gradio-container .myst-unit-cell-visor .myst-unit-cell-visor-image > .form,
+.gradio-container .myst-unit-cell-visor .myst-unit-cell-visor-image .gradio-html,
+.gradio-container .myst-unit-cell-visor .myst-unit-cell-visor-image .html-container,
+.gradio-container .myst-unit-cell-visor .myst-unit-cell-visor-image .prose,
+.gradio-container .myst-unit-cell-visor .myst-unit-cell-viewport-image {{
     height: 100% !important;
     min-height: 100% !important;
     width: 100% !important;
@@ -4856,9 +4897,9 @@ footer {{ visibility: hidden; }}
     margin: 0 !important;
     box-sizing: border-box !important;
 }}
-.gradio-container .myst-unit-cell-image-row .wrap.center.full,
-.gradio-container .myst-unit-cell-image-row .wrap.center.hidden,
-.gradio-container .myst-unit-cell-image-row .wrap.default.hidden {{
+.gradio-container .myst-unit-cell-visor .wrap.center.full,
+.gradio-container .myst-unit-cell-visor .wrap.center.hidden,
+.gradio-container .myst-unit-cell-visor .wrap.default.hidden {{
     display: none !important;
     opacity: 0 !important;
     pointer-events: none !important;
@@ -4896,14 +4937,19 @@ footer {{ visibility: hidden; }}
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
 }}
-.gradio-container #unit-cell-animation,
-.gradio-container #unit-cell-animation .wrap,
-.gradio-container #unit-cell-animation .video-container,
-.gradio-container #unit-cell-animation video {{
+.gradio-container .myst-unit-cell-visor #unit-cell-animation,
+.gradio-container .myst-unit-cell-visor #unit-cell-animation .wrap,
+.gradio-container .myst-unit-cell-visor #unit-cell-animation .video-container,
+.gradio-container .myst-unit-cell-visor #unit-cell-animation video {{
     width: 100% !important;
-    height: 320px !important;
-    min-height: 320px !important;
+    height: 100% !important;
+    min-height: 100% !important;
+    max-height: 100% !important;
     object-fit: contain !important;
+    background: #000000 !important;
+}}
+.gradio-container .myst-unit-cell-visor .myst-unit-cell-visor-video .label-wrap {{
+    display: none !important;
 }}
 .gradio-container .gradio-image:not(#unit-cell-main-view) img {{
     width: 100% !important;
@@ -5298,13 +5344,33 @@ def _gravity_level_blocks(value: float, spec: dict[str, object]) -> tuple[str, s
     return blocks, "myst-val-pos"
 
 
-def _default_gravity_tui_state() -> dict[str, int]:
-    return {"scroll": 0, "focus": 0}
+_GRAVITY_PIPELINE_SOFT_LIMIT = 5
+_GRAVITY_MAIN_MENU_ITEMS: tuple[tuple[str, str], ...] = (
+    ("preset_list", "Load Preset — catalog"),
+    ("animate", "Animate Current Preset"),
+    ("pipeline", "Pipeline Animation — stitch sequence"),
+    ("catalog", "Parameter Catalog"),
+)
+_GRAVITY_MAIN_MENU_FOCUS_MAX = max(0, len(_GRAVITY_MAIN_MENU_ITEMS) - 1)
 
 
-def _coerce_gravity_tui_state(value: object) -> dict[str, int]:
-    """Normalize TUI nav state — tolerate swapped preset/state values from older handlers."""
+def _default_gravity_tui_state() -> dict[str, object]:
+    return {
+        "menu": "main",
+        "focus": 0,
+        "scroll": 0,
+        "pipeline": [],
+        "message": "",
+        "pending": "",
+    }
+
+
+def _coerce_gravity_tui_state(value: object) -> dict[str, object]:
+    """Normalize TUI menu/nav state — current_menu, pipeline_sequence, scroll/focus."""
     if isinstance(value, dict):
+        menu = str(value.get("menu", "main"))
+        if menu not in {"main", "preset_list", "pipeline"}:
+            menu = "main"
         try:
             scroll = int(value.get("scroll", 0))
         except (TypeError, ValueError):
@@ -5313,16 +5379,38 @@ def _coerce_gravity_tui_state(value: object) -> dict[str, int]:
             focus = int(value.get("focus", 0))
         except (TypeError, ValueError):
             focus = 0
+        pipeline_raw = value.get("pipeline", [])
+        pipeline: list[int] = []
+        if isinstance(pipeline_raw, list):
+            for item in pipeline_raw:
+                try:
+                    pipeline.append(max(0, min(_GRAVITY_TUI_MENU_FOCUS_MAX, int(item))))
+                except (TypeError, ValueError):
+                    continue
+        pending = str(value.get("pending", "") or "")
+        message = str(value.get("message", "") or "")
+        focus_max = (
+            _GRAVITY_MAIN_MENU_FOCUS_MAX
+            if menu == "main"
+            else _GRAVITY_TUI_MENU_FOCUS_MAX
+        )
         return {
+            "menu": menu,
             "scroll": max(0, scroll),
-            "focus": max(0, min(_GRAVITY_TUI_MENU_FOCUS_MAX, focus)),
+            "focus": max(0, min(focus_max, focus)),
+            "pipeline": pipeline,
+            "message": message,
+            "pending": pending,
         }
     if isinstance(value, (int, float, str)):
         try:
             slot = max(0, min(_GRAVITY_TUI_MENU_FOCUS_MAX, int(value)))
         except (TypeError, ValueError):
             slot = 0
-        return {"scroll": 0, "focus": slot}
+        state = _default_gravity_tui_state()
+        state["menu"] = "preset_list"
+        state["focus"] = slot
+        return state
     return _default_gravity_tui_state()
 
 
@@ -5335,11 +5423,15 @@ def _coerce_active_preset(value: object) -> int:
         return 0
 
 
-def _gravity_preset_handler_outputs(outputs: tuple) -> tuple:
+def _gravity_preset_handler_outputs(
+    outputs: tuple,
+    *,
+    menu_state: dict[str, object] | None = None,
+) -> tuple:
     """Map explorer outputs (…, tui, active_slot) → preset outputs (…, tui, tui_state, active_slot)."""
     out = list(outputs)
     active_slot_val = out.pop()
-    return (*out, _default_gravity_tui_state(), active_slot_val)
+    return (*out, _coerce_gravity_tui_state(menu_state), active_slot_val)
 
 
 def _gravity_keypad_label(key: str) -> str:
@@ -5448,20 +5540,107 @@ def _gravity_tui_viewport_open(scroll_px: int) -> str:
     )
 
 
-def _format_gravity_menu_tui_html(*, tui_state: dict[str, int] | None = None) -> str:
+def _format_gravity_main_menu_html(*, tui_state: dict[str, object] | None = None) -> str:
     state = _coerce_gravity_tui_state(tui_state)
-    focus = state["focus"]
-    scroll_px = state["scroll"]
-    body = "\n".join(_gravity_tui_preset_lines(focus=focus, active_slot=0)).rstrip()
+    focus = int(state["focus"])
+    scroll_px = int(state["scroll"])
+    lines: list[str] = ["MAIN MENU", ""]
+    for index, (_action, label) in enumerate(_GRAVITY_MAIN_MENU_ITEMS):
+        marker = ">" if index == focus else " "
+        lines.append(f"{marker} {index + 1} - {label}")
+    message = str(state.get("message", "") or "").strip()
+    if message:
+        lines.extend(["", message])
+    lines.extend(["", "↑↓ move · number jump · Green confirm · Red back"])
+    body = "\n".join(lines).rstrip()
     return (
         f'{_gravity_tui_viewport_open(scroll_px)}'
         '<div class="myst-preset-tui-serial myst-preset-tui-menu">'
         '<div class="myst-preset-tui-status">'
-        "<u>ACTIVE STATUS: PRESET 01 — Parameter Catalog</u>"
+        "<u>ACTIVE STATUS: GRAVITY MENU</u>"
         "</div>"
         f'<pre class="myst-preset-tui-lines">{body}</pre>'
         "</div></div>"
     )
+
+
+def _format_gravity_preset_list_html(
+    *,
+    tui_state: dict[str, object] | None = None,
+    active_slot: int | None = None,
+) -> str:
+    state = _coerce_gravity_tui_state(tui_state)
+    focus = int(state["focus"])
+    scroll_px = int(state["scroll"])
+    body = "\n".join(
+        _gravity_tui_preset_lines(focus=focus, active_slot=active_slot)
+    ).rstrip()
+    message = str(state.get("message", "") or "").strip()
+    if message:
+        body = f"{body}\n\n{message}"
+    return (
+        f'{_gravity_tui_viewport_open(scroll_px)}'
+        '<div class="myst-preset-tui-serial myst-preset-tui-menu">'
+        '<div class="myst-preset-tui-status">'
+        "<u>ACTIVE STATUS: PRESET CATALOG</u>"
+        "</div>"
+        f'<pre class="myst-preset-tui-lines">{body}</pre>'
+        "</div></div>"
+    )
+
+
+def _format_gravity_pipeline_menu_html(*, tui_state: dict[str, object] | None = None) -> str:
+    state = _coerce_gravity_tui_state(tui_state)
+    scroll_px = int(state["scroll"])
+    pipeline = list(state.get("pipeline", []))
+    seq = (
+        " → ".join(_gravity_preset_id(int(slot)) for slot in pipeline)
+        if pipeline
+        else "(empty)"
+    )
+    pending = str(state.get("pending", "") or "").strip()
+    pending_line = f"Pending digit: {pending}" if pending else "Pending digit: —"
+    message = str(state.get("message", "") or "").strip() or (
+        "Enter preset number + Green to add.\n"
+        "Green (no pending) = finish pipeline.\n"
+        "Red = cancel and return to main menu."
+    )
+    body = "\n".join(
+        [
+            "PIPELINE ANIMATION",
+            "",
+            f"Sequence: {seq}",
+            pending_line,
+            "",
+            message,
+        ]
+    ).rstrip()
+    return (
+        f'{_gravity_tui_viewport_open(scroll_px)}'
+        '<div class="myst-preset-tui-serial myst-preset-tui-menu">'
+        '<div class="myst-preset-tui-status">'
+        "<u>ACTIVE STATUS: PIPELINE BUILDER</u>"
+        "</div>"
+        f'<pre class="myst-preset-tui-lines">{body}</pre>'
+        "</div></div>"
+    )
+
+
+def _format_gravity_menu_tui_html(
+    *,
+    tui_state: dict[str, object] | None = None,
+    active_slot: int | None = None,
+) -> str:
+    state = _coerce_gravity_tui_state(tui_state)
+    menu = str(state["menu"])
+    if menu == "pipeline":
+        return _format_gravity_pipeline_menu_html(tui_state=state)
+    if menu == "preset_list":
+        return _format_gravity_preset_list_html(
+            tui_state=state,
+            active_slot=active_slot,
+        )
+    return _format_gravity_main_menu_html(tui_state=state)
 
 
 def _format_gravity_control_panel_html(
@@ -5848,10 +6027,10 @@ def _format_gravity_preset_tui_html(
     *,
     status_label: str | None = None,
     key_metrics: dict[str, float | int | str | None] | None = None,
-    tui_state: dict[str, int] | None = None,
+    tui_state: dict[str, object] | None = None,
 ) -> str:
     if active_slot == 0 and key_metrics is None and status_label is None:
-        return _format_gravity_menu_tui_html(tui_state=tui_state)
+        return _format_gravity_menu_tui_html(tui_state=tui_state, active_slot=0)
     state = _coerce_gravity_tui_state(tui_state)
     focus = state["focus"]
     scroll_px = state["scroll"]
@@ -5878,37 +6057,42 @@ def _gravity_tui_for_preset(
     *,
     status_label: str | None = None,
     key_metrics: dict[str, float | int | str | None] | None = None,
-    tui_state: dict[str, int] | None = None,
+    tui_state: dict[str, object] | None = None,
 ) -> str:
+    state = _coerce_gravity_tui_state(tui_state)
     if key_metrics is not None or status_label is not None:
         return _format_gravity_preset_tui_html(
             active_slot,
             dials,
             status_label=status_label,
             key_metrics=key_metrics,
-            tui_state=tui_state,
+            tui_state=state,
         )
-    if active_slot == 0:
-        return _format_gravity_menu_tui_html(tui_state=tui_state)
-    return _format_gravity_preset_tui_html(active_slot, dials, tui_state=tui_state)
+    if int(active_slot) > 0 and str(state.get("menu")) != "pipeline":
+        return _format_gravity_preset_tui_html(active_slot, dials, tui_state=state)
+    return _format_gravity_menu_tui_html(tui_state=state, active_slot=active_slot)
 
 
 def _gravity_tui_nav_apply(
     direction: str,
-    tui_state: dict[str, int] | None,
+    tui_state: dict[str, object] | None,
     *,
     active_slot: int,
     dials: dict[str, float],
     active_nav: str,
-) -> tuple[str, dict[str, int], tuple]:
+) -> tuple[str, dict[str, object], tuple]:
     state = _coerce_gravity_tui_state(tui_state)
-    scroll = state["scroll"]
-    focus = state["focus"]
+    menu = str(state["menu"])
+    focus = int(state["focus"])
     if direction in {"up", "left"}:
         focus = max(0, focus - 1)
     elif direction in {"down", "right"}:
-        focus = max(0, min(_GRAVITY_TUI_MENU_FOCUS_MAX, focus + 1))
-    state["scroll"] = scroll
+        focus_max = (
+            _GRAVITY_MAIN_MENU_FOCUS_MAX
+            if menu == "main"
+            else _GRAVITY_TUI_MENU_FOCUS_MAX
+        )
+        focus = min(focus_max, focus + 1)
     state["focus"] = focus
     tui = _gravity_tui_for_preset(int(active_slot), dials, tui_state=state)
     return tui, state, _gravity_keypad_btn_updates(active_numeric=str(active_slot), active_nav=active_nav)
@@ -6280,6 +6464,9 @@ def _gravity_animate_toggle_click(
         plt.close(fig)
         dials["pressure"] = float(key_metrics["pressure"])
         tui = _gravity_tui_for_preset(slot, dials, key_metrics=key_metrics)
+        anim_state = _coerce_gravity_tui_state(None)
+        anim_state["menu"] = "preset_list"
+        anim_state["focus"] = slot
         return _gravity_preset_handler_outputs(
             _gravity_animation_render_outputs(
                 str(slot),
@@ -6291,11 +6478,15 @@ def _gravity_animate_toggle_click(
                 slot,
                 status_zoom_slot,
                 edit_params_enabled=bool(edit_params_enabled),
-            )
+            ),
+            menu_state=anim_state,
         )
     except Exception as exc:
         logger.exception("gravity animate render failed")
         err_tui = _gravity_tui_for_preset(slot, dials, status_label="ANIMATE ERROR")
+        err_state = _coerce_gravity_tui_state(None)
+        err_state["menu"] = "preset_list"
+        err_state["focus"] = slot
         return _gravity_preset_handler_outputs(
             _gravity_animation_render_outputs(
                 str(slot),
@@ -6307,8 +6498,59 @@ def _gravity_animate_toggle_click(
                 slot,
                 status_zoom_slot,
                 edit_params_enabled=bool(edit_params_enabled),
-            )
+            ),
+            menu_state=err_state,
         )
+
+
+def _gravity_pipeline_message(state: dict[str, object]) -> str:
+    pipeline = list(state.get("pipeline", []))
+    seq = (
+        " → ".join(_gravity_preset_id(int(slot)) for slot in pipeline)
+        if pipeline
+        else "(empty)"
+    )
+    message = f"Sequence: {seq}"
+    if len(pipeline) >= _GRAVITY_PIPELINE_SOFT_LIMIT:
+        message += (
+            f"\n(Soft limit {_GRAVITY_PIPELINE_SOFT_LIMIT} reached — "
+            "continue or Green to finish)"
+        )
+    return message
+
+
+def _gravity_menu_to_preset_outputs(
+    tui: str,
+    menu_state: dict[str, object],
+    active_preset: int,
+    *,
+    active_numeric: str = "",
+    active_nav: str = "",
+) -> tuple:
+    """Menu-only TUI refresh packed into gravity_preset_outputs shape."""
+    return _gravity_preset_handler_outputs(
+        (
+            *_gravity_keypad_btn_updates(
+                active_numeric=active_numeric,
+                active_nav=active_nav,
+            ),
+            gr.skip(),
+            gr.skip(),
+            *([gr.skip()] * 20),
+            gr.skip(),
+            gr.skip(),
+            gr.skip(),
+            gr.skip(),
+            gr.skip(),
+            gr.skip(),
+            gr.skip(),
+            gr.skip(),
+            gr.skip(),
+            tui,
+            int(active_preset),
+        ),
+        menu_state=menu_state,
+    )
 
 
 def _gravity_keypad_enter_apply(
@@ -6327,9 +6569,140 @@ def _gravity_keypad_enter_apply(
     status_zoom_slot: int,
     tui_state: object,
 ) -> tuple:
-    """Green circle — confirm the TUI-highlighted preset."""
-    slot = _coerce_gravity_tui_state(tui_state)["focus"]
-    return _make_gravity_quick_preset_click(slot)(
+    """Green circle — confirm menu choice, preset, or pipeline digit."""
+    state = _coerce_gravity_tui_state(tui_state)
+    menu = str(state["menu"])
+    dials = _gravity_dial_bundle(
+        phi_sq_scale,
+        e_sq_scale,
+        pi_sq_scale,
+        kappa,
+        delta_z,
+        alpha,
+        beta,
+        deform_pressure,
+        view_elev,
+        view_azim,
+    )
+
+    if menu == "main":
+        action = _GRAVITY_MAIN_MENU_ITEMS[int(state["focus"])][0]
+        if action == "preset_list":
+            state["menu"] = "preset_list"
+            state["focus"] = max(0, int(active_preset))
+            state["message"] = "Select preset · Green loads · Red = main menu"
+            tui = _format_gravity_preset_list_html(
+                tui_state=state,
+                active_slot=int(active_preset),
+            )
+            return _gravity_menu_to_preset_outputs(
+                tui, state, int(active_preset), active_nav="enter"
+            )
+        if action == "animate":
+            return _gravity_animate_toggle_click(
+                phi_sq_scale,
+                e_sq_scale,
+                pi_sq_scale,
+                kappa,
+                delta_z,
+                alpha,
+                beta,
+                deform_pressure,
+                view_elev,
+                view_azim,
+                int(active_preset),
+                edit_params_enabled,
+                status_zoom_slot,
+            )
+        if action == "pipeline":
+            state["menu"] = "pipeline"
+            state["pipeline"] = []
+            state["pending"] = ""
+            state["message"] = (
+                "Enter preset number + Green to add.\n"
+                "Green (no pending) = finish. Red = cancel."
+            )
+            tui = _format_gravity_pipeline_menu_html(tui_state=state)
+            return _gravity_menu_to_preset_outputs(
+                tui, state, int(active_preset), active_nav="enter"
+            )
+        if action == "catalog":
+            state["menu"] = "preset_list"
+            state["focus"] = 0
+            return _make_gravity_quick_preset_click(0, menu_state=state)(
+                phi_sq_scale,
+                e_sq_scale,
+                pi_sq_scale,
+                kappa,
+                delta_z,
+                alpha,
+                beta,
+                deform_pressure,
+                view_elev,
+                view_azim,
+                active_preset,
+                edit_params_enabled,
+                status_zoom_slot,
+            )
+
+    if menu == "preset_list":
+        slot = int(state["focus"])
+        state["menu"] = "preset_list"
+        return _make_gravity_quick_preset_click(slot, menu_state=state)(
+            phi_sq_scale,
+            e_sq_scale,
+            pi_sq_scale,
+            kappa,
+            delta_z,
+            alpha,
+            beta,
+            deform_pressure,
+            view_elev,
+            view_azim,
+            active_preset,
+            edit_params_enabled,
+            status_zoom_slot,
+        )
+
+    if menu == "pipeline":
+        pending = str(state.get("pending", "") or "").strip()
+        if pending:
+            try:
+                slot = max(0, min(_GRAVITY_TUI_MENU_FOCUS_MAX, int(pending)))
+            except ValueError:
+                state["message"] = f"Invalid preset digit: {pending!r}"
+                tui = _format_gravity_pipeline_menu_html(tui_state=state)
+                return _gravity_menu_to_preset_outputs(
+                    tui, state, int(active_preset), active_nav="enter"
+                )
+            pipeline = list(state.get("pipeline", []))
+            pipeline.append(slot)
+            state["pipeline"] = pipeline
+            state["pending"] = ""
+            state["message"] = _gravity_pipeline_message(state)
+            tui = _format_gravity_pipeline_menu_html(tui_state=state)
+            return _gravity_menu_to_preset_outputs(
+                tui, state, int(active_preset), active_nav="enter"
+            )
+        pipeline = list(state.get("pipeline", []))
+        if pipeline:
+            state["message"] = (
+                f"Pipeline ready ({len(pipeline)} presets) — "
+                f"{' → '.join(_gravity_preset_id(int(s)) for s in pipeline)}\n"
+                "(Stitched animation render — coming soon)"
+            )
+            tui = _format_gravity_pipeline_menu_html(tui_state=state)
+            return _gravity_menu_to_preset_outputs(
+                tui, state, int(active_preset), active_nav="enter"
+            )
+        state["message"] = "Add at least one preset before finishing."
+        tui = _format_gravity_pipeline_menu_html(tui_state=state)
+        return _gravity_menu_to_preset_outputs(
+            tui, state, int(active_preset), active_nav="enter"
+        )
+
+    slot = int(state["focus"])
+    return _make_gravity_quick_preset_click(slot, menu_state=state)(
         phi_sq_scale,
         e_sq_scale,
         pi_sq_scale,
@@ -6381,7 +6754,12 @@ def _make_gravity_keypad_nav_click(direction: str):
             dials=dials,
             active_nav=direction,
         )
-        return (tui, state, *keypad_updates)
+        return _gravity_menu_to_preset_outputs(
+            tui,
+            state,
+            preset_slot,
+            active_nav=direction,
+        )
 
     return handler
 
@@ -6397,9 +6775,31 @@ def _gravity_keypad_stop_apply(
     deform_pressure: float,
     view_elev: float,
     view_azim: float,
+    active_preset: int,
     edit_params_enabled: bool,
     status_zoom_slot: int,
+    tui_state: object,
 ) -> tuple:
+    """Red circle — cancel pipeline / back to main / stop animation."""
+    state = _coerce_gravity_tui_state(tui_state)
+    menu = str(state["menu"])
+
+    if menu == "pipeline":
+        state = _default_gravity_tui_state()
+        state["message"] = "Pipeline cancelled."
+        tui = _format_gravity_main_menu_html(tui_state=state)
+        return _gravity_menu_to_preset_outputs(
+            tui, state, int(active_preset), active_nav="stop"
+        )
+
+    if menu == "preset_list":
+        state = _default_gravity_tui_state()
+        state["message"] = "Returned to main menu."
+        tui = _format_gravity_main_menu_html(tui_state=state)
+        return _gravity_menu_to_preset_outputs(
+            tui, state, int(active_preset), active_nav="stop"
+        )
+
     dials, metrics, header, fig, tui, active_slot = _gravity_quick_preset_apply(
         0,
         phi_sq_scale,
@@ -6413,6 +6813,9 @@ def _gravity_keypad_stop_apply(
         view_elev,
         view_azim,
     )
+    reset_state = _default_gravity_tui_state()
+    reset_state["message"] = "Animation stopped · catalog reset."
+    tui = _format_gravity_main_menu_html(tui_state=reset_state)
     outputs = list(
         _gravity_explorer_outputs(
             "0",
@@ -6432,7 +6835,7 @@ def _gravity_keypad_stop_apply(
     outputs[:keypad_len] = list(
         _gravity_keypad_btn_updates(active_numeric="0", active_nav="stop")
     )
-    return _gravity_preset_handler_outputs(tuple(outputs))
+    return _gravity_preset_handler_outputs(tuple(outputs), menu_state=reset_state)
 
 
 def _gravity_quick_preset_apply(
@@ -6481,7 +6884,84 @@ def _gravity_quick_preset_apply(
     return dials, metrics, header, fig, tui, slot
 
 
-def _make_gravity_quick_preset_click(slot: int):
+def _make_gravity_keypad_digit_click(digit: int):
+    """Numeric keypad — menu navigation, pipeline pending digit, or preset focus."""
+
+    def handler(
+        phi_sq_scale: float,
+        e_sq_scale: float,
+        pi_sq_scale: float,
+        kappa: float,
+        delta_z: float,
+        alpha: float,
+        beta: float,
+        deform_pressure: float,
+        view_elev: float,
+        view_azim: float,
+        active_preset: int,
+        edit_params_enabled: bool,
+        status_zoom_slot: int,
+        tui_state: object,
+    ) -> tuple:
+        state = _coerce_gravity_tui_state(tui_state)
+        menu = str(state["menu"])
+        key = str(int(digit))
+        dials = _gravity_dial_bundle(
+            phi_sq_scale,
+            e_sq_scale,
+            pi_sq_scale,
+            kappa,
+            delta_z,
+            alpha,
+            beta,
+            deform_pressure,
+            view_elev,
+            view_azim,
+        )
+
+        if menu == "pipeline":
+            state["pending"] = key
+            state["message"] = f"Pending: {key} — press Green to add to pipeline"
+            tui = _format_gravity_pipeline_menu_html(tui_state=state)
+            return _gravity_menu_to_preset_outputs(
+                tui,
+                state,
+                int(active_preset),
+                active_numeric=key,
+            )
+
+        if menu == "main":
+            if key in {"1", "2", "3", "4"}:
+                state["focus"] = int(key) - 1
+            tui = _format_gravity_main_menu_html(tui_state=state)
+            return _gravity_menu_to_preset_outputs(
+                tui,
+                state,
+                int(active_preset),
+                active_numeric=key,
+            )
+
+        state["menu"] = "preset_list"
+        state["focus"] = max(0, min(_GRAVITY_TUI_MENU_FOCUS_MAX, int(digit)))
+        tui = _format_gravity_preset_list_html(
+            tui_state=state,
+            active_slot=int(active_preset),
+        )
+        return _gravity_menu_to_preset_outputs(
+            tui,
+            state,
+            int(active_preset),
+            active_numeric=key,
+        )
+
+    return handler
+
+
+def _make_gravity_quick_preset_click(
+    slot: int,
+    *,
+    menu_state: dict[str, object] | None = None,
+):
     """Single-step preset handler — updates buttons, sliders, metrics, image, TUI."""
 
     def handler(
@@ -6568,8 +7048,12 @@ def _make_gravity_quick_preset_click(slot: int):
                 flush=True,
             )
         print(f"[DEBUG] preset_click_unified EXIT slot={slot}", flush=True)
+        resolved_state = _coerce_gravity_tui_state(menu_state)
+        resolved_state["menu"] = "preset_list"
+        resolved_state["focus"] = int(active_slot)
         return _gravity_preset_handler_outputs(
-            tuple(outputs) if isinstance(outputs, list) else outputs
+            tuple(outputs) if isinstance(outputs, list) else outputs,
+            menu_state=resolved_state,
         )
 
     return handler
@@ -7426,26 +7910,33 @@ def build_app() -> gr.Blocks:
                             _init_unit_cell_header,
                             elem_classes=["myst-cube-viewport-header-slot"],
                         )
-                        with gr.Row(elem_classes=["myst-unit-cell-image-row"]):
-                            unit_cell_image = gr.HTML(
-                                value="",
-                                elem_classes=["myst-unit-cell-viewport-image"],
-                                container=False,
-                                min_height=480,
-                            )
-                        with gr.Row(elem_classes=["myst-unit-cell-video-row"]):
-                            unit_cell_video = gr.Video(
-                                label="Deformation Animation",
-                                show_label=True,
-                                interactive=False,
-                                container=False,
-                                autoplay=True,
-                                loop=True,
-                                height=320,
-                                format="mp4",
-                                elem_id="unit-cell-animation",
-                                elem_classes=["myst-unit-cell-animation", "gradio-video"],
-                            )
+                        with gr.Row(elem_classes=["myst-unit-cell-visor"]):
+                            with gr.Column(elem_classes=["myst-unit-cell-visor-slot"]):
+                                unit_cell_image = gr.HTML(
+                                    value="",
+                                    elem_classes=[
+                                        "myst-unit-cell-viewport-image",
+                                        "myst-unit-cell-visor-image",
+                                    ],
+                                    container=False,
+                                    min_height=480,
+                                )
+                                unit_cell_video = gr.Video(
+                                    label="Deformation Animation",
+                                    show_label=False,
+                                    interactive=False,
+                                    container=False,
+                                    autoplay=True,
+                                    loop=False,
+                                    height=480,
+                                    format="mp4",
+                                    elem_id="unit-cell-animation",
+                                    elem_classes=[
+                                        "myst-unit-cell-animation",
+                                        "myst-unit-cell-visor-video",
+                                        "gradio-video",
+                                    ],
+                                )
             re_inputs = [
                 re_phi_scale, re_e_scale, re_pi_scale,
                 re_kappa, re_delta_z, re_alpha, re_beta, re_pressure,
@@ -7541,31 +8032,26 @@ def build_app() -> gr.Blocks:
                 outputs=gravity_preset_outputs,
                 show_progress="hidden",
             )
+            gravity_menu_inputs = [*gravity_preset_inputs, gravity_tui_state]
             re_gravity_keypad["stop"].click(
                 _gravity_keypad_stop_apply,
-                inputs=gravity_preset_inputs,
+                inputs=gravity_menu_inputs,
                 outputs=gravity_preset_outputs,
                 show_progress="hidden",
                 cancels=[animate_event, enter_select_event],
             )
-            gravity_tui_nav_outputs = [
-                re_preset_tui,
-                gravity_tui_state,
-                *gravity_preset_btn_outputs,
-            ]
             for nav_key in ("up", "down", "left", "right"):
                 re_gravity_keypad[nav_key].click(
                     _make_gravity_keypad_nav_click(nav_key),
                     inputs=gravity_tui_nav_inputs,
-                    outputs=gravity_tui_nav_outputs,
+                    outputs=gravity_preset_outputs,
                     show_progress="hidden",
                 )
-            # Unified single-step preset clicks — no immediate/.then() split.
             preset_cancel_events = [animate_event, enter_select_event]
             for slot, preset_btn in enumerate(re_quick_presets):
                 preset_btn.click(
-                    _make_gravity_quick_preset_click(slot),
-                    inputs=gravity_preset_inputs,
+                    _make_gravity_keypad_digit_click(slot),
+                    inputs=gravity_menu_inputs,
                     outputs=gravity_preset_outputs,
                     show_progress="hidden",
                     cancels=preset_cancel_events,
