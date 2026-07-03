@@ -9477,11 +9477,11 @@ def build_app() -> gr.Blocks:
         newhere_minimize_btn.click(_minimize_newhere, outputs=newhere_outputs[:3])
         claims_minimize_btn.click(_minimize_claims, outputs=claims_outputs[:3])
         def _app_boot() -> tuple:
-            return (*_nav_to_page("gravity"), _init_unit_cell_html)
+            return (*_nav_to_page("gravity"), _get_gravity_demo_static_html("A"))
 
         demo.load(
             _app_boot,
-            outputs=[*nav_outputs, unit_cell_image],
+            outputs=[*nav_outputs, gravity_viewport],
             show_progress=False,
         )
 
