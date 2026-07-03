@@ -37,10 +37,10 @@ from demo_core import (
     get_build_label,
     is_hf_space,
     build_unit_cell_viewport_header_html,
+    figure_to_viewport_filepath,
     figure_to_viewport_html,
-    figure_to_viewport_numpy,
+    unit_cell_error_placeholder_filepath,
     unit_cell_error_placeholder_html,
-    unit_cell_error_placeholder_numpy,
     render_unit_cell_deformation_video,
     residual_from_scales,
     run_analysis,
@@ -3915,17 +3915,14 @@ def _gravity_tui_for_preset(
 
 
 def _gravity_static_image_update(fig: object) -> object:
-    """HF: gr.Image numpy. Local: gr.HTML inline base64."""
+    """HF: gr.Image filepath. Local: gr.HTML inline base64."""
     if fig is gr.skip():
         print("[DEBUG] _gravity_static_image_update: gr.skip()", flush=True)
         return gr.skip()
     if is_hf_space():
-        arr = figure_to_viewport_numpy(fig, dpi=_UNIT_CELL_IMAGE_DPI)
-        print(
-            f"[DEBUG] _gravity_static_image_update: HF numpy shape={arr.shape}",
-            flush=True,
-        )
-        return arr
+        path = figure_to_viewport_filepath(fig, dpi=_UNIT_CELL_IMAGE_DPI)
+        print(f"[DEBUG] _gravity_static_image_update: HF filepath={path}", flush=True)
+        return path
     html = figure_to_viewport_html(fig, dpi=_UNIT_CELL_IMAGE_DPI)
     print(
         f"[DEBUG] _gravity_static_image_update: returning html len={len(html)}",
@@ -3936,7 +3933,7 @@ def _gravity_static_image_update(fig: object) -> object:
 
 def _gravity_viewport_error_placeholder() -> object:
     if is_hf_space():
-        return unit_cell_error_placeholder_numpy()
+        return unit_cell_error_placeholder_filepath()
     return unit_cell_error_placeholder_html()
 
 
@@ -4680,17 +4677,17 @@ def build_app() -> gr.Blocks:
         )
         _use_image_viewport = is_hf_space()
         if _use_image_viewport:
-            _init_unit_cell_numpy = figure_to_viewport_numpy(
+            _init_unit_cell_path = figure_to_viewport_filepath(
                 _init_unit_cell_fig,
                 dpi=_UNIT_CELL_IMAGE_DPI,
             )
             _init_unit_cell_html = ""
             print(
-                f"[DEBUG] init unit cell numpy shape={_init_unit_cell_numpy.shape} (HF gr.Image)",
+                f"[DEBUG] init unit cell filepath={_init_unit_cell_path} (HF gr.Image)",
                 flush=True,
             )
         else:
-            _init_unit_cell_numpy = None
+            _init_unit_cell_path = None
             _init_unit_cell_html = figure_to_viewport_html(
                 _init_unit_cell_fig,
                 dpi=_UNIT_CELL_IMAGE_DPI,
@@ -5001,12 +4998,10 @@ def build_app() -> gr.Blocks:
                     with gr.Row(elem_classes=["myst-unit-cell-image-row"]):
                         if _use_image_viewport:
                             unit_cell_image = gr.Image(
-                                value=_init_unit_cell_numpy,
+                                value=_init_unit_cell_path,
                                 label=None,
                                 show_label=False,
-                                type="numpy",
-                                image_mode="RGB",
-                                format="png",
+                                type="filepath",
                                 interactive=False,
                                 container=False,
                                 height=550,
@@ -5166,7 +5161,7 @@ def build_app() -> gr.Blocks:
         demo.load(_stream_term_boot, outputs=term_keypad_outputs)
         demo.load(
             lambda: (
-                _init_unit_cell_numpy if _use_image_viewport else _init_unit_cell_html
+                _init_unit_cell_path if _use_image_viewport else _init_unit_cell_html
             ),
             outputs=[unit_cell_image],
             show_progress=False,

@@ -1226,13 +1226,26 @@ def _pil_to_viewport_jpeg_path(pil_img) -> str:
 
 
 def figure_to_viewport_filepath(fig: plt.Figure, *, dpi: int = 100) -> str:
-    """Matplotlib figure → JPEG filepath for gr.Image(type='filepath')."""
+    """Matplotlib figure → PNG filepath for gr.Image(type='filepath') on HF."""
     print(f"[DEBUG] figure_to_viewport_filepath: dpi={dpi}", flush=True)
     try:
-        pil_img = figure_to_viewport_pil(fig, dpi=dpi)
-        path = _pil_to_viewport_jpeg_path(pil_img)
-        print(f"[DEBUG] figure_to_viewport_filepath: path={path}", flush=True)
-        return path
+        with tempfile.NamedTemporaryFile(suffix=".png", delete=False, dir="/tmp") as tmp:
+            tmp_path = tmp.name
+        face = fig.get_facecolor()
+        if not face or str(face).lower() in {"none", "auto"}:
+            face = "#000000"
+        fig.savefig(
+            tmp_path,
+            format="png",
+            dpi=dpi,
+            facecolor=face,
+            edgecolor="none",
+            bbox_inches="tight",
+            pad_inches=0.05,
+        )
+        plt.close(fig)
+        print(f"[DEBUG] figure_to_viewport_filepath: path={tmp_path}", flush=True)
+        return tmp_path
     except Exception as exc:
         print(f"[ERROR] figure_to_viewport_filepath failed: {exc}", flush=True)
         traceback.print_exc()
@@ -1240,8 +1253,13 @@ def figure_to_viewport_filepath(fig: plt.Figure, *, dpi: int = 100) -> str:
 
 
 def unit_cell_error_placeholder_filepath() -> str:
-    """Red JPEG placeholder filepath when viewport conversion fails."""
-    return _pil_to_viewport_jpeg_path(unit_cell_error_placeholder_pil())
+    """Red PNG placeholder filepath when viewport conversion fails."""
+    from PIL import Image as PILImage
+
+    with tempfile.NamedTemporaryFile(suffix=".png", delete=False, dir="/tmp") as tmp:
+        tmp_path = tmp.name
+    PILImage.fromarray(unit_cell_error_placeholder_numpy()).save(tmp_path, format="PNG")
+    return tmp_path
 
 
 def figure_to_viewport_gradio_pil(fig: plt.Figure, *, dpi: int = 100):
