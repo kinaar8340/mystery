@@ -5821,6 +5821,36 @@ _GRAVITY_PRESET_PROFILES: dict[int, dict[str, float]] = {
 }
 
 
+def _gravity_dial_bundle(
+    phi_sq_scale: float,
+    e_sq_scale: float,
+    pi_sq_scale: float,
+    kappa: float,
+    delta_z: float,
+    alpha: float,
+    beta: float,
+    deform_pressure: float,
+    view_elev: float,
+    view_azim: float,
+) -> dict[str, float]:
+    return {
+        "phi": float(phi_sq_scale),
+        "e": float(e_sq_scale),
+        "pi": float(pi_sq_scale),
+        "kappa": float(kappa),
+        "dz": float(delta_z),
+        "alpha": float(alpha),
+        "beta": float(beta),
+        "pressure": float(deform_pressure),
+        "elev": float(view_elev),
+        "azim": float(view_azim),
+    }
+
+
+def _gravity_preset_id(slot: int) -> str:
+    return f"{int(slot) + 1:02d}"
+
+
 def _build_render_preset_meta() -> dict[int, dict[str, str]]:
     """Metadata for Render tab full-viewport preset detail panels."""
     meta: dict[int, dict[str, str]] = {}
@@ -5860,36 +5890,6 @@ def _build_render_preset_meta() -> dict[int, dict[str, str]]:
 
 
 RENDER_PRESET_META = _build_render_preset_meta()
-
-
-def _gravity_dial_bundle(
-    phi_sq_scale: float,
-    e_sq_scale: float,
-    pi_sq_scale: float,
-    kappa: float,
-    delta_z: float,
-    alpha: float,
-    beta: float,
-    deform_pressure: float,
-    view_elev: float,
-    view_azim: float,
-) -> dict[str, float]:
-    return {
-        "phi": float(phi_sq_scale),
-        "e": float(e_sq_scale),
-        "pi": float(pi_sq_scale),
-        "kappa": float(kappa),
-        "dz": float(delta_z),
-        "alpha": float(alpha),
-        "beta": float(beta),
-        "pressure": float(deform_pressure),
-        "elev": float(view_elev),
-        "azim": float(view_azim),
-    }
-
-
-def _gravity_preset_id(slot: int) -> str:
-    return f"{int(slot) + 1:02d}"
 
 
 def _gravity_param_display(spec: dict[str, object], value: float) -> str:
