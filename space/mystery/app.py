@@ -1306,17 +1306,80 @@ WALLPAPER_HEAD = f"""
         var btn = document.getElementById('myst-render-cell-btn-' + slot);
         if (btn) btn.click();
     }}
+    function mystRenderDetailPlotEl() {{
+        return document.querySelector('#myst-render-detail-plot .plotly-graph-div')
+            || document.querySelector('.myst-render-detail-plot-host .plotly-graph-div')
+            || document.querySelector('.myst-render-detail-plot-host #myst-render-detail-plotly');
+    }}
     function mystResizeRenderDetailPlot() {{
-        var host = document.querySelector('.myst-render-detail-plot-host');
-        if (!host) return;
-        var plotDiv = host.querySelector('.plotly-graph-div, #myst-render-detail-plotly');
-        if (!plotDiv || !window.Plotly) return;
-        var h = Math.max(480, Math.round(host.getBoundingClientRect().height));
+        var host = document.querySelector('.myst-render-detail-plot-host')
+            || document.querySelector('#myst-render-detail-plot')
+            || document.querySelector('.myst-render-detail-view');
+        var plotDiv = mystRenderDetailPlotEl();
+        if (!host || !plotDiv || !window.Plotly) return;
+        var h = Math.max(520, Math.round(host.getBoundingClientRect().height) - 8);
         plotDiv.style.height = h + 'px';
         plotDiv.style.width = '100%';
         try {{
             window.Plotly.Plots.resize(plotDiv);
         }} catch (_err) {{}}
+    }}
+    function mystRenderDetailZoom(factor) {{
+        var plotDiv = mystRenderDetailPlotEl();
+        if (!plotDiv || !window.Plotly) return;
+        var cam = plotDiv.layout && plotDiv.layout.scene && plotDiv.layout.scene.camera;
+        if (!cam || !cam.eye) return;
+        var ex = cam.eye.x, ey = cam.eye.y, ez = cam.eye.z;
+        try {{
+            window.Plotly.relayout(plotDiv, {{
+                'scene.camera.eye': {{ x: ex * factor, y: ey * factor, z: ez * factor }}
+            }});
+        }} catch (_err) {{}}
+    }}
+    function mystRenderDetailResetView() {{
+        var plotDiv = mystRenderDetailPlotEl();
+        if (!plotDiv || !window.Plotly) return;
+        try {{
+            window.Plotly.relayout(plotDiv, {{ 'scene.camera': null }});
+        }} catch (_err) {{}}
+    }}
+    function mystRenderDetailDownloadPng() {{
+        var plotDiv = mystRenderDetailPlotEl();
+        if (!plotDiv || !window.Plotly) return;
+        try {{
+            window.Plotly.downloadImage(plotDiv, {{
+                format: 'png',
+                width: plotDiv.offsetWidth || 1200,
+                height: plotDiv.offsetHeight || 800,
+                filename: 'mystery-render-preset'
+            }});
+        }} catch (_err) {{}}
+    }}
+    function mystRenderDetailFullscreen() {{
+        var host = document.querySelector('.myst-render-detail-plot-host')
+            || document.querySelector('#myst-render-detail-plot');
+        if (!host) return;
+        var req = host.requestFullscreen || host.webkitRequestFullscreen;
+        if (req) req.call(host);
+    }}
+    function mystBindRenderDetailActions() {{
+        var map = [
+            ['myst-render-detail-zoom-in', function() {{ mystRenderDetailZoom(0.82); }}],
+            ['myst-render-detail-zoom-out', function() {{ mystRenderDetailZoom(1.22); }}],
+            ['myst-render-detail-reset', mystRenderDetailResetView],
+            ['myst-render-detail-download', mystRenderDetailDownloadPng],
+            ['myst-render-detail-fullscreen', mystRenderDetailFullscreen],
+        ];
+        map.forEach(function(entry) {{
+            var btn = document.getElementById(entry[0]);
+            if (!btn || btn.dataset.mystBound === '1') return;
+            btn.dataset.mystBound = '1';
+            btn.addEventListener('click', function(e) {{
+                e.preventDefault();
+                e.stopPropagation();
+                entry[1]();
+            }}, true);
+        }});
     }}
     function mystBindRenderGridClicks() {{
         document.querySelectorAll('.myst-render-cell-clickable[data-slot]').forEach(function(cell) {{
@@ -1332,22 +1395,34 @@ WALLPAPER_HEAD = f"""
                 }}
             }});
         }});
-        if (document.querySelector('.myst-render-detail-wrap')) {{
+        if (document.querySelector('.myst-render-detail-view:not(.hide)')) {{
             requestAnimationFrame(function() {{
                 mystResizeRenderDetailPlot();
+                mystBindRenderDetailActions();
                 requestAnimationFrame(mystResizeRenderDetailPlot);
             }});
         }}
     }}
     function bootRenderGridClicks() {{
         mystBindRenderGridClicks();
+        mystBindRenderDetailActions();
         if (window.__mystRenderGridObs) return;
         window.__mystRenderGridObs = new MutationObserver(function() {{
-            requestAnimationFrame(mystBindRenderGridClicks);
+            requestAnimationFrame(function() {{
+                mystBindRenderGridClicks();
+                mystBindRenderDetailActions();
+                mystResizeRenderDetailPlot();
+            }});
         }});
         var host = document.getElementById('myst-render-grid-host');
         if (host) {{
             window.__mystRenderGridObs.observe(host, {{
+                subtree: true, childList: true, attributes: true
+            }});
+        }}
+        var detailHost = document.querySelector('.myst-render-detail-view');
+        if (detailHost) {{
+            window.__mystRenderGridObs.observe(detailHost, {{
                 subtree: true, childList: true, attributes: true
             }});
         }}
@@ -4974,6 +5049,80 @@ footer {{ visibility: hidden; }}
     padding-left: 0 !important;
     padding-right: 0 !important;
 }}
+.gradio-container .myst-render-page .myst-render-detail-view {{
+    flex: 1 1 auto !important;
+    width: 100% !important;
+    min-height: calc(100dvh - 7.5rem - var(--myst-render-grid-bottom-frame, 0.38rem)) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.22rem !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    align-items: stretch !important;
+}}
+.gradio-container .myst-render-page .myst-render-detail-toolbar {{
+    flex: 0 0 auto !important;
+    margin: 0 !important;
+    padding: 0 0 0.12rem 0 !important;
+    gap: 0.35rem !important;
+}}
+.gradio-container .myst-render-page .myst-render-detail-plot-host,
+.gradio-container .myst-render-page #myst-render-detail-plot,
+.gradio-container .myst-render-page #myst-render-detail-plot.block {{
+    flex: 1 1 auto !important;
+    min-height: calc(100dvh - 14rem) !important;
+    height: calc(100dvh - 14rem) !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #000000 !important;
+    border: 2px inset rgba(92, 74, 31, {_MYST_STATUS_PANEL_ALPHA}) !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+}}
+.gradio-container .myst-render-page .myst-render-detail-plot-host .plot-container,
+.gradio-container .myst-render-page .myst-render-detail-plot-host .js-plotly-plot,
+.gradio-container .myst-render-page .myst-render-detail-plot-host .plotly-graph-div,
+.gradio-container .myst-render-page #myst-render-detail-plot .plot-container,
+.gradio-container .myst-render-page #myst-render-detail-plot .plotly-graph-div {{
+    width: 100% !important;
+    height: 100% !important;
+    min-height: calc(100dvh - 14.5rem) !important;
+    max-height: none !important;
+}}
+.gradio-container .myst-render-page .myst-render-detail-actions {{
+    flex: 0 0 auto !important;
+    gap: 0.28rem !important;
+    margin: 0 !important;
+    padding: 0.08rem 0 !important;
+    flex-wrap: wrap !important;
+}}
+.gradio-container .myst-render-page .myst-render-detail-desc,
+.gradio-container .myst-render-page .myst-render-detail-desc .prose {{
+    flex: 0 0 auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0.42rem 0.48rem 0.5rem !important;
+    background: rgba(0, 0, 0, {_MYST_STATUS_PANEL_ALPHA}) !important;
+    border: 2px inset rgba(92, 74, 31, {_MYST_STATUS_PANEL_ALPHA}) !important;
+    color: #f5e6c8 !important;
+    font-size: 0.82rem !important;
+    line-height: 1.35 !important;
+    box-sizing: border-box !important;
+}}
+.gradio-container .myst-render-page .myst-render-detail-desc h3 {{
+    color: #f5e6c8 !important;
+    margin: 0 0 0.35rem 0 !important;
+    font-size: 0.92rem !important;
+}}
+.gradio-container .myst-render-page .myst-render-detail-desc pre,
+.gradio-container .myst-render-page .myst-render-detail-desc code {{
+    background: rgba(0, 0, 0, 0.55) !important;
+    color: #d4af37 !important;
+    font-size: 0.76rem !important;
+}}
 .gradio-container .myst-render-page .myst-render-detail-wrap {{
     width: 100% !important;
     height: 100% !important;
@@ -5672,6 +5821,47 @@ _GRAVITY_PRESET_PROFILES: dict[int, dict[str, float]] = {
 }
 
 
+def _build_render_preset_meta() -> dict[int, dict[str, str]]:
+    """Metadata for Render tab full-viewport preset detail panels."""
+    meta: dict[int, dict[str, str]] = {}
+    for slot in range(_STATUS_GRID_PRESET_COUNT):
+        preset_id = _gravity_preset_id(slot)
+        title_profile = _GRAVITY_PRESET_TUI_LABELS.get(
+            slot,
+            _GRAVITY_PRESET_SLOT_LABELS.get(slot, f"Preset {preset_id}"),
+        )
+        dials = _gravity_preset_dials_for_slot(slot)
+        params = "\n".join(
+            [
+                f"Deformation pressure: {dials['pressure'] * 100:.1f}%",
+                f"φ² scale: {dials['phi']:.3f}",
+                f"e² scale: {dials['e']:.3f}",
+                f"π² scale: {dials['pi']:.3f}",
+                f"κ (holonomy): {dials['kappa']:.3f}",
+                f"δ_z push: {dials['dz']:.3f}",
+                f"α geometry: {dials['alpha']:.3f}",
+                f"β coupling: {dials['beta']:.3f}",
+                f"View elevation: {dials['elev']:.1f}°",
+                f"View azimuth: {dials['azim']:.1f}°",
+            ]
+        )
+        profile = _GRAVITY_PRESET_SLOT_LABELS.get(slot, "")
+        meta[slot] = {
+            "title": f"Preset {preset_id} – {title_profile}",
+            "description": (
+                f"Interactive 3D unit-cell visualization for the **{profile}** preset. "
+                "Drag to orbit 360°, scroll or pinch to zoom; use the Plotly toolbar "
+                "for pan, reset, download, and fullscreen."
+            ),
+            "params": params,
+            "notes": _GRAVITY_PRESET_STATUS_NOTES.get(slot, "No additional notes."),
+        }
+    return meta
+
+
+RENDER_PRESET_META = _build_render_preset_meta()
+
+
 def _gravity_dial_bundle(
     phi_sq_scale: float,
     e_sq_scale: float,
@@ -6277,6 +6467,39 @@ def _render_preset_detail_plot_html(slot: int) -> str:
     return plotly_figure_to_render_detail_html(fig)
 
 
+def _generate_render_detail_plot(slot: int):
+    """Large interactive Plotly 3D figure for the Render preset detail view."""
+    slot = int(slot)
+    dials = _gravity_preset_dials_for_slot(slot)
+    fig = run_residual_explorer_plotly(*_dials_to_explorer_args(dials))
+    fig.update_layout(
+        height=680,
+        margin=dict(l=0, r=0, t=8, b=0),
+        paper_bgcolor="#000000",
+        plot_bgcolor="#000000",
+        uirevision=f"mystery-render-detail-{slot}",
+    )
+    fig.update_layout(
+        modebar=dict(orientation="v", bgcolor="rgba(0,0,0,0.55)"),
+    )
+    return fig
+
+
+def _format_render_detail_description(slot: int) -> str:
+    """Markdown description panel for a Render preset detail view."""
+    slot = int(slot)
+    meta = RENDER_PRESET_META.get(slot, {})
+    return (
+        f"### {meta.get('title', f'Preset {_gravity_preset_id(slot)}')}\n\n"
+        f"**Description**  \n"
+        f"{meta.get('description', 'No description available.')}\n\n"
+        f"**Current Parameters**\n\n"
+        f"```\n{meta.get('params', 'N/A')}\n```\n\n"
+        f"**Notes**  \n"
+        f"{meta.get('notes', 'No additional notes.')}"
+    )
+
+
 def _format_render_cell_html(
     slot: int,
     *,
@@ -6360,9 +6583,8 @@ def _render_panel_html(
     *,
     grid_active_slot: int | None = None,
 ) -> str:
-    """Render tab host — 3×3 grid when zoom_slot < 0, else preset detail view."""
-    if int(zoom_slot) >= 0:
-        return _format_render_detail_html(int(zoom_slot))
+    """Render tab grid host HTML (detail view uses gr.Plot in a separate column)."""
+    _ = zoom_slot
     has_plots = bool(plot_cache) and any(plot_cache)
     return _format_render_grid_html(
         plot_cache if has_plots else None,
@@ -6477,13 +6699,16 @@ def _place_render_sub_nav_row(
     return back_btn, buttons, render_btn
 
 
-def _render_open_detail(slot: int, plot_cache: list[str | None]) -> tuple:
-    """Open full-page detail view for one preset."""
+def _render_detail_view_updates(slot: int) -> tuple:
+    """Show full-viewport interactive detail for one preset."""
     slot = int(slot)
-    html = _format_render_detail_html(slot)
     return (
-        html,
         slot,
+        slot,
+        gr.update(visible=False),
+        gr.update(visible=True),
+        _generate_render_detail_plot(slot),
+        _format_render_detail_description(slot),
         slot,
         *_render_sub_nav_btn_updates(slot),
         _render_sub_nav_back_update(slot),
@@ -6491,11 +6716,13 @@ def _render_open_detail(slot: int, plot_cache: list[str | None]) -> tuple:
     )
 
 
-def _render_back_to_grid(
-    plot_cache: list[str | None],
+def _render_grid_view_updates(
+    plot_cache: list[str | None] | None,
     active_slot: int,
+    *,
+    rendering: bool = True,
 ) -> tuple:
-    """Return from preset detail to the 3×3 Render grid."""
+    """Restore the 3×3 overview grid and hide the detail column."""
     nav_active = int(active_slot) if int(active_slot) >= 0 else -1
     highlight = nav_active if nav_active >= 0 else None
     has_plots = bool(plot_cache) and any(plot_cache)
@@ -6507,10 +6734,29 @@ def _render_back_to_grid(
         html,
         -1,
         nav_active,
+        gr.update(visible=True),
+        gr.update(visible=False),
+        gr.update(value=None),
+        "",
+        -1,
         *_render_sub_nav_btn_updates(nav_active if nav_active >= 0 else -1),
         _render_sub_nav_back_update(-1),
-        _render_sub_nav_render_btn_update(rendering=has_plots, on_grid=True),
+        _render_sub_nav_render_btn_update(rendering=rendering and has_plots, on_grid=True),
     )
+
+
+def _render_open_detail(slot: int, plot_cache: list[str | None] | None = None) -> tuple:
+    """Open full-viewport detail view for one preset."""
+    _ = plot_cache
+    return (gr.skip(), *_render_detail_view_updates(int(slot)))
+
+
+def _render_back_to_grid(
+    plot_cache: list[str | None],
+    active_slot: int,
+) -> tuple:
+    """Return from preset detail to the 3×3 Render grid."""
+    return _render_grid_view_updates(plot_cache, active_slot)
 
 
 def _render_load_all_presets(active_slot: int, zoom_slot: int) -> tuple:
@@ -6519,15 +6765,10 @@ def _render_load_all_presets(active_slot: int, zoom_slot: int) -> tuple:
     zs = int(zoom_slot)
     nav_active = int(active_slot) if int(active_slot) >= 0 else -1
     if zs >= 0:
-        html = _format_render_detail_html(zs)
         return (
-            html,
+            gr.skip(),
             plots,
-            zs,
-            zs,
-            *_render_sub_nav_btn_updates(zs),
-            _render_sub_nav_back_update(zs),
-            _render_sub_nav_render_btn_update(rendering=True, on_grid=False),
+            *_render_detail_view_updates(zs),
         )
     highlight = nav_active if nav_active >= 0 else None
     html = _format_render_grid_html(plots, active_slot=highlight)
@@ -6536,6 +6777,11 @@ def _render_load_all_presets(active_slot: int, zoom_slot: int) -> tuple:
         plots,
         -1,
         nav_active,
+        gr.update(visible=True),
+        gr.update(visible=False),
+        gr.update(value=None),
+        "",
+        -1,
         *_render_sub_nav_btn_updates(nav_active),
         _render_sub_nav_back_update(-1),
         _render_sub_nav_render_btn_update(rendering=True, on_grid=True),
@@ -7975,6 +8221,55 @@ def build_app() -> gr.Blocks:
                             "myst-render-grid-host",
                         ],
                     )
+                render_detail_slot = gr.State(-1)
+                with gr.Column(
+                    visible=False,
+                    elem_classes=["myst-render-detail-view"],
+                ) as render_detail_col:
+                    with gr.Row(elem_classes=["myst-render-detail-toolbar"]):
+                        render_back_to_grid_btn = gr.Button(
+                            "← Back to Grid",
+                            variant="secondary",
+                            scale=0,
+                            elem_id="myst-render-back-to-grid-btn",
+                        )
+                    render_detail_plot = gr.Plot(
+                        label="",
+                        show_label=False,
+                        container=True,
+                        elem_id="myst-render-detail-plot",
+                        elem_classes=["myst-render-detail-plot-host"],
+                    )
+                    with gr.Row(elem_classes=["myst-render-detail-actions"]):
+                        render_detail_zoom_in_btn = gr.Button(
+                            "Zoom +",
+                            scale=0,
+                            elem_id="myst-render-detail-zoom-in",
+                        )
+                        render_detail_zoom_out_btn = gr.Button(
+                            "Zoom −",
+                            scale=0,
+                            elem_id="myst-render-detail-zoom-out",
+                        )
+                        render_detail_reset_btn = gr.Button(
+                            "Reset View",
+                            scale=0,
+                            elem_id="myst-render-detail-reset",
+                        )
+                        render_detail_download_btn = gr.Button(
+                            "Download PNG",
+                            scale=0,
+                            elem_id="myst-render-detail-download",
+                        )
+                        render_detail_fullscreen_btn = gr.Button(
+                            "Fullscreen",
+                            scale=0,
+                            elem_id="myst-render-detail-fullscreen",
+                        )
+                    render_detail_description = gr.Markdown(
+                        elem_classes=["myst-render-detail-desc"],
+                        container=True,
+                    )
 
         status_content_open = gr.State(True)
         with gr.Column(visible=False, elem_classes=["myst-status-page"]) as page_status:
@@ -8822,6 +9117,11 @@ def build_app() -> gr.Blocks:
             render_panel_html,
             render_zoom_slot,
             render_active_slot,
+            render_catalog_col,
+            render_detail_col,
+            render_detail_plot,
+            render_detail_description,
+            render_detail_slot,
             *render_sub_nav_btns,
             render_back_btn,
             render_all_btn,
@@ -8831,6 +9131,11 @@ def build_app() -> gr.Blocks:
             render_plot_cache,
             render_zoom_slot,
             render_active_slot,
+            render_catalog_col,
+            render_detail_col,
+            render_detail_plot,
+            render_detail_description,
+            render_detail_slot,
             *render_sub_nav_btns,
             render_back_btn,
             render_all_btn,
@@ -8849,6 +9154,12 @@ def build_app() -> gr.Blocks:
             show_progress="hidden",
         )
         render_back_btn.click(
+            _render_back_to_grid,
+            inputs=[render_plot_cache, render_active_slot],
+            outputs=render_panel_outputs,
+            show_progress="hidden",
+        )
+        render_back_to_grid_btn.click(
             _render_back_to_grid,
             inputs=[render_plot_cache, render_active_slot],
             outputs=render_panel_outputs,
