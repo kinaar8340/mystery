@@ -3434,6 +3434,48 @@ footer {{ visibility: hidden; }}
     font-size: 0.94rem !important;
     line-height: 1.5 !important;
 }}
+/* === UNIT CELL VIEWPORT header — transparent overlay (component-191) === */
+.gradio-container #component-191,
+.gradio-container #component-191.block,
+.gradio-container .myst-gravity-visuals-col .myst-cube-viewport-header-slot,
+.gradio-container .myst-gravity-visuals-col .myst-cube-viewport-header-slot.block,
+.gradio-container #component-191 .html-container,
+.gradio-container #component-191 .prose,
+.gradio-container .myst-gravity-visuals-col .myst-cube-viewport-header-slot .html-container,
+.gradio-container .myst-gravity-visuals-col .myst-cube-viewport-header-slot .prose {{
+    background: transparent !important;
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}}
+.gradio-container #component-191 .wrap.center.full,
+.gradio-container #component-191 .wrap.center.hidden,
+.gradio-container #component-191 .wrap.default.hidden,
+.gradio-container .myst-gravity-visuals-col .myst-cube-viewport-header-slot .wrap.center.full,
+.gradio-container .myst-gravity-visuals-col .myst-cube-viewport-header-slot .wrap.center.hidden,
+.gradio-container .myst-gravity-visuals-col .myst-cube-viewport-header-slot .wrap.default.hidden {{
+    background: transparent !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    max-height: 0 !important;
+    overflow: hidden !important;
+}}
+.gradio-container .myst-gravity-visuals-col .myst-cube-viewport-header,
+.gradio-container .myst-gravity-visuals-col .myst-cube-viewport-header-fixed,
+.gradio-container #component-191 .myst-cube-viewport-header,
+.gradio-container #component-191 .myst-cube-viewport-header-fixed {{
+    background: rgba(0, 0, 0, 0.55) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border-radius: 6px !important;
+    padding: 4px 8px !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}}
 /* === UNIT CELL VIEWPORT — flex height fix (Gradio unequal-height row) === */
 .gradio-container .myst-gravity-split > .column.myst-gravity-visuals-col {{
     min-width: 0 !important;
@@ -3447,10 +3489,7 @@ footer {{ visibility: hidden; }}
 }}
 .gradio-container .myst-unit-cell-image-row,
 .gradio-container .row.myst-unit-cell-image-row,
-.gradio-container .myst-unit-cell-video-row,
-.gradio-container .row.myst-unit-cell-video-row,
-.gradio-container #component-192,
-.gradio-container #component-194 {{
+.gradio-container #component-192 {{
     height: 550px !important;
     min-height: 550px !important;
     max-height: 550px !important;
@@ -3458,6 +3497,14 @@ footer {{ visibility: hidden; }}
     flex-shrink: 0 !important;
     width: 100% !important;
     min-width: 0 !important;
+    align-items: stretch !important;
+    align-self: stretch !important;
+    box-sizing: border-box !important;
+    overflow: visible !important;
+}}
+.gradio-container .myst-unit-cell-video-row,
+.gradio-container .row.myst-unit-cell-video-row,
+.gradio-container #component-194 {{
     align-items: stretch !important;
     align-self: stretch !important;
     box-sizing: border-box !important;
@@ -3489,6 +3536,16 @@ footer {{ visibility: hidden; }}
     margin: 0 !important;
     box-sizing: border-box !important;
 }}
+.gradio-container .myst-unit-cell-image-row .wrap.center.full,
+.gradio-container .myst-unit-cell-image-row .wrap.center.hidden,
+.gradio-container .myst-unit-cell-image-row .wrap.default.hidden,
+.gradio-container #component-192 .wrap.center.full,
+.gradio-container #component-192 .wrap.center.hidden {{
+    display: none !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    visibility: hidden !important;
+}}
 .gradio-container #unit-cell-main-view,
 .gradio-container #unit-cell-main-view.myst-unit-cell-viewport-inner {{
     height: 550px !important;
@@ -3516,8 +3573,7 @@ footer {{ visibility: hidden; }}
 }}
 .gradio-container .myst-unit-cell-viewport-image,
 .gradio-container #unit-cell-animation,
-.gradio-container #unit-cell-animation.block,
-.gradio-container .myst-cube-viewport-header-slot {{
+.gradio-container #unit-cell-animation.block {{
     background-color: #000000 !important;
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
