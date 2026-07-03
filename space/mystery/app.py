@@ -857,6 +857,7 @@ def _external_tab_html(label: str, url: str, tab_id: str) -> str:
 
 _MAIN_NAV_TAB_SPECS = (
     ("gravity", "Gravity"),
+    ("render", "Render"),
     ("status", "Presets"),
     ("readme", "README"),
     ("animations", "Figures"),
@@ -864,7 +865,7 @@ _MAIN_NAV_TAB_SPECS = (
 
 
 def _place_main_nav_row(active_page: str) -> dict[str, gr.Button]:
-    """Mystery: spreadsheet nav — one compact row of four main tabs."""
+    """Mystery: spreadsheet nav — one compact row of five main tabs."""
     buttons: dict[str, gr.Button] = {}
     with gr.Row(
         elem_classes=[
@@ -1065,25 +1066,29 @@ def _nav_to_status_page(current_page: str, content_open: bool) -> tuple:
 
 
 def _nav_to_page(page: str) -> tuple:
-    """Switch between figures, gravity, readme, status, and edit; refresh nav highlights."""
+    """Switch between render, figures, gravity, readme, status, and edit; refresh nav highlights."""
+    on_render = page == "render"
     on_anim = page == "animations"
     on_gravity = page == "gravity"
     on_readme = page == "readme"
     on_status = page == "status"
     closed = _close_links_panels()
     tab_gravity = _source_tab_btn_update(active=on_gravity)
+    tab_render = _source_tab_btn_update(active=on_render)
     tab_readme = _source_tab_btn_update(active=on_readme)
     tab_anim = _source_tab_btn_update(active=on_anim)
     tab_status = _source_tab_btn_update(active=on_status)
-    page_tabs = (tab_gravity, tab_readme, tab_anim, tab_status)
+    page_tabs = (tab_gravity, tab_render, tab_readme, tab_anim, tab_status)
     return (
-        gr.update(visible=on_anim),
         gr.update(visible=on_gravity),
+        gr.update(visible=on_render),
+        gr.update(visible=on_anim),
         gr.update(visible=on_readme),
         gr.update(visible=on_status),
         gr.update(visible=False),
         *page_tabs,
         *closed,
+        *page_tabs,
         *page_tabs,
         *page_tabs,
         *page_tabs,
@@ -3905,12 +3910,14 @@ footer {{ visibility: hidden; }}
     line-height: 1.5 !important;
 }}
 .gradio-container .myst-status-page,
+.gradio-container .myst-render-page,
 .gradio-container .myst-edit-page {{
     width: 100% !important;
     max-width: none !important;
     padding: 0 0.25rem 0 !important;
 }}
-.gradio-container .myst-status-page {{
+.gradio-container .myst-status-page,
+.gradio-container .myst-render-page {{
     --myst-default-gap-height: {_MYST_DEFAULT_GAP_HEIGHT};
     --myst-half-gap-height: calc(var(--myst-default-gap-height) * 0.5);
     min-height: calc(100dvh - 4.25rem) !important;
@@ -3925,7 +3932,9 @@ footer {{ visibility: hidden; }}
 }}
 .gradio-container .myst-status-page .myst-status-gap-row,
 .gradio-container .myst-status-page .myst-default-gap-row,
-.gradio-container .myst-status-page .myst-status-zoom-edit-col > .row.myst-status-gap-row {{
+.gradio-container .myst-status-page .myst-status-zoom-edit-col > .row.myst-status-gap-row,
+.gradio-container .myst-render-page .myst-status-gap-row,
+.gradio-container .myst-render-page .myst-default-gap-row {{
     min-height: var(--myst-default-gap-height) !important;
     height: var(--myst-default-gap-height) !important;
     max-height: var(--myst-default-gap-height) !important;
@@ -4001,7 +4010,10 @@ footer {{ visibility: hidden; }}
 }}
 .gradio-container .myst-status-page > .block:has(.myst-status-stack),
 .gradio-container .myst-status-page > .form:has(.myst-status-stack),
-.gradio-container .myst-status-page > .column.myst-status-stack {{
+.gradio-container .myst-status-page > .column.myst-status-stack,
+.gradio-container .myst-render-page > .block:has(.myst-render-stack),
+.gradio-container .myst-render-page > .form:has(.myst-render-stack),
+.gradio-container .myst-render-page > .column.myst-render-stack {{
     flex: 1 1 auto !important;
     height: auto !important;
     min-height: 0 !important;
@@ -4760,14 +4772,97 @@ footer {{ visibility: hidden; }}
     letter-spacing: 0.1em !important;
     text-transform: uppercase !important;
 }}
+.gradio-container .myst-render-page .myst-render-grid-wrap {{
+    width: 100% !important;
+    height: auto !important;
+    min-height: calc(100dvh - 8.5rem) !important;
+    flex: 1 1 auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+}}
+.gradio-container .myst-render-page .myst-render-grid {{
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    grid-template-rows: repeat(3, minmax(10rem, 1fr)) !important;
+    gap: 0.45rem !important;
+    width: 100% !important;
+    min-height: calc(100dvh - 7.5rem) !important;
+    flex: 1 1 auto !important;
+}}
+.gradio-container .myst-render-page .myst-render-grid-cell {{
+    min-width: 0 !important;
+    min-height: 0 !important;
+    height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+}}
+.gradio-container .myst-render-page .myst-render-preset-panel {{
+    padding: 0.38rem 0.42rem 0.46rem !important;
+    flex: 1 1 0 !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    background: rgba(0, 0, 0, {_MYST_STATUS_PANEL_ALPHA}) !important;
+    border: 2px inset rgba(92, 74, 31, {_MYST_STATUS_PANEL_ALPHA}) !important;
+    box-sizing: border-box !important;
+}}
+.gradio-container .myst-render-page .myst-render-grid-cell-active .myst-render-preset-panel {{
+    box-shadow:
+        0 0 0 2px rgba(212, 175, 55, 0.72),
+        inset 0 0 12px rgba(212, 175, 55, 0.18) !important;
+}}
+.gradio-container .myst-render-page .myst-render-plot-host {{
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+    background: #000000 !important;
+}}
+.gradio-container .myst-render-page .myst-render-plot-host .myst-unit-cell-viewport-inner {{
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    max-height: 100% !important;
+}}
+.gradio-container .myst-render-page .myst-render-plot-host img {{
+    max-width: 100% !important;
+    max-height: 100% !important;
+    object-fit: contain !important;
+}}
+.gradio-container .myst-render-page .myst-render-plot-placeholder {{
+    flex: 1 1 auto !important;
+    min-height: 4.5rem !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    color: rgba(245, 230, 200, 0.55) !important;
+    font-size: 0.78rem !important;
+    letter-spacing: 0.04em !important;
+}}
+.gradio-container .myst-render-page .myst-render-accent {{
+    color: #d4af37 !important;
+    font-weight: 700 !important;
+}}
+.gradio-container .myst-render-page .myst-render-catalog-host,
+.gradio-container .myst-render-page .myst-render-grid-host {{
+    flex: 1 1 auto !important;
+    width: 100% !important;
+}}
 @media (max-width: 1100px) {{
-    .gradio-container .myst-status-page .myst-status-grid {{
+    .gradio-container .myst-status-page .myst-status-grid,
+    .gradio-container .myst-render-page .myst-render-grid {{
         grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
         grid-template-rows: auto !important;
     }}
 }}
 @media (max-width: 720px) {{
-    .gradio-container .myst-status-page .myst-status-grid {{
+    .gradio-container .myst-status-page .myst-status-grid,
+    .gradio-container .myst-render-page .myst-render-grid {{
         grid-template-columns: minmax(0, 1fr) !important;
     }}
 }}
@@ -4976,6 +5071,7 @@ _GRAVITY_PRESET_BTN_KEYS = _GRAVITY_KEYPAD_NUMERIC_KEYS
 _GRAVITY_TUI_SCROLL_STEP_PX = 22
 _GRAVITY_TUI_MENU_FOCUS_MAX = 9
 _UNIT_CELL_IMAGE_DPI = 100
+_RENDER_GRID_IMAGE_DPI = 72
 # Index of unit_cell_image within gravity_preset_outputs (16 keypad + 2 edit btns + 20 sliders).
 _GRAVITY_PRESET_IMAGE_OUT_INDEX = 41
 _GRAVITY_HOME_DIALS = {
@@ -5806,6 +5902,212 @@ def _format_gravity_status_grid_html(active_slot: int | None = None) -> str:
         f"{''.join(cells)}"
         "</div>"
         "</div>"
+    )
+
+
+def _dials_to_explorer_args(dials: dict[str, float]) -> tuple[float, ...]:
+    return (
+        dials["phi"],
+        dials["e"],
+        dials["pi"],
+        dials["kappa"],
+        dials["dz"],
+        dials["alpha"],
+        dials["beta"],
+        dials["pressure"],
+        dials["elev"],
+        dials["azim"],
+    )
+
+
+def _render_preset_plot_html(slot: int) -> str:
+    """Render one preset's unit-cell plot as viewport HTML for the Render grid."""
+    dials = _gravity_preset_dials_for_slot(slot)
+    _metrics, _header, fig = run_residual_explorer(*_dials_to_explorer_args(dials))
+    return _gravity_fig_to_viewport_file_html(fig, dpi=_RENDER_GRID_IMAGE_DPI)
+
+
+def _format_render_cell_html(
+    slot: int,
+    *,
+    plot_html: str | None = None,
+    active: bool = False,
+) -> str:
+    """Single Render grid cell — preset label plus plot or placeholder."""
+    preset_id = _gravity_preset_id(slot)
+    profile = _GRAVITY_PRESET_SLOT_LABELS.get(slot)
+    subtitle = f" · {profile}" if profile else ""
+    active_cls = " myst-render-grid-cell-active" if active else ""
+    panel_index = slot + 1
+    if plot_html:
+        body = f'<div class="myst-render-plot-host">{plot_html}</div>'
+    else:
+        body = (
+            '<div class="myst-render-plot-placeholder">'
+            'Click <span class="myst-render-accent">Render</span> to load'
+            "</div>"
+        )
+    return (
+        f'<div class="myst-render-grid-cell myst-render-panel-{panel_index}{active_cls}">'
+        '<div class="myst-gravity-level-panel myst-render-preset-panel">'
+        f'<div class="myst-gravity-level-title">PRESET {preset_id}{subtitle}</div>'
+        '<hr class="myst-gravity-level-rule" />'
+        f"{body}"
+        "</div>"
+        "</div>"
+    )
+
+
+def _format_render_grid_html(
+    plot_htmls: list[str | None] | None = None,
+    *,
+    active_slot: int | None = None,
+) -> str:
+    """3×3 Render page grid — preset plots or placeholders."""
+    cells = [
+        _format_render_cell_html(
+            slot,
+            plot_html=None if plot_htmls is None else plot_htmls[slot],
+            active=(active_slot is not None and active_slot == slot),
+        )
+        for slot in range(_STATUS_GRID_PRESET_COUNT)
+    ]
+    return (
+        '<div class="myst-render-grid-wrap">'
+        '<div class="myst-render-grid">'
+        f"{''.join(cells)}"
+        "</div>"
+        "</div>"
+    )
+
+
+def _render_sub_nav_btn_classes(slot: int, active_slot: int) -> list[str]:
+    classes = ["vqc-source-tab", "myst-status-preset-btn", "myst-render-preset-btn"]
+    if slot == active_slot:
+        classes.append("active")
+    return classes
+
+
+def _render_sub_nav_btn_updates(active_slot: int) -> tuple:
+    active = int(active_slot)
+    return tuple(
+        gr.update(
+            interactive=(i != active),
+            elem_classes=_render_sub_nav_btn_classes(i, active),
+            variant="secondary",
+        )
+        for i in range(_STATUS_ZOOM_PRESET_COUNT)
+    )
+
+
+def _render_sub_nav_home_btn_update(*, active_slot: int) -> gr.Update:
+    on_grid = int(active_slot) < 0
+    classes = ["vqc-source-tab", "myst-status-preset-btn", "myst-render-nav-home-btn"]
+    if on_grid:
+        classes.append("active")
+    return gr.update(
+        interactive=not on_grid,
+        elem_classes=classes,
+        variant="secondary",
+    )
+
+
+def _render_sub_nav_render_btn_update(*, rendering: bool = False) -> gr.Update:
+    classes = ["vqc-source-tab", "myst-status-preset-btn", "myst-render-nav-render-btn"]
+    if rendering:
+        classes.append("active")
+    return gr.update(elem_classes=classes, variant="secondary")
+
+
+def _place_render_sub_nav_row(
+    active_slot: int = -1,
+) -> tuple[gr.Button, dict[str, gr.Button], gr.Button]:
+    """Render sub-nav — Home, nine presets (01 … 09), and Render in one grid row."""
+    buttons: dict[str, gr.Button] = {}
+    active = int(active_slot)
+    on_grid = active < 0
+    with gr.Row(
+        elem_id="myst-render-sub-nav",
+        elem_classes=[
+            "myst-render-preset-nav-wrap",
+            "vqc-nav-spreadsheet-row",
+            "vqc-status-preset-nav-row",
+        ],
+    ):
+        home_classes = ["vqc-source-tab", "myst-status-preset-btn", "myst-render-nav-home-btn"]
+        if on_grid:
+            home_classes.append("active")
+        home_btn = gr.Button(
+            "Home",
+            elem_id="myst-render-nav-home-btn",
+            elem_classes=home_classes,
+            interactive=not on_grid,
+            scale=0,
+            min_width=0,
+            variant="secondary",
+        )
+        for slot in range(_STATUS_ZOOM_PRESET_COUNT):
+            preset_id = _gravity_preset_id(slot)
+            is_active = slot == active
+            classes = ["vqc-source-tab", "myst-status-preset-btn", "myst-render-preset-btn"]
+            if is_active:
+                classes.append("active")
+            buttons[str(slot)] = gr.Button(
+                preset_id,
+                elem_id=f"myst-render-preset-btn-{preset_id}",
+                elem_classes=classes,
+                interactive=not is_active,
+                scale=0,
+                min_width=0,
+                variant="secondary",
+            )
+        render_btn = gr.Button(
+            "Render",
+            elem_id="myst-render-nav-render-btn",
+            elem_classes=[
+                "vqc-source-tab",
+                "myst-status-preset-btn",
+                "myst-render-nav-render-btn",
+            ],
+            scale=0,
+            min_width=0,
+            variant="secondary",
+        )
+    return home_btn, buttons, render_btn
+
+
+def _render_grid_select(
+    slot: int,
+    plot_cache: list[str | None],
+) -> tuple:
+    """Highlight one preset in the Render grid without re-rendering plots."""
+    slot = int(slot)
+    has_plots = any(plot_cache)
+    html = _format_render_grid_html(
+        plot_cache if has_plots else None,
+        active_slot=slot,
+    )
+    return (
+        html,
+        slot,
+        *_render_sub_nav_btn_updates(slot),
+        _render_sub_nav_home_btn_update(active_slot=slot),
+    )
+
+
+def _render_load_all_presets(active_slot: int) -> tuple:
+    """Render all nine preset plots into the Render grid."""
+    plots = [_render_preset_plot_html(slot) for slot in range(_STATUS_GRID_PRESET_COUNT)]
+    nav_active = int(active_slot) if int(active_slot) >= 0 else -1
+    highlight = nav_active if nav_active >= 0 else None
+    html = _format_render_grid_html(plots, active_slot=highlight)
+    return (
+        html,
+        plots,
+        nav_active,
+        *_render_sub_nav_btn_updates(nav_active),
+        _render_sub_nav_home_btn_update(active_slot=nav_active),
+        _render_sub_nav_render_btn_update(rendering=True),
     )
 
 
@@ -7069,6 +7371,12 @@ def build_app() -> gr.Blocks:
         with gr.Column(visible=False, elem_classes=["myst-gravity-wired-hidden"]):
             tab_gravity_btn = gr.Button(
                 "Gravity",
+                elem_classes=["vqc-source-tab", "active"],
+                interactive=False,
+                variant="secondary",
+            )
+            tab_render_btn = gr.Button(
+                "Render",
                 elem_classes=["vqc-source-tab"],
                 variant="secondary",
             )
@@ -7101,6 +7409,7 @@ def build_app() -> gr.Blocks:
         with gr.Column(visible=False, elem_classes=["vqc-animations-page"]) as page_animations:
             _anim_nav = _place_main_nav_row("animations")
             anim_tab_gravity_btn = _anim_nav["gravity"]
+            anim_tab_render_btn = _anim_nav["render"]
             anim_tab_readme_btn = _anim_nav["readme"]
             anim_tab_anim_btn = _anim_nav["animations"]
             anim_tab_status_btn = _anim_nav["status"]
@@ -7119,10 +7428,12 @@ def build_app() -> gr.Blocks:
         _init_preset_tui = _format_gravity_menu_tui_html()
         _init_control_levels = _format_gravity_control_panel_html(_GRAVITY_HOME_DIALS, 0)
         _init_status_panel = _format_gravity_status_grid_html(active_slot=None)
+        _init_render_panel = _format_render_grid_html()
 
         with gr.Column(visible=False, elem_classes=["myst-readme-page"]) as page_readme:
             _readme_nav = _place_main_nav_row("readme")
             readme_tab_gravity_btn = _readme_nav["gravity"]
+            readme_tab_render_btn = _readme_nav["render"]
             readme_tab_readme_btn = _readme_nav["readme"]
             readme_tab_anim_btn = _readme_nav["animations"]
             readme_tab_status_btn = _readme_nav["status"]
@@ -7143,11 +7454,45 @@ def build_app() -> gr.Blocks:
                     gr.Code(snippet, language="python", lines=10)
             gr.Markdown(EXPLORE_FURTHER_MD)
 
+        render_active_slot = gr.State(-1)
+        render_plot_cache = gr.State([None] * _STATUS_GRID_PRESET_COUNT)
+        with gr.Column(visible=False, elem_classes=["myst-render-page"]) as page_render:
+            _place_status_gap_row(slot="before-main-nav")
+            _render_nav = _place_main_nav_row("render")
+            render_tab_gravity_btn = _render_nav["gravity"]
+            render_tab_render_btn = _render_nav["render"]
+            render_tab_readme_btn = _render_nav["readme"]
+            render_tab_anim_btn = _render_nav["animations"]
+            render_tab_status_btn = _render_nav["status"]
+            _place_status_gap_row(slot="after-main-nav", half_height=True)
+            with gr.Column(visible=True, elem_classes=["myst-render-stack"]) as render_content_col:
+                render_home_btn, _render_sub_nav, render_all_btn = _place_render_sub_nav_row(
+                    active_slot=-1
+                )
+                _place_status_gap_row(slot="after-preset-nav")
+                render_sub_nav_btns = [
+                    _render_sub_nav[str(i)] for i in range(_STATUS_ZOOM_PRESET_COUNT)
+                ]
+                with gr.Column(
+                    visible=True,
+                    elem_classes=["myst-render-catalog-host"],
+                ) as render_catalog_col:
+                    render_grid_html = gr.HTML(
+                        _init_render_panel,
+                        elem_id="myst-render-grid-host",
+                        elem_classes=[
+                            "myst-gravity-control-levels-wrap",
+                            "myst-render-panel-host",
+                            "myst-render-grid-host",
+                        ],
+                    )
+
         status_content_open = gr.State(True)
         with gr.Column(visible=False, elem_classes=["myst-status-page"]) as page_status:
             _place_status_gap_row(slot="before-main-nav")
             _status_nav = _place_main_nav_row("status")
             status_tab_gravity_btn = _status_nav["gravity"]
+            status_tab_render_btn = _status_nav["render"]
             status_tab_readme_btn = _status_nav["readme"]
             status_tab_anim_btn = _status_nav["animations"]
             status_tab_status_btn = _status_nav["status"]
@@ -7302,6 +7647,7 @@ def build_app() -> gr.Blocks:
         with gr.Column(visible=False, elem_classes=["myst-edit-page"]) as page_edit:
             _edit_nav = _place_main_nav_row("edit")
             edit_tab_gravity_btn = _edit_nav["gravity"]
+            edit_tab_render_btn = _edit_nav["render"]
             edit_tab_readme_btn = _edit_nav["readme"]
             edit_tab_anim_btn = _edit_nav["animations"]
             edit_tab_status_btn = _edit_nav["status"]
@@ -7441,6 +7787,7 @@ def build_app() -> gr.Blocks:
         with gr.Column(visible=True, elem_classes=["myst-gravity-page"], scale=1) as page_gravity:
             _grav_nav = _place_main_nav_row("gravity")
             grav_tab_gravity_btn = _grav_nav["gravity"]
+            grav_tab_render_btn = _grav_nav["render"]
             grav_tab_readme_btn = _grav_nav["readme"]
             grav_tab_anim_btn = _grav_nav["animations"]
             grav_tab_status_btn = _grav_nav["status"]
@@ -7908,12 +8255,14 @@ def build_app() -> gr.Blocks:
         newhere_outputs = [panel_newhere, tab_newhere_btn, newhere_open, panel_claims, tab_claims_btn, claims_open]
         claims_outputs = [panel_claims, tab_claims_btn, claims_open, panel_newhere, tab_newhere_btn, newhere_open]
         nav_outputs = [
-            page_animations,
             page_gravity,
+            page_render,
+            page_animations,
             page_readme,
             page_status,
             page_edit,
             tab_gravity_btn,
+            tab_render_btn,
             tab_readme_btn,
             tab_anim_btn,
             tab_status_btn,
@@ -7924,25 +8273,35 @@ def build_app() -> gr.Blocks:
             tab_claims_btn,
             claims_open,
             anim_tab_gravity_btn,
+            anim_tab_render_btn,
             anim_tab_readme_btn,
             anim_tab_anim_btn,
             anim_tab_status_btn,
             grav_tab_gravity_btn,
+            grav_tab_render_btn,
             grav_tab_readme_btn,
             grav_tab_anim_btn,
             grav_tab_status_btn,
             readme_tab_gravity_btn,
+            readme_tab_render_btn,
             readme_tab_readme_btn,
             readme_tab_anim_btn,
             readme_tab_status_btn,
             status_tab_gravity_btn,
+            status_tab_render_btn,
             status_tab_readme_btn,
             status_tab_anim_btn,
             status_tab_status_btn,
             edit_tab_gravity_btn,
+            edit_tab_render_btn,
             edit_tab_readme_btn,
             edit_tab_anim_btn,
             edit_tab_status_btn,
+            render_tab_gravity_btn,
+            render_tab_render_btn,
+            render_tab_readme_btn,
+            render_tab_anim_btn,
+            render_tab_status_btn,
             current_page,
         ]
 
@@ -7975,39 +8334,87 @@ def build_app() -> gr.Blocks:
                 show_progress="hidden",
             )
 
+        render_select_outputs = [
+            render_grid_html,
+            render_active_slot,
+            *render_sub_nav_btns,
+            render_home_btn,
+        ]
+        render_load_outputs = [
+            render_grid_html,
+            render_plot_cache,
+            render_active_slot,
+            *render_sub_nav_btns,
+            render_home_btn,
+            render_all_btn,
+        ]
+
+        def _make_render_select_click(slot: int):
+            def _handler(plot_cache: list[str | None]):
+                return _render_grid_select(slot, plot_cache)
+
+            return _handler
+
+        render_all_btn.click(
+            _render_load_all_presets,
+            inputs=[render_active_slot],
+            outputs=render_load_outputs,
+            show_progress="hidden",
+        )
+        _bind_nav(render_home_btn, "gravity", refresh_gravity=True)
+        for slot, btn in enumerate(render_sub_nav_btns):
+            btn.click(
+                _make_render_select_click(slot),
+                inputs=[render_plot_cache],
+                outputs=render_select_outputs,
+                show_progress="hidden",
+            )
+
+        _bind_nav(tab_render_btn, "render")
         _bind_nav(tab_anim_btn, "animations")
         _bind_nav(tab_readme_btn, "readme")
         _bind_status_nav(tab_status_btn)
         _bind_nav(tab_gravity_btn, "gravity", refresh_gravity=True)
+        _bind_nav(anim_tab_render_btn, "render")
         _bind_nav(anim_tab_anim_btn, "animations")
         _bind_nav(anim_tab_readme_btn, "readme")
         _bind_status_nav(anim_tab_status_btn)
         _bind_nav(anim_tab_gravity_btn, "gravity", refresh_gravity=True)
+        _bind_nav(grav_tab_render_btn, "render")
         _bind_nav(grav_tab_anim_btn, "animations")
         _bind_nav(grav_tab_readme_btn, "readme")
         _bind_status_nav(grav_tab_status_btn)
         _bind_nav(grav_tab_gravity_btn, "gravity", refresh_gravity=True)
         _bind_nav(readme_tab_gravity_btn, "gravity", refresh_gravity=True)
+        _bind_nav(readme_tab_render_btn, "render")
         _bind_nav(readme_tab_anim_btn, "animations")
         _bind_nav(readme_tab_readme_btn, "readme")
         _bind_status_nav(readme_tab_status_btn)
         _bind_nav(status_tab_gravity_btn, "gravity", refresh_gravity=True)
+        _bind_nav(status_tab_render_btn, "render")
         _bind_nav(status_tab_readme_btn, "readme")
         _bind_nav(status_tab_anim_btn, "animations")
         _bind_status_nav(status_tab_status_btn)
         _bind_nav(edit_tab_gravity_btn, "gravity", refresh_gravity=True)
+        _bind_nav(edit_tab_render_btn, "render")
         _bind_nav(edit_tab_readme_btn, "readme")
         _bind_nav(edit_tab_anim_btn, "animations")
         _bind_status_nav(edit_tab_status_btn)
+        _bind_nav(render_tab_gravity_btn, "gravity", refresh_gravity=True)
+        _bind_nav(render_tab_render_btn, "render")
+        _bind_nav(render_tab_readme_btn, "readme")
+        _bind_nav(render_tab_anim_btn, "animations")
+        _bind_status_nav(render_tab_status_btn)
         tab_newhere_btn.click(_toggle_newhere, inputs=[newhere_open], outputs=newhere_outputs)
         tab_claims_btn.click(_toggle_claims, inputs=[claims_open], outputs=claims_outputs)
         newhere_minimize_btn.click(_minimize_newhere, outputs=newhere_outputs[:3])
         claims_minimize_btn.click(_minimize_claims, outputs=claims_outputs[:3])
+        def _app_boot() -> tuple:
+            return (*_nav_to_page("gravity"), _init_unit_cell_html)
+
         demo.load(
-            lambda: (
-                _init_unit_cell_html
-            ),
-            outputs=[unit_cell_image],
+            _app_boot,
+            outputs=[*nav_outputs, unit_cell_image],
             show_progress=False,
         )
 
