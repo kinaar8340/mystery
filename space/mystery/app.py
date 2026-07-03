@@ -3845,6 +3845,18 @@ footer {{ visibility: hidden; }}
     margin: 0 !important;
     background: transparent !important;
 }}
+.gradio-container .myst-render-page .myst-gravity-control-levels-wrap,
+.gradio-container .myst-render-page .myst-gravity-control-levels-wrap .html-container {{
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    flex: 1 1 auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    justify-content: flex-start !important;
+}}
 .gradio-container .myst-gravity-level-panel {{
     width: 100% !important;
     padding: 0.55rem 0.65rem 0.65rem !important;
@@ -3990,6 +4002,13 @@ footer {{ visibility: hidden; }}
     row-gap: 0 !important;
     box-sizing: border-box !important;
 }}
+.gradio-container .myst-render-page {{
+    --myst-default-gap-height: 0.38rem;
+    --myst-half-gap-height: calc(var(--myst-default-gap-height) * 0.5);
+    --myst-render-grid-gap: 0.18rem;
+    --myst-render-grid-bottom-frame: 0.38rem;
+    padding: 0 !important;
+}}
 .gradio-container .myst-status-page .myst-status-gap-row,
 .gradio-container .myst-status-page .myst-default-gap-row,
 .gradio-container .myst-status-page .myst-status-zoom-edit-col > .row.myst-status-gap-row,
@@ -4075,12 +4094,17 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-render-page > .form:has(.myst-render-stack),
 .gradio-container .myst-render-page > .column.myst-render-stack {{
     flex: 1 1 auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
     height: auto !important;
     min-height: 0 !important;
     margin-top: 0 !important;
     padding-top: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
     justify-content: flex-start !important;
-    align-content: flex-start !important;
+    align-content: stretch !important;
+    align-items: stretch !important;
 }}
 .gradio-container .myst-status-page > .block,
 .gradio-container .myst-status-page > .form,
@@ -4835,24 +4859,38 @@ footer {{ visibility: hidden; }}
 }}
 .gradio-container .myst-render-page .myst-render-grid-wrap {{
     width: 100% !important;
-    height: auto !important;
-    min-height: calc(100dvh - 8.5rem) !important;
+    height: 100% !important;
+    min-height: calc(100dvh - 7.5rem - var(--myst-render-grid-bottom-frame, 0.38rem)) !important;
     flex: 1 1 auto !important;
     display: flex !important;
     flex-direction: column !important;
+    align-items: stretch !important;
+    align-content: stretch !important;
+    justify-content: flex-start !important;
+    padding: 0 0 var(--myst-render-grid-bottom-frame, 0.38rem) 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+    box-sizing: border-box !important;
 }}
 .gradio-container .myst-render-page .myst-render-grid {{
     display: grid !important;
     grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-    grid-template-rows: repeat(3, minmax(10rem, 1fr)) !important;
-    gap: 0.45rem !important;
+    grid-template-rows: repeat(3, minmax(0, 1fr)) !important;
+    gap: var(--myst-render-grid-gap, 0.18rem) !important;
     width: 100% !important;
-    min-height: calc(100dvh - 7.5rem) !important;
+    height: calc(100dvh - 7.5rem - var(--myst-render-grid-bottom-frame, 0.38rem)) !important;
+    min-height: calc(100dvh - 7.5rem - var(--myst-render-grid-bottom-frame, 0.38rem)) !important;
     flex: 1 1 auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+    align-content: stretch !important;
+    box-sizing: border-box !important;
 }}
 .gradio-container .myst-render-page .myst-render-grid-cell {{
     min-width: 0 !important;
     min-height: 0 !important;
+    width: 100% !important;
     height: 100% !important;
     display: flex !important;
     flex-direction: column !important;
@@ -4867,21 +4905,59 @@ footer {{ visibility: hidden; }}
 }}
 .gradio-container .myst-render-page .myst-render-catalog-host:not(.hide):not(.hidden) {{
     flex: 1 1 auto !important;
-    min-height: 0 !important;
-    height: calc(100dvh - 7rem) !important;
+    min-height: calc(100dvh - 8.5rem) !important;
+    height: auto !important;
     display: flex !important;
     flex-direction: column !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    align-items: stretch !important;
 }}
+.gradio-container .myst-render-page .myst-render-catalog-host:not(.hide):not(.hidden) #myst-render-grid-host,
+.gradio-container .myst-render-page .myst-render-catalog-host:not(.hide):not(.hidden) #myst-render-grid-host .html-container,
 .gradio-container .myst-render-page .myst-render-panel-host,
 .gradio-container .myst-render-page .myst-render-panel-host .html-container,
 .gradio-container .myst-render-page #myst-render-grid-host,
-.gradio-container .myst-render-page #myst-render-grid-host .html-container {{
-    flex: 1 1 auto !important;
-    min-height: 0 !important;
-    height: 100% !important;
+.gradio-container .myst-render-page #myst-render-grid-host .html-container,
+.gradio-container .myst-render-page #myst-render-grid-host.block,
+.gradio-container .myst-render-page #myst-render-grid-host .wrap,
+.gradio-container .myst-render-page #myst-render-grid-host .gradio-html,
+.gradio-container .myst-render-page #myst-render-grid-host .prose {{
     width: 100% !important;
+    max-width: 100% !important;
+    min-height: calc(100dvh - 8.5rem - var(--myst-render-grid-bottom-frame, 0.38rem)) !important;
+    height: calc(100dvh - 7.5rem - var(--myst-render-grid-bottom-frame, 0.38rem)) !important;
+    flex: 1 1 auto !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
     display: flex !important;
     flex-direction: column !important;
+    align-items: stretch !important;
+    align-content: stretch !important;
+    justify-content: flex-start !important;
+    box-sizing: border-box !important;
+}}
+.gradio-container .myst-render-page .myst-render-plot-host .myst-render-grid-viewport,
+.gradio-container .myst-render-page .myst-render-plot-host .myst-unit-cell-viewport-inner {{
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    max-width: none !important;
+    max-height: none !important;
+    display: block !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    align-items: unset !important;
+    justify-content: unset !important;
+}}
+.gradio-container:has(.myst-render-page:not(.hide)) {{
+    padding-left: 0 !important;
+    padding-right: 0 !important;
 }}
 .gradio-container .myst-render-page .myst-render-detail-wrap {{
     width: 100% !important;
@@ -4959,16 +5035,35 @@ footer {{ visibility: hidden; }}
     object-fit: contain !important;
 }}
 .gradio-container .myst-render-page .myst-render-preset-panel {{
-    padding: 0.38rem 0.42rem 0.46rem !important;
+    padding: 0.16rem !important;
     flex: 1 1 0 !important;
     height: 100% !important;
     min-height: 0 !important;
     display: flex !important;
     flex-direction: column !important;
+    gap: 0 !important;
     overflow: hidden !important;
     background: rgba(0, 0, 0, {_MYST_STATUS_PANEL_ALPHA}) !important;
     border: 2px inset rgba(92, 74, 31, {_MYST_STATUS_PANEL_ALPHA}) !important;
     box-sizing: border-box !important;
+}}
+.gradio-container .myst-render-page .myst-render-preset-header {{
+    flex: 0 0 auto !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}}
+.gradio-container .myst-render-page .myst-render-preset-panel .myst-gravity-level-title {{
+    font-size: 0.66rem !important;
+    letter-spacing: 0.05em !important;
+    line-height: 1.1 !important;
+    margin: 0 !important;
+    padding: 0 0.04rem !important;
+    flex: 0 0 auto !important;
+}}
+.gradio-container .myst-render-page .myst-render-preset-panel .myst-gravity-level-rule {{
+    margin: 0.08rem 0 0.1rem 0 !important;
+    flex: 0 0 auto !important;
 }}
 .gradio-container .myst-render-page .myst-render-grid-cell-active .myst-render-preset-panel {{
     box-shadow:
@@ -4978,26 +5073,42 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-render-page .myst-render-plot-host {{
     flex: 1 1 auto !important;
     min-height: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
     display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
+    align-items: stretch !important;
+    justify-content: stretch !important;
     overflow: hidden !important;
     background: #000000 !important;
+    padding: 0 !important;
+    margin: 0 !important;
 }}
 .gradio-container .myst-render-page .myst-render-plot-host .myst-unit-cell-viewport-inner {{
     width: 100% !important;
     height: 100% !important;
     min-height: 0 !important;
-    max-height: 100% !important;
+    max-height: none !important;
+    max-width: none !important;
+    display: block !important;
+    align-items: unset !important;
+    justify-content: unset !important;
+    overflow: hidden !important;
+    margin: 0 !important;
+    padding: 0 !important;
 }}
 .gradio-container .myst-render-page .myst-render-plot-host img {{
+    width: 100% !important;
+    height: 100% !important;
     max-width: 100% !important;
     max-height: 100% !important;
     object-fit: contain !important;
+    display: block !important;
+    margin: 0 !important;
+    padding: 0 !important;
 }}
 .gradio-container .myst-render-page .myst-render-plot-placeholder {{
     flex: 1 1 auto !important;
-    min-height: 4.5rem !important;
+    min-height: 0 !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -5014,17 +5125,63 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-render-page .myst-render-grid-host {{
     flex: 1 1 auto !important;
     width: 100% !important;
+    min-height: 0 !important;
+}}
+.gradio-container .myst-render-page .myst-render-stack {{
+    width: 100% !important;
+    flex: 1 1 auto !important;
+    min-height: calc(100dvh - 8rem) !important;
+    height: auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    justify-content: flex-start !important;
+    gap: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+}}
+.gradio-container .myst-render-page .myst-render-stack > .block:has(.myst-render-catalog-host):not(.hide):not(.hidden),
+.gradio-container .myst-render-page .myst-render-stack > .form:has(.myst-render-catalog-host):not(.hide):not(.hidden),
+.gradio-container .myst-render-page .myst-render-stack > .column.myst-render-catalog-host:not(.hide):not(.hidden) {{
+    flex: 1 1 auto !important;
+    min-height: calc(100dvh - 8.5rem) !important;
+    height: auto !important;
+    width: 100% !important;
+    align-items: stretch !important;
+}}
+.gradio-container .myst-render-page .myst-render-preset-nav-wrap,
+.gradio-container .myst-render-page .myst-render-preset-nav-wrap.row,
+.gradio-container .myst-render-page #myst-render-sub-nav {{
+    flex: 0 0 auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}}
+.gradio-container .myst-render-page > .block,
+.gradio-container .myst-render-page > .form,
+.gradio-container .myst-render-page > .column,
+.gradio-container .myst-render-page .myst-render-catalog-host .block,
+.gradio-container .myst-render-page .myst-render-catalog-host .form,
+.gradio-container .myst-render-page .myst-render-catalog-host .column {{
+    width: 100% !important;
+    max-width: 100% !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    align-items: stretch !important;
 }}
 @media (max-width: 1100px) {{
-    .gradio-container .myst-status-page .myst-status-grid,
-    .gradio-container .myst-render-page .myst-render-grid {{
+    .gradio-container .myst-status-page .myst-status-grid {{
         grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
         grid-template-rows: auto !important;
     }}
 }}
 @media (max-width: 720px) {{
-    .gradio-container .myst-status-page .myst-status-grid,
-    .gradio-container .myst-render-page .myst-render-grid {{
+    .gradio-container .myst-status-page .myst-status-grid {{
         grid-template-columns: minmax(0, 1fr) !important;
     }}
 }}
@@ -5233,7 +5390,7 @@ _GRAVITY_PRESET_BTN_KEYS = _GRAVITY_KEYPAD_NUMERIC_KEYS
 _GRAVITY_TUI_SCROLL_STEP_PX = 22
 _GRAVITY_TUI_MENU_FOCUS_MAX = 9
 _UNIT_CELL_IMAGE_DPI = 100
-_RENDER_GRID_IMAGE_DPI = 72
+_RENDER_GRID_IMAGE_DPI = 100
 _RENDER_DETAIL_IMAGE_DPI = 120
 # Index of unit_cell_image within gravity_preset_outputs (16 keypad + 2 edit btns + 20 sliders).
 _GRAVITY_PRESET_IMAGE_OUT_INDEX = 41
@@ -6084,10 +6241,10 @@ def _dials_to_explorer_args(dials: dict[str, float]) -> tuple[float, ...]:
 
 
 def _render_preset_plot_html(slot: int, *, dpi: int = _RENDER_GRID_IMAGE_DPI) -> str:
-    """Render one preset's unit-cell plot as viewport HTML."""
+    """Render one preset's unit-cell plot as stretch-filled grid cell HTML."""
     dials = _gravity_preset_dials_for_slot(slot)
     _metrics, _header, fig = run_residual_explorer(*_dials_to_explorer_args(dials))
-    return _gravity_fig_to_viewport_file_html(fig, dpi=dpi)
+    return _gravity_fig_to_render_grid_file_html(fig, dpi=dpi)
 
 
 def _render_preset_detail_plot_html(slot: int) -> str:
@@ -6122,8 +6279,10 @@ def _format_render_cell_html(
         f'data-slot="{slot}" role="button" tabindex="0" '
         f'aria-label="Open PRESET {preset_id} detail view">'
         '<div class="myst-gravity-level-panel myst-render-preset-panel">'
+        '<div class="myst-render-preset-header">'
         f'<div class="myst-gravity-level-title">PRESET {preset_id}{subtitle}</div>'
         '<hr class="myst-gravity-level-rule" />'
+        '</div>'
         f"{body}"
         "</div>"
         "</div>"
@@ -6662,6 +6821,31 @@ def figure_to_viewport_file_html(path: str, *, png_bytes: int | None = None) -> 
     return html
 
 
+def figure_to_render_grid_viewport_html(path: str, *, png_bytes: int | None = None) -> str:
+    """Stretch-filled viewport img for Render tab 3×3 grid cells (no centering)."""
+    if not path or not os.path.exists(path):
+        return "<div style='color:red;padding:20px;'>Image file not found</div>"
+    size = png_bytes if png_bytes is not None else os.path.getsize(path)
+    html = (
+        '<div class="myst-unit-cell-viewport-inner myst-render-grid-viewport" '
+        'style="height:100% !important;width:100% !important;max-width:100% !important;'
+        'min-height:100% !important;background:#000000;display:block !important;'
+        'overflow:hidden !important;box-sizing:border-box !important;margin:0 !important;'
+        'padding:0 !important;">'
+        f'<img src="/gradio_api/file={path}" '
+        'style="width:100% !important;height:100% !important;'
+        'max-width:100% !important;max-height:100% !important;'
+        'object-fit:contain !important;display:block !important;margin:0 !important;" '
+        'alt="Unit cell viewport" loading="eager" decoding="sync" />'
+        "</div>"
+    )
+    print(
+        f"[DEBUG] Returning render grid HTML len={len(html)} png_bytes={size} path={path}",
+        flush=True,
+    )
+    return html
+
+
 def _gravity_fig_to_viewport_file_html(fig: plt.Figure, *, dpi: int) -> str:
     """savefig → save_file_to_cache → gr.HTML img (HF Spaces-safe)."""
     from gradio.processing_utils import save_file_to_cache
@@ -6688,6 +6872,29 @@ def _gravity_fig_to_viewport_file_html(fig: plt.Figure, *, dpi: int) -> str:
     )
     served_path = save_file_to_cache(tmp_path, get_upload_folder())
     return figure_to_viewport_file_html(served_path, png_bytes=png_bytes)
+
+
+def _gravity_fig_to_render_grid_file_html(fig: plt.Figure, *, dpi: int) -> str:
+    """savefig → cache → stretch-filled grid cell img (Render tab 3×3)."""
+    from gradio.processing_utils import save_file_to_cache
+    from gradio.utils import get_upload_folder
+
+    with tempfile.NamedTemporaryFile(suffix=".png", delete=False, dir="/tmp") as tmp:
+        tmp_path = tmp.name
+    try:
+        fig.savefig(
+            tmp_path,
+            format="png",
+            dpi=dpi,
+            facecolor="#000000",
+            bbox_inches="tight",
+            pad_inches=0.02,
+        )
+    finally:
+        plt.close(fig)
+    png_bytes = os.path.getsize(tmp_path)
+    served_path = save_file_to_cache(tmp_path, get_upload_folder())
+    return figure_to_render_grid_viewport_html(served_path, png_bytes=png_bytes)
 
 
 def _gravity_static_image_update(fig: object) -> object:
