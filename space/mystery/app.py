@@ -1731,6 +1731,15 @@ footer {{
     text-decoration: none !important;
     cursor: default !important;
 }}
+/* Child-level navigation (Render + Presets sub-nav) — active = dark orange */
+.gradio-container .myst-render-preset-nav-wrap button.vqc-source-tab.active,
+.gradio-container .myst-status-preset-nav-wrap button.vqc-source-tab.active,
+.gradio-container button.myst-render-preset-btn.active,
+.gradio-container button.myst-status-preset-btn.active,
+.gradio-container button.myst-render-nav-render-btn.active {{
+    color: #B85C00 !important;
+    -webkit-text-fill-color: #B85C00 !important;
+}}
 .gradio-container a:hover:not(.vqc-source-tab),
 .gradio-container .markdown a:hover:not(.vqc-source-tab),
 .gradio-container .prose a:hover:not(.vqc-source-tab) {{
@@ -5157,6 +5166,10 @@ footer {{ visibility: hidden; }}
     margin: 0 !important;
     padding: 0 !important;
 }}
+.gradio-container .myst-render-preset-nav-wrap button.myst-render-nav-render-btn {{
+    min-width: 82px !important;
+    width: 82px !important;
+}}
 .gradio-container .myst-render-page > .block,
 .gradio-container .myst-render-page > .form,
 .gradio-container .myst-render-page > .column,
@@ -6366,25 +6379,15 @@ def _render_sub_nav_btn_updates(active_slot: int) -> tuple:
     )
 
 
-def _render_sub_nav_home_back_updates(zoom_slot: int) -> tuple[gr.Update, gr.Update]:
+def _render_sub_nav_home_back_updates(zoom_slot: int) -> gr.Update:
+    """Back button update only (Home removed from Render sub-nav)."""
     on_grid = int(zoom_slot) < 0
-    home_classes = ["vqc-source-tab", "myst-status-preset-btn", "myst-render-nav-home-btn"]
     back_classes = ["vqc-source-tab", "myst-status-preset-btn", "myst-render-nav-back-btn"]
-    if on_grid:
-        home_classes.append("active")
-    return (
-        gr.update(
-            visible=on_grid,
-            interactive=not on_grid,
-            elem_classes=home_classes,
-            variant="secondary",
-        ),
-        gr.update(
-            visible=not on_grid,
-            interactive=True,
-            elem_classes=back_classes,
-            variant="secondary",
-        ),
+    return gr.update(
+        visible=not on_grid,
+        interactive=True,
+        elem_classes=back_classes,
+        variant="secondary",
     )
 
 
@@ -6403,11 +6406,10 @@ def _place_render_sub_nav_row(
     active_slot: int = -1,
     *,
     zoom_slot: int = -1,
-) -> tuple[gr.Button, gr.Button, dict[str, gr.Button], gr.Button]:
-    """Render sub-nav — Home/Back, nine presets (01 … 09), and Render in one grid row."""
+) -> tuple[gr.Button, dict[str, gr.Button], gr.Button]:
+    """Render sub-nav — Back, nine presets (01 … 09), and Render in one row."""
     buttons: dict[str, gr.Button] = {}
     active = int(active_slot)
-    on_grid = int(zoom_slot) < 0
     with gr.Row(
         elem_id="myst-render-sub-nav",
         elem_classes=[
@@ -6416,18 +6418,6 @@ def _place_render_sub_nav_row(
             "vqc-status-preset-nav-row",
         ],
     ):
-        home_classes = ["vqc-source-tab", "myst-status-preset-btn", "myst-render-nav-home-btn"]
-        if on_grid:
-            home_classes.append("active")
-        home_btn = gr.Button(
-            "Home",
-            elem_id="myst-render-nav-home-btn",
-            elem_classes=home_classes,
-            interactive=not on_grid,
-            scale=0,
-            min_width=0,
-            variant="secondary",
-        )
         back_btn = gr.Button(
             "Back",
             elem_id="myst-render-nav-back-btn",
@@ -6465,10 +6455,10 @@ def _place_render_sub_nav_row(
                 "myst-render-nav-render-btn",
             ],
             scale=0,
-            min_width=0,
+            min_width=82,
             variant="secondary",
         )
-    return home_btn, back_btn, buttons, render_btn
+    return back_btn, buttons, render_btn
 
 
 def _render_open_detail(slot: int, plot_cache: list[str | None]) -> tuple:
@@ -7940,7 +7930,7 @@ def build_app() -> gr.Blocks:
             render_tab_status_btn = _render_nav["status"]
             _place_status_gap_row(slot="after-main-nav", half_height=True)
             with gr.Column(visible=True, elem_classes=["myst-render-stack"]) as render_content_col:
-                render_home_btn, render_back_btn, _render_sub_nav, render_all_btn = (
+                render_back_btn, _render_sub_nav, render_all_btn = (
                     _place_render_sub_nav_row(active_slot=-1, zoom_slot=-1)
                 )
                 _place_status_gap_row(slot="after-preset-nav")
@@ -8822,7 +8812,6 @@ def build_app() -> gr.Blocks:
             render_zoom_slot,
             render_active_slot,
             *render_sub_nav_btns,
-            render_home_btn,
             render_back_btn,
             render_all_btn,
         ]
@@ -8832,7 +8821,6 @@ def build_app() -> gr.Blocks:
             render_zoom_slot,
             render_active_slot,
             *render_sub_nav_btns,
-            render_home_btn,
             render_back_btn,
             render_all_btn,
         ]
@@ -8849,7 +8837,6 @@ def build_app() -> gr.Blocks:
             outputs=render_load_outputs,
             show_progress="hidden",
         )
-        _bind_nav(render_home_btn, "gravity", refresh_gravity=True)
         render_back_btn.click(
             _render_back_to_grid,
             inputs=[render_plot_cache, render_active_slot],
