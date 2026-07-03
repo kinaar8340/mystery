@@ -1034,6 +1034,32 @@ WALLPAPER_HEAD = f"""
     document.addEventListener('DOMContentLoaded', mountWallpaper);
     window.addEventListener('load', mountWallpaper);
 }})();
+(function() {{
+    function mystReflowViewport() {{
+        var vp = document.getElementById('unit-cell-main-view');
+        var row = document.querySelector('.myst-unit-cell-image-row');
+        if (vp) void vp.offsetHeight;
+        if (row) void row.offsetHeight;
+        window.dispatchEvent(new Event('resize'));
+    }}
+    function bootViewportReflow() {{
+        mystReflowViewport();
+        requestAnimationFrame(mystReflowViewport);
+        if (window.__mystViewportReflowObs) return;
+        window.__mystViewportReflowObs = new MutationObserver(function() {{
+            requestAnimationFrame(mystReflowViewport);
+        }});
+        var root = document.querySelector('.myst-unit-cell-image-row');
+        if (root) {{
+            window.__mystViewportReflowObs.observe(root, {{
+                subtree: true, childList: true, attributes: true, attributeFilter: ['style', 'class']
+            }});
+        }}
+    }}
+    if (document.body) bootViewportReflow();
+    document.addEventListener('DOMContentLoaded', bootViewportReflow);
+    window.addEventListener('load', bootViewportReflow);
+}})();
 </script>
 """
 
@@ -3408,7 +3434,7 @@ footer {{ visibility: hidden; }}
     font-size: 0.94rem !important;
     line-height: 1.5 !important;
 }}
-/* === UNIT CELL VIEWPORT — minimal CSS (no JS overrides) === */
+/* === UNIT CELL VIEWPORT — flex height fix (Gradio unequal-height row) === */
 .gradio-container .myst-gravity-split > .column.myst-gravity-visuals-col {{
     min-width: 0 !important;
     width: 100% !important;
@@ -3419,82 +3445,76 @@ footer {{ visibility: hidden; }}
     width: 100% !important;
     overflow: visible !important;
 }}
-/* Image row — prevent unequal-height flex from squishing viewport to 0 */
 .gradio-container .myst-unit-cell-image-row,
-.gradio-container .myst-unit-cell-image-row.row,
 .gradio-container .row.myst-unit-cell-image-row,
-.gradio-container .myst-unit-cell-image-row.block,
-.gradio-container .myst-unit-cell-image-row > .form,
-.gradio-container .myst-unit-cell-image-row > .form > .block {{
+.gradio-container .myst-unit-cell-video-row,
+.gradio-container .row.myst-unit-cell-video-row,
+.gradio-container #component-192,
+.gradio-container #component-194 {{
     height: 550px !important;
     min-height: 550px !important;
     max-height: 550px !important;
     flex: 0 0 550px !important;
+    flex-shrink: 0 !important;
     width: 100% !important;
     min-width: 0 !important;
     align-items: stretch !important;
     align-self: stretch !important;
+    box-sizing: border-box !important;
     overflow: visible !important;
 }}
+.gradio-container .myst-unit-cell-video-row,
+.gradio-container .row.myst-unit-cell-video-row,
+.gradio-container #component-194 {{
+    height: 320px !important;
+    min-height: 320px !important;
+    max-height: 320px !important;
+    flex: 0 0 320px !important;
+}}
+.gradio-container .myst-unit-cell-image-row > .form,
+.gradio-container .myst-unit-cell-image-row > .form > .block,
 .gradio-container .myst-unit-cell-image-row .gradio-html,
-.gradio-container .myst-unit-cell-image-row #unit-cell-main-view,
-.gradio-container .myst-unit-cell-image-row #unit-cell-main-view.block,
-.gradio-container .myst-unit-cell-image-row #unit-cell-main-view.gradio-html,
 .gradio-container .myst-unit-cell-image-row .myst-unit-cell-viewport-image,
 .gradio-container .myst-unit-cell-image-row .html-container,
-.gradio-container .myst-unit-cell-image-row .prose {{
+.gradio-container .myst-unit-cell-image-row .prose,
+.gradio-container #component-192 .gradio-html,
+.gradio-container #component-192 .html-container {{
     height: 100% !important;
-    min-height: 550px !important;
-    max-height: 550px !important;
+    min-height: 100% !important;
     width: 100% !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
     padding: 0 !important;
-    margin: 0 auto !important;
+    margin: 0 !important;
     box-sizing: border-box !important;
 }}
 .gradio-container #unit-cell-main-view,
-.gradio-container #unit-cell-main-view.block,
-.gradio-container #unit-cell-main-view.gradio-html,
-.gradio-container #unit-cell-main-view .html-container,
-.gradio-container #unit-cell-main-view .prose,
-.gradio-container #unit-cell-main-view .html-container > div,
-.gradio-container #unit-cell-main-view .myst-unit-cell-viewport-inner,
-.gradio-container .myst-unit-cell-viewport-img-wrap {{
+.gradio-container #unit-cell-main-view.myst-unit-cell-viewport-inner {{
     height: 550px !important;
     min-height: 550px !important;
     max-height: 550px !important;
     width: 100% !important;
     max-width: 550px !important;
-    min-width: 0 !important;
-    margin: 0 auto !important;
-    padding: 0 !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
     background: #000000 !important;
-    background-color: #000000 !important;
     overflow: hidden !important;
     box-sizing: border-box !important;
+    margin: 0 auto !important;
 }}
-.gradio-container #unit-cell-main-view img,
-.gradio-container .myst-unit-cell-viewport-img {{
+.gradio-container #unit-cell-main-view img {{
     max-width: 100% !important;
     max-height: 100% !important;
     width: auto !important;
     height: auto !important;
-    min-width: 0 !important;
     object-fit: contain !important;
-    object-position: center center !important;
     display: block !important;
-    margin: 0 auto !important;
     visibility: visible !important;
     opacity: 1 !important;
-    background: transparent !important;
 }}
-.gradio-container #unit-cell-main-view,
-.gradio-container #unit-cell-main-view.block,
+.gradio-container .myst-unit-cell-viewport-image,
 .gradio-container #unit-cell-animation,
 .gradio-container #unit-cell-animation.block,
 .gradio-container .myst-cube-viewport-header-slot {{
@@ -3949,12 +3969,14 @@ def figure_to_viewport_file_html(path: str, *, png_bytes: int | None = None) -> 
         return "<div style='color:red;padding:20px;'>Image file not found</div>"
     size = png_bytes if png_bytes is not None else os.path.getsize(path)
     html = (
-        '<div class="myst-unit-cell-viewport-inner" '
-        'style="height:550px;width:100%;max-width:550px;min-height:550px;'
-        'background:#000000;display:flex;align-items:center;justify-content:center;'
-        'overflow:hidden;box-sizing:border-box;">'
+        '<div id="unit-cell-main-view" class="myst-unit-cell-viewport-inner" '
+        'style="height:550px !important;width:100% !important;max-width:550px !important;'
+        'min-height:550px !important;background:#000000;display:flex !important;'
+        'align-items:center !important;justify-content:center !important;'
+        'overflow:hidden !important;box-sizing:border-box !important;">'
         f'<img src="/gradio_api/file={path}" '
-        'style="max-width:100%;max-height:100%;object-fit:contain;display:block;" '
+        'style="max-width:100% !important;max-height:100% !important;'
+        'object-fit:contain !important;display:block !important;" '
         'alt="Unit cell viewport" loading="eager" decoding="sync" />'
         "</div>"
     )
@@ -5057,7 +5079,6 @@ def build_app() -> gr.Blocks:
                     with gr.Row(elem_classes=["myst-unit-cell-image-row"]):
                         unit_cell_image = gr.HTML(
                             value="",
-                            elem_id="unit-cell-main-view",
                             elem_classes=["myst-unit-cell-viewport-image"],
                             container=False,
                             min_height=550,
