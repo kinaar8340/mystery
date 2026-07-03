@@ -3423,8 +3423,10 @@ footer {{ visibility: hidden; }}
 }}
 .gradio-container #unit-cell-main-view,
 .gradio-container #unit-cell-main-view.block,
+.gradio-container #unit-cell-main-view.gradio-html,
 .gradio-container #unit-cell-main-view .html-container,
 .gradio-container #unit-cell-main-view .prose,
+.gradio-container #unit-cell-main-view .html-container > div,
 .gradio-container #unit-cell-main-view .myst-unit-cell-viewport-inner,
 .gradio-container .myst-unit-cell-viewport-img-wrap {{
     height: 550px !important;
@@ -3434,19 +3436,29 @@ footer {{ visibility: hidden; }}
     max-width: 550px !important;
     min-width: 0 !important;
     margin: 0 auto !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
     background: #000000 !important;
+    background-color: #000000 !important;
+    overflow: hidden !important;
     box-sizing: border-box !important;
 }}
 .gradio-container #unit-cell-main-view img,
 .gradio-container .myst-unit-cell-viewport-img {{
-    width: 100% !important;
-    height: 100% !important;
     max-width: 100% !important;
+    max-height: 100% !important;
+    width: auto !important;
+    height: auto !important;
     min-width: 0 !important;
     object-fit: contain !important;
     object-position: center center !important;
     display: block !important;
-    background: #000000 !important;
+    margin: 0 auto !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    background: transparent !important;
 }}
 .gradio-container #unit-cell-main-view,
 .gradio-container #unit-cell-main-view.block,
@@ -3903,11 +3915,17 @@ def figure_to_viewport_file_html(path: str, *, png_bytes: int | None = None) -> 
     if not path or not os.path.exists(path):
         return "<div style='color:red;padding:20px;'>Image file not found</div>"
     size = png_bytes if png_bytes is not None else os.path.getsize(path)
-    html = f"""
-<div style="width:100%;max-width:550px;height:550px;background:#000000;display:flex;align-items:center;justify-content:center;overflow:hidden;border-radius:6px;">
-<img src="/gradio_api/file={path}" style="max-width:100%;max-height:100%;object-fit:contain;display:block;" alt="Unit cell viewport" loading="eager" />
-</div>
-"""
+    html = (
+        '<div class="myst-unit-cell-viewport-inner" '
+        'style="width:100%;max-width:550px;height:550px;min-height:550px;'
+        'background:#000000;display:flex;align-items:center;justify-content:center;'
+        'overflow:hidden;box-sizing:border-box;">'
+        f'<img src="/gradio_api/file={path}" '
+        'style="max-width:100%;max-height:100%;width:auto;height:auto;'
+        'object-fit:contain;display:block;margin:0 auto;" '
+        'alt="Unit cell viewport" loading="eager" decoding="sync" />'
+        "</div>"
+    )
     print(
         f"[DEBUG] Returning HTML len={len(html)} png_bytes={size} path={path}",
         flush=True,
