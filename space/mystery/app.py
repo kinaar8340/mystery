@@ -148,6 +148,7 @@ _VQC_TAB_ORANGE_BORDER = "#6a4c93"
 _VQC_TAB_ORANGE_TEXT = "#d4b8ff"
 _VQC_MATRIX_GREEN = "#33ff66"
 # Status page chrome: 80% transparent (20% opaque).
+_MYST_DEFAULT_GAP_HEIGHT = "0.84rem"
 _MYST_STATUS_LAYER_ALPHA = 0.2
 # Individual preset panel backgrounds: 30% transparent (30% opaque).
 _MYST_STATUS_PANEL_ALPHA = 0.3
@@ -860,7 +861,7 @@ _MAIN_NAV_TAB_SPECS = (
     ("readme", "README"),
     ("demo", "Live Probe"),
     ("animations", "Figures"),
-    ("status", "Status"),
+    ("status", "Presets"),
 )
 
 
@@ -948,6 +949,26 @@ def _place_status_zoom_nav_row(
             variant="secondary",
         )
     return back_btn, buttons, edit_btn
+
+
+def _place_status_gap_row(*, slot: str, half_height: bool = False) -> None:
+    """Empty spacer row on the Presets page — height uses --myst-default-gap-height."""
+    classes = [
+        "myst-status-gap-row",
+        "myst-default-gap-row",
+        f"myst-status-gap-{slot}",
+    ]
+    if half_height:
+        classes.append("myst-status-gap-half")
+    with gr.Row(
+        elem_id=f"myst-status-gap-{slot}",
+        elem_classes=classes,
+    ):
+        gr.HTML(
+            '<div class="myst-status-gap-fill" aria-hidden="true"></div>',
+            elem_id=f"myst-status-gap-fill-{slot}",
+            elem_classes=["myst-status-gap-fill-host"],
+        )
 
 
 def _status_zoom_nav_back_btn_update(active_slot: int) -> gr.Update:
@@ -1788,7 +1809,8 @@ footer {{
     padding-top: 0 !important;
 }}
 .gradio-container .myst-status-page .vqc-main-nav-row {{
-    margin-bottom: 0.05rem !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
 }}
 .gradio-container .vqc-main-nav-row .vqc-nav-cell button.vqc-source-tab,
 .gradio-container .vqc-status-preset-nav-row .vqc-nav-cell button.vqc-source-tab {{
@@ -3690,19 +3712,93 @@ footer {{ visibility: hidden; }}
     padding: 0 0.25rem 0 !important;
 }}
 .gradio-container .myst-status-page {{
+    --myst-default-gap-height: {_MYST_DEFAULT_GAP_HEIGHT};
+    --myst-half-gap-height: calc(var(--myst-default-gap-height) * 0.5);
     min-height: calc(100dvh - 4.25rem) !important;
     height: auto !important;
     display: flex !important;
     flex-direction: column !important;
     align-items: stretch !important;
     justify-content: flex-start !important;
+    gap: 0 !important;
+    row-gap: 0 !important;
     box-sizing: border-box !important;
+}}
+.gradio-container .myst-status-page .myst-status-gap-row,
+.gradio-container .myst-status-page .myst-default-gap-row,
+.gradio-container .myst-status-page .myst-status-zoom-edit-col > .row.myst-status-gap-row {{
+    min-height: var(--myst-default-gap-height) !important;
+    height: var(--myst-default-gap-height) !important;
+    max-height: var(--myst-default-gap-height) !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    flex: 0 0 auto !important;
+    width: 100% !important;
+    display: flex !important;
+    visibility: visible !important;
+    align-items: stretch !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}}
+.gradio-container .myst-status-page > .block:has(.myst-status-gap-row),
+.gradio-container .myst-status-page > .form:has(.myst-status-gap-row),
+.gradio-container .myst-status-page .myst-status-stack > .block:has(.myst-status-gap-row),
+.gradio-container .myst-status-page .myst-status-stack > .form:has(.myst-status-gap-row),
+.gradio-container .myst-status-page .myst-status-zoom-edit-col > .block:has(.myst-status-gap-row),
+.gradio-container .myst-status-page .myst-status-zoom-edit-col > .form:has(.myst-status-gap-row),
+.gradio-container .myst-status-page .myst-status-gap-row > .block.myst-status-gap-fill-host,
+.gradio-container .myst-status-page .myst-status-gap-row > .form.myst-status-gap-fill-host {{
+    min-height: var(--myst-default-gap-height) !important;
+    height: var(--myst-default-gap-height) !important;
+    max-height: var(--myst-default-gap-height) !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    flex: 0 0 auto !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}}
+.gradio-container .myst-status-page .myst-status-gap-row.myst-status-gap-half,
+.gradio-container .myst-status-page > .block:has(.myst-status-gap-half),
+.gradio-container .myst-status-page > .form:has(.myst-status-gap-half),
+.gradio-container .myst-status-page .myst-status-stack > .block:has(.myst-status-gap-half),
+.gradio-container .myst-status-page .myst-status-stack > .form:has(.myst-status-gap-half),
+.gradio-container .myst-status-page .myst-status-gap-half > .block.myst-status-gap-fill-host,
+.gradio-container .myst-status-page .myst-status-gap-half > .form.myst-status-gap-fill-host {{
+    min-height: var(--myst-half-gap-height) !important;
+    height: var(--myst-half-gap-height) !important;
+    max-height: var(--myst-half-gap-height) !important;
+}}
+.gradio-container .myst-status-page .myst-status-gap-fill,
+.gradio-container .myst-status-page .myst-status-gap-fill-host,
+.gradio-container .myst-status-page .myst-status-gap-fill-host .html-container,
+.gradio-container .myst-status-page [id^="myst-status-gap-fill-"] {{
+    width: 100% !important;
+    height: 100% !important;
+    min-height: var(--myst-default-gap-height) !important;
+    max-height: var(--myst-default-gap-height) !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    pointer-events: none !important;
+}}
+.gradio-container .myst-status-page .myst-status-gap-half .myst-status-gap-fill,
+.gradio-container .myst-status-page .myst-status-gap-half .myst-status-gap-fill-host,
+.gradio-container .myst-status-page .myst-status-gap-half .myst-status-gap-fill-host .html-container,
+.gradio-container .myst-status-page .myst-status-gap-half [id^="myst-status-gap-fill-"] {{
+    min-height: var(--myst-half-gap-height) !important;
+    max-height: var(--myst-half-gap-height) !important;
 }}
 .gradio-container .myst-status-page > .block:has(.vqc-main-nav-row),
 .gradio-container .myst-status-page > .form:has(.vqc-main-nav-row) {{
     flex: 0 0 auto !important;
     height: auto !important;
-    margin-bottom: 0.05rem !important;
+    margin-bottom: 0 !important;
 }}
 .gradio-container .myst-status-page > .block:has(.myst-status-stack),
 .gradio-container .myst-status-page > .form:has(.myst-status-stack),
@@ -3739,7 +3835,7 @@ footer {{ visibility: hidden; }}
     min-height: var(--myst-control-bar-height, 2.05rem) !important;
     max-height: none !important;
     overflow: visible !important;
-    margin: 0.04rem 0 0.36rem 0 !important;
+    margin: 0.04rem 0 0 !important;
     padding: 0 !important;
     align-self: stretch !important;
     display: grid !important;
@@ -3891,13 +3987,26 @@ footer {{ visibility: hidden; }}
     padding: 0 !important;
     height: auto !important;
     min-height: 0 !important;
-    max-height: none !important;
+    max-height: 72vh !important;
     flex-shrink: 0 !important;
-    overflow: visible !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    scrollbar-width: thin !important;
+    scrollbar-color: #c9a227 #2a1f08 !important;
+}}
+.gradio-container .myst-status-page .myst-status-zoom-edit-col::-webkit-scrollbar {{
+    width: 8px !important;
+}}
+.gradio-container .myst-status-page .myst-status-zoom-edit-col::-webkit-scrollbar-track {{
+    background: #2a1f08 !important;
+}}
+.gradio-container .myst-status-page .myst-status-zoom-edit-col::-webkit-scrollbar-thumb {{
+    background: #c9a227 !important;
+    border-radius: 4px !important;
 }}
 .gradio-container .myst-status-page .myst-status-zoom-edit-col > .block,
 .gradio-container .myst-status-page .myst-status-zoom-edit-col > .form,
-.gradio-container .myst-status-page .myst-status-zoom-edit-col > .row,
+.gradio-container .myst-status-page .myst-status-zoom-edit-col > .row:not(.slider-row):not(.myst-status-gap-row),
 .gradio-container .myst-status-page .myst-status-zoom-edit-col > .column {{
     flex: 0 0 auto !important;
     flex-shrink: 0 !important;
@@ -3913,9 +4022,53 @@ footer {{ visibility: hidden; }}
     z-index: auto !important;
     display: block !important;
 }}
-.gradio-container .myst-status-page .myst-status-zoom-edit-col > .block:has(.vqc-optics-dial-wrap),
-.gradio-container .myst-status-page .myst-status-zoom-edit-col > .form:has(.vqc-optics-dial-wrap) {{
-    min-height: 3.35rem !important;
+.gradio-container .myst-status-page .myst-status-zoom-edit-col > .row.slider-row {{
+    display: flex !important;
+}}
+.gradio-container .myst-status-page .myst-status-zoom-edit-col > .block:has(.slider-row),
+.gradio-container .myst-status-page .myst-status-zoom-edit-col > .form:has(.slider-row),
+.gradio-container .myst-status-page .myst-status-zoom-edit-col .block:has(.slider-row),
+.gradio-container .myst-status-page .myst-status-zoom-edit-col .form:has(.slider-row) {{
+    min-height: 4.35rem !important;
+    height: auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0.08rem 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    flex: 0 0 auto !important;
+    display: block !important;
+}}
+.gradio-container .myst-status-page .slider-row,
+.gradio-container .myst-status-page .myst-status-zoom-edit-col .slider-row {{
+    min-height: 4.35rem !important;
+    height: auto !important;
+    align-items: stretch !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: flex !important;
+    flex-direction: row !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    flex: 0 0 auto !important;
+    overflow: visible !important;
+}}
+.gradio-container .myst-status-page .slider-row > .block,
+.gradio-container .myst-status-page .slider-row > .form {{
+    flex: 1 1 100% !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    height: auto !important;
+    min-height: 3.9rem !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    align-self: stretch !important;
+    overflow: visible !important;
+    display: block !important;
+    visibility: visible !important;
 }}
 
 .gradio-container .myst-status-page .myst-status-zoom-edit-save-row {{
@@ -3937,26 +4090,70 @@ footer {{ visibility: hidden; }}
     min-width: 0 !important;
     max-width: 100% !important;
 }}
-.gradio-container .myst-status-page .myst-status-zoom-edit-drawer.vqc-optics-panel .vqc-optics-dial-wrap,
 .gradio-container .myst-status-page .myst-status-zoom-edit-drawer .vqc-optics-dial-wrap,
 .gradio-container .myst-status-page .myst-status-zoom-edit-col .vqc-optics-dial-wrap {{
-    background: transparent !important;
-    border: 1px solid rgba(74, 56, 24, 0.42) !important;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
     width: 100% !important;
+    min-height: 3.9rem !important;
+    height: auto !important;
+    padding: 0.5rem 0.8rem !important;
+    margin: 0 !important;
+    border-radius: 9px !important;
+    background: rgba(26, 18, 38, 0.72) !important;
+    border: 1px solid rgba(201, 162, 39, 0.28) !important;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25) !important;
     max-width: 100% !important;
     min-width: 0 !important;
     box-sizing: border-box !important;
-    margin: 0 !important;
+    overflow: visible !important;
 }}
-.gradio-container .myst-status-page .myst-status-zoom-edit-drawer .vqc-optics-dial-wrap .wrap,
+.gradio-container .myst-status-page .myst-status-zoom-edit-col .vqc-optics-dial-wrap > .wrap.hide,
+.gradio-container .myst-status-page .myst-status-zoom-edit-col .vqc-optics-dial-wrap > .wrap.hidden,
+.gradio-container .myst-status-page .myst-status-zoom-edit-col .vqc-optics-dial-wrap > .wrap.default.hidden {{
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    width: 0 !important;
+    min-height: 0 !important;
+    max-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    pointer-events: none !important;
+    position: absolute !important;
+}}
+.gradio-container .myst-status-page .myst-status-zoom-edit-drawer .vqc-optics-dial-wrap .wrap:not(.hide):not(.hidden),
+.gradio-container .myst-status-page .myst-status-zoom-edit-col .vqc-optics-dial-wrap .wrap:not(.hide):not(.hidden) {{
+    display: flex !important;
+    visibility: visible !important;
+    position: static !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    height: auto !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+}}
 .gradio-container .myst-status-page .myst-status-zoom-edit-drawer .vqc-optics-dial-wrap .wrap > div,
+.gradio-container .myst-status-page .myst-status-zoom-edit-col .vqc-optics-dial-wrap .wrap > div,
 .gradio-container .myst-status-page .myst-status-zoom-edit-drawer .vqc-optics-dial-wrap input[type="range"],
-.gradio-container .myst-status-page .myst-status-zoom-edit-col .vqc-optics-dial-wrap .wrap,
 .gradio-container .myst-status-page .myst-status-zoom-edit-col .vqc-optics-dial-wrap input[type="range"] {{
     width: 100% !important;
     max-width: 100% !important;
     min-width: 0 !important;
+    margin: 0 !important;
     box-sizing: border-box !important;
+}}
+.gradio-container .myst-status-page #myst-status-slider-02,
+.gradio-container .myst-status-page #myst-status-slider-03 {{
+    display: block !important;
+    visibility: visible !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 3.9rem !important;
+    height: auto !important;
 }}
 .gradio-container .myst-status-page .myst-status-zoom-edit-save-row button.myst-status-zoom-save-btn {{
     width: 100% !important;
@@ -4003,7 +4200,7 @@ footer {{ visibility: hidden; }}
     flex-direction: column !important;
     justify-content: flex-start !important;
     align-items: stretch !important;
-    gap: 0.84rem !important;
+    gap: 0 !important;
     margin: 0 !important;
     padding: 0 !important;
 }}
@@ -4376,8 +4573,6 @@ footer {{ visibility: hidden; }}
     }}
 }}
 /* === UNIT CELL VIEWPORT header — hidden (plot only) === */
-.gradio-container #component-191,
-.gradio-container #component-191.block,
 .gradio-container .myst-gravity-visuals-col .myst-cube-viewport-header-slot,
 .gradio-container .myst-gravity-visuals-col .myst-cube-viewport-header-slot.block {{
     display: none !important;
@@ -4403,8 +4598,7 @@ footer {{ visibility: hidden; }}
     overflow: visible !important;
 }}
 .gradio-container .myst-unit-cell-image-row,
-.gradio-container .row.myst-unit-cell-image-row,
-.gradio-container #component-192 {{
+.gradio-container .row.myst-unit-cell-image-row {{
     height: 550px !important;
     min-height: 550px !important;
     max-height: 550px !important;
@@ -4418,16 +4612,14 @@ footer {{ visibility: hidden; }}
     overflow: visible !important;
 }}
 .gradio-container .myst-unit-cell-video-row,
-.gradio-container .row.myst-unit-cell-video-row,
-.gradio-container #component-194 {{
+.gradio-container .row.myst-unit-cell-video-row {{
     align-items: stretch !important;
     align-self: stretch !important;
     box-sizing: border-box !important;
     overflow: visible !important;
 }}
 .gradio-container .myst-unit-cell-video-row,
-.gradio-container .row.myst-unit-cell-video-row,
-.gradio-container #component-194 {{
+.gradio-container .row.myst-unit-cell-video-row {{
     height: 320px !important;
     min-height: 320px !important;
     max-height: 320px !important;
@@ -4438,9 +4630,7 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-unit-cell-image-row .gradio-html,
 .gradio-container .myst-unit-cell-image-row .myst-unit-cell-viewport-image,
 .gradio-container .myst-unit-cell-image-row .html-container,
-.gradio-container .myst-unit-cell-image-row .prose,
-.gradio-container #component-192 .gradio-html,
-.gradio-container #component-192 .html-container {{
+.gradio-container .myst-unit-cell-image-row .prose {{
     height: 100% !important;
     min-height: 100% !important;
     width: 100% !important;
@@ -4453,9 +4643,7 @@ footer {{ visibility: hidden; }}
 }}
 .gradio-container .myst-unit-cell-image-row .wrap.center.full,
 .gradio-container .myst-unit-cell-image-row .wrap.center.hidden,
-.gradio-container .myst-unit-cell-image-row .wrap.default.hidden,
-.gradio-container #component-192 .wrap.center.full,
-.gradio-container #component-192 .wrap.center.hidden {{
+.gradio-container .myst-unit-cell-image-row .wrap.default.hidden {{
     display: none !important;
     opacity: 0 !important;
     pointer-events: none !important;
@@ -5943,7 +6131,7 @@ def build_app() -> gr.Blocks:
                                 )
                             with gr.Column(elem_classes=["vqc-nav-cell"], scale=1, min_width=72):
                                 tab_status_btn = gr.Button(
-                                    "Status",
+                                    "Presets",
                                     elem_classes=["vqc-source-tab"],
                                     scale=0,
                                     variant="secondary",
@@ -6198,18 +6386,21 @@ def build_app() -> gr.Blocks:
 
         status_content_open = gr.State(True)
         with gr.Column(visible=False, elem_classes=["myst-status-page"]) as page_status:
+            _place_status_gap_row(slot="before-main-nav")
             _status_nav = _place_main_nav_row("status")
             status_tab_gravity_btn = _status_nav["gravity"]
             status_tab_readme_btn = _status_nav["readme"]
             status_tab_demo_btn = _status_nav["demo"]
             status_tab_anim_btn = _status_nav["animations"]
             status_tab_status_btn = _status_nav["status"]
+            _place_status_gap_row(slot="after-main-nav", half_height=True)
             status_zoom_slot = gr.State(-1)
             status_zoom_edit_open = gr.State(False)
             with gr.Column(visible=True, elem_classes=["myst-status-stack"]) as status_content_col:
                 status_zoom_back_btn, _status_zoom_nav, status_zoom_edit_btn = (
                     _place_status_zoom_nav_row(active_slot=-1)
                 )
+                _place_status_gap_row(slot="after-preset-nav")
                 status_zoom_btns = [
                     _status_zoom_nav[str(i)] for i in range(_STATUS_ZOOM_PRESET_COUNT)
                 ]
@@ -6233,96 +6424,109 @@ def build_app() -> gr.Blocks:
                                     variant="secondary",
                                     elem_classes=_STATUS_ZOOM_SAVE_BTN_CLASSES,
                                 )
-                            sz_pressure = gr.Slider(
-                                0.0,
-                                1.0,
-                                value=0.35,
-                                step=0.01,
-                                label="01 · Deformation pressure",
-                                elem_classes=["vqc-optics-dial-wrap"],
-                                interactive=False,
-                            )
-                            sz_phi_scale = gr.Slider(
-                                0.90,
-                                1.10,
-                                value=1.0,
-                                step=0.001,
-                                label="02 · φ² scale",
-                                elem_classes=["vqc-optics-dial-wrap"],
-                                interactive=False,
-                            )
-                            sz_e_scale = gr.Slider(
-                                0.90,
-                                1.10,
-                                value=1.0,
-                                step=0.001,
-                                label="03 · e² scale",
-                                elem_classes=["vqc-optics-dial-wrap"],
-                                interactive=False,
-                            )
-                            sz_pi_scale = gr.Slider(
-                                0.90,
-                                1.10,
-                                value=1.0,
-                                step=0.001,
-                                label="04 · π² scale",
-                                elem_classes=["vqc-optics-dial-wrap"],
-                                interactive=False,
-                            )
-                            sz_kappa = gr.Slider(
-                                0.70,
-                                0.95,
-                                value=KAPPA_DOC,
-                                step=0.001,
-                                label="05 · κ (holonomy-gap parameter)",
-                                elem_classes=["vqc-optics-dial-wrap"],
-                                interactive=False,
-                            )
-                            sz_delta_z = gr.Slider(
-                                0.0,
-                                0.5,
-                                value=0.1,
-                                step=0.01,
-                                label="06 · δ_z (primary push)",
-                                elem_classes=["vqc-optics-dial-wrap"],
-                                interactive=False,
-                            )
-                            sz_alpha = gr.Slider(
-                                0.0,
-                                2.0,
-                                value=1.0,
-                                step=0.05,
-                                label="07 · α (geometry factor)",
-                                elem_classes=["vqc-optics-dial-wrap"],
-                                interactive=False,
-                            )
-                            sz_beta = gr.Slider(
-                                0.0,
-                                2.0,
-                                value=1.0,
-                                step=0.05,
-                                label="08 · β (residual coupling)",
-                                elem_classes=["vqc-optics-dial-wrap"],
-                                interactive=False,
-                            )
-                            sz_view_elev = gr.Slider(
-                                5.0,
-                                75.0,
-                                value=22.0,
-                                step=1.0,
-                                label="09 · View elevation (°)",
-                                elem_classes=["vqc-optics-dial-wrap"],
-                                interactive=False,
-                            )
-                            sz_view_azim = gr.Slider(
-                                0.0,
-                                360.0,
-                                value=45.0,
-                                step=5.0,
-                                label="10 · View azimuth (°)",
-                                elem_classes=["vqc-optics-dial-wrap"],
-                                interactive=False,
-                            )
+                            _place_status_gap_row(slot="after-save")
+                            with gr.Row(elem_classes=["slider-row"]):
+                                sz_pressure = gr.Slider(
+                                    0.0,
+                                    1.0,
+                                    value=0.35,
+                                    step=0.01,
+                                    label="01 · Deformation pressure",
+                                    elem_classes=["vqc-optics-dial-wrap"],
+                                    interactive=True,
+                                )
+                            with gr.Row(elem_classes=["slider-row"]):
+                                sz_phi_scale = gr.Slider(
+                                    0.90,
+                                    1.10,
+                                    value=1.0,
+                                    step=0.001,
+                                    label="02 · Φ² scale",
+                                    elem_id="myst-status-slider-02",
+                                    elem_classes=["vqc-optics-dial-wrap"],
+                                    interactive=True,
+                                )
+                            with gr.Row(elem_classes=["slider-row"]):
+                                sz_e_scale = gr.Slider(
+                                    0.90,
+                                    1.10,
+                                    value=1.0,
+                                    step=0.001,
+                                    label="03 · e² scale",
+                                    elem_id="myst-status-slider-03",
+                                    elem_classes=["vqc-optics-dial-wrap"],
+                                    interactive=True,
+                                )
+                            with gr.Row(elem_classes=["slider-row"]):
+                                sz_pi_scale = gr.Slider(
+                                    0.90,
+                                    1.10,
+                                    value=1.0,
+                                    step=0.001,
+                                    label="04 · π² scale",
+                                    elem_classes=["vqc-optics-dial-wrap"],
+                                    interactive=True,
+                                )
+                            with gr.Row(elem_classes=["slider-row"]):
+                                sz_kappa = gr.Slider(
+                                    0.70,
+                                    0.95,
+                                    value=KAPPA_DOC,
+                                    step=0.001,
+                                    label="05 · κ (holonomy-gap parameter)",
+                                    elem_classes=["vqc-optics-dial-wrap"],
+                                    interactive=True,
+                                )
+                            with gr.Row(elem_classes=["slider-row"]):
+                                sz_delta_z = gr.Slider(
+                                    0.0,
+                                    0.5,
+                                    value=0.1,
+                                    step=0.01,
+                                    label="06 · δ_z (primary push)",
+                                    elem_classes=["vqc-optics-dial-wrap"],
+                                    interactive=True,
+                                )
+                            with gr.Row(elem_classes=["slider-row"]):
+                                sz_alpha = gr.Slider(
+                                    0.0,
+                                    2.0,
+                                    value=1.0,
+                                    step=0.05,
+                                    label="07 · α (geometry factor)",
+                                    elem_classes=["vqc-optics-dial-wrap"],
+                                    interactive=True,
+                                )
+                            with gr.Row(elem_classes=["slider-row"]):
+                                sz_beta = gr.Slider(
+                                    0.0,
+                                    2.0,
+                                    value=1.0,
+                                    step=0.05,
+                                    label="08 · β (residual coupling)",
+                                    elem_classes=["vqc-optics-dial-wrap"],
+                                    interactive=True,
+                                )
+                            with gr.Row(elem_classes=["slider-row"]):
+                                sz_view_elev = gr.Slider(
+                                    5.0,
+                                    75.0,
+                                    value=22.0,
+                                    step=1.0,
+                                    label="09 · View elevation (°)",
+                                    elem_classes=["vqc-optics-dial-wrap"],
+                                    interactive=True,
+                                )
+                            with gr.Row(elem_classes=["slider-row"]):
+                                sz_view_azim = gr.Slider(
+                                    0.0,
+                                    360.0,
+                                    value=45.0,
+                                    step=5.0,
+                                    label="10 · View azimuth (°)",
+                                    elem_classes=["vqc-optics-dial-wrap"],
+                                    interactive=True,
+                                )
                 with gr.Column(
                     visible=True,
                     elem_classes=["myst-status-catalog-host"],
