@@ -34,7 +34,30 @@ BOOT_QUOTE_STRING = "TEST EVERYTHING, HOLD FAST WHAT IS GOOD AND KNOW YOUR GOD"
 HF_SPACE_URL = "https://huggingface.co/spaces/kinaar111/mystery"
 GITHUB_URL = "https://github.com/kinaar8340/mystery"
 TOE_URL = "https://github.com/kinaar8340/toe"
-WALLPAPER_URL = f"{GITHUB_URL}/raw/main/mystery_image.png"
+_SPACE_DIR = Path(__file__).resolve().parent
+_REPO_ROOT = _SPACE_DIR.parent.parent
+
+
+def resolve_wallpaper_url() -> str:
+    """Prefer bundled/local mystery_image.png; fall back to GitHub raw after push."""
+    for path in (_SPACE_DIR / "mystery_image.png", _REPO_ROOT / "mystery_image.png"):
+        if path.is_file():
+            stamp = int(path.stat().st_mtime)
+            # Gradio serves set_static_paths() assets via /gradio_api/file= (not /file=<abs path>).
+            return f"/gradio_api/file={path.name}?v={stamp}"
+    return f"{GITHUB_URL}/raw/main/mystery_image.png"
+
+
+def wallpaper_static_paths() -> list[Path]:
+    """Directories Gradio may serve for the wallpaper background image."""
+    paths: list[Path] = []
+    for path in (_SPACE_DIR / "mystery_image.png", _REPO_ROOT / "mystery_image.png"):
+        if path.is_file():
+            paths.append(path.parent)
+    return list(dict.fromkeys(paths))
+
+
+WALLPAPER_URL = resolve_wallpaper_url()
 
 SIMULATION_BANNER_MD = """
 > **Demo-oriented Space** — browser κ slider, φ-e-π triangle plots, and CLI terminal.

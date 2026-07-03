@@ -16,8 +16,12 @@ BUILD_COMMIT = "$COMMIT"
 BUILD_UPDATED_UTC = "$UPDATED"
 EOF
 
-# Wallpaper/cover served from GitHub raw (HF git rejects bare binary blobs without Xet).
-rm -f "$DST/mystery_image.png"
+# Bundle readable wallpaper for local HF + /file= serving (GitHub raw remains README fallback).
+if [[ -f "$ROOT/mystery_image.png" ]]; then
+  cp -f "$ROOT/mystery_image.png" "$DST/mystery_image.png"
+else
+  rm -f "$DST/mystery_image.png"
+fi
 
 cat > "$DST/requirements.txt" <<'EOF'
 numpy>=1.24.0,<3.0.0

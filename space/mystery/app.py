@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import html
 import logging
 import os
 import re
@@ -37,6 +38,7 @@ from demo_core import (
     WALLPAPER_URL,
     get_build_label,
     is_hf_space,
+    wallpaper_static_paths,
     build_unit_cell_viewport_header_html,
     unit_cell_error_placeholder_html,
     render_unit_cell_deformation_video,
@@ -145,6 +147,11 @@ _VQC_TAB_ORANGE_BG = "#3d2a5c"
 _VQC_TAB_ORANGE_BORDER = "#6a4c93"
 _VQC_TAB_ORANGE_TEXT = "#d4b8ff"
 _VQC_MATRIX_GREEN = "#33ff66"
+# Status page chrome: 80% transparent (20% opaque).
+_MYST_STATUS_LAYER_ALPHA = 0.2
+# Individual preset panel backgrounds: 30% transparent (30% opaque).
+_MYST_STATUS_PANEL_ALPHA = 0.3
+_STATUS_ZOOM_PRESET_COUNT = 9
 _VQC_MATRIX_GREEN_BG = "#0a1f12"
 _VQC_LOGO_GOLD = "#c9a227"
 _VQC_HOME_KEY_BG = "#000000"
@@ -848,6 +855,133 @@ def _external_tab_html(label: str, url: str, tab_id: str) -> str:
     )
 
 
+_MAIN_NAV_TAB_SPECS = (
+    ("gravity", "Gravity"),
+    ("readme", "README"),
+    ("demo", "Live Probe"),
+    ("animations", "Figures"),
+    ("status", "Status"),
+)
+
+
+def _place_main_nav_row(active_page: str) -> dict[str, gr.Button]:
+    """Mystery: spreadsheet nav — one compact row of five main tabs."""
+    buttons: dict[str, gr.Button] = {}
+    with gr.Row(
+        elem_classes=[
+            "vqc-source-tabs-row",
+            "vqc-nav-spreadsheet-row",
+            "vqc-main-nav-row",
+            "vqc-animations-nav-row",
+        ],
+    ):
+        gr.HTML('<span class="vqc-source-label vqc-nav-row-label">Mystery:</span>')
+        for page_id, label in _MAIN_NAV_TAB_SPECS:
+            is_active = page_id == active_page
+            classes = ["vqc-source-tab"]
+            if is_active:
+                classes.append("active")
+            with gr.Column(elem_classes=["vqc-nav-cell"], scale=1, min_width=72):
+                buttons[page_id] = gr.Button(
+                    label,
+                    elem_classes=classes,
+                    interactive=not is_active,
+                    scale=0,
+                    variant="secondary",
+                )
+    return buttons
+
+
+def _place_status_zoom_nav_row(
+    active_slot: int = -1,
+) -> tuple[gr.Button, dict[str, gr.Button], gr.Button]:
+    """Status sub-nav — All Presets, nine presets (01 … 09), and Edit in one grid row."""
+    buttons: dict[str, gr.Button] = {}
+    active = int(active_slot)
+    on_grid = active < 0
+    with gr.Row(
+        elem_id="myst-status-zoom-nav",
+        elem_classes=[
+            "myst-status-preset-nav-wrap",
+            "vqc-nav-spreadsheet-row",
+            "vqc-status-preset-nav-row",
+        ],
+    ):
+        back_classes = ["vqc-source-tab", "myst-status-preset-btn", "myst-status-nav-back-btn"]
+        if on_grid:
+            back_classes.append("active")
+        back_btn = gr.Button(
+            "All Presets",
+            elem_id="myst-status-nav-back-btn",
+            elem_classes=back_classes,
+            interactive=not on_grid,
+            scale=0,
+            min_width=0,
+            variant="secondary",
+        )
+        for slot in range(_STATUS_ZOOM_PRESET_COUNT):
+            preset_id = _gravity_preset_id(slot)
+            is_active = slot == active
+            classes = ["vqc-source-tab", "myst-status-preset-btn"]
+            if is_active:
+                classes.append("active")
+            buttons[str(slot)] = gr.Button(
+                preset_id,
+                elem_id=f"myst-status-preset-btn-{preset_id}",
+                elem_classes=classes,
+                interactive=not is_active,
+                scale=0,
+                min_width=0,
+                variant="secondary",
+            )
+        edit_btn = gr.Button(
+            "Edit",
+            elem_id="myst-status-nav-edit-btn",
+            elem_classes=[
+                "vqc-source-tab",
+                "myst-status-preset-btn",
+                "myst-status-nav-edit-btn",
+            ],
+            interactive=False,
+            scale=0,
+            min_width=0,
+            variant="secondary",
+        )
+    return back_btn, buttons, edit_btn
+
+
+def _status_zoom_nav_back_btn_update(active_slot: int) -> gr.Update:
+    on_grid = int(active_slot) < 0
+    classes = ["vqc-source-tab", "myst-status-preset-btn", "myst-status-nav-back-btn"]
+    if on_grid:
+        classes.append("active")
+    return gr.update(interactive=not on_grid, elem_classes=classes, variant="secondary")
+
+
+def _status_zoom_nav_edit_btn_update(*, in_zoom: bool, edit_open: bool) -> gr.Update:
+    classes = ["vqc-source-tab", "myst-status-preset-btn", "myst-status-nav-edit-btn"]
+    if edit_open:
+        classes.append("active")
+    return gr.update(interactive=in_zoom, elem_classes=classes, variant="secondary")
+
+
+def _status_zoom_back_to_grid() -> tuple:
+    """Return from preset zoom to the 3×3 grid overview."""
+    dials = dict(_GRAVITY_HOME_DIALS)
+    slider_updates = _gravity_slider_control_updates(dials, edit_enabled=False)
+    return (
+        *_status_panel_levels_update(-1, grid_active_slot=None, visible=True),
+        *_status_zoom_btn_updates(-1),
+        _status_zoom_nav_back_btn_update(-1),
+        -1,
+        False,
+        gr.update(visible=False),
+        _status_zoom_nav_edit_btn_update(in_zoom=False, edit_open=False),
+        *slider_updates,
+        _status_zoom_save_btn_update(saved=False),
+    )
+
+
 def _source_tab_btn_update(*, active: bool) -> gr.Update:
     """Source tab — matrix-green label when active; default brown body either way."""
     if active:
@@ -878,25 +1012,71 @@ def _close_links_panels() -> tuple:
     )
 
 
+def _status_zoom_btn_classes(slot: int, active_slot: int) -> list[str]:
+    classes = ["vqc-source-tab", "myst-status-preset-btn"]
+    if int(slot) == int(active_slot):
+        classes.append("active")
+    return classes
+
+
+def _status_zoom_btn_updates(active_slot: int) -> tuple:
+    active = int(active_slot)
+    return tuple(
+        gr.update(
+            interactive=(i != active),
+            elem_classes=_status_zoom_btn_classes(i, active),
+            variant="secondary",
+        )
+        for i in range(_STATUS_ZOOM_PRESET_COUNT)
+    )
+
+
+def _nav_to_status_page(current_page: str, content_open: bool) -> tuple:
+    """Open Status page, or toggle its grid closed under the Status tab when already there."""
+    grid_reset = _status_zoom_back_to_grid()
+    skip_reset = tuple(gr.skip() for _ in grid_reset)
+    if current_page == "status":
+        new_open = not bool(content_open)
+        reset = grid_reset if (not bool(content_open) and new_open) else skip_reset
+        return (
+            *_nav_to_page("status"),
+            gr.update(visible=new_open),
+            new_open,
+            *reset,
+        )
+    return (
+        *_nav_to_page("status"),
+        gr.update(visible=True),
+        True,
+        *grid_reset,
+    )
+
+
 def _nav_to_page(page: str) -> tuple:
-    """Switch between demo, figures, gravity, and readme; refresh Source tab highlights."""
+    """Switch between demo, figures, gravity, readme, status, and edit; refresh nav highlights."""
     on_demo = page == "demo"
     on_anim = page == "animations"
     on_gravity = page == "gravity"
     on_readme = page == "readme"
+    on_status = page == "status"
     closed = _close_links_panels()
     tab_gravity = _source_tab_btn_update(active=on_gravity)
     tab_readme = _source_tab_btn_update(active=on_readme)
     tab_demo = _home_tab_update(on_demo_page=on_demo)
     tab_anim = _source_tab_btn_update(active=on_anim)
-    page_tabs = (tab_gravity, tab_readme, tab_demo, tab_anim)
+    tab_status = _source_tab_btn_update(active=on_status)
+    page_tabs = (tab_gravity, tab_readme, tab_demo, tab_anim, tab_status)
     return (
         gr.update(visible=on_demo),
         gr.update(visible=on_anim),
         gr.update(visible=on_gravity),
         gr.update(visible=on_readme),
+        gr.update(visible=on_status),
+        gr.update(visible=False),
         *page_tabs,
         *closed,
+        *page_tabs,
+        *page_tabs,
         *page_tabs,
         *page_tabs,
         *page_tabs,
@@ -1023,7 +1203,6 @@ WALLPAPER_HEAD = f"""
 (function() {{
     window.mystOnHf = {'true' if is_hf_space() else 'false'};
     function mountWallpaper() {{
-        if (window.mystOnHf) return;
         if (document.getElementById('vqc-wallpaper')) return;
         var wp = document.createElement('div');
         wp.id = 'vqc-wallpaper';
@@ -1561,12 +1740,82 @@ footer {{
 }}
 .gradio-container .vqc-nav-spreadsheet-row {{
     display: grid !important;
-    grid-template-columns: 4.75rem repeat(6, minmax(3.8rem, 1fr)) !important;
     gap: 0.2rem 0.45rem !important;
     align-items: center !important;
     width: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
+}}
+.gradio-container .vqc-nav-spreadsheet-row.vqc-main-nav-row {{
+    grid-template-columns: 4.75rem repeat(6, minmax(3.8rem, 1fr)) !important;
+}}
+.gradio-container .vqc-nav-spreadsheet-row.vqc-nav-spreadsheet-row-8 {{
+    grid-template-columns: 4.75rem repeat(8, minmax(3.2rem, 1fr)) !important;
+}}
+.gradio-container .vqc-nav-spreadsheet-row.vqc-status-preset-nav-row {{
+    display: grid !important;
+    grid-template-columns: minmax(5rem, 1.15fr) repeat(9, minmax(2.1rem, 1fr)) minmax(3rem, 0.9fr) !important;
+    grid-auto-flow: column !important;
+    flex-wrap: nowrap !important;
+    align-items: stretch !important;
+    gap: 0.18rem 0.28rem !important;
+    margin: 0.04rem 0 0.12rem 0 !important;
+    width: 100% !important;
+    overflow: visible !important;
+}}
+.gradio-container .vqc-status-preset-nav-row > .block,
+.gradio-container .vqc-status-preset-nav-row > .form,
+.gradio-container .vqc-status-preset-nav-row > button {{
+    flex: none !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}}
+.gradio-container .vqc-status-preset-nav-row > .block > .form,
+.gradio-container .vqc-status-preset-nav-row > .form > .block {{
+    width: 100% !important;
+    min-width: 0 !important;
+}}
+.gradio-container .myst-status-page > .block:has(.vqc-main-nav-row),
+.gradio-container .myst-status-page > .form:has(.vqc-main-nav-row),
+.gradio-container .myst-status-page .myst-status-stack > .block:has(.vqc-main-nav-row) {{
+    margin-bottom: 0.05rem !important;
+}}
+.gradio-container .myst-status-page .myst-status-stack {{
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+}}
+.gradio-container .myst-status-page .vqc-main-nav-row {{
+    margin-bottom: 0.05rem !important;
+}}
+.gradio-container .vqc-main-nav-row .vqc-nav-cell button.vqc-source-tab,
+.gradio-container .vqc-status-preset-nav-row .vqc-nav-cell button.vqc-source-tab {{
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+}}
+.gradio-container .vqc-status-preset-nav-row .vqc-nav-cell button.myst-status-preset-btn {{
+    padding-left: 0.34rem !important;
+    padding-right: 0.34rem !important;
+}}
+.gradio-container .vqc-status-preset-nav-row .vqc-nav-cell,
+.gradio-container .vqc-status-preset-nav-row .vqc-nav-cell > .block,
+.gradio-container .vqc-status-preset-nav-row .vqc-nav-cell > .form {{
+    min-width: 0 !important;
+    width: 100% !important;
+    overflow: visible !important;
+}}
+.gradio-container .vqc-status-preset-nav-row button.myst-status-preset-btn,
+.gradio-container .vqc-status-preset-nav-row button.myst-status-nav-back-btn,
+.gradio-container .vqc-status-preset-nav-row button.myst-status-nav-edit-btn {{
+    visibility: visible !important;
+    display: inline-flex !important;
+    opacity: 1 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
 }}
 .gradio-container .vqc-nav-spreadsheet-row > .block,
 .gradio-container .vqc-nav-spreadsheet-row > .form,
@@ -3434,6 +3683,698 @@ footer {{ visibility: hidden; }}
     font-size: 0.94rem !important;
     line-height: 1.5 !important;
 }}
+.gradio-container .myst-status-page,
+.gradio-container .myst-edit-page {{
+    width: 100% !important;
+    max-width: none !important;
+    padding: 0 0.25rem 0 !important;
+}}
+.gradio-container .myst-status-page {{
+    min-height: calc(100dvh - 4.25rem) !important;
+    height: auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    justify-content: flex-start !important;
+    box-sizing: border-box !important;
+}}
+.gradio-container .myst-status-page > .block:has(.vqc-main-nav-row),
+.gradio-container .myst-status-page > .form:has(.vqc-main-nav-row) {{
+    flex: 0 0 auto !important;
+    height: auto !important;
+    margin-bottom: 0.05rem !important;
+}}
+.gradio-container .myst-status-page > .block:has(.myst-status-stack),
+.gradio-container .myst-status-page > .form:has(.myst-status-stack),
+.gradio-container .myst-status-page > .column.myst-status-stack {{
+    flex: 1 1 auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+    justify-content: flex-start !important;
+    align-content: flex-start !important;
+}}
+.gradio-container .myst-status-page > .block,
+.gradio-container .myst-status-page > .form,
+.gradio-container .myst-status-page > .column,
+.gradio-container .myst-status-page .block,
+.gradio-container .myst-status-page .form {{
+    background: transparent !important;
+    box-shadow: none !important;
+}}
+.gradio-container .myst-status-page > .block:has(.vqc-animations-nav-row),
+.gradio-container .myst-edit-page > .block:has(.vqc-animations-nav-row) {{
+    flex: 0 0 auto !important;
+}}
+.gradio-container .myst-status-page .myst-status-preset-nav-wrap,
+.gradio-container .myst-status-page .myst-status-preset-nav-wrap.row,
+.gradio-container .myst-status-page #myst-status-zoom-nav,
+.gradio-container .myst-status-page .row#myst-status-zoom-nav,
+.gradio-container .myst-status-page .myst-status-stack > .block:has(#myst-status-zoom-nav),
+.gradio-container .myst-status-page .myst-status-stack > .form:has(#myst-status-zoom-nav) {{
+    flex: 0 0 auto !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: var(--myst-control-bar-height, 2.05rem) !important;
+    max-height: none !important;
+    overflow: visible !important;
+    margin: 0.04rem 0 0.36rem 0 !important;
+    padding: 0 !important;
+    align-self: stretch !important;
+    display: grid !important;
+    box-sizing: border-box !important;
+}}
+.gradio-container .myst-status-page .myst-status-grid-view.hide,
+.gradio-container .myst-status-page .myst-status-grid-view.hidden,
+.gradio-container .myst-status-page .myst-status-zoom-view.hide,
+.gradio-container .myst-status-page .myst-status-zoom-view.hidden,
+.gradio-container .myst-status-page .myst-status-panels-host > .hide,
+.gradio-container .myst-status-page .myst-status-panels-host > .hidden,
+.gradio-container .myst-status-page .myst-status-panels-host > .block.hide,
+.gradio-container .myst-status-page .myst-status-panels-host > .block.hidden,
+.gradio-container .myst-status-page .myst-status-panels-host > .form.hide,
+.gradio-container .myst-status-page .myst-status-panels-host > .form.hidden,
+.gradio-container .myst-status-page .myst-status-panels-host > .column.hide,
+.gradio-container .myst-status-page .myst-status-panels-host > .column.hidden {{
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    max-height: 0 !important;
+    overflow: hidden !important;
+    pointer-events: none !important;
+    flex: 0 0 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}}
+.gradio-container .myst-status-page .myst-status-grid-view:not(.hide):not(.hidden),
+.gradio-container .myst-status-page .myst-status-zoom-view:not(.hide):not(.hidden) {{
+    width: 100% !important;
+    height: auto !important;
+    min-height: calc(100dvh - 7.5rem) !important;
+    flex: 1 1 auto !important;
+    background: transparent !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+}}
+.gradio-container .myst-status-page .myst-status-zoom-host,
+.gradio-container .myst-status-page .myst-status-zoom-host .html-container {{
+    width: 100% !important;
+    height: auto !important;
+    min-height: 12rem !important;
+    flex: 1 1 auto !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    display: flex !important;
+    flex-direction: column !important;
+}}
+.gradio-container .myst-status-page .myst-status-zoom-wrap {{
+    width: 100% !important;
+    height: auto !important;
+    min-height: 12rem !important;
+    flex: 1 1 auto !important;
+    background: transparent !important;
+    display: flex !important;
+    flex-direction: column !important;
+}}
+.gradio-container .myst-status-page .myst-status-zoom-panel {{
+    flex: 1 1 auto !important;
+    height: auto !important;
+    min-height: 12rem !important;
+    max-height: none !important;
+    overflow-y: visible !important;
+}}
+.gradio-container .myst-status-page .myst-status-zoom-panel .myst-gravity-level-title,
+.gradio-container .myst-status-page .myst-status-zoom-panel .myst-gravity-level-foot,
+.gradio-container .myst-status-page .myst-status-zoom-level-row,
+.gradio-container .myst-status-page .myst-status-zoom-level-row .myst-gravity-level-id,
+.gradio-container .myst-status-page .myst-status-zoom-level-row .myst-gravity-level-desc,
+.gradio-container .myst-status-page .myst-status-zoom-level-row .myst-gravity-level-range,
+.gradio-container .myst-status-page .myst-status-zoom-level-row .myst-gravity-level-val {{
+    font-size: 0.82rem !important;
+    line-height: 1.2 !important;
+}}
+.gradio-container .myst-status-page .myst-status-zoom-level-row {{
+    grid-template-columns: 1.45rem minmax(0, 0.48fr) minmax(4.75rem, 0.72fr) minmax(0, 1.45fr) minmax(3.6rem, auto) !important;
+    gap: 0.2rem 0.28rem !important;
+    margin: 0 !important;
+}}
+.gradio-container .vqc-status-preset-nav-row .vqc-nav-cell button.myst-status-nav-back-btn,
+.gradio-container .vqc-status-preset-nav-row .vqc-nav-cell button.myst-status-nav-edit-btn {{
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+}}
+.gradio-container .vqc-status-preset-nav-row .vqc-nav-cell button.myst-status-nav-back-btn {{
+    font-size: 0.72rem !important;
+    padding-left: 0.28rem !important;
+    padding-right: 0.28rem !important;
+    letter-spacing: 0.01em !important;
+}}
+.gradio-container .myst-status-page .myst-status-zoom-edit-drawer.myst-gravity-control-panel {{
+    background: transparent !important;
+}}
+.gradio-container .myst-status-page .myst-status-zoom-edit-drawer {{
+    position: relative !important;
+    left: auto !important;
+    right: auto !important;
+    top: auto !important;
+    bottom: auto !important;
+    z-index: 12 !important;
+    width: 100% !important;
+    margin: 0 0 0.55rem 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    max-height: none !important;
+    height: auto !important;
+    min-height: 0 !important;
+    flex: 0 0 auto !important;
+    flex-shrink: 0 !important;
+    overflow: visible !important;
+}}
+.gradio-container .myst-status-page .myst-status-panels-host > .block:has(.myst-status-zoom-edit-drawer),
+.gradio-container .myst-status-page .myst-status-panels-host > .form:has(.myst-status-zoom-edit-drawer),
+.gradio-container .myst-status-page .myst-status-panels-host > .column:has(.myst-status-zoom-edit-drawer) {{
+    flex: 0 0 auto !important;
+    flex-shrink: 0 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+}}
+
+.gradio-container .myst-status-page .myst-status-zoom-edit-drawer > .block,
+.gradio-container .myst-status-page .myst-status-zoom-edit-drawer > .form,
+.gradio-container .myst-status-page .myst-status-zoom-edit-drawer > .column,
+.gradio-container .myst-status-page .myst-status-zoom-edit-col,
+.gradio-container .myst-status-page .myst-status-zoom-edit-col > .block,
+.gradio-container .myst-status-page .myst-status-zoom-edit-col > .form {{
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}}
+.gradio-container .myst-status-page .myst-status-zoom-edit-col {{
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.34rem !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    flex-shrink: 0 !important;
+    overflow: visible !important;
+}}
+.gradio-container .myst-status-page .myst-status-zoom-edit-col > .block,
+.gradio-container .myst-status-page .myst-status-zoom-edit-col > .form,
+.gradio-container .myst-status-page .myst-status-zoom-edit-col > .row,
+.gradio-container .myst-status-page .myst-status-zoom-edit-col > .column {{
+    flex: 0 0 auto !important;
+    flex-shrink: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    align-self: stretch !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    position: static !important;
+    z-index: auto !important;
+    display: block !important;
+}}
+.gradio-container .myst-status-page .myst-status-zoom-edit-col > .block:has(.vqc-optics-dial-wrap),
+.gradio-container .myst-status-page .myst-status-zoom-edit-col > .form:has(.vqc-optics-dial-wrap) {{
+    min-height: 3.35rem !important;
+}}
+
+.gradio-container .myst-status-page .myst-status-zoom-edit-save-row {{
+    display: flex !important;
+    justify-content: stretch !important;
+    align-items: stretch !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    min-height: var(--myst-control-bar-height, 2.05rem) !important;
+    flex: 0 0 auto !important;
+}}
+.gradio-container .myst-status-page .myst-status-zoom-edit-col > .block:has(.myst-status-zoom-edit-save-row),
+.gradio-container .myst-status-page .myst-status-zoom-edit-col > .form:has(.myst-status-zoom-edit-save-row),
+.gradio-container .myst-status-page .myst-status-zoom-edit-save-row > .block,
+.gradio-container .myst-status-page .myst-status-zoom-edit-save-row > .form {{
+    width: 100% !important;
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+}}
+.gradio-container .myst-status-page .myst-status-zoom-edit-drawer.vqc-optics-panel .vqc-optics-dial-wrap,
+.gradio-container .myst-status-page .myst-status-zoom-edit-drawer .vqc-optics-dial-wrap,
+.gradio-container .myst-status-page .myst-status-zoom-edit-col .vqc-optics-dial-wrap {{
+    background: transparent !important;
+    border: 1px solid rgba(74, 56, 24, 0.42) !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    margin: 0 !important;
+}}
+.gradio-container .myst-status-page .myst-status-zoom-edit-drawer .vqc-optics-dial-wrap .wrap,
+.gradio-container .myst-status-page .myst-status-zoom-edit-drawer .vqc-optics-dial-wrap .wrap > div,
+.gradio-container .myst-status-page .myst-status-zoom-edit-drawer .vqc-optics-dial-wrap input[type="range"],
+.gradio-container .myst-status-page .myst-status-zoom-edit-col .vqc-optics-dial-wrap .wrap,
+.gradio-container .myst-status-page .myst-status-zoom-edit-col .vqc-optics-dial-wrap input[type="range"] {{
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+}}
+.gradio-container .myst-status-page .myst-status-zoom-edit-save-row button.myst-status-zoom-save-btn {{
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    min-height: var(--myst-control-bar-height, 2.05rem) !important;
+    height: var(--myst-control-bar-height, 2.05rem) !important;
+    margin: 0 !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}}
+.gradio-container .myst-status-page button.myst-status-zoom-save-btn,
+.gradio-container .myst-status-page button.myst-status-zoom-save-btn span {{
+    color: #e63939 !important;
+    -webkit-text-fill-color: #e63939 !important;
+}}
+.gradio-container .myst-status-page button.myst-status-zoom-save-btn:not(.saved):hover,
+.gradio-container .myst-status-page button.myst-status-zoom-save-btn:not(.saved):hover span {{
+    color: #ff5c5c !important;
+    -webkit-text-fill-color: #ff5c5c !important;
+}}
+.gradio-container .myst-status-page button.myst-status-zoom-save-btn.saved,
+.gradio-container .myst-status-page button.myst-status-zoom-save-btn.saved span,
+.gradio-container .myst-status-page button.myst-status-zoom-save-btn.saved:disabled,
+.gradio-container .myst-status-page button.myst-status-zoom-save-btn.saved[disabled],
+.gradio-container .myst-status-page button.myst-status-zoom-save-btn.saved:disabled span,
+.gradio-container .myst-status-page button.myst-status-zoom-save-btn.saved[disabled] span {{
+    color: #c92f2f !important;
+    -webkit-text-fill-color: #c92f2f !important;
+    cursor: default !important;
+}}
+.gradio-container .myst-status-page button.myst-status-zoom-save-btn {{
+    padding-left: 0.78rem !important;
+    padding-right: 0.78rem !important;
+}}
+
+.gradio-container .myst-status-page .myst-status-stack {{
+    width: 100% !important;
+    height: auto !important;
+    min-height: calc(100dvh - 8rem) !important;
+    flex: 1 1 auto !important;
+    background: transparent !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+    align-items: stretch !important;
+    gap: 0.84rem !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}}
+.gradio-container .myst-status-page .myst-status-stack > .block:has(.myst-status-panels-host),
+.gradio-container .myst-status-page .myst-status-stack > .form:has(.myst-status-panels-host),
+.gradio-container .myst-status-page .myst-status-panels-host {{
+    width: 100% !important;
+    flex: 0 0 auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    height: auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow-x: hidden !important;
+    overflow-y: visible !important;
+    position: relative !important;
+    z-index: 4 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    align-items: stretch !important;
+}}
+.gradio-container .myst-status-page .myst-status-panels-host > .block,
+.gradio-container .myst-status-page .myst-status-panels-host > .form,
+.gradio-container .myst-status-page .myst-status-panels-host > .column {{
+    width: 100% !important;
+    overflow: visible !important;
+}}
+.gradio-container .myst-status-page .myst-status-stack > .block:has(.myst-status-catalog-host):not(.hide):not(.hidden),
+.gradio-container .myst-status-page .myst-status-stack > .form:has(.myst-status-catalog-host):not(.hide):not(.hidden),
+.gradio-container .myst-status-page .myst-status-stack > .column.myst-status-catalog-host:not(.hide):not(.hidden),
+.gradio-container .myst-status-page .myst-status-catalog-host:not(.hide):not(.hidden) {{
+    flex: 1 1 auto !important;
+    min-height: calc(100dvh - 8.5rem) !important;
+    height: auto !important;
+}}
+.gradio-container .myst-status-page .myst-status-stack:has(.myst-status-edit-active),
+.gradio-container .myst-status-page .myst-status-stack:has(.myst-status-zoom-edit-drawer:not(.hide):not(.hidden)) {{
+    min-height: 0 !important;
+    gap: 0.35rem !important;
+}}
+.gradio-container .myst-status-page .myst-status-panels-host.myst-status-edit-active,
+.gradio-container .myst-status-page .myst-status-panels-host:has(.myst-status-zoom-edit-drawer:not(.hide):not(.hidden)) {{
+    min-height: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+    flex: 0 0 auto !important;
+    overflow: visible !important;
+}}
+.gradio-container .myst-status-page .myst-status-panels-host.myst-status-edit-active + .myst-status-catalog-host,
+.gradio-container .myst-status-page .myst-status-panels-host.myst-status-edit-active + .block:has(.myst-status-catalog-host),
+.gradio-container .myst-status-page .myst-status-panels-host.myst-status-edit-active + .form:has(.myst-status-catalog-host),
+.gradio-container .myst-status-page .myst-status-stack:has(.myst-status-edit-active) .myst-status-catalog-host,
+.gradio-container .myst-status-page .myst-status-stack:has(.myst-status-zoom-edit-drawer:not(.hide):not(.hidden)) .myst-status-catalog-host,
+.gradio-container .myst-status-page .myst-status-stack:has(.myst-status-zoom-edit-drawer:not(.hide):not(.hidden)) .myst-status-catalog-host > .block,
+.gradio-container .myst-status-page .myst-status-stack:has(.myst-status-zoom-edit-drawer:not(.hide):not(.hidden)) .myst-status-catalog-host > .form,
+.gradio-container .myst-status-page .myst-status-stack:has(.myst-status-zoom-edit-drawer:not(.hide):not(.hidden)) .myst-status-catalog-host > .column {{
+    display: none !important;
+    min-height: 0 !important;
+    height: 0 !important;
+    flex: 0 0 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+}}
+.gradio-container .myst-status-page .myst-status-catalog-host.hide,
+.gradio-container .myst-status-page .myst-status-catalog-host.hidden,
+.gradio-container .myst-status-page .myst-status-catalog-host > .block.hide,
+.gradio-container .myst-status-page .myst-status-catalog-host > .block.hidden,
+.gradio-container .myst-status-page .myst-status-catalog-host > .form.hide,
+.gradio-container .myst-status-page .myst-status-catalog-host > .form.hidden,
+.gradio-container .myst-status-page .myst-status-catalog-host > .column.hide,
+.gradio-container .myst-status-page .myst-status-catalog-host > .column.hidden {{
+    display: none !important;
+    min-height: 0 !important;
+    height: 0 !important;
+    flex: 0 0 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+}}
+.gradio-container .myst-status-page .myst-status-catalog-host:not(.hide):not(.hidden) #myst-status-panel-host,
+.gradio-container .myst-status-page .myst-status-catalog-host:not(.hide):not(.hidden) #myst-status-panel-host .html-container,
+.gradio-container .myst-status-page .myst-status-catalog-host:not(.hide):not(.hidden) #myst-status-grid-host,
+.gradio-container .myst-status-page .myst-status-catalog-host:not(.hide):not(.hidden) #myst-status-grid-host .html-container,
+.gradio-container .myst-status-page .myst-status-catalog-host:not(.hide):not(.hidden) .myst-status-panel-host,
+.gradio-container .myst-status-page .myst-status-catalog-host:not(.hide):not(.hidden) .myst-status-panel-host .html-container,
+.gradio-container .myst-status-page .myst-status-grid-view .myst-status-grid-host,
+.gradio-container .myst-status-page .myst-status-grid-view .myst-status-grid-host .html-container {{
+    width: 100% !important;
+    min-height: calc(100dvh - 8.5rem) !important;
+    height: auto !important;
+    flex: 1 1 auto !important;
+    overflow: visible !important;
+    position: relative !important;
+    z-index: 3 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    display: flex !important;
+    flex-direction: column !important;
+}}
+.gradio-container .myst-status-page.hide,
+.gradio-container .myst-gravity-page.hide,
+.gradio-container .myst-edit-page.hide,
+.gradio-container .myst-readme-page.hide,
+.gradio-container .vqc-animations-page.hide {{
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    pointer-events: none !important;
+}}
+.gradio-container .myst-status-page .myst-status-grid-wrap {{
+    width: 100% !important;
+    height: auto !important;
+    min-height: calc(100dvh - 8.5rem) !important;
+    flex: 1 1 auto !important;
+    background: transparent !important;
+    display: flex !important;
+    flex-direction: column !important;
+}}
+.gradio-container .myst-status-page .myst-status-grid {{
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    grid-template-rows: repeat(3, minmax(10rem, 1fr)) !important;
+    gap: 0.45rem !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: calc(100dvh - 7.5rem) !important;
+    flex: 1 1 auto !important;
+    background: transparent !important;
+    align-content: stretch !important;
+    position: relative !important;
+    z-index: 3 !important;
+}}
+.gradio-container .myst-status-page .myst-status-grid-cell {{
+    min-width: 0 !important;
+    min-height: 0 !important;
+    height: 100% !important;
+    background: transparent !important;
+    display: flex !important;
+    flex-direction: column !important;
+}}
+.gradio-container .myst-status-page .myst-status-grid-cell-active .myst-status-preset-panel {{
+    box-shadow:
+        0 0 0 2px rgba(61, 255, 122, {_MYST_STATUS_LAYER_ALPHA}),
+        inset 0 0 12px rgba(61, 255, 122, {_MYST_STATUS_LAYER_ALPHA}) !important;
+}}
+.gradio-container .myst-status-page .myst-status-preset-panel {{
+    padding: 0.42rem 0.46rem 0.52rem !important;
+    flex: 1 1 0 !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    background: rgba(0, 0, 0, {_MYST_STATUS_PANEL_ALPHA}) !important;
+    border: 2px inset rgba(92, 74, 31, {_MYST_STATUS_PANEL_ALPHA}) !important;
+    box-shadow: none !important;
+    box-sizing: border-box !important;
+}}
+.gradio-container .myst-status-page .myst-status-preset-panel {{
+    font-weight: 700 !important;
+}}
+.gradio-container .myst-status-page .myst-status-preset-panel .myst-gravity-level-title {{
+    font-size: 0.82rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.03em !important;
+    line-height: 1.2 !important;
+}}
+.gradio-container .myst-status-page .myst-status-preset-panel .myst-gravity-level-rule {{
+    margin: 0.28rem 0 0.35rem 0 !important;
+    border-top-color: rgba(245, 230, 200, {_MYST_STATUS_PANEL_ALPHA}) !important;
+}}
+.gradio-container .myst-status-page .myst-status-level-row {{
+    grid-template-columns: 1.45rem minmax(0, 0.5fr) minmax(4.25rem, 0.68fr) minmax(0, 1.15fr) minmax(3.6rem, auto) !important;
+    gap: 0.14rem 0.18rem !important;
+    margin: 0 !important;
+    font-size: 0.82rem !important;
+    line-height: 1.2 !important;
+    align-items: center !important;
+}}
+.gradio-container .myst-status-page .myst-status-level-spacer {{
+    display: block !important;
+    width: 100% !important;
+    min-height: 0.82rem !important;
+    height: 0.82rem !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    background: transparent !important;
+    pointer-events: none !important;
+    flex: 0 0 0.82rem !important;
+}}
+.gradio-container .myst-status-page .myst-status-preset-panel .myst-gravity-level-id,
+.gradio-container .myst-status-page .myst-status-preset-panel .myst-gravity-level-desc,
+.gradio-container .myst-status-page .myst-status-preset-panel .myst-gravity-level-range,
+.gradio-container .myst-status-page .myst-status-preset-panel .myst-gravity-level-val,
+.gradio-container .myst-status-page .myst-status-preset-panel .myst-gravity-level-foot {{
+    font-size: 0.82rem !important;
+    font-weight: 700 !important;
+    line-height: 1.2 !important;
+}}
+.gradio-container .myst-status-page .myst-status-level-row .myst-gravity-level-range {{
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    font-weight: 600 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    min-width: 0 !important;
+    justify-self: start !important;
+    text-align: left !important;
+}}
+.gradio-container .myst-status-page .myst-status-catalog-header .myst-gravity-level-id,
+.gradio-container .myst-status-page .myst-status-catalog-header .myst-gravity-level-desc,
+.gradio-container .myst-status-page .myst-status-catalog-header .myst-gravity-level-range {{
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+}}
+.gradio-container .myst-status-page .myst-status-catalog-header .myst-gravity-level-val {{
+    color: #f5e6c8 !important;
+    -webkit-text-fill-color: #f5e6c8 !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.04em !important;
+    text-transform: uppercase !important;
+    font-size: 0.72rem !important;
+}}
+.gradio-container .myst-status-page .myst-status-catalog-header .myst-gravity-level-bar {{
+    visibility: hidden !important;
+}}
+.gradio-container .myst-status-page .myst-status-notes-wrap {{
+    width: 100% !important;
+    margin: 0.18rem 0 0.1rem 0 !important;
+    box-sizing: border-box !important;
+}}
+.gradio-container .myst-status-page .myst-status-notes-label {{
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    font-size: 0.72rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.06em !important;
+    text-transform: uppercase !important;
+    line-height: 1.2 !important;
+    margin: 0 0 0.28rem 0 !important;
+}}
+.gradio-container .myst-status-page .myst-status-notes-box {{
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    font-size: 0.82rem !important;
+    font-weight: 600 !important;
+    line-height: 1.35 !important;
+    border: 2px solid #6b4f1d !important;
+    border-radius: 8px !important;
+    padding: 0.48rem 0.55rem !important;
+    background: rgba(0, 0, 0, 0.38) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 220, 150, 0.08) !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+    min-height: 2.6rem !important;
+}}
+.gradio-container .myst-status-page .myst-status-level-row .myst-gravity-level-desc {{
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    font-weight: 700 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    min-width: 0 !important;
+}}
+.gradio-container .myst-status-page .myst-status-level-row .myst-gravity-level-id {{
+    font-weight: 700 !important;
+}}
+.gradio-container .myst-status-page .myst-status-level-row .myst-gravity-level-val {{
+    font-weight: 700 !important;
+}}
+.gradio-container .myst-status-page .myst-status-level-row .myst-gravity-level-bar {{
+    width: 100% !important;
+    min-height: 0.72rem !important;
+    justify-self: stretch !important;
+    display: flex !important;
+    gap: 2px !important;
+    align-items: stretch !important;
+    box-sizing: border-box !important;
+    padding-right: 4ch !important;
+}}
+.gradio-container .myst-status-page .myst-status-level-row .myst-gravity-level-val {{
+    min-width: 3.6rem !important;
+    justify-self: end !important;
+    text-align: right !important;
+}}
+.gradio-container .myst-status-page .myst-level-block {{
+    flex: 1 1 0 !important;
+    width: auto !important;
+    min-width: 2px !important;
+    max-width: none !important;
+    height: 0.72rem !important;
+}}
+.gradio-container .myst-status-page .myst-level-block.myst-level-fill.myst-level-pos {{
+    background: #33ff66 !important;
+    box-shadow: 0 0 4px rgba(51, 255, 102, 0.55) !important;
+    opacity: 1 !important;
+}}
+.gradio-container .myst-status-page .myst-level-block.myst-level-fill.myst-level-neg {{
+    background: #ff3344 !important;
+    box-shadow: 0 0 4px rgba(255, 51, 68, 0.55) !important;
+    opacity: 1 !important;
+}}
+.gradio-container .myst-status-page .myst-level-block.myst-level-empty {{
+    background: rgba(255, 255, 255, 0.12) !important;
+    opacity: 1 !important;
+}}
+/* Status preset nav — keep the 11-button row inline; never flex-stretch or wrap */
+.gradio-container .myst-status-page .myst-status-stack #myst-status-zoom-nav {{
+    position: relative !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+}}
+.gradio-container .myst-status-page .vqc-status-preset-nav-row.vqc-source-tabs-row {{
+    display: grid !important;
+    flex-wrap: nowrap !important;
+}}
+.gradio-container .myst-status-page .vqc-main-nav-row.vqc-source-tabs-row {{
+    margin: 0.12rem 0 0.05rem 0 !important;
+}}
+.gradio-container .myst-edit-page .myst-edit-panel {{
+    width: 100% !important;
+    margin-top: 0.35rem !important;
+}}
+.gradio-container .myst-edit-page .myst-gravity-controls-accordion {{
+    flex: 0 0 auto !important;
+    background: rgba(0, 0, 0, 0.18) !important;
+    border: 1px solid #4a3818 !important;
+    border-radius: 10px !important;
+    box-shadow: inset 0 1px 0 rgba(255, 220, 150, 0.08) !important;
+    overflow: hidden !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+}}
+.gradio-container .myst-edit-page .myst-gravity-manual-edit-accordion .accordion {{
+    max-height: min(70vh, 42rem) !important;
+    overflow-y: auto !important;
+}}
+.gradio-container .myst-edit-page .myst-gravity-controls-accordion > .label-wrap {{
+    background: linear-gradient(180deg, #1f140a 0%, #0f0a06 100%) !important;
+    border-bottom: 1px solid rgba(74, 56, 24, 0.65) !important;
+}}
+.gradio-container .myst-edit-page .myst-gravity-controls-accordion > .label-wrap span {{
+    color: #f5e6c8 !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.1em !important;
+    text-transform: uppercase !important;
+}}
+@media (max-width: 1100px) {{
+    .gradio-container .myst-status-page .myst-status-grid {{
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        grid-template-rows: auto !important;
+    }}
+}}
+@media (max-width: 720px) {{
+    .gradio-container .myst-status-page .myst-status-grid {{
+        grid-template-columns: minmax(0, 1fr) !important;
+    }}
+}}
 /* === UNIT CELL VIEWPORT header — hidden (plot only) === */
 .gradio-container #component-191,
 .gradio-container #component-191.block,
@@ -3579,22 +4520,6 @@ footer {{ visibility: hidden; }}
 
 """
 
-_HF_VIEWPORT_CSS = ""
-if is_hf_space():
-    _HF_VIEWPORT_CSS = """
-/* HF Space — no wallpaper; body fallback only */
-body::before,
-#vqc-wallpaper {{
-    display: none !important;
-}}
-body {{
-    background: #0a0818 !important;
-}}
-"""
-
-HFB_CSS = HFB_CSS + _HF_VIEWPORT_CSS
-
-
 def run_probe(
     kappa: float,
     progress: gr.Progress = gr.Progress(track_tqdm=False),
@@ -3614,6 +4539,8 @@ def run_probe(
 _GRAVITY_QUICK_PRESET_KEYS = tuple(str(i) for i in range(8))
 _GRAVITY_PRESET_BTN_KEYS = _GRAVITY_QUICK_PRESET_KEYS
 _UNIT_CELL_IMAGE_DPI = 100
+# Index of unit_cell_image within gravity_preset_outputs (8 presets + 2 edit btns + 20 sliders).
+_GRAVITY_PRESET_IMAGE_OUT_INDEX = 33
 _GRAVITY_HOME_DIALS = {
     "phi": 1.0,
     "e": 1.0,
@@ -3632,6 +4559,48 @@ _GRAVITY_PRESET_SLOT_LABELS = {
     2: "full π bowl + φ/e concave pinch",
     3: "full π bowl",
     4: "φ/e concave pinch",
+    5: "κ_doc home blend",
+    6: "moderate bowl",
+    7: "φ leg emphasis",
+    8: "e leg emphasis",
+}
+_GRAVITY_PRESET_STATUS_NOTES: dict[int, str] = {
+    0: (
+        "Reference catalog for all ten φ-e-π deformation controls. "
+        "Use presets 02–09 for programmed shapes; ranges show allowable slider spans."
+    ),
+    1: (
+        "Rigid-cube baseline: deformation pressure 0%, δ_z push disabled. "
+        "φ², e², and π² legs remain at nominal unity with κ_doc holonomy gap."
+    ),
+    2: (
+        "Maximum programmed deformation — full π bowl plus φ/e concave pinch. "
+        "Pressure 100%; φ²/e² skew 0.962/1.038; elevated α and β side coupling."
+    ),
+    3: (
+        "Full π-bowl profile at 100% deformation pressure with moderate δ_z primary push. "
+        "Leg scales nominal; suited to holonomy-gap studies at κ_doc."
+    ),
+    4: (
+        "Partial φ/e concave pinch — 68% deformation pressure with φ²/e² bias 0.975/1.025. "
+        "Stronger α/β geometry coupling without full bowl closure."
+    ),
+    5: (
+        "κ_doc home blend — 35% deformation pressure, δ_z 0.10, nominal leg scales. "
+        "Default Mystery explorer envelope for residual B(κ)−R comparisons."
+    ),
+    6: (
+        "Moderate bowl — 50% deformation pressure, δ_z 0.12, κ at κ_doc. "
+        "Intermediate between rigid cube and full-bowl extremes."
+    ),
+    7: (
+        "φ-leg emphasis — φ² scale 0.950 with 45% deformation pressure. "
+        "Highlights golden-ratio leg response in the concave pinch geometry."
+    ),
+    8: (
+        "e-leg emphasis — e² scale 1.050 with 45% deformation pressure. "
+        "Highlights natural-base leg response against nominal φ² and π² legs."
+    ),
 }
 _GRAVITY_PARAM_CATALOG: tuple[dict[str, object], ...] = (
     {
@@ -3735,6 +4704,17 @@ _GRAVITY_PARAM_CATALOG: tuple[dict[str, object], ...] = (
         "desc": "Camera azimuth angle (°)",
     },
 )
+_STATUS_GRID_PRESET_COUNT = 9
+
+
+def _gravity_preset_dials_for_slot(slot: int) -> dict[str, float]:
+    """Programmed dial bundle for a preset slot (status grid / static readout)."""
+    slot = int(slot)
+    if slot in _GRAVITY_PRESET_PROFILES:
+        return dict(_GRAVITY_PRESET_PROFILES[slot])
+    return dict(_GRAVITY_HOME_DIALS)
+
+
 _GRAVITY_PRESET_PROFILES: dict[int, dict[str, float]] = {
     1: {
         "phi": 1.0,
@@ -3831,6 +4811,14 @@ def _gravity_param_range_label(spec: dict[str, object]) -> str:
     return f"{lo:.3f}–{hi:.3f}"
 
 
+def _gravity_param_range_parens(spec: dict[str, object]) -> str:
+    """Min–max (or option span) for a catalog parameter, wrapped in parentheses."""
+    options = spec.get("options")
+    if options:
+        return f"({' · '.join(str(opt) for opt in options)})"
+    return f"({_gravity_param_range_label(spec)})"
+
+
 def _gravity_level_blocks(value: float, spec: dict[str, object]) -> tuple[str, str]:
     lo = float(spec["min"])
     hi = float(spec["max"])
@@ -3909,6 +4897,346 @@ def _format_gravity_control_panel_html(
         f"{''.join(rows)}"
         f'<div class="myst-gravity-level-foot">PRESET {preset_id} · live dial readout</div>'
         "</div>"
+    )
+
+
+def _format_gravity_status_catalog_notes(slot: int) -> str:
+    """Outlined Notes box with preset-specific configuration guidance."""
+    note = _GRAVITY_PRESET_STATUS_NOTES.get(
+        int(slot),
+        "Programmed preset configuration notes for this Status catalog panel.",
+    )
+    return (
+        '<div class="myst-status-notes-wrap">'
+        '<div class="myst-status-notes-label">Notes</div>'
+        f'<div class="myst-status-notes-box">{html.escape(note)}</div>'
+        "</div>"
+    )
+
+
+def _format_gravity_status_catalog_header(*, zoom: bool = False) -> str:
+    """Column labels for Status preset catalog tables."""
+    zoom_cls = " myst-status-zoom-level-row" if zoom else ""
+    return (
+        f'<div class="myst-gravity-level-row myst-status-level-row myst-status-catalog-header{zoom_cls}">'
+        '<span class="myst-gravity-level-id">#</span>'
+        '<span class="myst-gravity-level-desc">Description</span>'
+        '<span class="myst-gravity-level-range">Range</span>'
+        '<span class="myst-gravity-level-bar"></span>'
+        '<span class="myst-gravity-level-val">Value</span>'
+        "</div>"
+    )
+
+
+def _format_gravity_status_catalog_rows(
+    dials: dict[str, float],
+    *,
+    slot: int,
+    zoom: bool = False,
+) -> str:
+    """Status preset catalog lines with a blank row after each numbered entry."""
+    rows: list[str] = [_format_gravity_status_catalog_header(zoom=zoom)]
+    catalog = _GRAVITY_PARAM_CATALOG
+    zoom_cls = " myst-status-zoom-level-row" if zoom else ""
+    rows.append('<div class="myst-status-level-spacer" aria-hidden="true"></div>')
+    for index, spec in enumerate(catalog):
+        val = float(dials[str(spec["key"])])
+        blocks, val_cls = _gravity_level_blocks(val, spec)
+        display = _gravity_param_display(spec, val)
+        range_text = _gravity_param_range_parens(spec)
+        rows.append(
+            f'<div class="myst-gravity-level-row myst-status-level-row{zoom_cls}">'
+            f'<span class="myst-gravity-level-id">{spec["id"]}</span>'
+            f'<span class="myst-gravity-level-desc">{spec["label"]}</span>'
+            f'<span class="myst-gravity-level-range">{range_text}</span>'
+            f'<span class="myst-gravity-level-bar">{blocks}</span>'
+            f'<span class="myst-gravity-level-val {val_cls}">{display}</span>'
+            "</div>"
+        )
+        if index < len(catalog) - 1:
+            rows.append('<div class="myst-status-level-spacer" aria-hidden="true"></div>')
+    rows.append('<div class="myst-status-level-spacer" aria-hidden="true"></div>')
+    rows.append(_format_gravity_status_catalog_notes(slot))
+    return "".join(rows)
+
+
+def _format_gravity_status_cell_html(slot: int, *, active: bool = False) -> str:
+    """Compact parameter levels for one programmed preset (status grid cell)."""
+    dials = _gravity_preset_dials_for_slot(slot)
+    preset_id = _gravity_preset_id(slot)
+    profile = _GRAVITY_PRESET_SLOT_LABELS.get(slot)
+    subtitle = f" · {profile}" if profile else ""
+    active_cls = " myst-status-grid-cell-active" if active else ""
+    panel_index = slot + 1
+    return (
+        f'<div class="myst-status-grid-cell myst-status-panel-{panel_index}{active_cls}">'
+        '<div class="myst-gravity-level-panel myst-status-preset-panel">'
+        f'<div class="myst-gravity-level-title">PRESET {preset_id}{subtitle}</div>'
+        '<hr class="myst-gravity-level-rule" />'
+        f"{_format_gravity_status_catalog_rows(dials, slot=slot)}"
+        "</div>"
+        "</div>"
+    )
+
+
+def _status_panel_html(
+    zoom_slot: int,
+    *,
+    grid_active_slot: int | None = None,
+    dials: dict[str, float] | None = None,
+) -> str:
+    """Single Status content host — 3×3 grid when zoom_slot < 0, else full-page preset."""
+    zs = int(zoom_slot)
+    if zs >= 0:
+        return _format_gravity_status_zoom_html(zs, dials)
+    return _format_gravity_status_grid_html(active_slot=grid_active_slot)
+
+
+def _status_panels_host_update(*, edit_active: bool) -> gr.Update:
+    classes = ["myst-status-panels-host"]
+    if edit_active:
+        classes.append("myst-status-edit-active")
+    return gr.update(elem_classes=classes)
+
+
+def _status_catalog_updates(
+    zoom_slot: int,
+    *,
+    grid_active_slot: int | None = None,
+    dials: dict[str, float] | None = None,
+    visible: bool = True,
+) -> tuple[gr.Update, gr.Update]:
+    """Refresh catalog HTML and show/hide the catalog column during manual edit."""
+    html = _status_panel_html(
+        zoom_slot,
+        grid_active_slot=grid_active_slot,
+        dials=dials,
+    )
+    show = bool(visible)
+    return (
+        gr.update(visible=show),
+        gr.update(value=html),
+    )
+
+
+def _status_panel_levels_update(
+    zoom_slot: int,
+    *,
+    grid_active_slot: int | None = None,
+    dials: dict[str, float] | None = None,
+    visible: bool = True,
+) -> tuple[gr.Update, gr.Update, gr.Update]:
+    """Refresh Status panels — catalog column, HTML value, and panels-host edit class."""
+    catalog_col, panel_html = _status_catalog_updates(
+        zoom_slot,
+        grid_active_slot=grid_active_slot,
+        dials=dials,
+        visible=visible,
+    )
+    return (
+        catalog_col,
+        panel_html,
+        _status_panels_host_update(edit_active=not visible),
+    )
+
+
+def _format_gravity_status_grid_html(active_slot: int | None = None) -> str:
+    """3×3 status page grid — status_panel_1 … status_panel_9 programmed preset readouts."""
+    active = int(active_slot) if active_slot is not None else None
+    cells = [
+        _format_gravity_status_cell_html(slot, active=(active == slot))
+        for slot in range(_STATUS_GRID_PRESET_COUNT)
+    ]
+    return (
+        '<div class="myst-status-grid-wrap">'
+        '<div class="myst-status-grid">'
+        f"{''.join(cells)}"
+        "</div>"
+        "</div>"
+    )
+
+
+def _format_gravity_status_zoom_html(
+    slot: int,
+    dials: dict[str, float] | None = None,
+) -> str:
+    """Full-page preset readout for Status/01 … Status/09 zoom view."""
+    slot = int(slot)
+    dials = dials or _gravity_preset_dials_for_slot(slot)
+    preset_id = _gravity_preset_id(slot)
+    profile = _GRAVITY_PRESET_SLOT_LABELS.get(slot)
+    subtitle = f" · {profile}" if profile else ""
+    return (
+        f'<div class="myst-status-zoom-wrap myst-status-panel-{slot + 1}">'
+        '<div class="myst-gravity-level-panel myst-status-preset-panel myst-status-zoom-panel">'
+        f'<div class="myst-gravity-level-title">PRESET {preset_id}{subtitle}</div>'
+        '<hr class="myst-gravity-level-rule" />'
+        f"{_format_gravity_status_catalog_rows(dials, slot=slot, zoom=True)}"
+        f'<div class="myst-gravity-level-foot">PRESET {preset_id} · parameter levels</div>'
+        "</div>"
+        "</div>"
+    )
+
+
+def _status_zoom_select(slot: int) -> tuple:
+    """Latch a Status/ preset zoom button and show the full-page preset readout."""
+    slot = int(slot)
+    dials = _gravity_preset_dials_for_slot(slot)
+    slider_updates = _gravity_slider_control_updates(dials, edit_enabled=False)
+    return (
+        *_status_panel_levels_update(slot, dials=dials, visible=True),
+        *_status_zoom_btn_updates(slot),
+        _status_zoom_nav_back_btn_update(slot),
+        slot,
+        False,
+        gr.update(visible=False),
+        _status_zoom_nav_edit_btn_update(in_zoom=True, edit_open=False),
+        *slider_updates,
+        _status_zoom_save_btn_update(saved=False),
+    )
+
+
+_STATUS_ZOOM_SAVE_BTN_CLASSES = [
+    "vqc-source-tab",
+    "myst-status-preset-btn",
+    "myst-status-zoom-save-btn",
+]
+
+
+def _status_zoom_save_btn_update(*, saved: bool = False) -> gr.Update:
+    if saved:
+        return gr.update(
+            value="Saved ✓",
+            interactive=False,
+            variant="secondary",
+            elem_classes=[*_STATUS_ZOOM_SAVE_BTN_CLASSES, "saved"],
+        )
+    return gr.update(
+        value="Save",
+        interactive=True,
+        variant="secondary",
+        elem_classes=list(_STATUS_ZOOM_SAVE_BTN_CLASSES),
+    )
+
+
+def _status_zoom_edit_toggle(
+    is_open: bool,
+    zoom_slot: int,
+    phi_sq_scale: float,
+    e_sq_scale: float,
+    pi_sq_scale: float,
+    kappa: float,
+    delta_z: float,
+    alpha: float,
+    beta: float,
+    deform_pressure: float,
+    view_elev: float,
+    view_azim: float,
+) -> tuple:
+    """Toggle Status zoom Edit drawer (drop-up) and latch the Edit button."""
+    show = not bool(is_open)
+    if show:
+        dials = _gravity_dial_bundle(
+            phi_sq_scale,
+            e_sq_scale,
+            pi_sq_scale,
+            kappa,
+            delta_z,
+            alpha,
+            beta,
+            deform_pressure,
+            view_elev,
+            view_azim,
+        )
+    else:
+        dials = _gravity_preset_dials_for_slot(int(zoom_slot))
+    slider_updates = _gravity_slider_control_updates(dials, edit_enabled=show)
+    edit_btn = _status_zoom_nav_edit_btn_update(in_zoom=True, edit_open=show)
+    save_btn = _status_zoom_save_btn_update(saved=False)
+    return (
+        show,
+        gr.update(visible=show),
+        edit_btn,
+        *slider_updates,
+        *_status_panel_levels_update(int(zoom_slot), dials=dials, visible=not show),
+        save_btn,
+    )
+
+
+def _status_zoom_save_preset(
+    zoom_slot: int,
+    phi_sq_scale: float,
+    e_sq_scale: float,
+    pi_sq_scale: float,
+    kappa: float,
+    delta_z: float,
+    alpha: float,
+    beta: float,
+    deform_pressure: float,
+    view_elev: float,
+    view_azim: float,
+) -> tuple:
+    """Persist edited dial values, then collapse the edit drawer back into the Edit tab."""
+    slot = int(zoom_slot)
+    if slot < 0:
+        return tuple(gr.skip() for _ in range(17))
+    dials = _gravity_dial_bundle(
+        phi_sq_scale,
+        e_sq_scale,
+        pi_sq_scale,
+        kappa,
+        delta_z,
+        alpha,
+        beta,
+        deform_pressure,
+        view_elev,
+        view_azim,
+    )
+    _GRAVITY_PRESET_PROFILES[slot] = dict(dials)
+    slider_updates = _gravity_slider_control_updates(dials, edit_enabled=False)
+    saved_btn = _status_zoom_save_btn_update(saved=True)
+    return (
+        *_status_panel_levels_update(slot, dials=dials, visible=True),
+        saved_btn,
+        False,
+        gr.update(visible=False),
+        _status_zoom_nav_edit_btn_update(in_zoom=True, edit_open=False),
+        *slider_updates,
+    )
+
+
+def _status_zoom_manual_refresh(
+    phi_sq_scale: float,
+    e_sq_scale: float,
+    pi_sq_scale: float,
+    kappa: float,
+    delta_z: float,
+    alpha: float,
+    beta: float,
+    deform_pressure: float,
+    view_elev: float,
+    view_azim: float,
+    zoom_slot: int,
+    edit_open: bool,
+) -> tuple:
+    if not edit_open:
+        return gr.skip(), gr.skip(), gr.skip(), gr.skip()  # catalog, panel, panels-host, save_btn
+    dials = _gravity_dial_bundle(
+        phi_sq_scale,
+        e_sq_scale,
+        pi_sq_scale,
+        kappa,
+        delta_z,
+        alpha,
+        beta,
+        deform_pressure,
+        view_elev,
+        view_azim,
+    )
+    reset_btn = _status_zoom_save_btn_update(saved=False)
+    return (
+        *_status_panel_levels_update(int(zoom_slot), dials=dials, visible=False),
+        reset_btn,
     )
 
 
@@ -4085,7 +5413,8 @@ def _run_residual_explorer_ui(
     view_elev: float,
     view_azim: float,
     active_preset: int,
-) -> tuple[str, str, str | object, dict, str, str]:
+    status_zoom_slot: int,
+) -> tuple:
     metrics, header, fig = run_residual_explorer(
         phi_sq_scale,
         e_sq_scale,
@@ -4113,13 +5442,23 @@ def _run_residual_explorer_ui(
     slot = int(active_preset)
     tui = _gravity_tui_for_preset(slot, dials)
     control_levels = _format_gravity_control_panel_html(dials, slot)
+    zoom_slot = int(status_zoom_slot)
+    status_panel = _status_panel_html(
+        zoom_slot,
+        grid_active_slot=slot,
+        dials=_gravity_preset_dials_for_slot(zoom_slot) if zoom_slot >= 0 else None,
+    )
     print(f"[DEBUG] _run_residual_explorer_ui: preset={slot}", flush=True)
     return (
+        metrics,
         metrics,
         header,
         _gravity_static_image_update(fig),
         _gravity_clear_video_update(),
         control_levels,
+        gr.skip(),
+        gr.update(value=status_panel),
+        gr.skip(),
         tui,
     )
 
@@ -4136,11 +5475,12 @@ def _run_residual_explorer_ui_manual(
     view_elev: float,
     view_azim: float,
     active_preset: int,
+    status_zoom_slot: int,
     edit_params_enabled: bool,
 ) -> tuple:
     """Manual dial refresh — only when Manual Edit is latched (avoids preset cascade)."""
     if not edit_params_enabled:
-        return tuple(gr.skip() for _ in range(6))
+        return tuple(gr.skip() for _ in range(10))
     print("[DEBUG] _run_residual_explorer_ui_manual: manual dial release", flush=True)
     return _run_residual_explorer_ui(
         phi_sq_scale,
@@ -4154,6 +5494,7 @@ def _run_residual_explorer_ui_manual(
         view_elev,
         view_azim,
         active_preset,
+        status_zoom_slot,
     )
 
 
@@ -4222,10 +5563,14 @@ def _gravity_slider_control_updates(
 
 def _gravity_edit_params_toggle(enabled: bool) -> tuple:
     new_state = not bool(enabled)
+    btn_update = _gravity_edit_params_btn_update(new_state)
+    slider_updates = _gravity_slider_control_updates(None, edit_enabled=new_state)
     return (
         new_state,
-        _gravity_edit_params_btn_update(new_state),
-        *_gravity_slider_control_updates(None, edit_enabled=new_state),
+        btn_update,
+        *slider_updates,
+        btn_update,
+        *slider_updates,
     )
 
 
@@ -4238,20 +5583,38 @@ def _gravity_explorer_outputs(
     video_update: dict,
     tui: str,
     active_slot: int,
+    status_zoom_slot: int,
     *,
     edit_params_enabled: bool = False,
     update_image: bool = True,
 ) -> tuple:
     image_out = _gravity_static_image_update(fig) if update_image else gr.skip()
+    edit_btn = _gravity_edit_params_btn_update(edit_params_enabled)
+    slider_updates = _gravity_slider_control_updates(
+        dials, edit_enabled=edit_params_enabled
+    )
+    control_levels = _format_gravity_control_panel_html(dials, active_slot)
+    zoom_slot = int(status_zoom_slot)
+    status_panel = _status_panel_html(
+        zoom_slot,
+        grid_active_slot=active_slot,
+        dials=_gravity_preset_dials_for_slot(zoom_slot) if zoom_slot >= 0 else None,
+    )
     return (
         *_gravity_preset_btn_updates(active_key),
-        _gravity_edit_params_btn_update(edit_params_enabled),
-        *_gravity_slider_control_updates(dials, edit_enabled=edit_params_enabled),
+        edit_btn,
+        edit_btn,
+        *slider_updates,
+        *slider_updates,
+        metrics,
         metrics,
         header,
         image_out,
         video_update,
-        _format_gravity_control_panel_html(dials, active_slot),
+        control_levels,
+        gr.skip(),
+        gr.update(value=status_panel),
+        gr.skip(),
         tui,
         active_slot,
     )
@@ -4265,6 +5628,7 @@ def _gravity_animation_render_outputs(
     video_update: dict,
     tui: str,
     active_slot: int,
+    status_zoom_slot: int,
     *,
     edit_params_enabled: bool = False,
 ) -> tuple:
@@ -4277,6 +5641,7 @@ def _gravity_animation_render_outputs(
         video_update,
         tui,
         active_slot,
+        status_zoom_slot,
         edit_params_enabled=edit_params_enabled,
         update_image=False,
     )
@@ -4295,6 +5660,7 @@ def _gravity_animate_toggle_click(
     view_azim: float,
     active_preset: int,
     edit_params_enabled: bool,
+    status_zoom_slot: int,
     progress: gr.Progress = gr.Progress(track_tqdm=False),
 ) -> tuple:
     dials = _gravity_dial_bundle(
@@ -4335,6 +5701,7 @@ def _gravity_animate_toggle_click(
             _gravity_load_video_update(video_path),
             tui,
             slot,
+            status_zoom_slot,
             edit_params_enabled=bool(edit_params_enabled),
         )
     except Exception as exc:
@@ -4348,6 +5715,7 @@ def _gravity_animate_toggle_click(
             _gravity_clear_video_update(),
             err_tui,
             slot,
+            status_zoom_slot,
             edit_params_enabled=bool(edit_params_enabled),
         )
 
@@ -4414,6 +5782,7 @@ def _make_gravity_quick_preset_click(slot: int):
         view_azim: float,
         _active_preset: int,
         edit_params_enabled: bool,
+        status_zoom_slot: int,
     ):
         print(f"[DEBUG] preset_click_unified ENTER slot={slot}", flush=True)
         print(
@@ -4455,12 +5824,13 @@ def _make_gravity_quick_preset_click(slot: int):
             _gravity_clear_video_update(),
             tui,
             active_slot,
+            status_zoom_slot,
             edit_params_enabled=edit_params_enabled,
             update_image=fig is not None,
         )
         if fig is None:
             outputs = list(outputs)
-            outputs[21] = _gravity_viewport_error_placeholder()
+            outputs[_GRAVITY_PRESET_IMAGE_OUT_INDEX] = _gravity_viewport_error_placeholder()
         image_out = outputs[21]
         if hasattr(image_out, "shape"):
             print(
@@ -4499,6 +5869,8 @@ def load_kappa_star() -> float:
 
 
 def build_app() -> gr.Blocks:
+    for static_dir in wallpaper_static_paths():
+        gr.set_static_paths(paths=[str(static_dir)])
     with gr.Blocks(
         title="Mystery — φ · e · π Emergent Signature",
         analytics_enabled=False,
@@ -4536,8 +5908,10 @@ def build_app() -> gr.Blocks:
                 with gr.Row(elem_classes=["vqc-optics-panel-header"]):
                     gr.HTML(OPTICS_LOGO_HTML)
                     with gr.Column(elem_classes=["vqc-optics-panel-nav"], scale=1):
-                        with gr.Row(elem_classes=["vqc-nav-spreadsheet-row"]):
-                            gr.HTML('<span class="vqc-source-label vqc-nav-row-label">Source:</span>')
+                        with gr.Row(
+                            elem_classes=["vqc-nav-spreadsheet-row", "vqc-nav-spreadsheet-row-8"],
+                        ):
+                            gr.HTML('<span class="vqc-source-label vqc-nav-row-label">Mystery:</span>')
                             with gr.Column(elem_classes=["vqc-nav-cell"], scale=1, min_width=72):
                                 tab_gravity_btn = gr.Button(
                                     "Gravity",
@@ -4568,6 +5942,13 @@ def build_app() -> gr.Blocks:
                                     variant="secondary",
                                 )
                             with gr.Column(elem_classes=["vqc-nav-cell"], scale=1, min_width=72):
+                                tab_status_btn = gr.Button(
+                                    "Status",
+                                    elem_classes=["vqc-source-tab"],
+                                    scale=0,
+                                    variant="secondary",
+                                )
+                            with gr.Column(elem_classes=["vqc-nav-cell"], scale=1, min_width=72):
                                 tab_claims_btn = gr.Button(
                                     "Claims",
                                     elem_classes=["vqc-source-tab"],
@@ -4581,18 +5962,19 @@ def build_app() -> gr.Blocks:
                                     scale=0,
                                     variant="secondary",
                                 )
-                        with gr.Row(elem_classes=["vqc-nav-spreadsheet-row"]):
+                        with gr.Row(
+                            elem_classes=["vqc-nav-spreadsheet-row", "vqc-nav-spreadsheet-row-8"],
+                        ):
                             gr.HTML('<span class="vqc-source-label vqc-nav-row-label">Links:</span>')
                             with gr.Column(elem_classes=["vqc-nav-cell"], scale=1, min_width=72):
                                 gr.HTML(_external_tab_html("GitHub", GITHUB_URL, "github"))
                             with gr.Column(elem_classes=["vqc-nav-cell"], scale=1, min_width=72):
                                 gr.HTML(_external_tab_html("TOE parent", TOE_URL, "toe"))
-                            with gr.Column(elem_classes=["vqc-nav-cell"], scale=1, min_width=72):
-                                gr.HTML('<span class="vqc-nav-cell-empty" aria-hidden="true">&nbsp;</span>')
-                            with gr.Column(elem_classes=["vqc-nav-cell"], scale=1, min_width=72):
-                                gr.HTML('<span class="vqc-nav-cell-empty" aria-hidden="true">&nbsp;</span>')
-                            with gr.Column(elem_classes=["vqc-nav-cell"], scale=1, min_width=72):
-                                gr.HTML('<span class="vqc-nav-cell-empty" aria-hidden="true">&nbsp;</span>')
+                            for _ in range(6):
+                                with gr.Column(elem_classes=["vqc-nav-cell"], scale=1, min_width=72):
+                                    gr.HTML(
+                                        '<span class="vqc-nav-cell-empty" aria-hidden="true">&nbsp;</span>'
+                                    )
                 optics_terminal = gr.Textbox(
                     label="Matrix status display — selection menu · d-pad nav",
                     value="",
@@ -4768,33 +6150,12 @@ def build_app() -> gr.Blocks:
             )
 
         with gr.Column(visible=False, elem_classes=["vqc-animations-page"]) as page_animations:
-            with gr.Row(elem_classes=["vqc-source-tabs-row", "vqc-animations-nav-row"]):
-                gr.HTML('<span class="vqc-source-label">Source:</span>')
-                anim_tab_gravity_btn = gr.Button(
-                    "Gravity",
-                    elem_classes=["vqc-source-tab"],
-                    scale=0,
-                    variant="secondary",
-                )
-                anim_tab_readme_btn = gr.Button(
-                    "README",
-                    elem_classes=["vqc-source-tab"],
-                    scale=0,
-                    variant="secondary",
-                )
-                anim_tab_demo_btn = gr.Button(
-                    "Live Probe",
-                    elem_classes=["vqc-source-tab"],
-                    scale=0,
-                    variant="secondary",
-                )
-                anim_tab_anim_btn = gr.Button(
-                    "Figures",
-                    elem_classes=["vqc-source-tab", "active"],
-                    interactive=False,
-                    scale=0,
-                    variant="secondary",
-                )
+            _anim_nav = _place_main_nav_row("animations")
+            anim_tab_gravity_btn = _anim_nav["gravity"]
+            anim_tab_readme_btn = _anim_nav["readme"]
+            anim_tab_demo_btn = _anim_nav["demo"]
+            anim_tab_anim_btn = _anim_nav["animations"]
+            anim_tab_status_btn = _anim_nav["status"]
             gr.Markdown("## Reference figures")
             gr.Markdown(FIGURES_INTRO_MD_LOCAL)
             gr.HTML(_figures_grid_html())
@@ -4809,35 +6170,15 @@ def build_app() -> gr.Blocks:
         )
         _init_preset_tui = _format_gravity_menu_tui_html()
         _init_control_levels = _format_gravity_control_panel_html(_GRAVITY_HOME_DIALS, 0)
+        _init_status_panel = _format_gravity_status_grid_html(active_slot=None)
 
         with gr.Column(visible=False, elem_classes=["myst-readme-page"]) as page_readme:
-            with gr.Row(elem_classes=["vqc-source-tabs-row", "vqc-animations-nav-row"]):
-                gr.HTML('<span class="vqc-source-label">Source:</span>')
-                readme_tab_gravity_btn = gr.Button(
-                    "Gravity",
-                    elem_classes=["vqc-source-tab"],
-                    scale=0,
-                    variant="secondary",
-                )
-                readme_tab_readme_btn = gr.Button(
-                    "README",
-                    elem_classes=["vqc-source-tab", "active"],
-                    interactive=False,
-                    scale=0,
-                    variant="secondary",
-                )
-                readme_tab_demo_btn = gr.Button(
-                    "Live Probe",
-                    elem_classes=["vqc-source-tab"],
-                    scale=0,
-                    variant="secondary",
-                )
-                readme_tab_anim_btn = gr.Button(
-                    "Figures",
-                    elem_classes=["vqc-source-tab"],
-                    scale=0,
-                    variant="secondary",
-                )
+            _readme_nav = _place_main_nav_row("readme")
+            readme_tab_gravity_btn = _readme_nav["gravity"]
+            readme_tab_readme_btn = _readme_nav["readme"]
+            readme_tab_demo_btn = _readme_nav["demo"]
+            readme_tab_anim_btn = _readme_nav["animations"]
+            readme_tab_status_btn = _readme_nav["status"]
             gr.HTML(
                 f'<p class="myst-github-banner">Full derivations, probe suite, and JSON outputs: '
                 f'<a href="{GITHUB_URL}" target="_blank" rel="noopener noreferrer">'
@@ -4855,34 +6196,294 @@ def build_app() -> gr.Blocks:
                     gr.Code(snippet, language="python", lines=10)
             gr.Markdown(EXPLORE_FURTHER_MD)
 
+        status_content_open = gr.State(True)
+        with gr.Column(visible=False, elem_classes=["myst-status-page"]) as page_status:
+            _status_nav = _place_main_nav_row("status")
+            status_tab_gravity_btn = _status_nav["gravity"]
+            status_tab_readme_btn = _status_nav["readme"]
+            status_tab_demo_btn = _status_nav["demo"]
+            status_tab_anim_btn = _status_nav["animations"]
+            status_tab_status_btn = _status_nav["status"]
+            status_zoom_slot = gr.State(-1)
+            status_zoom_edit_open = gr.State(False)
+            with gr.Column(visible=True, elem_classes=["myst-status-stack"]) as status_content_col:
+                status_zoom_back_btn, _status_zoom_nav, status_zoom_edit_btn = (
+                    _place_status_zoom_nav_row(active_slot=-1)
+                )
+                status_zoom_btns = [
+                    _status_zoom_nav[str(i)] for i in range(_STATUS_ZOOM_PRESET_COUNT)
+                ]
+                with gr.Column(elem_classes=["myst-status-panels-host"]) as status_panels_host:
+                    with gr.Column(
+                        visible=False,
+                        elem_classes=[
+                            "myst-status-zoom-edit-drawer",
+                            "myst-gravity-control-panel",
+                        ],
+                    ) as status_zoom_edit_drawer:
+                        with gr.Column(
+                            elem_classes=[
+                                "myst-status-zoom-edit-col",
+                                "vqc-optics-panel",
+                            ],
+                        ):
+                            with gr.Row(elem_classes=["myst-status-zoom-edit-save-row"]):
+                                status_zoom_save_btn = gr.Button(
+                                    "Save",
+                                    variant="secondary",
+                                    elem_classes=_STATUS_ZOOM_SAVE_BTN_CLASSES,
+                                )
+                            sz_pressure = gr.Slider(
+                                0.0,
+                                1.0,
+                                value=0.35,
+                                step=0.01,
+                                label="01 · Deformation pressure",
+                                elem_classes=["vqc-optics-dial-wrap"],
+                                interactive=False,
+                            )
+                            sz_phi_scale = gr.Slider(
+                                0.90,
+                                1.10,
+                                value=1.0,
+                                step=0.001,
+                                label="02 · φ² scale",
+                                elem_classes=["vqc-optics-dial-wrap"],
+                                interactive=False,
+                            )
+                            sz_e_scale = gr.Slider(
+                                0.90,
+                                1.10,
+                                value=1.0,
+                                step=0.001,
+                                label="03 · e² scale",
+                                elem_classes=["vqc-optics-dial-wrap"],
+                                interactive=False,
+                            )
+                            sz_pi_scale = gr.Slider(
+                                0.90,
+                                1.10,
+                                value=1.0,
+                                step=0.001,
+                                label="04 · π² scale",
+                                elem_classes=["vqc-optics-dial-wrap"],
+                                interactive=False,
+                            )
+                            sz_kappa = gr.Slider(
+                                0.70,
+                                0.95,
+                                value=KAPPA_DOC,
+                                step=0.001,
+                                label="05 · κ (holonomy-gap parameter)",
+                                elem_classes=["vqc-optics-dial-wrap"],
+                                interactive=False,
+                            )
+                            sz_delta_z = gr.Slider(
+                                0.0,
+                                0.5,
+                                value=0.1,
+                                step=0.01,
+                                label="06 · δ_z (primary push)",
+                                elem_classes=["vqc-optics-dial-wrap"],
+                                interactive=False,
+                            )
+                            sz_alpha = gr.Slider(
+                                0.0,
+                                2.0,
+                                value=1.0,
+                                step=0.05,
+                                label="07 · α (geometry factor)",
+                                elem_classes=["vqc-optics-dial-wrap"],
+                                interactive=False,
+                            )
+                            sz_beta = gr.Slider(
+                                0.0,
+                                2.0,
+                                value=1.0,
+                                step=0.05,
+                                label="08 · β (residual coupling)",
+                                elem_classes=["vqc-optics-dial-wrap"],
+                                interactive=False,
+                            )
+                            sz_view_elev = gr.Slider(
+                                5.0,
+                                75.0,
+                                value=22.0,
+                                step=1.0,
+                                label="09 · View elevation (°)",
+                                elem_classes=["vqc-optics-dial-wrap"],
+                                interactive=False,
+                            )
+                            sz_view_azim = gr.Slider(
+                                0.0,
+                                360.0,
+                                value=45.0,
+                                step=5.0,
+                                label="10 · View azimuth (°)",
+                                elem_classes=["vqc-optics-dial-wrap"],
+                                interactive=False,
+                            )
+                with gr.Column(
+                    visible=True,
+                    elem_classes=["myst-status-catalog-host"],
+                ) as status_catalog_col:
+                    status_panel_levels = gr.HTML(
+                        _init_status_panel,
+                        elem_id="myst-status-panel-host",
+                        elem_classes=[
+                            "myst-gravity-control-levels-wrap",
+                            "myst-status-panel-host",
+                            "myst-status-grid-host",
+                        ],
+                    )
+
+        with gr.Column(visible=False, elem_classes=["myst-edit-page"]) as page_edit:
+            _edit_nav = _place_main_nav_row("edit")
+            edit_tab_gravity_btn = _edit_nav["gravity"]
+            edit_tab_readme_btn = _edit_nav["readme"]
+            edit_tab_demo_btn = _edit_nav["demo"]
+            edit_tab_anim_btn = _edit_nav["animations"]
+            edit_tab_status_btn = _edit_nav["status"]
+            with gr.Column(
+                elem_classes=[
+                    "vqc-optics-panel",
+                    "vqc-gravity-panel",
+                    "myst-gravity-left-frame",
+                    "myst-gravity-panel-window",
+                    "myst-gravity-control-panel",
+                    "myst-edit-panel",
+                ],
+            ):
+                with gr.Accordion(
+                    "Manual Edit",
+                    open=True,
+                    elem_classes=[
+                        "myst-gravity-controls-accordion",
+                        "myst-gravity-manual-edit-accordion",
+                    ],
+                ):
+                    gr.HTML(CONTROL_PANEL_HEADER_HTML)
+                    edit_edit_params_btn = gr.Button(
+                        "Manual Edit",
+                        variant="secondary",
+                        elem_classes=[
+                            "vqc-receiver-preset",
+                            "myst-gravity-edit-params-btn",
+                            "vqc-full-width",
+                        ],
+                    )
+                    with gr.Row(elem_classes=["vqc-optics-dial-row"]):
+                        edit_re_pressure = gr.Slider(
+                            0.0,
+                            1.0,
+                            value=0.35,
+                            step=0.01,
+                            label="Deformation pressure",
+                            info="0 = rigid cube · 1 = full π bowl + φ/e concave pinch",
+                            elem_classes=["vqc-optics-dial-wrap"],
+                            interactive=False,
+                        )
+                    with gr.Row(elem_classes=["vqc-optics-dial-row"]):
+                        edit_re_view_elev = gr.Slider(
+                            5.0,
+                            75.0,
+                            value=22.0,
+                            step=1.0,
+                            label="View elevation (°)",
+                            elem_classes=["vqc-optics-dial-wrap"],
+                            interactive=False,
+                        )
+                        edit_re_view_azim = gr.Slider(
+                            0.0,
+                            360.0,
+                            value=45.0,
+                            step=5.0,
+                            label="View azimuth (°)",
+                            elem_classes=["vqc-optics-dial-wrap"],
+                            interactive=False,
+                        )
+                    with gr.Row(elem_classes=["vqc-optics-dial-row"]):
+                        edit_re_phi_scale = gr.Slider(
+                            0.90,
+                            1.10,
+                            value=1.0,
+                            step=0.001,
+                            label="φ² scale",
+                            elem_classes=["vqc-optics-dial-wrap"],
+                            interactive=False,
+                        )
+                        edit_re_e_scale = gr.Slider(
+                            0.90,
+                            1.10,
+                            value=1.0,
+                            step=0.001,
+                            label="e² scale",
+                            elem_classes=["vqc-optics-dial-wrap"],
+                            interactive=False,
+                        )
+                        edit_re_pi_scale = gr.Slider(
+                            0.90,
+                            1.10,
+                            value=1.0,
+                            step=0.001,
+                            label="π² scale",
+                            elem_classes=["vqc-optics-dial-wrap"],
+                            interactive=False,
+                        )
+                    with gr.Row(elem_classes=["vqc-optics-dial-row"]):
+                        edit_re_kappa = gr.Slider(
+                            0.70,
+                            0.95,
+                            value=KAPPA_DOC,
+                            step=0.001,
+                            label="κ (holonomy-gap parameter)",
+                            info=f"κ_doc = {KAPPA_DOC} · κ* nulls B(κ)−R",
+                            elem_classes=["vqc-optics-dial-wrap"],
+                            interactive=False,
+                        )
+                        edit_re_delta_z = gr.Slider(
+                            0.0,
+                            0.5,
+                            value=0.1,
+                            step=0.01,
+                            label="δ_z (primary push)",
+                            elem_classes=["vqc-optics-dial-wrap"],
+                            interactive=False,
+                        )
+                    with gr.Row(elem_classes=["vqc-optics-dial-row"]):
+                        edit_re_alpha = gr.Slider(
+                            0.0,
+                            2.0,
+                            value=1.0,
+                            step=0.05,
+                            label="α (geometry factor)",
+                            elem_classes=["vqc-optics-dial-wrap"],
+                            interactive=False,
+                        )
+                        edit_re_beta = gr.Slider(
+                            0.0,
+                            2.0,
+                            value=1.0,
+                            step=0.05,
+                            label="β (residual coupling)",
+                            elem_classes=["vqc-optics-dial-wrap"],
+                            interactive=False,
+                        )
+                    with gr.Column(elem_classes=["myst-gravity-metrics-inner"]):
+                        edit_re_metrics = gr.Textbox(
+                            label="Residual explorer",
+                            lines=9,
+                            interactive=False,
+                            value=_init_re_metrics,
+                        )
+
         with gr.Column(visible=True, elem_classes=["myst-gravity-page"], scale=1) as page_gravity:
-            with gr.Row(elem_classes=["vqc-source-tabs-row", "vqc-animations-nav-row"]):
-                gr.HTML('<span class="vqc-source-label">Source:</span>')
-                grav_tab_gravity_btn = gr.Button(
-                    "Gravity",
-                    elem_classes=["vqc-source-tab", "active"],
-                    interactive=False,
-                    scale=0,
-                    variant="secondary",
-                )
-                grav_tab_readme_btn = gr.Button(
-                    "README",
-                    elem_classes=["vqc-source-tab"],
-                    scale=0,
-                    variant="secondary",
-                )
-                grav_tab_demo_btn = gr.Button(
-                    "Live Probe",
-                    elem_classes=["vqc-source-tab"],
-                    scale=0,
-                    variant="secondary",
-                )
-                grav_tab_anim_btn = gr.Button(
-                    "Figures",
-                    elem_classes=["vqc-source-tab"],
-                    scale=0,
-                    variant="secondary",
-                )
+            _grav_nav = _place_main_nav_row("gravity")
+            grav_tab_gravity_btn = _grav_nav["gravity"]
+            grav_tab_readme_btn = _grav_nav["readme"]
+            grav_tab_demo_btn = _grav_nav["demo"]
+            grav_tab_anim_btn = _grav_nav["animations"]
+            grav_tab_status_btn = _grav_nav["status"]
             with gr.Row(elem_classes=["myst-gravity-split"], equal_height=True):
                 with gr.Column(
                     scale=2,
@@ -5131,35 +6732,68 @@ def build_app() -> gr.Blocks:
                 re_kappa, re_delta_z, re_alpha, re_beta, re_pressure,
                 re_view_elev, re_view_azim,
             ]
+            edit_re_inputs = [
+                edit_re_phi_scale, edit_re_e_scale, edit_re_pi_scale,
+                edit_re_kappa, edit_re_delta_z, edit_re_alpha, edit_re_beta, edit_re_pressure,
+                edit_re_view_elev, edit_re_view_azim,
+            ]
             re_outputs = [
                 re_metrics,
+                edit_re_metrics,
                 unit_cell_header,
                 unit_cell_image,
                 unit_cell_video,
                 re_control_levels,
+                status_catalog_col,
+                status_panel_levels,
+                status_panels_host,
                 re_preset_tui,
             ]
-            gravity_dial_inputs = [*re_inputs, re_active_preset]
+            gravity_dial_inputs = [*re_inputs, re_active_preset, status_zoom_slot]
+            edit_dial_inputs = [*edit_re_inputs, re_active_preset, status_zoom_slot]
             gravity_preset_inputs = [*gravity_dial_inputs, re_edit_params]
+            edit_preset_inputs = [*edit_dial_inputs, re_edit_params]
             gravity_preset_btn_outputs = list(re_quick_presets)
             gravity_preset_outputs = [
                 *gravity_preset_btn_outputs,
                 edit_params_btn,
+                edit_edit_params_btn,
                 *re_inputs,
+                *edit_re_inputs,
                 *re_outputs,
                 re_active_preset,
+            ]
+            edit_params_outputs = [
+                re_edit_params,
+                edit_params_btn,
+                *re_inputs,
+                edit_edit_params_btn,
+                *edit_re_inputs,
             ]
             edit_params_btn.click(
                 _gravity_edit_params_toggle,
                 inputs=[re_edit_params],
-                outputs=[re_edit_params, edit_params_btn, *re_inputs],
+                outputs=edit_params_outputs,
+            )
+            edit_edit_params_btn.click(
+                _gravity_edit_params_toggle,
+                inputs=[re_edit_params],
+                outputs=edit_params_outputs,
             )
             # .release() not .change() — preset slider gr.update() must not re-fire explorer.
             gravity_manual_inputs = [*gravity_dial_inputs, re_edit_params]
+            edit_manual_inputs = [*edit_dial_inputs, re_edit_params]
             for slider in re_inputs:
                 slider.release(
                     _run_residual_explorer_ui_manual,
                     inputs=gravity_manual_inputs,
+                    outputs=re_outputs,
+                    show_progress="hidden",
+                )
+            for slider in edit_re_inputs:
+                slider.release(
+                    _run_residual_explorer_ui_manual,
+                    inputs=edit_manual_inputs,
                     outputs=re_outputs,
                     show_progress="hidden",
                 )
@@ -5191,6 +6825,107 @@ def build_app() -> gr.Blocks:
                 flush=True,
             )
 
+            sz_inputs = [
+                sz_phi_scale,
+                sz_e_scale,
+                sz_pi_scale,
+                sz_kappa,
+                sz_delta_z,
+                sz_alpha,
+                sz_beta,
+                sz_pressure,
+                sz_view_elev,
+                sz_view_azim,
+            ]
+            status_zoom_save_outputs = [
+                status_catalog_col,
+                status_panel_levels,
+                status_panels_host,
+                status_zoom_save_btn,
+                status_zoom_edit_open,
+                status_zoom_edit_drawer,
+                status_zoom_edit_btn,
+                *sz_inputs,
+            ]
+            status_zoom_select_outputs = [
+                status_catalog_col,
+                status_panel_levels,
+                status_panels_host,
+                *status_zoom_btns,
+                status_zoom_back_btn,
+                status_zoom_slot,
+                status_zoom_edit_open,
+                status_zoom_edit_drawer,
+                status_zoom_edit_btn,
+                *sz_inputs,
+                status_zoom_save_btn,
+            ]
+            for slot, zoom_btn in enumerate(status_zoom_btns):
+                zoom_btn.click(
+                    lambda s=slot: _status_zoom_select(s),
+                    outputs=status_zoom_select_outputs,
+                    show_progress="hidden",
+                )
+            status_zoom_edit_outputs = [
+                status_zoom_edit_open,
+                status_zoom_edit_drawer,
+                status_zoom_edit_btn,
+                *sz_inputs,
+                status_catalog_col,
+                status_panel_levels,
+                status_panels_host,
+                status_zoom_save_btn,
+            ]
+            status_zoom_edit_inputs = [
+                status_zoom_edit_open,
+                status_zoom_slot,
+                *sz_inputs,
+            ]
+            status_zoom_edit_btn.click(
+                _status_zoom_edit_toggle,
+                inputs=status_zoom_edit_inputs,
+                outputs=status_zoom_edit_outputs,
+                show_progress="hidden",
+            )
+            sz_manual_inputs = [*sz_inputs, status_zoom_slot, status_zoom_edit_open]
+            for slider in sz_inputs:
+                slider.release(
+                    _status_zoom_manual_refresh,
+                    inputs=sz_manual_inputs,
+                    outputs=[
+                        status_catalog_col,
+                        status_panel_levels,
+                        status_panels_host,
+                        status_zoom_save_btn,
+                    ],
+                    show_progress="hidden",
+                )
+            status_zoom_save_inputs = [status_zoom_slot, *sz_inputs]
+            status_zoom_save_btn.click(
+                _status_zoom_save_preset,
+                inputs=status_zoom_save_inputs,
+                outputs=status_zoom_save_outputs,
+                show_progress="hidden",
+            )
+            status_zoom_back_outputs = [
+                status_catalog_col,
+                status_panel_levels,
+                status_panels_host,
+                *status_zoom_btns,
+                status_zoom_back_btn,
+                status_zoom_slot,
+                status_zoom_edit_open,
+                status_zoom_edit_drawer,
+                status_zoom_edit_btn,
+                *sz_inputs,
+                status_zoom_save_btn,
+            ]
+            status_zoom_back_btn.click(
+                _status_zoom_back_to_grid,
+                outputs=status_zoom_back_outputs,
+                show_progress="hidden",
+            )
+
         newhere_outputs = [panel_newhere, tab_newhere_btn, newhere_open, panel_claims, tab_claims_btn, claims_open]
         claims_outputs = [panel_claims, tab_claims_btn, claims_open, panel_newhere, tab_newhere_btn, newhere_open]
         nav_outputs = [
@@ -5198,10 +6933,13 @@ def build_app() -> gr.Blocks:
             page_animations,
             page_gravity,
             page_readme,
+            page_status,
+            page_edit,
             tab_gravity_btn,
             tab_readme_btn,
             tab_demo_btn,
             tab_anim_btn,
+            tab_status_btn,
             panel_newhere,
             tab_newhere_btn,
             newhere_open,
@@ -5212,15 +6950,35 @@ def build_app() -> gr.Blocks:
             anim_tab_readme_btn,
             anim_tab_demo_btn,
             anim_tab_anim_btn,
+            anim_tab_status_btn,
             grav_tab_gravity_btn,
             grav_tab_readme_btn,
             grav_tab_demo_btn,
             grav_tab_anim_btn,
+            grav_tab_status_btn,
             readme_tab_gravity_btn,
             readme_tab_readme_btn,
             readme_tab_demo_btn,
             readme_tab_anim_btn,
+            readme_tab_status_btn,
+            status_tab_gravity_btn,
+            status_tab_readme_btn,
+            status_tab_demo_btn,
+            status_tab_anim_btn,
+            status_tab_status_btn,
+            edit_tab_gravity_btn,
+            edit_tab_readme_btn,
+            edit_tab_demo_btn,
+            edit_tab_anim_btn,
+            edit_tab_status_btn,
             current_page,
+        ]
+
+        status_nav_outputs = [
+            *nav_outputs,
+            status_content_col,
+            status_content_open,
+            *status_zoom_back_outputs,
         ]
 
         def _bind_nav(btn: gr.Button, page: str, *, refresh_gravity: bool = False) -> None:
@@ -5233,22 +6991,48 @@ def build_app() -> gr.Blocks:
             else:
                 btn.click(lambda: _nav_to_page(page), outputs=nav_outputs)
 
+        def _bind_status_nav(btn: gr.Button) -> None:
+            btn.click(
+                _nav_to_status_page,
+                inputs=[current_page, status_content_open],
+                outputs=status_nav_outputs,
+            ).then(
+                _run_residual_explorer_ui,
+                inputs=gravity_dial_inputs,
+                outputs=re_outputs,
+                show_progress="hidden",
+            )
+
         _bind_nav(tab_demo_btn, "demo")
         _bind_nav(tab_anim_btn, "animations")
         _bind_nav(tab_readme_btn, "readme")
+        _bind_status_nav(tab_status_btn)
         _bind_nav(tab_gravity_btn, "gravity", refresh_gravity=True)
         _bind_nav(anim_tab_demo_btn, "demo")
         _bind_nav(anim_tab_anim_btn, "animations")
         _bind_nav(anim_tab_readme_btn, "readme")
+        _bind_status_nav(anim_tab_status_btn)
         _bind_nav(anim_tab_gravity_btn, "gravity", refresh_gravity=True)
         _bind_nav(grav_tab_demo_btn, "demo")
         _bind_nav(grav_tab_anim_btn, "animations")
         _bind_nav(grav_tab_readme_btn, "readme")
+        _bind_status_nav(grav_tab_status_btn)
         _bind_nav(grav_tab_gravity_btn, "gravity", refresh_gravity=True)
         _bind_nav(readme_tab_gravity_btn, "gravity", refresh_gravity=True)
         _bind_nav(readme_tab_demo_btn, "demo")
         _bind_nav(readme_tab_anim_btn, "animations")
         _bind_nav(readme_tab_readme_btn, "readme")
+        _bind_status_nav(readme_tab_status_btn)
+        _bind_nav(status_tab_gravity_btn, "gravity", refresh_gravity=True)
+        _bind_nav(status_tab_readme_btn, "readme")
+        _bind_nav(status_tab_demo_btn, "demo")
+        _bind_nav(status_tab_anim_btn, "animations")
+        _bind_status_nav(status_tab_status_btn)
+        _bind_nav(edit_tab_gravity_btn, "gravity", refresh_gravity=True)
+        _bind_nav(edit_tab_readme_btn, "readme")
+        _bind_nav(edit_tab_demo_btn, "demo")
+        _bind_nav(edit_tab_anim_btn, "animations")
+        _bind_status_nav(edit_tab_status_btn)
         tab_newhere_btn.click(_toggle_newhere, inputs=[newhere_open], outputs=newhere_outputs)
         tab_claims_btn.click(_toggle_claims, inputs=[claims_open], outputs=claims_outputs)
         newhere_minimize_btn.click(_minimize_newhere, outputs=newhere_outputs[:3])
@@ -5273,8 +7057,30 @@ def build_app() -> gr.Blocks:
 demo = build_app()
 
 
+def _pick_local_server_port(preferred: int, *, max_tries: int = 10) -> int:
+    """Return the first free TCP port in [preferred, preferred + max_tries)."""
+    import socket
+
+    for port in range(preferred, preferred + max_tries):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            try:
+                sock.bind(("0.0.0.0", port))
+            except OSError:
+                continue
+            return port
+    return preferred
+
+
 def main() -> None:
     logging.basicConfig(level=logging.INFO)
+    try:
+        from build_info import BUILD_COMMIT, BUILD_UPDATED_UTC
+
+        logger.info("Mystery build %s (%s)", BUILD_COMMIT, BUILD_UPDATED_UTC)
+    except ImportError:
+        logger.info("Mystery build (dev — run scripts/sync_hf_space.sh to stamp)")
+    logger.info("Wallpaper URL: %s", WALLPAPER_URL)
 
     try:
         demo.get_api_info()
@@ -5283,7 +7089,14 @@ def main() -> None:
         logger.exception("Gradio API info check failed")
 
     on_hf = bool(os.environ.get("SPACE_ID"))
-    port = int(os.environ.get("GRADIO_SERVER_PORT", "7860"))
+    preferred_port = int(os.environ.get("GRADIO_SERVER_PORT", "7860"))
+    port = preferred_port if on_hf else _pick_local_server_port(preferred_port)
+    if not on_hf and port != preferred_port:
+        logger.warning(
+            "Port %s is busy; launching on http://127.0.0.1:%s instead",
+            preferred_port,
+            port,
+        )
     share_env = os.environ.get("GRADIO_SHARE", "").strip().lower()
     share_local = share_env in {"1", "true", "yes", "on"}
 
@@ -5301,6 +7114,8 @@ def main() -> None:
     if on_hf and gradio_root:
         launch_kwargs["root_path"] = gradio_root
 
+    if not on_hf:
+        logger.info("Open http://127.0.0.1:%s (close other local app.py instances to avoid stale ports)", port)
     demo.queue(default_concurrency_limit=2).launch(**launch_kwargs)
 
 
