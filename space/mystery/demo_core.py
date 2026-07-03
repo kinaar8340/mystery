@@ -1485,6 +1485,18 @@ def _deformation_pressure_once(n_forward: int = 24) -> list[float]:
     return [_ease_in_out_cubic(float(t)) for t in sweep_t]
 
 
+def _deformation_pressure_demo_sweep(target: float, n_forward: int = 28) -> list[float]:
+    """Signed demo sweep from rigid (0) toward the preset deformation target."""
+    target = _clamp_deform_pressure(target)
+    if abs(target) < 0.02:
+        sweep_t = np.linspace(0.0, 1.0, max(8, int(n_forward)))
+        pulse = [0.22 * np.sin(float(t) * np.pi) for t in sweep_t]
+        return [_clamp_deform_pressure(p) for p in pulse]
+    sweep_t = np.linspace(0.0, 1.0, max(6, int(n_forward)))
+    eased = [_ease_in_out_cubic(float(t)) for t in sweep_t]
+    return [_clamp_deform_pressure(target * e) for e in eased]
+
+
 def _deformation_pressure_loop(n_forward: int = 24) -> list[float]:
     """Ping-pong 0 → 1 → 0 pressure path for seamless video loops."""
     sweep_t = np.linspace(0.0, 1.0, max(4, int(n_forward)))
@@ -2191,6 +2203,45 @@ def render_unit_cell_deformation_video(
     if progress is not None:
         progress(1.0, desc="Video ready")
     return video_path, metrics, header, fig, final_km
+
+
+def render_gravity_demo_animation_video(
+    phi_sq_scale: float,
+    e_sq_scale: float,
+    pi_sq_scale: float,
+    kappa: float,
+    delta_z: float,
+    alpha: float,
+    beta: float,
+    deform_pressure: float = 0.0,
+    view_elev: float = UNIT_CELL_VIEW_ELEV,
+    view_azim: float = UNIT_CELL_VIEW_AZIM,
+    *,
+    fps: int = 10,
+    dpi: int = 88,
+) -> str:
+    """Render a looping signed deformation demo (0 → target) for Gravity viewport."""
+    r_val = residual_from_scales(phi_sq_scale, e_sq_scale, pi_sq_scale)
+    d_side = delta_side_contraction(delta_z, r_val, kappa, alpha=alpha, beta=beta)
+    side = abs(d_side) * 0.5
+    target = _clamp_deform_pressure(deform_pressure)
+    pressures = _deformation_pressure_demo_sweep(target)
+    rgb_frames: list[np.ndarray] = []
+    for pressure_val in pressures:
+        p = float(pressure_val)
+        fig = build_unit_cell_figure(
+            delta_z=delta_z,
+            delta_side=side,
+            r_val=r_val,
+            pressure=p,
+            view_elev=view_elev,
+            view_azim=view_azim,
+            show_curvature_grid=False,
+            dpi=dpi,
+        )
+        rgb_frames.append(_figure_to_rgb(fig, dpi=dpi))
+        plt.close(fig)
+    return _encode_loop_video(rgb_frames, fps=fps)
 
 
 PROBE_SCRIPTS: tuple[tuple[str, str], ...] = (

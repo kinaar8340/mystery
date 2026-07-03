@@ -42,6 +42,8 @@ from demo_core import (
     build_unit_cell_viewport_header_html,
     unit_cell_error_placeholder_html,
     render_unit_cell_deformation_video,
+    render_gravity_demo_animation_video,
+    figure_to_viewport_cached_html,
     residual_from_scales,
     run_residual_explorer,
     run_residual_explorer_plotly,
@@ -1237,7 +1239,9 @@ WALLPAPER_HEAD = f"""
 }})();
 (function() {{
     function mystSyncVisorHeight() {{
-        var visor = document.querySelector('.myst-unit-cell-visor');
+        var visor = document.querySelector('.myst-unit-cell-visor')
+            || document.querySelector('.myst-gravity-single-viewport')
+            || document.querySelector('#myst-gravity-viewport');
         var leftCard = document.querySelector('.myst-gravity-presets-tui-card');
         var page = document.querySelector('.myst-gravity-page');
         if (!visor) return;
@@ -1840,6 +1844,83 @@ footer {{
 #myst-gravity-child-nav button.vqc-source-tab.active {{
     color: {_VQC_MATRIX_GREEN} !important;
     -webkit-text-fill-color: {_VQC_MATRIX_GREEN} !important;
+}}
+/* Main nav tabs — match Demo (A–I) child tab height */
+.gradio-container .vqc-main-nav-row button.vqc-source-tab,
+.gradio-container .vqc-source-tabs-row button.vqc-source-tab {{
+    min-height: 2.05rem !important;
+    height: 2.05rem !important;
+    padding-top: 0.35rem !important;
+    padding-bottom: 0.35rem !important;
+    font-size: 0.95rem !important;
+    font-weight: 600 !important;
+}}
+.gradio-container .myst-gravity-page .myst-gravity-demo-label-wrap {{
+    display: flex !important;
+    align-items: center !important;
+    padding: 0 0.35rem 0 0.15rem !important;
+    margin: 0 !important;
+}}
+.gradio-container .myst-gravity-page .myst-gravity-demo-label {{
+    color: #aaaaaa !important;
+    font-size: 0.85rem !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.4px !important;
+    text-transform: uppercase !important;
+    white-space: nowrap !important;
+}}
+.gradio-container .myst-gravity-page .myst-gravity-single-viewport {{
+    flex: 1 1 auto !important;
+    width: 100% !important;
+    min-height: calc(100dvh - 9.5rem) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}}
+.gradio-container .myst-gravity-page .myst-gravity-viewport,
+.gradio-container .myst-gravity-page #myst-gravity-viewport {{
+    flex: 1 1 auto !important;
+    width: 100% !important;
+    min-height: calc(100dvh - 9.5rem) !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #0a0a0f !important;
+    border: 1px solid #2a2a3a !important;
+    border-radius: 12px !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+}}
+.gradio-container .myst-gravity-page .myst-gravity-viewport-inner {{
+    width: 100% !important;
+    height: 100% !important;
+    min-height: calc(100dvh - 10rem) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    background: #0a0a0f !important;
+}}
+.gradio-container .myst-gravity-page .myst-gravity-viewport-title {{
+    flex: 0 0 auto !important;
+    color: #f5e6c8 !important;
+    font-size: 0.92rem !important;
+    font-weight: 600 !important;
+    padding: 0.55rem 0.75rem 0.2rem !important;
+}}
+.gradio-container .myst-gravity-page .myst-gravity-viewport-sub {{
+    flex: 0 0 auto !important;
+    color: #aaaaaa !important;
+    font-size: 0.78rem !important;
+    padding: 0 0.75rem 0.45rem !important;
+}}
+.gradio-container .myst-gravity-page .myst-gravity-demo-video,
+.gradio-container .myst-gravity-page .myst-gravity-viewport-frame,
+.gradio-container .myst-gravity-page .myst-gravity-viewport-frame img {{
+    flex: 1 1 auto !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: calc(100dvh - 12rem) !important;
+    object-fit: contain !important;
+    background: #000000 !important;
 }}
 .gradio-container a:hover:not(.vqc-source-tab),
 .gradio-container .markdown a:hover:not(.vqc-source-tab),
@@ -2663,6 +2744,7 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-gravity-page .myst-cube-viewport-tag {{
     font-size: var(--myst-gravity-header-sub-font) !important;
 }}
+.gradio-container .myst-gravity-page > .block:has(.myst-gravity-single-viewport),
 .gradio-container .myst-gravity-page > .block:has(.myst-gravity-split),
 .gradio-container .myst-gravity-page > .block:has(.vqc-animations-nav-row) + .block {{
     flex: 1 1 0 !important;
@@ -6356,6 +6438,109 @@ def _gravity_child_nav_output_updates(active_slot: int = -1) -> tuple:
     return (gr.skip(), *_gravity_child_nav_btn_updates(active_slot))
 
 
+_GRAVITY_DEMO_VIDEO_CACHE: dict[str, str] = {}
+
+
+def _gravity_demo_letter_slot(letter: str) -> int:
+    letter = str(letter).strip().upper()
+    if letter not in _GRAVITY_CHILD_NAV_LETTERS:
+        letter = "A"
+    return ord(letter) - ord("A")
+
+
+def _gravity_demo_video_html(video_path: str, *, letter: str, title: str, deform_display: str) -> str:
+    url = f"/gradio_api/file={video_path}"
+    return (
+        f'<div class="myst-gravity-viewport-inner myst-gravity-demo-{letter.lower()}">'
+        f'<div class="myst-gravity-viewport-title">Demo {letter} — {title}</div>'
+        f'<div class="myst-gravity-viewport-sub">{deform_display}</div>'
+        '<video class="myst-gravity-demo-video" autoplay loop muted playsinline '
+        'preload="auto">'
+        f'<source src="{url}" type="video/mp4" />'
+        "</video></div>"
+    )
+
+
+def _get_gravity_demo_static_html(letter: str) -> str:
+    """Fast static frame for a demo letter (used before video encode)."""
+    letter = str(letter).strip().upper()
+    slot = _gravity_demo_letter_slot(letter)
+    meta = _render_preset_shape_meta(slot)
+    dials = _render_preset_dials_for_slot(slot)
+    try:
+        _metrics, _header, fig = run_residual_explorer(
+            dials["phi"],
+            dials["e"],
+            dials["pi"],
+            dials["kappa"],
+            dials["dz"],
+            dials["alpha"],
+            dials["beta"],
+            dials["pressure"],
+            dials["elev"],
+            dials["azim"],
+        )
+        body = figure_to_viewport_cached_html(fig, dpi=_UNIT_CELL_IMAGE_DPI)
+    except Exception as exc:
+        logger.exception("gravity demo static frame failed for %s", letter)
+        body = unit_cell_error_placeholder_html()
+        body = f'<div class="myst-gravity-viewport-error">Demo {letter} error: {exc}</div>{body}'
+    return (
+        f'<div class="myst-gravity-viewport-inner myst-gravity-demo-{letter.lower()}">'
+        f'<div class="myst-gravity-viewport-title">Demo {letter} — {meta["title"]}</div>'
+        f'<div class="myst-gravity-viewport-sub">{meta["deform_display"]} · {meta["shape_type"]}</div>'
+        f'<div class="myst-gravity-viewport-frame">{body}</div></div>'
+    )
+
+
+def _get_gravity_animation_html(letter: str) -> str:
+    """Return looping deformation video HTML for the selected Demo letter."""
+    letter = str(letter).strip().upper()
+    if letter not in _GRAVITY_CHILD_NAV_LETTERS:
+        letter = "A"
+    slot = _gravity_demo_letter_slot(letter)
+    meta = _render_preset_shape_meta(slot)
+    dials = _render_preset_dials_for_slot(slot)
+    if letter not in _GRAVITY_DEMO_VIDEO_CACHE:
+        try:
+            _GRAVITY_DEMO_VIDEO_CACHE[letter] = render_gravity_demo_animation_video(
+                dials["phi"],
+                dials["e"],
+                dials["pi"],
+                dials["kappa"],
+                dials["dz"],
+                dials["alpha"],
+                dials["beta"],
+                dials["pressure"],
+                dials["elev"],
+                dials["azim"],
+            )
+        except Exception as exc:
+            logger.exception("gravity demo video failed for %s", letter)
+            return _get_gravity_demo_static_html(letter).replace(
+                "</div></div>",
+                f'<div class="myst-gravity-viewport-error">Video encode failed: {exc}</div></div></div>',
+                1,
+            )
+    return _gravity_demo_video_html(
+        _GRAVITY_DEMO_VIDEO_CACHE[letter],
+        letter=letter,
+        title=meta["title"],
+        deform_display=f'{meta["deform_display"]} · {meta["shape_type"]}',
+    )
+
+
+def _switch_gravity_demo(letter: str) -> tuple:
+    """Switch the Gravity viewport to the animation for the selected letter."""
+    letter = str(letter).strip().upper()
+    slot = _gravity_demo_letter_slot(letter)
+    return (
+        _get_gravity_animation_html(letter),
+        *_gravity_child_nav_output_updates(slot),
+        letter,
+    )
+
+
 def _gravity_tui_viewport_open(scroll_px: int) -> str:
     return (
         '<div class="myst-preset-tui-viewport" '
@@ -6899,12 +7084,13 @@ def _render_sub_nav_render_btn_update(
 
 
 def _place_gravity_child_nav_row() -> dict[str, gr.Button]:
-    """Gravity child nav — horizontal A–I row matching Render sub-nav style."""
+    """Gravity child nav — horizontal Demo: A–I row matching Render sub-nav style."""
     buttons: dict[str, gr.Button] = {}
     with gr.Row(
         elem_id="myst-gravity-child-nav",
         elem_classes=[
             "myst-render-preset-nav-wrap",
+            "myst-gravity-demo-nav-wrap",
             "vqc-nav-spreadsheet-row",
             "vqc-status-preset-nav-row",
         ],
@@ -6922,6 +7108,11 @@ def _place_gravity_child_nav_row() -> dict[str, gr.Button]:
             variant="secondary",
         )
         buttons["back"] = back_btn
+        gr.HTML(
+            "<span class='myst-gravity-demo-label'>Demo:</span>",
+            elem_classes=["myst-gravity-demo-label-wrap"],
+            container=False,
+        )
         for letter in _GRAVITY_CHILD_NAV_LETTERS:
             buttons[letter] = gr.Button(
                 letter,
@@ -8906,257 +9097,74 @@ def build_app() -> gr.Blocks:
                 letter: gravity_child_nav[letter] for letter in _GRAVITY_CHILD_NAV_LETTERS
             }
             _place_status_gap_row(slot="after-preset-nav")
-            with gr.Row(elem_classes=["myst-gravity-split"], equal_height=True):
-                with gr.Column(
-                    scale=3,
-                    min_width=292,
-                    elem_classes=[
-                        "myst-gravity-controls-col",
-                        "myst-gravity-left-panel",
-                        "myst-gravity-left-stack",
-                    ],
-                ):
-                    with gr.Column(
-                        elem_classes=[
-                            "vqc-optics-panel",
-                            "vqc-gravity-panel",
-                            "myst-gravity-left-frame",
-                            "myst-gravity-panel-window",
-                            "myst-gravity-presets-tui-card",
-                            "myst-gravity-left-presets-tui-slot",
-                        ],
-                    ):
-                        with gr.Column(
-                            elem_classes=[
-                                "myst-gravity-presets-panel",
-                                "myst-gravity-presets-fixed",
-                            ],
-                        ):
-                            gr.HTML(QUICK_PRESETS_PANEL_HEADER_HTML)
-                            gravity_tui_state = gr.State(_default_gravity_tui_state())
-                            re_gravity_keypad: dict[str, gr.Button] = {}
-                            with gr.Column(elem_classes=["myst-gravity-keypad-wrap"]):
-                                for row_keys in _GRAVITY_KEYPAD_LAYOUT:
-                                    with gr.Row(
-                                        elem_classes=["myst-gravity-keypad-row"],
-                                        equal_height=True,
-                                    ):
-                                        for key in row_keys:
-                                            classes = _gravity_keypad_btn_classes(
-                                                key,
-                                                active_numeric="0" if key == "0" else "",
-                                            )
-                                            btn_kwargs: dict = {
-                                                "variant": "secondary",
-                                                "elem_classes": classes,
-                                                "scale": 1,
-                                            }
-                                            if key == "0":
-                                                btn_kwargs["elem_id"] = "gravity-preset-btn-0"
-                                            elif key == "1":
-                                                btn_kwargs["elem_id"] = "gravity-preset-btn-1"
-                                            re_gravity_keypad[key] = gr.Button(
-                                                _gravity_keypad_label(key),
-                                                **btn_kwargs,
-                                            )
-                            re_quick_presets = [
-                                re_gravity_keypad[str(slot)]
-                                for slot in range(len(_GRAVITY_KEYPAD_NUMERIC_KEYS))
-                            ]
-                        re_active_preset = gr.State(0)
-                        animate_deform_btn = gr.Button(
-                            "Animate deformation",
-                            variant="secondary",
-                            elem_classes=[
-                                "vqc-receiver-preset",
-                                "myst-gravity-edit-params-btn",
-                                "vqc-full-width",
-                            ],
-                        )
-                        with gr.Column(
-                            elem_classes=[
-                                "myst-gravity-preset-tui-section",
-                                "myst-gravity-left-tui",
-                                "myst-gravity-left-tui-slot",
-                            ],
-                        ):
-                            gr.HTML(GRAVITY_PRESET_TUI_HEADER_HTML)
-                            re_preset_tui = gr.HTML(
-                                _init_preset_tui,
-                                elem_classes=["myst-gravity-preset-tui-wrap"],
-                            )
-                    with gr.Column(
-                        visible=False,
-                        elem_classes=["myst-gravity-wired-hidden"],
-                    ):
-                        re_control_levels = gr.HTML(
-                            _init_control_levels,
-                            elem_classes=["myst-gravity-control-levels-wrap"],
-                        )
-                        re_edit_params = gr.State(False)
-                        edit_params_btn = gr.Button(
-                            "Manual Edit",
-                            variant="secondary",
-                            elem_classes=[
-                                "vqc-receiver-preset",
-                                "myst-gravity-edit-params-btn",
-                                "vqc-full-width",
-                            ],
-                        )
-                        with gr.Row(elem_classes=["vqc-optics-dial-row"]):
-                            re_pressure = gr.Slider(
-                                0.0,
-                                1.0,
-                                value=0.35,
-                                step=0.01,
-                                label="Deformation pressure",
-                                info="0 = rigid cube · 1 = full π bowl + φ/e concave pinch",
-                                elem_classes=["vqc-optics-dial-wrap"],
-                                interactive=False,
-                            )
-                        with gr.Row(elem_classes=["vqc-optics-dial-row"]):
-                            re_view_elev = gr.Slider(
-                                5.0,
-                                75.0,
-                                value=22.0,
-                                step=1.0,
-                                label="View elevation (°)",
-                                elem_classes=["vqc-optics-dial-wrap"],
-                                interactive=False,
-                            )
-                            re_view_azim = gr.Slider(
-                                0.0,
-                                360.0,
-                                value=45.0,
-                                step=5.0,
-                                label="View azimuth (°)",
-                                elem_classes=["vqc-optics-dial-wrap"],
-                                interactive=False,
-                            )
-                        with gr.Row(elem_classes=["vqc-optics-dial-row"]):
-                            re_phi_scale = gr.Slider(
-                                0.90,
-                                1.10,
-                                value=1.0,
-                                step=0.001,
-                                label="φ² scale",
-                                elem_classes=["vqc-optics-dial-wrap"],
-                                interactive=False,
-                            )
-                            re_e_scale = gr.Slider(
-                                0.90,
-                                1.10,
-                                value=1.0,
-                                step=0.001,
-                                label="e² scale",
-                                elem_classes=["vqc-optics-dial-wrap"],
-                                interactive=False,
-                            )
-                            re_pi_scale = gr.Slider(
-                                0.90,
-                                1.10,
-                                value=1.0,
-                                step=0.001,
-                                label="π² scale",
-                                elem_classes=["vqc-optics-dial-wrap"],
-                                interactive=False,
-                            )
-                        with gr.Row(elem_classes=["vqc-optics-dial-row"]):
-                            re_kappa = gr.Slider(
-                                0.70,
-                                0.95,
-                                value=KAPPA_DOC,
-                                step=0.001,
-                                label="κ (holonomy-gap parameter)",
-                                info=f"κ_doc = {KAPPA_DOC} · κ* nulls B(κ)−R",
-                                elem_classes=["vqc-optics-dial-wrap"],
-                                interactive=False,
-                            )
-                            re_delta_z = gr.Slider(
-                                0.0,
-                                0.5,
-                                value=0.1,
-                                step=0.01,
-                                label="δ_z (primary push)",
-                                elem_classes=["vqc-optics-dial-wrap"],
-                                interactive=False,
-                            )
-                        with gr.Row(elem_classes=["vqc-optics-dial-row"]):
-                            re_alpha = gr.Slider(
-                                0.0,
-                                2.0,
-                                value=1.0,
-                                step=0.05,
-                                label="α (geometry factor)",
-                                elem_classes=["vqc-optics-dial-wrap"],
-                                interactive=False,
-                            )
-                            re_beta = gr.Slider(
-                                0.0,
-                                2.0,
-                                value=1.0,
-                                step=0.05,
-                                label="β (residual coupling)",
-                                elem_classes=["vqc-optics-dial-wrap"],
-                                interactive=False,
-                            )
-                        re_metrics = gr.Textbox(
-                            label="Residual explorer",
-                            lines=9,
-                            interactive=False,
-                            value=_init_re_metrics,
-                        )
-                with gr.Column(
-                    scale=6,
-                    elem_classes=["myst-gravity-visuals-col"],
-                ):
-                    with gr.Column(elem_classes=["myst-gravity-visuals-stack"]):
-                        unit_cell_header = gr.HTML(
-                            _init_unit_cell_header,
-                            elem_classes=["myst-cube-viewport-header-slot"],
-                        )
-                        with gr.Row(elem_classes=["myst-unit-cell-visor"]):
-                            with gr.Column(elem_classes=["myst-unit-cell-visor-slot"]):
-                                unit_cell_image = gr.HTML(
-                                    value="",
-                                    elem_classes=[
-                                        "myst-unit-cell-viewport-image",
-                                        "myst-unit-cell-visor-image",
-                                    ],
-                                    container=False,
-                                    min_height=480,
-                                )
-                                unit_cell_video = gr.Video(
-                                    label="Deformation Animation",
-                                    show_label=False,
-                                    interactive=False,
-                                    container=False,
-                                    autoplay=True,
-                                    loop=False,
-                                    height=480,
-                                    format="mp4",
-                                    elem_id="unit-cell-animation",
-                                    elem_classes=[
-                                        "myst-unit-cell-animation",
-                                        "myst-unit-cell-visor-video",
-                                        "gradio-video",
-                                    ],
-                                )
+            gravity_active_letter = gr.State("A")
+            with gr.Column(elem_classes=["myst-gravity-single-viewport"]):
+                gravity_viewport = gr.HTML(
+                    value=_get_gravity_demo_static_html("A"),
+                    elem_id="myst-gravity-viewport",
+                    elem_classes=["myst-gravity-viewport"],
+                    container=False,
+                )
+            with gr.Column(visible=False, elem_classes=["myst-gravity-wired-hidden"]):
+                re_active_preset = gr.State(0)
+                re_edit_params = gr.State(False)
+                re_control_levels = gr.HTML(
+                    _init_control_levels,
+                    elem_classes=["myst-gravity-control-levels-wrap"],
+                )
+                re_preset_tui = gr.HTML(
+                    _init_preset_tui,
+                    elem_classes=["myst-gravity-preset-tui-wrap"],
+                )
+                unit_cell_header = gr.HTML(
+                    _init_unit_cell_header,
+                    elem_classes=["myst-cube-viewport-header-slot"],
+                )
+                unit_cell_video = gr.Video(
+                    visible=False,
+                    elem_id="unit-cell-animation",
+                    elem_classes=["myst-unit-cell-animation"],
+                )
+                re_pressure = gr.Slider(-1.0, 1.0, value=0.35, step=0.01, visible=False)
+                re_view_elev = gr.Slider(5.0, 75.0, value=22.0, step=1.0, visible=False)
+                re_view_azim = gr.Slider(0.0, 360.0, value=45.0, step=5.0, visible=False)
+                re_phi_scale = gr.Slider(0.90, 1.10, value=1.0, step=0.001, visible=False)
+                re_e_scale = gr.Slider(0.90, 1.10, value=1.0, step=0.001, visible=False)
+                re_pi_scale = gr.Slider(0.90, 1.10, value=1.0, step=0.001, visible=False)
+                re_kappa = gr.Slider(0.70, 0.95, value=KAPPA_DOC, step=0.001, visible=False)
+                re_delta_z = gr.Slider(0.0, 0.5, value=0.1, step=0.01, visible=False)
+                re_alpha = gr.Slider(0.0, 2.0, value=1.0, step=0.05, visible=False)
+                re_beta = gr.Slider(0.0, 2.0, value=1.0, step=0.05, visible=False)
+                re_metrics = gr.Textbox(value=_init_re_metrics, visible=False)
             re_inputs = [
-                re_phi_scale, re_e_scale, re_pi_scale,
-                re_kappa, re_delta_z, re_alpha, re_beta, re_pressure,
-                re_view_elev, re_view_azim,
+                re_phi_scale,
+                re_e_scale,
+                re_pi_scale,
+                re_kappa,
+                re_delta_z,
+                re_alpha,
+                re_beta,
+                re_pressure,
+                re_view_elev,
+                re_view_azim,
             ]
             edit_re_inputs = [
-                edit_re_phi_scale, edit_re_e_scale, edit_re_pi_scale,
-                edit_re_kappa, edit_re_delta_z, edit_re_alpha, edit_re_beta, edit_re_pressure,
-                edit_re_view_elev, edit_re_view_azim,
+                edit_re_phi_scale,
+                edit_re_e_scale,
+                edit_re_pi_scale,
+                edit_re_kappa,
+                edit_re_delta_z,
+                edit_re_alpha,
+                edit_re_beta,
+                edit_re_pressure,
+                edit_re_view_elev,
+                edit_re_view_azim,
             ]
             re_outputs = [
                 re_metrics,
                 edit_re_metrics,
                 unit_cell_header,
-                unit_cell_image,
+                gravity_viewport,
                 unit_cell_video,
                 re_control_levels,
                 status_catalog_col,
@@ -9165,127 +9173,18 @@ def build_app() -> gr.Blocks:
                 re_preset_tui,
             ]
             gravity_dial_inputs = [*re_inputs, re_active_preset, status_zoom_slot]
-            edit_dial_inputs = [*edit_re_inputs, re_active_preset, status_zoom_slot]
-            gravity_preset_inputs = [*gravity_dial_inputs, re_edit_params]
-            edit_preset_inputs = [*edit_dial_inputs, re_edit_params]
-            gravity_preset_btn_outputs = [
-                re_gravity_keypad[key] for key in _GRAVITY_KEYPAD_ALL_KEYS
-            ]
-            gravity_child_nav_outputs = [
+            gravity_demo_outputs = [
+                gravity_viewport,
                 gravity_back_btn,
                 *[gravity_letter_btns[letter] for letter in _GRAVITY_CHILD_NAV_LETTERS],
+                gravity_active_letter,
             ]
-            gravity_tui_nav_inputs = [*re_inputs, re_active_preset, gravity_tui_state]
-            gravity_preset_outputs = [
-                *gravity_preset_btn_outputs,
-                *gravity_child_nav_outputs,
-                edit_params_btn,
-                edit_edit_params_btn,
-                *re_inputs,
-                *edit_re_inputs,
-                *re_outputs,
-                gravity_tui_state,
-                re_active_preset,
-            ]
-            edit_params_outputs = [
-                re_edit_params,
-                edit_params_btn,
-                *re_inputs,
-                edit_edit_params_btn,
-                *edit_re_inputs,
-            ]
-            edit_params_btn.click(
-                _gravity_edit_params_toggle,
-                inputs=[re_edit_params],
-                outputs=edit_params_outputs,
-            )
-            edit_edit_params_btn.click(
-                _gravity_edit_params_toggle,
-                inputs=[re_edit_params],
-                outputs=edit_params_outputs,
-            )
-            # .release() not .change() — preset slider gr.update() must not re-fire explorer.
-            gravity_manual_inputs = [*gravity_dial_inputs, re_edit_params]
-            edit_manual_inputs = [*edit_dial_inputs, re_edit_params]
-            for slider in re_inputs:
-                slider.release(
-                    _run_residual_explorer_ui_manual,
-                    inputs=gravity_manual_inputs,
-                    outputs=re_outputs,
-                    show_progress="hidden",
-                )
-            for slider in edit_re_inputs:
-                slider.release(
-                    _run_residual_explorer_ui_manual,
-                    inputs=edit_manual_inputs,
-                    outputs=re_outputs,
-                    show_progress="hidden",
-                )
-            gravity_immediate_outputs = [
-                *gravity_preset_btn_outputs,
-                unit_cell_image,
-                unit_cell_video,
-            ]
-            animate_event = animate_deform_btn.click(
-                _gravity_animate_btn_immediate,
-                outputs=gravity_immediate_outputs,
-            ).then(
-                _gravity_animate_toggle_click,
-                inputs=gravity_preset_inputs,
-                outputs=gravity_preset_outputs,
-                show_progress="hidden",
-            )
-            gravity_enter_inputs = [*gravity_preset_inputs, gravity_tui_state]
-            enter_select_event = re_gravity_keypad["enter"].click(
-                _gravity_keypad_enter_apply,
-                inputs=gravity_enter_inputs,
-                outputs=gravity_preset_outputs,
-                show_progress="hidden",
-            )
-            gravity_menu_inputs = [*gravity_preset_inputs, gravity_tui_state]
-            re_gravity_keypad["stop"].click(
-                _gravity_keypad_stop_apply,
-                inputs=gravity_menu_inputs,
-                outputs=gravity_preset_outputs,
-                show_progress="hidden",
-                cancels=[animate_event, enter_select_event],
-            )
-            for nav_key in ("up", "down", "left", "right"):
-                re_gravity_keypad[nav_key].click(
-                    _make_gravity_keypad_nav_click(nav_key),
-                    inputs=gravity_tui_nav_inputs,
-                    outputs=gravity_preset_outputs,
-                    show_progress="hidden",
-                )
-            preset_cancel_events = [animate_event, enter_select_event]
-            for slot, preset_btn in enumerate(re_quick_presets):
-                preset_btn.click(
-                    _make_gravity_keypad_digit_click(slot),
-                    inputs=gravity_menu_inputs,
-                    outputs=gravity_preset_outputs,
-                    show_progress="hidden",
-                    cancels=preset_cancel_events,
-                )
-            gravity_back_btn.click(
-                _gravity_keypad_stop_apply,
-                inputs=gravity_menu_inputs,
-                outputs=gravity_preset_outputs,
-                show_progress="hidden",
-                cancels=preset_cancel_events,
-            )
             for letter, btn in gravity_letter_btns.items():
-                slot = ord(letter) - ord("A")
                 btn.click(
-                    _make_gravity_quick_preset_click(slot),
-                    inputs=gravity_menu_inputs,
-                    outputs=gravity_preset_outputs,
+                    lambda l=letter: _switch_gravity_demo(l),
+                    outputs=gravity_demo_outputs,
                     show_progress="hidden",
-                    cancels=preset_cancel_events,
                 )
-            print(
-                f"[DEBUG] wired {len(re_quick_presets)} unified preset handlers",
-                flush=True,
-            )
 
             sz_inputs = [
                 sz_phi_scale,
@@ -9435,6 +9334,11 @@ def build_app() -> gr.Blocks:
             render_tab_status_btn,
             current_page,
         ]
+
+        gravity_back_btn.click(
+            lambda: _nav_to_page("render"),
+            outputs=nav_outputs,
+        )
 
         status_nav_outputs = [
             *nav_outputs,
