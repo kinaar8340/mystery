@@ -528,15 +528,27 @@ _UNIT_CELL_BOTTOM_CONVEX = "#5a9ef2"
 _UNIT_CELL_LABEL_TEXT = "#ffffff"
 
 
+def _clamp_deform_pressure(pressure: float) -> float:
+    """Signed deformation driver: −1 = max concave, 0 = rigid, +1 = max convex."""
+    return float(np.clip(pressure, -1.0, 1.0))
+
+
 def _deform_pressure_hint(pressure: float) -> str:
-    p = float(np.clip(pressure, 0.0, 1.0))
-    if p < 0.04:
+    p = _clamp_deform_pressure(pressure)
+    if abs(p) < 0.04:
         return "rigid cube"
-    if p < 0.45:
-        return "mild bow + side pinch"
-    if p < 0.8:
-        return "π bowl concave · φ/e sides curving inward"
-    return "full concave bowl + compensatory bottom convex bulge"
+    if p > 0.0:
+        if p < 0.45:
+            return "mild convex · outward side bow"
+        if p < 0.8:
+            return "moderate convex · inflated faces"
+        return "max convex · very high internal pressure"
+    ap = abs(p)
+    if ap < 0.45:
+        return "mild concave · side pinch"
+    if ap < 0.8:
+        return "moderate concave · π bowl inward"
+    return "max concave · very low internal pressure"
 
 
 def deformation_key_metrics(
@@ -553,7 +565,7 @@ def deformation_key_metrics(
     total_frames: int | None = None,
 ) -> dict[str, float | int | str | None]:
     """Per-frame gravity/residual metrics for animation TUI readout."""
-    p = float(np.clip(pressure, 0.0, 1.0))
+    p = _clamp_deform_pressure(pressure)
     r_val = residual_from_scales(phi_sq_scale, e_sq_scale, pi_sq_scale)
     b_k = bound(kappa)
     d_side = delta_side_contraction(delta_z, r_val, kappa, alpha=alpha, beta=beta)
@@ -584,7 +596,7 @@ def build_unit_cell_viewport_header_html(
 ) -> str:
     """Compact fixed viewport nameplate (no legend/equation scroll stack)."""
     del r_val
-    p = float(np.clip(pressure, 0.0, 1.0))
+    p = _clamp_deform_pressure(pressure)
     hint = _deform_pressure_hint(p)
     frame_note = ""
     if frame_idx is not None and total_frames:
@@ -656,8 +668,13 @@ def _displacement_components(
     delta_z: float,
     delta_side: float,
 ) -> tuple[float, float, float, dict[str, float]]:
-    """Return (dx, dy, dz) offsets and signed mode weights for coloring."""
-    if pressure <= 0.0:
+    """Return (dx, dy, dz) offsets and mode weights for coloring.
+
+    Signed pressure: positive = convex (outward bulge), negative = concave
+    (inward bowl + side pinch), zero = rigid cube.
+    """
+    p = _clamp_deform_pressure(pressure)
+    if abs(p) < 1e-9:
         return 0.0, 0.0, 0.0, {
             "pi_bowl": 0.0,
             "phi_concave": 0.0,
@@ -665,29 +682,34 @@ def _displacement_components(
             "bottom_convex": 0.0,
         }
 
+    mag = abs(p)
     w = _deformation_weights(x, y, z, s)
     bowl = w["bowl"]
     equator = w["equator"]
 
-    # π-face: parabolic bowl — concave when viewed from above
-    pi_mag = pressure * delta_z * 5.0 * w["top_w"] * bowl
+    # Concave template at |p|: π-face bowl inward, φ/e sides pinch inward
+    pi_mag = mag * delta_z * 5.0 * w["top_w"] * bowl
     dz_pi = -pi_mag
 
-    # φ / e lateral faces: concave pinch toward cell center
     phi_mag = 0.0
     e_mag = 0.0
     dx_side = 0.0
     dy_side = 0.0
     if abs(x) > 1e-9:
-        phi_mag = pressure * delta_side * 3.6 * w["x_edge"] * equator * (1.0 - 0.25 * bowl)
+        phi_mag = mag * delta_side * 3.6 * w["x_edge"] * equator * (1.0 - 0.25 * bowl)
         dx_side = -np.sign(x) * phi_mag
     if abs(y) > 1e-9:
-        e_mag = pressure * delta_side * 3.6 * w["y_edge"] * equator * (1.0 - 0.25 * bowl)
+        e_mag = mag * delta_side * 3.6 * w["y_edge"] * equator * (1.0 - 0.25 * bowl)
         dy_side = -np.sign(y) * e_mag
 
-    # Bottom: compensatory convex dome (anticlastic response)
-    bottom_mag = pressure * delta_z * 0.85 * w["bottom_w"] * bowl
+    bottom_mag = mag * delta_z * 0.85 * w["bottom_w"] * bowl
     dz_bottom = bottom_mag
+
+    dx = dx_side
+    dy = dy_side
+    dz = dz_pi + dz_bottom
+    if p > 0.0:
+        dx, dy, dz = -dx, -dy, -dz
 
     modes = {
         "pi_bowl": pi_mag,
@@ -695,7 +717,7 @@ def _displacement_components(
         "e_concave": e_mag,
         "bottom_convex": bottom_mag,
     }
-    return dx_side, dy_side, dz_pi + dz_bottom, modes
+    return dx, dy, dz, modes
 
 
 def _displace_vertex(
@@ -772,7 +794,8 @@ def _triangle_mode_color(
     }
     dominant = max(totals, key=totals.get)
     mag = totals[dominant] / 3.0
-    blend = min(1.0, mag / max(0.08, pressure * 0.35 + 0.05))
+    p_abs = abs(_clamp_deform_pressure(pressure))
+    blend = min(1.0, mag / max(0.08, p_abs * 0.35 + 0.05))
     palette = {
         "pi_bowl": eq_blue,
         "phi_concave": eq_red,
@@ -781,7 +804,7 @@ def _triangle_mode_color(
     }
     base = palette.get(dominant, neutral)
     rgb = tuple(neutral[i] + blend * (base[i] - neutral[i]) for i in range(3))
-    alpha = 0.12 + 0.38 * min(1.0, pressure)
+    alpha = 0.12 + 0.38 * min(1.0, p_abs)
     return (*rgb, alpha)
 
 
@@ -1562,7 +1585,8 @@ def build_unit_cell_figure(
 
     s = 1.0
     side = abs(delta_side)
-    p = float(np.clip(pressure, 0.0, 1.0))
+    p = _clamp_deform_pressure(pressure)
+    p_abs = abs(p)
     edge_gold = _UNIT_CELL_GOLD
     eq_red = _UNIT_CELL_RED
     eq_green = _UNIT_CELL_GREEN
@@ -1587,8 +1611,8 @@ def build_unit_cell_figure(
             linewidths=0.0,
         )
     )
-    if show_curvature_grid and p > 0.02:
-        grid_alpha = 0.25 + 0.55 * p
+    if show_curvature_grid and p_abs > 0.02:
+        grid_alpha = 0.25 + 0.55 * p_abs
         for grid_line in _deformed_face_curvature_grid(s, p, delta_z, side):
             gx, gy, gz = zip(*grid_line)
             ax.plot(
@@ -1613,7 +1637,7 @@ def build_unit_cell_figure(
             zorder=5,
         )
 
-    arrow_scale = max(0.15, p)
+    arrow_scale = max(0.15, p_abs)
     arrow_kw = dict(arrow_length_ratio=0.28, linewidth=2.2, alpha=1.0)
     top_anchor = _anchor_point((0.0, 0.0, s), s, p, delta_z, side)
     ax.quiver(
@@ -1759,7 +1783,8 @@ def build_unit_cell_plotly_figure(
     _ = r_val
     s = 1.0
     side = abs(delta_side)
-    p = float(np.clip(pressure, 0.0, 1.0))
+    p = _clamp_deform_pressure(pressure)
+    p_abs = abs(p)
     triangles, tri_colors = _deformed_cube_surface(s, p, delta_z, side)
 
     xs: list[float] = []
@@ -1797,8 +1822,8 @@ def build_unit_cell_plotly_figure(
         )
     ]
 
-    if show_curvature_grid and p > 0.02:
-        grid_alpha = 0.25 + 0.55 * p
+    if show_curvature_grid and p_abs > 0.02:
+        grid_alpha = 0.25 + 0.55 * p_abs
         for grid_line in _deformed_face_curvature_grid(s, p, delta_z, side):
             gx, gy, gz = zip(*grid_line, strict=True)
             traces.append(
@@ -1913,16 +1938,8 @@ def run_residual_explorer(
     metrics = format_residual_explorer(
         phi_sq_scale, e_sq_scale, pi_sq_scale, kappa, delta_z, alpha, beta
     )
-    p = float(np.clip(deform_pressure, 0.0, 1.0))
-    mode = (
-        "rigid"
-        if p < 0.05
-        else "mild curvature"
-        if p < 0.45
-        else "strong concave bowl"
-        if p < 0.85
-        else "max bow + bottom convex bulge"
-    )
+    p = _clamp_deform_pressure(deform_pressure)
+    mode = _deform_pressure_hint(p)
     metrics = (
         f"{metrics}\n\n"
         f"Deformation pressure : {p * 100:.1f}%  ({mode})\n"

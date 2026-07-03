@@ -5712,10 +5712,10 @@ _GRAVITY_PARAM_CATALOG: tuple[dict[str, object], ...] = (
         "key": "pressure",
         "label": "deformation pressure",
         "kind": "percent",
-        "min": 0.0,
+        "min": -1.0,
         "max": 1.0,
         "default": 0.35,
-        "desc": "0 = rigid cube · 1 = full π bowl + φ/e concave pinch",
+        "desc": "+1 = max convex · 0 = rigid cube · −1 = max concave",
     },
     {
         "id": "02",
@@ -5809,6 +5809,118 @@ _GRAVITY_PARAM_CATALOG: tuple[dict[str, object], ...] = (
     },
 )
 _STATUS_GRID_PRESET_COUNT = 9
+
+_RENDER_NEUTRAL_DIALS: dict[str, float] = {
+    "phi": 1.0,
+    "e": 1.0,
+    "pi": 1.0,
+    "kappa": KAPPA_DOC,
+    "dz": 0.1,
+    "alpha": 1.0,
+    "beta": 1.0,
+    "elev": 26.0,
+    "azim": 45.0,
+}
+# Render / Status presets 01–09: signed deformation sweep (convex → rigid → concave).
+_RENDER_PRESET_DEFORMATIONS: tuple[tuple[float, str, str, str], ...] = (
+    (
+        1.00,
+        "Max Convex",
+        "Very High Internal Pressure",
+        "Maximum outward bow on all faces — the convex limit of the deformation envelope.",
+    ),
+    (
+        0.75,
+        "Strong Convex",
+        "High Internal Pressure",
+        "Strong outward bulge with clearly convex φ/e/π sides.",
+    ),
+    (
+        0.50,
+        "Moderate Convex",
+        "Elevated Internal Pressure",
+        "Balanced convex curvature midway between max convex and the rigid neutral cube.",
+    ),
+    (
+        0.25,
+        "Mild Convex",
+        "Slight Internal Pressure",
+        "Gentle outward bow — subtle convex rounding before the neutral rigid state.",
+    ),
+    (
+        0.00,
+        "Rigid Cube",
+        "Neutral",
+        "Perfect rigid cube at 0% deformation — no inward or outward face bow.",
+    ),
+    (
+        -0.25,
+        "Mild Concave",
+        "Slight Low Internal Pressure",
+        "Gentle inward pinch — π-face begins to bowl while φ/e sides curve inward.",
+    ),
+    (
+        -0.50,
+        "Moderate Concave",
+        "Low Internal Pressure",
+        "Clear concave geometry — π bowl and φ/e side pinch at half the concave span.",
+    ),
+    (
+        -0.75,
+        "Strong Concave",
+        "Very Low Internal Pressure",
+        "Strong inward curvature approaching the concave extreme.",
+    ),
+    (
+        -1.00,
+        "Max Concave",
+        "Very Low Internal Pressure",
+        "Maximum concave sides — full inward bowl and side pinch at the deformation floor.",
+    ),
+)
+_RENDER_PRESET_PROFILES: dict[int, dict[str, float]] = {
+    slot: {**_RENDER_NEUTRAL_DIALS, "pressure": deform[0]}
+    for slot, deform in enumerate(_RENDER_PRESET_DEFORMATIONS)
+}
+_RENDER_PRESET_LABELS: dict[int, str] = {
+    slot: deform[1].lower() for slot, deform in enumerate(_RENDER_PRESET_DEFORMATIONS)
+}
+
+
+def _render_preset_dials_for_slot(slot: int) -> dict[str, float]:
+    """Dial bundle for Render tab presets 01–09 (slots 0–8)."""
+    slot = int(slot)
+    if slot in _RENDER_PRESET_PROFILES:
+        return dict(_RENDER_PRESET_PROFILES[slot])
+    return dict(_RENDER_NEUTRAL_DIALS)
+
+
+def _render_preset_shape_meta(slot: int) -> dict[str, str]:
+    """Shape / pressure copy for Render detail left panel."""
+    slot = int(slot)
+    if not (0 <= slot < len(_RENDER_PRESET_DEFORMATIONS)):
+        return {
+            "title": f"Preset {_gravity_preset_id(slot)}",
+            "shape_type": "Unknown",
+            "pressure_label": "N/A",
+            "deform_display": "N/A",
+            "summary": "No description available.",
+        }
+    deform, title, pressure_label, summary = _RENDER_PRESET_DEFORMATIONS[slot]
+    if deform > 0.0:
+        shape_type = "Convex"
+    elif deform < 0.0:
+        shape_type = "Concave"
+    else:
+        shape_type = "Rigid (neutral)"
+    deform_display = f"{deform * 100:.0f}%"
+    return {
+        "title": title,
+        "shape_type": shape_type,
+        "pressure_label": pressure_label,
+        "deform_display": deform_display,
+        "summary": summary,
+    }
 
 
 def _gravity_preset_dials_for_slot(slot: int) -> dict[str, float]:
@@ -5918,14 +6030,13 @@ def _build_render_preset_meta() -> dict[int, dict[str, str]]:
     meta: dict[int, dict[str, str]] = {}
     for slot in range(_STATUS_GRID_PRESET_COUNT):
         preset_id = _gravity_preset_id(slot)
-        title_profile = _GRAVITY_PRESET_TUI_LABELS.get(
-            slot,
-            _GRAVITY_PRESET_SLOT_LABELS.get(slot, f"Preset {preset_id}"),
-        )
-        dials = _gravity_preset_dials_for_slot(slot)
+        shape = _render_preset_shape_meta(slot)
+        dials = _render_preset_dials_for_slot(slot)
         params = "\n".join(
             [
-                f"Deformation pressure: {dials['pressure'] * 100:.1f}%",
+                f"Deformation: {dials['pressure'] * 100:.0f}%",
+                f"Shape type: {shape['shape_type']}",
+                f"Pressure level: {shape['pressure_label']}",
                 f"φ² scale: {dials['phi']:.3f}",
                 f"e² scale: {dials['e']:.3f}",
                 f"π² scale: {dials['pi']:.3f}",
@@ -5937,16 +6048,17 @@ def _build_render_preset_meta() -> dict[int, dict[str, str]]:
                 f"View azimuth: {dials['azim']:.1f}°",
             ]
         )
-        profile = _GRAVITY_PRESET_SLOT_LABELS.get(slot, "")
         meta[slot] = {
-            "title": f"Preset {preset_id} – {title_profile}",
+            "title": f"Preset {preset_id} – {shape['title']}",
             "description": (
-                f"Interactive 3D unit-cell visualization for the **{profile}** preset. "
+                f"**Shape type:** {shape['shape_type']}  \n"
+                f"**Pressure level:** {shape['pressure_label']} ({shape['deform_display']})  \n\n"
+                f"{shape['summary']}  \n\n"
                 "Drag to orbit 360°, scroll or pinch to zoom; use the Plotly toolbar "
                 "for pan, reset, download, and fullscreen."
             ),
             "params": params,
-            "notes": _GRAVITY_PRESET_STATUS_NOTES.get(slot, "No additional notes."),
+            "notes": shape["summary"],
         }
     return meta
 
@@ -6517,14 +6629,14 @@ def _dials_to_explorer_args(dials: dict[str, float]) -> tuple[float, ...]:
 
 def _render_preset_plot_html(slot: int, *, dpi: int = _RENDER_GRID_IMAGE_DPI) -> str:
     """Render one preset's unit-cell plot as stretch-filled grid cell HTML."""
-    dials = _gravity_preset_dials_for_slot(slot)
+    dials = _render_preset_dials_for_slot(slot)
     _metrics, _header, fig = run_residual_explorer(*_dials_to_explorer_args(dials))
     return _gravity_fig_to_render_grid_file_html(fig, dpi=dpi)
 
 
 def _render_preset_detail_plot_html(slot: int) -> str:
     """Interactive Plotly plot for the Render preset detail view."""
-    dials = _gravity_preset_dials_for_slot(slot)
+    dials = _render_preset_dials_for_slot(slot)
     fig = run_residual_explorer_plotly(*_dials_to_explorer_args(dials))
     return plotly_figure_to_render_detail_html(fig)
 
@@ -6566,7 +6678,7 @@ def _generate_render_detail_plot(slot: int):
     """Large interactive Plotly 3D figure for the Render preset detail view."""
     slot = int(slot)
     try:
-        dials = _gravity_preset_dials_for_slot(slot)
+        dials = _render_preset_dials_for_slot(slot)
         fig = run_residual_explorer_plotly(*_dials_to_explorer_args(dials))
         fig.update_layout(
             height=620,
@@ -6606,7 +6718,7 @@ def _format_render_cell_html(
 ) -> str:
     """Single Render grid cell — preset label plus plot or placeholder."""
     preset_id = _gravity_preset_id(slot)
-    profile = _GRAVITY_PRESET_SLOT_LABELS.get(slot)
+    profile = _RENDER_PRESET_LABELS.get(slot)
     subtitle = f" · {profile}" if profile else ""
     active_cls = " myst-render-grid-cell-active" if active else ""
     panel_index = slot + 1
