@@ -38,7 +38,6 @@ from demo_core import (
     get_build_label,
     is_hf_space,
     build_unit_cell_viewport_header_html,
-    figure_to_viewport_html,
     unit_cell_error_placeholder_html,
     render_unit_cell_deformation_video,
     residual_from_scales,
@@ -3899,60 +3898,51 @@ def _gravity_tui_for_preset(
     return _format_gravity_preset_tui_html(active_slot, dials)
 
 
-def _gravity_viewport_served_html(fig: plt.Figure, *, dpi: int) -> str:
-    """savefig → Gradio cache → plain <img> HTML (HF Spaces-safe file URL)."""
-    from gradio.processing_utils import save_file_to_cache
-    from gradio.utils import get_upload_folder
+def figure_to_viewport_file_html(path: str) -> str:
+    """Clean gr.HTML with Gradio-served /gradio_api/file= image path."""
+    if not path or not os.path.exists(path):
+        return "<div style='color:red;padding:20px;'>Image file not found</div>"
+    html = f"""
+<div style="width:100%;max-width:550px;height:550px;background:#000000;display:flex;align-items:center;justify-content:center;overflow:hidden;border-radius:6px;">
+<img src="/gradio_api/file={path}" style="max-width:100%;max-height:100%;object-fit:contain;display:block;" alt="Unit cell viewport" loading="eager" />
+</div>
+"""
+    print(
+        f"[DEBUG] Returning HTML len={len(html)} for path={path} "
+        f"(png_bytes={os.path.getsize(path)})",
+        flush=True,
+    )
+    return html
 
+
+def _gravity_fig_to_viewport_file_html(fig: plt.Figure, *, dpi: int) -> str:
+    """savefig to /tmp PNG → figure_to_viewport_file_html."""
     with tempfile.NamedTemporaryFile(suffix=".png", delete=False, dir="/tmp") as tmp:
         tmp_path = tmp.name
-    face = fig.get_facecolor()
-    if not face or str(face).lower() in {"none", "auto"}:
-        face = "#000000"
     try:
         fig.savefig(
             tmp_path,
             format="png",
             dpi=dpi,
-            facecolor=face,
-            edgecolor="none",
+            facecolor="#000000",
             bbox_inches="tight",
             pad_inches=0.05,
         )
     finally:
         plt.close(fig)
-    png_bytes = os.path.getsize(tmp_path)
-    served_path = save_file_to_cache(tmp_path, get_upload_folder())
-    html = (
-        '<div class="myst-unit-cell-viewport-inner" '
-        'style="width:100%;max-width:550px;height:550px;background:#000000;'
-        'display:flex;align-items:center;justify-content:center;overflow:hidden;">'
-        f'<img src="/gradio_api/file={served_path}" '
-        'style="max-width:100%;max-height:100%;object-fit:contain;display:block;" '
-        'alt="Unit cell viewport" loading="eager" />'
-        "</div>"
-    )
     print(
-        f"[DEBUG] Returning HTML len={len(html)} png_bytes={png_bytes} "
-        f"path={served_path}",
+        f"[DEBUG] Saved PNG: {tmp_path} (exists={os.path.exists(tmp_path)})",
         flush=True,
     )
-    return html
+    return figure_to_viewport_file_html(tmp_path)
 
 
 def _gravity_static_image_update(fig: object) -> object:
-    """HF: gr.HTML + cached /gradio_api/file= PNG. Local: gr.HTML base64."""
+    """gr.HTML + /gradio_api/file= PNG (HF and local)."""
     if fig is gr.skip():
         print("[DEBUG] _gravity_static_image_update: gr.skip()", flush=True)
         return gr.skip()
-    if is_hf_space():
-        return _gravity_viewport_served_html(fig, dpi=_UNIT_CELL_IMAGE_DPI)
-    html = figure_to_viewport_html(fig, dpi=_UNIT_CELL_IMAGE_DPI)
-    print(
-        f"[DEBUG] _gravity_static_image_update: local html len={len(html)}",
-        flush=True,
-    )
-    return html
+    return _gravity_fig_to_viewport_file_html(fig, dpi=_UNIT_CELL_IMAGE_DPI)
 
 
 def _gravity_viewport_error_placeholder() -> object:
@@ -4705,20 +4695,10 @@ def build_app() -> gr.Blocks:
         _init_re_metrics, _init_unit_cell_header, _init_unit_cell_fig = run_residual_explorer(
             1.0, 1.0, 1.0, KAPPA_DOC, 0.1, 1.0, 1.0, 0.35, 22.0, 45.0
         )
-        if is_hf_space():
-            _init_unit_cell_html = _gravity_viewport_served_html(
-                _init_unit_cell_fig,
-                dpi=_UNIT_CELL_IMAGE_DPI,
-            )
-        else:
-            _init_unit_cell_html = figure_to_viewport_html(
-                _init_unit_cell_fig,
-                dpi=_UNIT_CELL_IMAGE_DPI,
-            )
-            print(
-                f"[DEBUG] init unit cell html len={len(_init_unit_cell_html)} (local)",
-                flush=True,
-            )
+        _init_unit_cell_html = _gravity_fig_to_viewport_file_html(
+            _init_unit_cell_fig,
+            dpi=_UNIT_CELL_IMAGE_DPI,
+        )
         _init_preset_tui = _format_gravity_menu_tui_html()
         _init_control_levels = _format_gravity_control_panel_html(_GRAVITY_HOME_DIALS, 0)
 
