@@ -897,7 +897,7 @@ def _place_main_nav_row(active_page: str) -> dict[str, gr.Button]:
 def _place_status_zoom_nav_row(
     active_slot: int = -1,
 ) -> tuple[gr.Button, dict[str, gr.Button], gr.Button]:
-    """Status sub-nav — All Presets, nine presets (01 … 09), and Edit in one grid row."""
+    """Status sub-nav — Back, nine presets (01 … 09), and Edit in one grid row."""
     buttons: dict[str, gr.Button] = {}
     active = int(active_slot)
     on_grid = active < 0
@@ -913,12 +913,13 @@ def _place_status_zoom_nav_row(
         if on_grid:
             back_classes.append("active")
         back_btn = gr.Button(
-            "All Presets",
+            "Back",
             elem_id="myst-status-nav-back-btn",
             elem_classes=back_classes,
-            interactive=not on_grid,
+            visible=True,
+            interactive=True,
             scale=0,
-            min_width=0,
+            min_width=82,
             variant="secondary",
         )
         for slot in range(_STATUS_ZOOM_PRESET_COUNT):
@@ -977,7 +978,12 @@ def _status_zoom_nav_back_btn_update(active_slot: int) -> gr.Update:
     classes = ["vqc-source-tab", "myst-status-preset-btn", "myst-status-nav-back-btn"]
     if on_grid:
         classes.append("active")
-    return gr.update(interactive=not on_grid, elem_classes=classes, variant="secondary")
+    return gr.update(
+        value="Back",
+        interactive=True,
+        elem_classes=classes,
+        variant="secondary",
+    )
 
 
 def _status_zoom_nav_edit_btn_update(*, in_zoom: bool, edit_open: bool) -> gr.Update:
@@ -5170,6 +5176,10 @@ footer {{ visibility: hidden; }}
     min-width: 82px !important;
     width: 82px !important;
 }}
+.gradio-container .myst-status-preset-nav-wrap button.myst-status-nav-back-btn {{
+    min-width: 82px !important;
+    width: 82px !important;
+}}
 .gradio-container .myst-render-page > .block,
 .gradio-container .myst-render-page > .form,
 .gradio-container .myst-render-page > .column,
@@ -6379,11 +6389,12 @@ def _render_sub_nav_btn_updates(active_slot: int) -> tuple:
     )
 
 
-def _render_sub_nav_home_back_updates(zoom_slot: int) -> gr.Update:
-    """Back button update only (Home removed from Render sub-nav)."""
+def _render_sub_nav_back_update(zoom_slot: int) -> gr.Update:
+    """Back button update — label locked to 'Back'."""
     on_grid = int(zoom_slot) < 0
     back_classes = ["vqc-source-tab", "myst-status-preset-btn", "myst-render-nav-back-btn"]
     return gr.update(
+        value="Back",
         visible=not on_grid,
         interactive=True,
         elem_classes=back_classes,
@@ -6399,7 +6410,12 @@ def _render_sub_nav_render_btn_update(
     classes = ["vqc-source-tab", "myst-status-preset-btn", "myst-render-nav-render-btn"]
     if rendering:
         classes.append("active")
-    return gr.update(visible=on_grid, elem_classes=classes, variant="secondary")
+    return gr.update(
+        value="Render",
+        visible=on_grid,
+        elem_classes=classes,
+        variant="secondary",
+    )
 
 
 def _place_render_sub_nav_row(
@@ -6470,7 +6486,7 @@ def _render_open_detail(slot: int, plot_cache: list[str | None]) -> tuple:
         slot,
         slot,
         *_render_sub_nav_btn_updates(slot),
-        *_render_sub_nav_home_back_updates(slot),
+        _render_sub_nav_back_update(slot),
         _render_sub_nav_render_btn_update(rendering=True, on_grid=False),
     )
 
@@ -6492,7 +6508,7 @@ def _render_back_to_grid(
         -1,
         nav_active,
         *_render_sub_nav_btn_updates(nav_active if nav_active >= 0 else -1),
-        *_render_sub_nav_home_back_updates(-1),
+        _render_sub_nav_back_update(-1),
         _render_sub_nav_render_btn_update(rendering=has_plots, on_grid=True),
     )
 
@@ -6510,7 +6526,7 @@ def _render_load_all_presets(active_slot: int, zoom_slot: int) -> tuple:
             zs,
             zs,
             *_render_sub_nav_btn_updates(zs),
-            *_render_sub_nav_home_back_updates(zs),
+            _render_sub_nav_back_update(zs),
             _render_sub_nav_render_btn_update(rendering=True, on_grid=False),
         )
     highlight = nav_active if nav_active >= 0 else None
@@ -6521,7 +6537,7 @@ def _render_load_all_presets(active_slot: int, zoom_slot: int) -> tuple:
         -1,
         nav_active,
         *_render_sub_nav_btn_updates(nav_active),
-        *_render_sub_nav_home_back_updates(-1),
+        _render_sub_nav_back_update(-1),
         _render_sub_nav_render_btn_update(rendering=True, on_grid=True),
     )
 
@@ -8719,11 +8735,6 @@ def build_app() -> gr.Blocks:
                 *sz_inputs,
                 status_zoom_save_btn,
             ]
-            status_zoom_back_btn.click(
-                _status_zoom_back_to_grid,
-                outputs=status_zoom_back_outputs,
-                show_progress="hidden",
-            )
 
         newhere_outputs = [panel_newhere, tab_newhere_btn, newhere_open, panel_claims, tab_claims_btn, claims_open]
         claims_outputs = [panel_claims, tab_claims_btn, claims_open, panel_newhere, tab_newhere_btn, newhere_open]
@@ -8878,6 +8889,7 @@ def build_app() -> gr.Blocks:
         _bind_nav(readme_tab_anim_btn, "animations")
         _bind_nav(readme_tab_readme_btn, "readme")
         _bind_status_nav(readme_tab_status_btn)
+        _bind_nav(status_zoom_back_btn, "gravity", refresh_gravity=True)
         _bind_nav(status_tab_gravity_btn, "gravity", refresh_gravity=True)
         _bind_nav(status_tab_render_btn, "render")
         _bind_nav(status_tab_readme_btn, "readme")
