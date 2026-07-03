@@ -4518,6 +4518,7 @@ footer {{ visibility: hidden; }}
     flex-direction: column !important;
 }}
 .gradio-container .myst-status-page.hide,
+.gradio-container .myst-render-page.hide,
 .gradio-container .myst-gravity-page.hide,
 .gradio-container .myst-edit-page.hide,
 .gradio-container .myst-readme-page.hide,
