@@ -6,6 +6,7 @@ from __future__ import annotations
 import logging
 import os
 import re
+import tempfile
 import time
 import traceback
 from collections.abc import Callable, Iterator
@@ -37,10 +38,7 @@ from demo_core import (
     get_build_label,
     is_hf_space,
     build_unit_cell_viewport_header_html,
-    UNIT_CELL_VIEWPORT_EMPTY_HTML,
-    figure_to_viewport_file_html,
     figure_to_viewport_html,
-    unit_cell_error_placeholder_file_html,
     unit_cell_error_placeholder_html,
     render_unit_cell_deformation_video,
     residual_from_scales,
@@ -3901,18 +3899,54 @@ def _gravity_tui_for_preset(
     return _format_gravity_preset_tui_html(active_slot, dials)
 
 
+def _gravity_viewport_served_html(fig: plt.Figure, *, dpi: int) -> str:
+    """savefig → Gradio cache → plain <img> HTML (HF Spaces-safe file URL)."""
+    from gradio.processing_utils import save_file_to_cache
+    from gradio.utils import get_upload_folder
+
+    with tempfile.NamedTemporaryFile(suffix=".png", delete=False, dir="/tmp") as tmp:
+        tmp_path = tmp.name
+    face = fig.get_facecolor()
+    if not face or str(face).lower() in {"none", "auto"}:
+        face = "#000000"
+    try:
+        fig.savefig(
+            tmp_path,
+            format="png",
+            dpi=dpi,
+            facecolor=face,
+            edgecolor="none",
+            bbox_inches="tight",
+            pad_inches=0.05,
+        )
+    finally:
+        plt.close(fig)
+    png_bytes = os.path.getsize(tmp_path)
+    served_path = save_file_to_cache(tmp_path, get_upload_folder())
+    html = (
+        '<div class="myst-unit-cell-viewport-inner" '
+        'style="width:100%;max-width:550px;height:550px;background:#000000;'
+        'display:flex;align-items:center;justify-content:center;overflow:hidden;">'
+        f'<img src="/gradio_api/file={served_path}" '
+        'style="max-width:100%;max-height:100%;object-fit:contain;display:block;" '
+        'alt="Unit cell viewport" loading="eager" />'
+        "</div>"
+    )
+    print(
+        f"[DEBUG] Returning HTML len={len(html)} png_bytes={png_bytes} "
+        f"path={served_path}",
+        flush=True,
+    )
+    return html
+
+
 def _gravity_static_image_update(fig: object) -> object:
-    """HF: gr.HTML + /gradio_api/file= PNG. Local: gr.HTML inline base64."""
+    """HF: gr.HTML + cached /gradio_api/file= PNG. Local: gr.HTML base64."""
     if fig is gr.skip():
         print("[DEBUG] _gravity_static_image_update: gr.skip()", flush=True)
         return gr.skip()
     if is_hf_space():
-        html = figure_to_viewport_file_html(fig, dpi=_UNIT_CELL_IMAGE_DPI)
-        print(
-            f"[DEBUG] _gravity_static_image_update: HF file-html len={len(html)}",
-            flush=True,
-        )
-        return html
+        return _gravity_viewport_served_html(fig, dpi=_UNIT_CELL_IMAGE_DPI)
     html = figure_to_viewport_html(fig, dpi=_UNIT_CELL_IMAGE_DPI)
     print(
         f"[DEBUG] _gravity_static_image_update: local html len={len(html)}",
@@ -3923,7 +3957,13 @@ def _gravity_static_image_update(fig: object) -> object:
 
 def _gravity_viewport_error_placeholder() -> object:
     if is_hf_space():
-        return unit_cell_error_placeholder_file_html()
+        return (
+            '<div class="myst-unit-cell-viewport-inner myst-unit-cell-viewport-error" '
+            'style="width:100%;max-width:550px;height:550px;background:#b40000;'
+            'display:flex;align-items:center;justify-content:center;color:#fff;">'
+            "Viewport render error"
+            "</div>"
+        )
     return unit_cell_error_placeholder_html()
 
 
@@ -4666,13 +4706,9 @@ def build_app() -> gr.Blocks:
             1.0, 1.0, 1.0, KAPPA_DOC, 0.1, 1.0, 1.0, 0.35, 22.0, 45.0
         )
         if is_hf_space():
-            _init_unit_cell_html = figure_to_viewport_file_html(
+            _init_unit_cell_html = _gravity_viewport_served_html(
                 _init_unit_cell_fig,
                 dpi=_UNIT_CELL_IMAGE_DPI,
-            )
-            print(
-                f"[DEBUG] init unit cell file-html len={len(_init_unit_cell_html)} (HF)",
-                flush=True,
             )
         else:
             _init_unit_cell_html = figure_to_viewport_html(
@@ -4984,7 +5020,7 @@ def build_app() -> gr.Blocks:
                     )
                     with gr.Row(elem_classes=["myst-unit-cell-image-row"]):
                         unit_cell_image = gr.HTML(
-                            value=_init_unit_cell_html or UNIT_CELL_VIEWPORT_EMPTY_HTML,
+                            value="",
                             elem_id="unit-cell-main-view",
                             elem_classes=["myst-unit-cell-viewport-image"],
                             container=False,
