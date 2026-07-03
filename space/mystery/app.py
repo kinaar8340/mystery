@@ -1308,16 +1308,17 @@ WALLPAPER_HEAD = f"""
     }}
     function mystRenderDetailPlotEl() {{
         return document.querySelector('#myst-render-detail-plot .plotly-graph-div')
+            || document.querySelector('.myst-render-detail-plot .plotly-graph-div')
             || document.querySelector('.myst-render-detail-plot-host .plotly-graph-div')
             || document.querySelector('.myst-render-detail-plot-host #myst-render-detail-plotly');
     }}
     function mystResizeRenderDetailPlot() {{
-        var host = document.querySelector('.myst-render-detail-plot-host')
-            || document.querySelector('#myst-render-detail-plot')
-            || document.querySelector('.myst-render-detail-view');
+        var host = document.querySelector('.myst-render-detail-plot')
+            || document.querySelector('.myst-render-detail-plot-host')
+            || document.querySelector('#myst-render-detail-plot');
         var plotDiv = mystRenderDetailPlotEl();
         if (!host || !plotDiv || !window.Plotly) return;
-        var h = Math.max(520, Math.round(host.getBoundingClientRect().height) - 8);
+        var h = Math.max(550, Math.min(620, Math.round(host.getBoundingClientRect().height) - 8));
         plotDiv.style.height = h + 'px';
         plotDiv.style.width = '100%';
         try {{
@@ -1356,7 +1357,8 @@ WALLPAPER_HEAD = f"""
         }} catch (_err) {{}}
     }}
     function mystRenderDetailFullscreen() {{
-        var host = document.querySelector('.myst-render-detail-plot-host')
+        var host = document.querySelector('.myst-render-detail-plot')
+            || document.querySelector('.myst-render-detail-plot-host')
             || document.querySelector('#myst-render-detail-plot');
         if (!host) return;
         var req = host.requestFullscreen || host.webkitRequestFullscreen;
@@ -5049,16 +5051,21 @@ footer {{ visibility: hidden; }}
     padding-left: 0 !important;
     padding-right: 0 !important;
 }}
+.gradio-container .myst-render-page #myst-render-detail-wrapper,
 .gradio-container .myst-render-page .myst-render-detail-view {{
     flex: 1 1 auto !important;
     width: 100% !important;
-    min-height: calc(100dvh - 7.5rem - var(--myst-render-grid-bottom-frame, 0.38rem)) !important;
+    height: calc(100dvh - 9rem) !important;
+    max-height: calc(100dvh - 9rem) !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
     display: flex !important;
     flex-direction: column !important;
     gap: 0.22rem !important;
-    padding: 0 !important;
+    padding: 0 0 2rem 0 !important;
     margin: 0 !important;
     align-items: stretch !important;
+    box-sizing: border-box !important;
 }}
 .gradio-container .myst-render-page .myst-render-detail-toolbar {{
     flex: 0 0 auto !important;
@@ -5066,12 +5073,15 @@ footer {{ visibility: hidden; }}
     padding: 0 0 0.12rem 0 !important;
     gap: 0.35rem !important;
 }}
+.gradio-container .myst-render-page .myst-render-detail-plot,
 .gradio-container .myst-render-page .myst-render-detail-plot-host,
 .gradio-container .myst-render-page #myst-render-detail-plot,
 .gradio-container .myst-render-page #myst-render-detail-plot.block {{
-    flex: 1 1 auto !important;
-    min-height: calc(100dvh - 14rem) !important;
-    height: calc(100dvh - 14rem) !important;
+    flex: 0 0 auto !important;
+    flex-shrink: 0 !important;
+    min-height: 520px !important;
+    height: 620px !important;
+    max-height: 620px !important;
     width: 100% !important;
     max-width: 100% !important;
     margin: 0 !important;
@@ -5081,6 +5091,9 @@ footer {{ visibility: hidden; }}
     box-sizing: border-box !important;
     overflow: hidden !important;
 }}
+.gradio-container .myst-render-page .myst-render-detail-plot .plot-container,
+.gradio-container .myst-render-page .myst-render-detail-plot .js-plotly-plot,
+.gradio-container .myst-render-page .myst-render-detail-plot .plotly-graph-div,
 .gradio-container .myst-render-page .myst-render-detail-plot-host .plot-container,
 .gradio-container .myst-render-page .myst-render-detail-plot-host .js-plotly-plot,
 .gradio-container .myst-render-page .myst-render-detail-plot-host .plotly-graph-div,
@@ -5088,8 +5101,8 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-render-page #myst-render-detail-plot .plotly-graph-div {{
     width: 100% !important;
     height: 100% !important;
-    min-height: calc(100dvh - 14.5rem) !important;
-    max-height: none !important;
+    min-height: 550px !important;
+    max-height: 620px !important;
 }}
 .gradio-container .myst-render-page .myst-render-detail-actions {{
     flex: 0 0 auto !important;
@@ -5098,18 +5111,27 @@ footer {{ visibility: hidden; }}
     padding: 0.08rem 0 !important;
     flex-wrap: wrap !important;
 }}
+.gradio-container .myst-render-page .myst-render-detail-desc-wrapper {{
+    flex: 0 0 auto !important;
+    margin: 1rem 0 0 0 !important;
+    padding: 1rem 1.25rem !important;
+    background: rgba(20, 20, 35, 0.6) !important;
+    border-radius: 8px !important;
+    border: 1px solid #3a3a5a !important;
+    box-sizing: border-box !important;
+}}
 .gradio-container .myst-render-page .myst-render-detail-desc,
 .gradio-container .myst-render-page .myst-render-detail-desc .prose {{
     flex: 0 0 auto !important;
     width: 100% !important;
     max-width: 100% !important;
     margin: 0 !important;
-    padding: 0.42rem 0.48rem 0.5rem !important;
-    background: rgba(0, 0, 0, {_MYST_STATUS_PANEL_ALPHA}) !important;
-    border: 2px inset rgba(92, 74, 31, {_MYST_STATUS_PANEL_ALPHA}) !important;
+    padding: 0 !important;
+    background: transparent !important;
+    border: none !important;
     color: #f5e6c8 !important;
-    font-size: 0.82rem !important;
-    line-height: 1.35 !important;
+    font-size: 0.95rem !important;
+    line-height: 1.5 !important;
     box-sizing: border-box !important;
 }}
 .gradio-container .myst-render-page .myst-render-detail-desc h3 {{
@@ -6467,22 +6489,58 @@ def _render_preset_detail_plot_html(slot: int) -> str:
     return plotly_figure_to_render_detail_html(fig)
 
 
+def _render_detail_plot_fallback(slot: int, error: Exception):
+    """Informative Plotly figure when WebGL / 3D rendering fails in the browser."""
+    import plotly.graph_objects as go
+
+    preset_id = _gravity_preset_id(int(slot))
+    fig = go.Figure()
+    fig.add_annotation(
+        text=(
+            "3D rendering failed in this browser.<br>"
+            "Please try Firefox or disable Brave Shields.<br>"
+            f"Preset {preset_id}<br>"
+            f"Error: {str(error)[:100]}"
+        ),
+        x=0.5,
+        y=0.5,
+        xref="paper",
+        yref="paper",
+        showarrow=False,
+        align="center",
+        font=dict(size=16, color="#e8a040"),
+    )
+    fig.update_layout(
+        height=500,
+        margin=dict(l=24, r=24, t=24, b=24),
+        paper_bgcolor="#000000",
+        plot_bgcolor="#000000",
+        xaxis=dict(visible=False),
+        yaxis=dict(visible=False),
+        uirevision="constant",
+    )
+    return fig
+
+
 def _generate_render_detail_plot(slot: int):
     """Large interactive Plotly 3D figure for the Render preset detail view."""
     slot = int(slot)
-    dials = _gravity_preset_dials_for_slot(slot)
-    fig = run_residual_explorer_plotly(*_dials_to_explorer_args(dials))
-    fig.update_layout(
-        height=680,
-        margin=dict(l=0, r=0, t=8, b=0),
-        paper_bgcolor="#000000",
-        plot_bgcolor="#000000",
-        uirevision=f"mystery-render-detail-{slot}",
-    )
-    fig.update_layout(
-        modebar=dict(orientation="v", bgcolor="rgba(0,0,0,0.55)"),
-    )
-    return fig
+    try:
+        dials = _gravity_preset_dials_for_slot(slot)
+        fig = run_residual_explorer_plotly(*_dials_to_explorer_args(dials))
+        fig.update_layout(
+            height=620,
+            margin=dict(l=0, r=0, t=8, b=0),
+            paper_bgcolor="#000000",
+            plot_bgcolor="#000000",
+            uirevision="constant",
+        )
+        fig.update_layout(
+            modebar=dict(orientation="v", bgcolor="rgba(0, 0, 0, 0.55)"),
+        )
+        return fig
+    except Exception as exc:
+        return _render_detail_plot_fallback(slot, exc)
 
 
 def _format_render_detail_description(slot: int) -> str:
@@ -8224,6 +8282,7 @@ def build_app() -> gr.Blocks:
                 render_detail_slot = gr.State(-1)
                 with gr.Column(
                     visible=False,
+                    elem_id="myst-render-detail-wrapper",
                     elem_classes=["myst-render-detail-view"],
                 ) as render_detail_col:
                     with gr.Row(elem_classes=["myst-render-detail-toolbar"]):
@@ -8238,7 +8297,7 @@ def build_app() -> gr.Blocks:
                         show_label=False,
                         container=True,
                         elem_id="myst-render-detail-plot",
-                        elem_classes=["myst-render-detail-plot-host"],
+                        elem_classes=["myst-render-detail-plot"],
                     )
                     with gr.Row(elem_classes=["myst-render-detail-actions"]):
                         render_detail_zoom_in_btn = gr.Button(
@@ -8266,10 +8325,11 @@ def build_app() -> gr.Blocks:
                             scale=0,
                             elem_id="myst-render-detail-fullscreen",
                         )
-                    render_detail_description = gr.Markdown(
-                        elem_classes=["myst-render-detail-desc"],
-                        container=True,
-                    )
+                    with gr.Column(elem_classes=["myst-render-detail-desc-wrapper"]):
+                        render_detail_description = gr.Markdown(
+                            elem_classes=["myst-render-detail-desc"],
+                            container=True,
+                        )
 
         status_content_open = gr.State(True)
         with gr.Column(visible=False, elem_classes=["myst-status-page"]) as page_status:
