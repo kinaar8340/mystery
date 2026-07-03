@@ -3898,25 +3898,28 @@ def _gravity_tui_for_preset(
     return _format_gravity_preset_tui_html(active_slot, dials)
 
 
-def figure_to_viewport_file_html(path: str) -> str:
+def figure_to_viewport_file_html(path: str, *, png_bytes: int | None = None) -> str:
     """Clean gr.HTML with Gradio-served /gradio_api/file= image path."""
     if not path or not os.path.exists(path):
         return "<div style='color:red;padding:20px;'>Image file not found</div>"
+    size = png_bytes if png_bytes is not None else os.path.getsize(path)
     html = f"""
 <div style="width:100%;max-width:550px;height:550px;background:#000000;display:flex;align-items:center;justify-content:center;overflow:hidden;border-radius:6px;">
 <img src="/gradio_api/file={path}" style="max-width:100%;max-height:100%;object-fit:contain;display:block;" alt="Unit cell viewport" loading="eager" />
 </div>
 """
     print(
-        f"[DEBUG] Returning HTML len={len(html)} for path={path} "
-        f"(png_bytes={os.path.getsize(path)})",
+        f"[DEBUG] Returning HTML len={len(html)} png_bytes={size} path={path}",
         flush=True,
     )
     return html
 
 
 def _gravity_fig_to_viewport_file_html(fig: plt.Figure, *, dpi: int) -> str:
-    """savefig to /tmp PNG → figure_to_viewport_file_html."""
+    """savefig → save_file_to_cache → gr.HTML img (HF Spaces-safe)."""
+    from gradio.processing_utils import save_file_to_cache
+    from gradio.utils import get_upload_folder
+
     with tempfile.NamedTemporaryFile(suffix=".png", delete=False, dir="/tmp") as tmp:
         tmp_path = tmp.name
     try:
@@ -3930,11 +3933,14 @@ def _gravity_fig_to_viewport_file_html(fig: plt.Figure, *, dpi: int) -> str:
         )
     finally:
         plt.close(fig)
+    png_bytes = os.path.getsize(tmp_path)
     print(
-        f"[DEBUG] Saved PNG: {tmp_path} (exists={os.path.exists(tmp_path)})",
+        f"[DEBUG] Saved PNG: {tmp_path} (exists={os.path.exists(tmp_path)}, "
+        f"bytes={png_bytes})",
         flush=True,
     )
-    return figure_to_viewport_file_html(tmp_path)
+    served_path = save_file_to_cache(tmp_path, get_upload_folder())
+    return figure_to_viewport_file_html(served_path, png_bytes=png_bytes)
 
 
 def _gravity_static_image_update(fig: object) -> object:
