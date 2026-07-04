@@ -10114,11 +10114,8 @@ def build_app() -> gr.Blocks:
         newhere_minimize_btn.click(_minimize_newhere, outputs=newhere_outputs[:3])
         claims_minimize_btn.click(_minimize_claims, outputs=claims_outputs[:3])
         def _app_boot() -> tuple:
-            try:
-                viewport = _demo_viewport_show_breathing_video()
-            except Exception:
-                logger.exception("app boot breathing video failed")
-                viewport = _demo_viewport_show_plot(_get_rigid_preset_plotly_figure())
+            """Fast boot — rigid plot first so HF health checks pass quickly."""
+            viewport = _demo_viewport_show_plot(_get_rigid_preset_plotly_figure())
             return (
                 *_nav_to_page("home"),
                 *viewport,
@@ -10126,6 +10123,14 @@ def build_app() -> gr.Blocks:
                 "A",
                 *_set_active_shape(_DEFAULT_ACTIVE_SHAPE),
             )
+
+        def _app_boot_deferred_video() -> tuple:
+            """Load Demo A breathing video after the UI is live (HF encodes on first boot)."""
+            try:
+                return _demo_viewport_show_breathing_video()
+            except Exception:
+                logger.exception("app boot breathing video failed")
+                return _demo_viewport_show_plot(_get_rigid_preset_plotly_figure())
 
         demo.load(
             _app_boot,
@@ -10137,6 +10142,10 @@ def build_app() -> gr.Blocks:
                 gravity_active_letter,
                 *shape_outputs,
             ],
+            show_progress="hidden",
+        ).then(
+            _app_boot_deferred_video,
+            outputs=[gravity_viewport_plot, gravity_viewport_video],
             show_progress="hidden",
         )
 

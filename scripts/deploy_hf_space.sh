@@ -39,12 +39,14 @@ fi
 
 rsync -av --delete \
   --exclude='.git' \
+  --exclude='.gradio' \
   --exclude='.venv' \
   --exclude='__pycache__' \
   --exclude='*.pyc' \
   --exclude='mystery_image.png' \
   --exclude='assets/demo_a_breathing.gif' \
   "$ROOT/space/mystery/" "$HF_DIR/"
+rm -rf "$HF_DIR/.gradio"
 cd "$HF_DIR"
 git add -A
 git status --short
