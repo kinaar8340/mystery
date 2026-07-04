@@ -2985,11 +2985,24 @@ footer {{
     box-shadow: 0 0 14px rgba(0, 255, 255, 0.85), 0 0 26px rgba(0, 255, 255, 0.5), 0 0 0 1px cyan !important;
     font-weight: 600 !important;
 }}
-/* ========== DEMO: BAR (A–I) + Render/Presets 01–09 ========== */
+/* ========== DEMO: BAR (A–I) + Figures/Presets 01–09 ========== */
 .gradio-container button.vqc-source-tab.demo-btn.active,
 .gradio-container button.vqc-source-tab.demo-btn.active:disabled,
 .gradio-container button.vqc-source-tab.demo-btn.active[disabled],
-#myst-gravity-child-nav button.vqc-source-tab.demo-btn.active {{
+.gradio-container button.vqc-source-tab.demo-btn.active span,
+.gradio-container button.vqc-source-tab.demo-btn.active:disabled span,
+.gradio-container button.vqc-source-tab.demo-btn.active[disabled] span,
+#myst-gravity-child-nav button.vqc-source-tab.demo-btn.active,
+#myst-gravity-child-nav button.vqc-source-tab.demo-btn.active span,
+#myst-render-sub-nav button.vqc-source-tab.demo-btn.active,
+#myst-render-sub-nav button.vqc-source-tab.demo-btn.active:disabled,
+#myst-render-sub-nav button.vqc-source-tab.demo-btn.active[disabled],
+#myst-render-sub-nav button.vqc-source-tab.demo-btn.active span,
+#myst-render-sub-nav button.vqc-source-tab.demo-btn.active:disabled span,
+#myst-render-sub-nav button.vqc-source-tab.demo-btn.active[disabled] span,
+#myst-render-sub-nav button.myst-render-preset-btn.demo-btn.active {{
+    color: #ffaa00 !important;
+    -webkit-text-fill-color: #ffaa00 !important;
     border-color: orange !important;
     box-shadow: 0 0 12px rgba(255, 165, 0, 0.8), 0 0 22px rgba(255, 165, 0, 0.5), 0 0 0 1px orange !important;
     font-weight: 600 !important;
@@ -8474,7 +8487,12 @@ def _render_panel_html(
 
 
 def _render_sub_nav_btn_classes(slot: int, active_slot: int) -> list[str]:
-    classes = ["vqc-source-tab", "myst-status-preset-btn", "myst-render-preset-btn"]
+    classes = [
+        "vqc-source-tab",
+        "demo-btn",
+        "myst-status-preset-btn",
+        "myst-render-preset-btn",
+    ]
     if slot == active_slot:
         classes.append("active")
     return classes
