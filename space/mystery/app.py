@@ -1271,8 +1271,11 @@ def _readme_back_to_app(return_page: str) -> tuple:
 
 
 def _home_demo_nav_visible(visible: bool) -> gr.Update:
-    """Show or hide the Home-only Demo: bar section."""
-    return gr.update(visible=bool(visible))
+    """Show or hide the Home-only Demo: A–I bar section."""
+    classes = ["myst-home-demo-nav-section"]
+    if visible:
+        classes.append("myst-force-visible")
+    return gr.update(visible=bool(visible), elem_classes=classes)
 
 
 def _nav_to_page(page: str) -> tuple:
@@ -1497,6 +1500,12 @@ WALLPAPER_HEAD = f"""
 (function() {{
     function mystHomePageActive() {{
         var gravityPage = document.querySelector('.myst-gravity-page');
+        var renderPage = document.querySelector('.myst-render-page');
+        var statusPage = document.querySelector('.myst-status-page');
+        var readmePage = document.querySelector('.myst-readme-page');
+        if (renderPage && !renderPage.classList.contains('hide')) return false;
+        if (statusPage && !statusPage.classList.contains('hide')) return false;
+        if (readmePage && !readmePage.classList.contains('hide')) return false;
         return !!(gravityPage && !gravityPage.classList.contains('hide'));
     }}
     function mystSyncHomeDemoNav() {{
@@ -1517,11 +1526,12 @@ WALLPAPER_HEAD = f"""
             }}
         }} else {{
             section.classList.remove('myst-force-visible');
-            section.style.removeProperty('display');
-            section.style.removeProperty('visibility');
+            section.classList.add('hide');
+            section.style.setProperty('display', 'none', 'important');
+            section.style.setProperty('visibility', 'hidden', 'important');
             if (nav) {{
-                nav.style.removeProperty('display');
-                nav.style.removeProperty('visibility');
+                nav.style.setProperty('display', 'none', 'important');
+                nav.style.setProperty('visibility', 'hidden', 'important');
             }}
         }}
     }}
@@ -1532,13 +1542,18 @@ WALLPAPER_HEAD = f"""
         window.__mystHomeDemoNavObs = new MutationObserver(function() {{
             requestAnimationFrame(mystSyncHomeDemoNav);
         }});
-        var page = document.querySelector('.myst-gravity-page');
-        if (page) {{
+        [
+            document.querySelector('.myst-gravity-page'),
+            document.querySelector('.myst-render-page'),
+            document.querySelector('.myst-status-page'),
+            document.querySelector('.myst-readme-page'),
+        ].forEach(function(page) {{
+            if (!page) return;
             window.__mystHomeDemoNavObs.observe(page, {{
                 attributes: true,
                 attributeFilter: ['class', 'style'],
             }});
-        }}
+        }});
         var section = document.getElementById('myst-home-demo-nav-section')
             || document.querySelector('.myst-home-demo-nav-section');
         if (section) {{
@@ -2744,11 +2759,29 @@ footer {{
     row-gap: 0 !important;
     min-height: fit-content !important;
     flex-shrink: 0 !important;
-    display: flex !important;
     flex-direction: column !important;
 }}
-.gradio-container .myst-home-demo-nav-section.myst-force-visible,
-.gradio-container .myst-home-demo-nav-section.myst-force-visible.hide {{
+.gradio-container .myst-home-demo-nav-section.hide {{
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    max-height: 0 !important;
+    overflow: hidden !important;
+    opacity: 0 !important;
+}}
+.gradio-container:has(.myst-render-page:not(.hide)) .myst-home-demo-nav-section,
+.gradio-container:has(.myst-status-page:not(.hide)) .myst-home-demo-nav-section,
+.gradio-container:has(.myst-readme-page:not(.hide)) .myst-home-demo-nav-section {{
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    max-height: 0 !important;
+    overflow: hidden !important;
+    opacity: 0 !important;
+}}
+.gradio-container .myst-home-demo-nav-section.myst-force-visible:not(.hide) {{
     display: flex !important;
     visibility: visible !important;
     opacity: 1 !important;
@@ -2758,11 +2791,34 @@ footer {{
     overflow: visible !important;
 }}
 .gradio-container .myst-home-demo-nav-section:not(.hide) #myst-gravity-child-nav,
-.gradio-container .myst-home-demo-nav-section.myst-force-visible #myst-gravity-child-nav {{
+.gradio-container .myst-home-demo-nav-section.myst-force-visible:not(.hide) #myst-gravity-child-nav {{
     display: flex !important;
     visibility: visible !important;
     width: 100% !important;
     opacity: 1 !important;
+}}
+.gradio-container .myst-home-demo-nav-section.hide #myst-gravity-child-nav,
+.gradio-container:has(.myst-render-page:not(.hide)) #myst-gravity-child-nav,
+.gradio-container:has(.myst-status-page:not(.hide)) #myst-gravity-child-nav,
+.gradio-container:has(.myst-readme-page:not(.hide)) #myst-gravity-child-nav {{
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    opacity: 0 !important;
+}}
+/* Render / Presets secondary nav — same theme grid as Home */
+.gradio-container .myst-render-page .myst-nav-bar-row,
+.gradio-container .myst-status-page .myst-nav-bar-row {{
+    width: 100% !important;
+    margin: 0 !important;
+}}
+.gradio-container .myst-render-page .nav-button-grid,
+.gradio-container .myst-status-page .nav-button-grid {{
+    display: grid !important;
+    grid-template-columns: repeat(9, minmax(0, 1fr)) !important;
+    gap: var(--nav-grid-gap, 4px) !important;
 }}
 .gradio-container .myst-home-demo-nav-section > .gap {{
     display: none !important;
@@ -10663,12 +10719,24 @@ def build_app() -> gr.Blocks:
             reset_save=True,
         )
         unified_nav["home"].click(
-            lambda: gr.update(visible=True),
+            lambda: _home_demo_nav_visible(True),
             outputs=[home_demo_nav_section],
         )
         _bind_nav(unified_nav["render"], "render", show_home_demo=False, reset_save=True)
+        unified_nav["render"].click(
+            lambda: _home_demo_nav_visible(False),
+            outputs=[home_demo_nav_section],
+        )
         _bind_readme_nav(unified_nav["readme"])
+        unified_nav["readme"].click(
+            lambda: _home_demo_nav_visible(False),
+            outputs=[home_demo_nav_section],
+        )
         _bind_status_nav(unified_nav["status"])
+        unified_nav["status"].click(
+            lambda: _home_demo_nav_visible(False),
+            outputs=[home_demo_nav_section],
+        )
         readme_back_btn.click(
             _readme_back_to_app,
             inputs=[readme_return_page],
@@ -10707,7 +10775,7 @@ def build_app() -> gr.Blocks:
                 return _demo_viewport_show_plot(_get_rigid_preset_plotly_figure())
 
         demo.load(
-            lambda: gr.update(visible=True),
+            lambda: _home_demo_nav_visible(True),
             outputs=[home_demo_nav_section],
             show_progress="hidden",
         ).then(
@@ -10722,7 +10790,7 @@ def build_app() -> gr.Blocks:
             ],
             show_progress="hidden",
         ).then(
-            lambda: gr.update(visible=True),
+            lambda: _home_demo_nav_visible(True),
             outputs=[home_demo_nav_section],
             show_progress="hidden",
         ).then(
