@@ -135,12 +135,21 @@ _VQC_MATRIX_GREEN = "#33ff66"
 # ====================== GLOBAL STYLING THEME ======================
 NAV_THEME: dict = {
     "default_gap_height": 0.20,
+    "nav_label": {
+        "font_size": "14px",
+        "font_weight": "500",
+        "text_color": "#e0e0e0",
+        "padding_right": "10px",
+    },
     "nav_button": {
         "height": "2.05rem",
         "min_width": "58px",
-        "padding": "0.34rem 0.78rem",
-        "font_size": "0.82rem",
-        "font_weight": "600",
+        "padding": "6px 12px",
+        "shape_padding": "6px 10px",
+        "font_size": "14px",
+        "font_weight": "500",
+        "text_align": "center",
+        "vertical_align": "center",
         "border_radius": "8px",
         "border_width": "2px",
         "transition": "background 0.15s ease, border-color 0.15s ease, color 0.15s ease",
@@ -887,15 +896,23 @@ def _nav_theme_gradio_css_vars() -> str:
     """CSS custom properties derived from NAV_THEME for injection into HFB_CSS."""
     gap = NAV_THEME["default_gap_height"]
     nb = NAV_THEME["nav_button"]
+    nl = NAV_THEME["nav_label"]
     active = nb["active"]
     return f"""
     --myst-default-gap-height: {gap}rem;
     --myst-half-gap-height: calc({gap}rem * 0.5);
+    --nav-label-font-size: {nl["font_size"]};
+    --nav-label-font-weight: {nl["font_weight"]};
+    --nav-label-text-color: {nl["text_color"]};
+    --nav-label-padding-right: {nl["padding_right"]};
     --nav-btn-height: {nb["height"]};
     --nav-btn-min-width: {nb["min_width"]};
     --nav-btn-padding: {nb["padding"]};
+    --nav-btn-shape-padding: {nb["shape_padding"]};
     --nav-btn-font-size: {nb["font_size"]};
     --nav-btn-font-weight: {nb["font_weight"]};
+    --nav-btn-text-align: {nb["text_align"]};
+    --nav-btn-vertical-align: {nb["vertical_align"]};
     --nav-btn-border-radius: {nb["border_radius"]};
     --nav-btn-border-width: {nb["border_width"]};
     --nav-btn-transition: {nb["transition"]};
@@ -2081,15 +2098,39 @@ footer {{
     padding: 0 !important;
     margin: 0 !important;
 }}
+/* ========== NAVIGATION LABELS (Mystery: / Demo:) ========== */
 .gradio-container .vqc-source-label {{
-    display: inline-flex !important;
+    display: flex !important;
     align-items: center !important;
+    justify-content: flex-start !important;
     min-width: 4.75rem !important;
-    color: #aaaaaa !important;
-    font-size: 0.92rem !important;
-    font-weight: 600 !important;
-    margin-right: 0.35rem !important;
+    width: 100% !important;
+    height: 100% !important;
+    padding-right: var(--nav-label-padding-right, 10px) !important;
+    margin-right: 0 !important;
+    color: var(--nav-label-text-color, #e0e0e0) !important;
+    font-size: var(--nav-label-font-size, 14px) !important;
+    font-weight: var(--nav-label-font-weight, 500) !important;
     line-height: 1.2 !important;
+    text-align: left !important;
+    white-space: nowrap !important;
+}}
+.gradio-container .vqc-nav-spreadsheet-row > .block:has(.vqc-source-label),
+.gradio-container .vqc-nav-spreadsheet-row > .form:has(.vqc-source-label) {{
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    text-align: left !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}}
+.gradio-container .vqc-nav-spreadsheet-row .html-container:has(.vqc-source-label) {{
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    width: 100% !important;
+    text-align: left !important;
 }}
 .gradio-container button.myst-standard-back-btn {{
     border-radius: 9999px !important;
@@ -2132,8 +2173,9 @@ footer {{
     color: var(--nav-btn-text-color, #ffffff) !important;
     -webkit-text-fill-color: var(--nav-btn-text-color, #ffffff) !important;
     text-decoration: none !important;
-    font-weight: var(--nav-btn-font-weight, 600) !important;
-    font-size: var(--nav-btn-font-size, 0.82rem) !important;
+    font-weight: var(--nav-btn-font-weight, 500) !important;
+    font-size: var(--nav-btn-font-size, 14px) !important;
+    text-align: var(--nav-btn-text-align, center) !important;
     line-height: 1.2 !important;
     letter-spacing: 0.03em !important;
     text-transform: none !important;
@@ -2217,28 +2259,27 @@ footer {{
 }}
 #myst-gravity-child-nav button.myst-status-preset-btn,
 #myst-gravity-child-nav button.myst-gravity-preset-btn {{
-    min-height: 2.05rem !important;
-    height: 2.05rem !important;
+    min-height: var(--nav-btn-height, 2.05rem) !important;
+    height: var(--nav-btn-height, 2.05rem) !important;
     min-width: 0 !important;
     width: 100% !important;
-    padding: 6px 8px !important;
-    font-size: 0.95rem !important;
-    font-weight: 600 !important;
+    padding: var(--nav-btn-padding, 6px 12px) !important;
+    font-size: var(--nav-btn-font-size, 14px) !important;
+    font-weight: var(--nav-btn-font-weight, 500) !important;
     margin-right: 0 !important;
 }}
 #myst-gravity-child-nav .myst-gravity-child-nav-label {{
-    color: #aaaaaa !important;
+    color: var(--nav-label-text-color, #e0e0e0) !important;
     text-transform: none !important;
 }}
 /* Main nav tabs — match Demo (A–I) child tab height */
 .gradio-container .vqc-main-nav-row button.vqc-source-tab,
 .gradio-container .vqc-source-tabs-row button.vqc-source-tab {{
-    min-height: 2.05rem !important;
-    height: 2.05rem !important;
-    padding-top: 0.35rem !important;
-    padding-bottom: 0.35rem !important;
-    font-size: 0.95rem !important;
-    font-weight: 600 !important;
+    min-height: var(--nav-btn-height, 2.05rem) !important;
+    height: var(--nav-btn-height, 2.05rem) !important;
+    padding: var(--nav-btn-padding, 6px 12px) !important;
+    font-size: var(--nav-btn-font-size, 14px) !important;
+    font-weight: var(--nav-btn-font-weight, 500) !important;
 }}
 
 #myst-gravity-viewport-wrapper,
@@ -2517,14 +2558,34 @@ footer {{
 }}
 /* Equal-width nav buttons — Mystery + Demo rows share 9-column grid */
 .gradio-container .myst-main-nav button.vqc-source-tab,
-.gradio-container .myst-main-nav button.vqc-source-tab span,
 .gradio-container #myst-gravity-child-nav button.vqc-source-tab,
-.gradio-container #myst-gravity-child-nav button.vqc-source-tab span {{
+.gradio-container #myst-render-sub-nav button.vqc-source-tab,
+.gradio-container #myst-status-zoom-nav button.vqc-source-tab,
+.gradio-container .myst-save-edit-row button.save-btn,
+.gradio-container .myst-save-edit-row button.edit-btn {{
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
     min-width: 0 !important;
     width: 100% !important;
     flex: 1 1 0% !important;
-    text-align: center !important;
-    padding: 6px 8px !important;
+    text-align: var(--nav-btn-text-align, center) !important;
+    padding: var(--nav-btn-padding, 6px 12px) !important;
+    box-sizing: border-box !important;
+}}
+.gradio-container .myst-main-nav button.vqc-source-tab span,
+.gradio-container #myst-gravity-child-nav button.vqc-source-tab span,
+.gradio-container #myst-render-sub-nav button.vqc-source-tab span,
+.gradio-container #myst-status-zoom-nav button.vqc-source-tab span,
+.gradio-container .myst-save-edit-row button.save-btn span,
+.gradio-container .myst-save-edit-row button.edit-btn span {{
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-width: 0 !important;
+    width: 100% !important;
+    flex: 1 1 0% !important;
+    text-align: var(--nav-btn-text-align, center) !important;
     box-sizing: border-box !important;
 }}
 .gradio-container .myst-main-nav > .block,
@@ -2679,8 +2740,9 @@ footer {{
 }}
 /* ========== SHAPE TABS (D4, D6, D8, D12, D20) ========== */
 .gradio-container button.shape-btn {{
-    font-weight: 600 !important;
+    font-weight: var(--nav-btn-font-weight, 500) !important;
     min-width: 0 !important;
+    padding: var(--nav-btn-shape-padding, 6px 10px) !important;
 }}
 .gradio-container .vqc-source-tabs-row button.vqc-source-tab.shape-btn.active,
 .gradio-container .vqc-source-tabs-row button.vqc-source-tab.shape-btn.active span,
@@ -2721,17 +2783,44 @@ footer {{
 .gradio-container .myst-secondary-nav .vqc-source-label {{
     display: flex !important;
     align-items: center !important;
-    padding: 0 8px !important;
-    font-weight: 600 !important;
-    color: #cccccc !important;
+    justify-content: flex-start !important;
+    padding: 0 var(--nav-label-padding-right, 10px) 0 0 !important;
+    font-size: var(--nav-label-font-size, 14px) !important;
+    font-weight: var(--nav-label-font-weight, 500) !important;
+    color: var(--nav-label-text-color, #e0e0e0) !important;
     white-space: nowrap !important;
+    text-align: left !important;
 }}
 #myst-render-sub-nav button.vqc-source-tab,
 #myst-status-zoom-nav button.vqc-source-tab {{
     min-width: 0 !important;
     width: 100% !important;
-    padding: 6px 8px !important;
+    padding: var(--nav-btn-padding, 6px 12px) !important;
     box-sizing: border-box !important;
+}}
+/* ========== NAVIGATION BUTTONS — center label text ========== */
+.gradio-container .vqc-source-tab,
+.gradio-container button.vqc-source-tab.demo-btn,
+.gradio-container button.vqc-source-tab.main-nav-btn,
+.gradio-container button.vqc-source-tab.shape-btn,
+.gradio-container .myst-save-edit-row button.save-btn,
+.gradio-container .myst-save-edit-row button.edit-btn {{
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: var(--nav-btn-text-align, center) !important;
+}}
+.gradio-container .vqc-source-tabs-row button.vqc-source-tab span,
+.gradio-container button.vqc-source-tab.demo-btn span,
+.gradio-container button.vqc-source-tab.main-nav-btn span,
+.gradio-container button.vqc-source-tab.shape-btn span,
+.gradio-container .myst-save-edit-row button.save-btn span,
+.gradio-container .myst-save-edit-row button.edit-btn span {{
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    text-align: var(--nav-btn-text-align, center) !important;
 }}
 .gradio-container .myst-save-edit-row {{
     display: flex !important;
@@ -2759,7 +2848,8 @@ footer {{
 .gradio-container .myst-save-edit-row button.save-btn,
 .gradio-container .myst-save-edit-row button.edit-btn {{
     min-width: 80px !important;
-    font-weight: 600 !important;
+    font-weight: var(--nav-btn-font-weight, 500) !important;
+    font-size: var(--nav-btn-font-size, 14px) !important;
     flex: 1 1 0% !important;
 }}
 .gradio-container .vqc-status-preset-nav-row > .block,
@@ -2829,10 +2919,10 @@ footer {{
     width: 100% !important;
 }}
 .gradio-container .vqc-nav-row-label {{
-    justify-self: end !important;
+    justify-self: start !important;
     align-self: center !important;
-    text-align: right !important;
-    padding-right: 0.15rem !important;
+    text-align: left !important;
+    padding-right: var(--nav-label-padding-right, 10px) !important;
 }}
 .gradio-container .vqc-nav-cell,
 .gradio-container .vqc-nav-cell > .block,
