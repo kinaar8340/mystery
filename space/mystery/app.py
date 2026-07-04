@@ -1256,6 +1256,11 @@ def _nav_to_status_page(current_page: str, content_open: bool) -> tuple:
     )
 
 
+def _nav_to_status_page_with_demo(current_page: str, content_open: bool) -> tuple:
+    """Status navigation plus unified-host demo bar sync."""
+    return (*_nav_to_status_page(current_page, content_open), *_sync_demo_nav_sections("status"))
+
+
 _README_RETURN_PAGES = frozenset({"home", "render", "status"})
 
 
@@ -1266,27 +1271,67 @@ def _readme_return_page(from_page: str) -> str:
 
 def _open_readme_page(from_page: str) -> tuple:
     """Open Documentation full-page view; remember prior tab for Back."""
-    return (*_nav_to_page("readme"), _readme_return_page(from_page))
+    return (
+        *_nav_to_page("readme"),
+        _readme_return_page(from_page),
+        *_sync_demo_nav_sections("readme"),
+    )
 
 
 def _readme_back_to_app(return_page: str) -> tuple:
     """Return from README to the tab the user came from."""
     page = _readme_return_page(return_page)
-    return (*_nav_to_page(page), *_sync_demo_nav_sections(page))
+    return _nav_to_page_with_demo(page)
+
+
+_HOME_DEMO_NAV_CLASSES = ["myst-home-demo-nav-section", "myst-secondary-nav-panel"]
+_RENDER_DEMO_NAV_CLASSES = [
+    "myst-render-demo-nav-section",
+    "myst-render-nav-panel",
+    "myst-secondary-nav-panel",
+]
+_HOME_DEMO_PAGES = frozenset({"home", "gravity"})
+_RENDER_DEMO_PAGES = frozenset({"render", "figures"})
 
 
 def _home_demo_nav_visible(visible: bool) -> gr.Update:
     """Show or hide the Home-only Demo: A–I bar section."""
-    return gr.update(visible=bool(visible))
+    return gr.update(
+        visible=bool(visible),
+        elem_classes=list(_HOME_DEMO_NAV_CLASSES),
+    )
+
+
+def _render_demo_nav_visible(visible: bool) -> gr.Update:
+    """Show or hide the Figures-only Demo: 01–09 bar section."""
+    return gr.update(
+        visible=bool(visible),
+        elem_classes=list(_RENDER_DEMO_NAV_CLASSES),
+    )
 
 
 def _sync_demo_nav_sections(page: str) -> tuple[gr.Update, gr.Update]:
     """Toggle Home Demo A–I vs Figures Demo 01–09 in the unified nav host."""
     active = str(page or "home").strip().lower()
+    if active in _HOME_DEMO_PAGES:
+        return (
+            _home_demo_nav_visible(True),
+            _render_demo_nav_visible(False),
+        )
+    if active in _RENDER_DEMO_PAGES:
+        return (
+            _home_demo_nav_visible(False),
+            _render_demo_nav_visible(True),
+        )
     return (
-        _home_demo_nav_visible(active == "home"),
-        gr.update(visible=active == "render"),
+        _home_demo_nav_visible(False),
+        _render_demo_nav_visible(False),
     )
+
+
+def _nav_to_page_with_demo(page: str) -> tuple:
+    """Switch pages and sync unified-host demo nav sections in one update."""
+    return (*_nav_to_page(page), *_sync_demo_nav_sections(page))
 
 
 def _nav_to_page(page: str) -> tuple:
@@ -2721,6 +2766,23 @@ footer {{
     opacity: 0 !important;
     pointer-events: none !important;
 }}
+.gradio-container .myst-unified-nav-host > .gap.hide:has(#myst-render-demo-nav-section:not(.hide):not(.hidden)),
+.gradio-container .myst-unified-nav-host > .block.hide:has(#myst-render-demo-nav-section:not(.hide):not(.hidden)),
+.gradio-container .myst-unified-nav-host > .form.hide:has(#myst-render-demo-nav-section:not(.hide):not(.hidden)),
+.gradio-container .myst-unified-nav-host > .column.hide:has(#myst-render-demo-nav-section:not(.hide):not(.hidden)),
+.gradio-container .myst-unified-nav-host > .gap.hide:has(#myst-home-demo-nav-section:not(.hide):not(.hidden)),
+.gradio-container .myst-unified-nav-host > .block.hide:has(#myst-home-demo-nav-section:not(.hide):not(.hidden)),
+.gradio-container .myst-unified-nav-host > .form.hide:has(#myst-home-demo-nav-section:not(.hide):not(.hidden)),
+.gradio-container .myst-unified-nav-host > .column.hide:has(#myst-home-demo-nav-section:not(.hide):not(.hidden)) {{
+    display: flex !important;
+    visibility: visible !important;
+    height: auto !important;
+    min-height: fit-content !important;
+    max-height: none !important;
+    overflow: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+}}
 .gradio-container .myst-unified-nav-host + .gap {{
     display: none !important;
     height: 0 !important;
@@ -2852,7 +2914,13 @@ footer {{
     opacity: 1 !important;
     pointer-events: auto !important;
 }}
-.gradio-container .myst-render-demo-nav-section:not(.hide):not(.hidden) #myst-render-sub-nav {{
+.gradio-container .myst-render-demo-nav-section:not(.hide):not(.hidden) {{
+    margin-bottom: var(--myst-default-gap-height, {_myst_default_gap_height}) !important;
+}}
+.gradio-container .myst-render-demo-nav-section:not(.hide):not(.hidden) > .gap:has(#myst-render-sub-nav),
+.gradio-container .myst-render-demo-nav-section:not(.hide):not(.hidden) > .block:has(#myst-render-sub-nav),
+.gradio-container .myst-render-demo-nav-section:not(.hide):not(.hidden) > .form:has(#myst-render-sub-nav),
+.gradio-container .myst-unified-nav-host .myst-render-demo-nav-section:not(.hide):not(.hidden) #myst-render-sub-nav {{
     display: flex !important;
     visibility: visible !important;
     width: 100% !important;
@@ -2860,8 +2928,17 @@ footer {{
     min-height: fit-content !important;
     max-height: none !important;
     overflow: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
     margin: 0 !important;
     padding: 0 !important;
+}}
+.gradio-container .myst-unified-nav-host #myst-render-sub-nav.myst-secondary-nav {{
+    display: flex !important;
+    align-items: center !important;
+    gap: var(--nav-grid-gap, 4px) !important;
+    flex-wrap: nowrap !important;
+    width: 100% !important;
 }}
 .gradio-container .myst-home-demo-nav-section:not(.hide):not(.hidden) > .gap:has(#myst-gravity-child-nav),
 .gradio-container .myst-home-demo-nav-section:not(.hide):not(.hidden) > .block:has(#myst-gravity-child-nav),
@@ -10808,16 +10885,16 @@ def build_app() -> gr.Blocks:
             claims_open,
             current_page,
         ]
-        readme_nav_outputs = [*nav_outputs, readme_return_page]
+        demo_nav_outputs = [home_demo_nav_section, render_demo_nav_section]
+        readme_nav_outputs = [*nav_outputs, readme_return_page, *demo_nav_outputs]
 
         status_nav_outputs = [
             *nav_outputs,
             status_content_col,
             status_content_open,
             *status_zoom_back_outputs,
+            *demo_nav_outputs,
         ]
-
-        demo_nav_outputs = [home_demo_nav_section, render_demo_nav_section]
 
         def _bind_nav(
             btn: gr.Button,
@@ -10827,12 +10904,13 @@ def build_app() -> gr.Blocks:
             refresh_gravity: bool = False,
             reset_save: bool = False,
         ) -> None:
-            chain = btn.click(lambda: _nav_to_page(page), outputs=nav_outputs)
             if sync_demo_nav:
-                chain = chain.then(
-                    lambda p=page: _sync_demo_nav_sections(p),
-                    outputs=demo_nav_outputs,
+                chain = btn.click(
+                    lambda p=page: _nav_to_page_with_demo(p),
+                    outputs=[*nav_outputs, *demo_nav_outputs],
                 )
+            else:
+                chain = btn.click(lambda p=page: _nav_to_page(p), outputs=nav_outputs)
             if reset_save:
                 chain = chain.then(_unlatch_save_button, outputs=save_unlatch_outputs)
             if refresh_gravity:
@@ -10844,21 +10922,15 @@ def build_app() -> gr.Blocks:
 
         def _bind_readme_nav(btn: gr.Button) -> None:
             btn.click(_open_readme_page, inputs=[current_page], outputs=readme_nav_outputs).then(
-                lambda: _sync_demo_nav_sections("readme"),
-                outputs=demo_nav_outputs,
-            ).then(
                 _unlatch_save_button,
                 outputs=save_unlatch_outputs,
             )
 
         def _bind_status_nav(btn: gr.Button) -> None:
             btn.click(
-                _nav_to_status_page,
+                _nav_to_status_page_with_demo,
                 inputs=[current_page, status_content_open],
                 outputs=status_nav_outputs,
-            ).then(
-                lambda: _sync_demo_nav_sections("status"),
-                outputs=demo_nav_outputs,
             ).then(
                 _run_residual_explorer_ui,
                 inputs=gravity_dial_inputs,
@@ -10957,7 +11029,7 @@ def build_app() -> gr.Blocks:
             """Fast boot — rigid plot first so HF health checks pass quickly."""
             viewport = _demo_viewport_show_plot(_get_rigid_preset_plotly_figure())
             return (
-                *_nav_to_page("home"),
+                *_nav_to_page_with_demo("home"),
                 *viewport,
                 *_demo_active_tab_updates("A"),
                 "A",
@@ -10973,23 +11045,16 @@ def build_app() -> gr.Blocks:
                 return _demo_viewport_show_plot(_get_rigid_preset_plotly_figure())
 
         demo.load(
-            lambda: _sync_demo_nav_sections("home"),
-            outputs=demo_nav_outputs,
-            show_progress="hidden",
-        ).then(
             _app_boot,
             outputs=[
                 *nav_outputs,
+                *demo_nav_outputs,
                 gravity_viewport_plot,
                 gravity_viewport_video,
                 *[gravity_letter_btns[letter] for letter in _GRAVITY_CHILD_NAV_LETTERS],
                 gravity_active_letter,
                 *shape_outputs,
             ],
-            show_progress="hidden",
-        ).then(
-            lambda: _sync_demo_nav_sections("home"),
-            outputs=demo_nav_outputs,
             show_progress="hidden",
         ).then(
             _app_boot_deferred_video,
