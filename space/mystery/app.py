@@ -928,6 +928,8 @@ def _nav_theme_gradio_css_vars() -> str:
     --nav-btn-active-text-color: {active["text_color"]};
     --nav-btn-active-border-color: {active["border_color"]};
     --nav-btn-active-body-color: {active["body_color"]};
+    --myst-panel-bg: #1a1a1a;
+    --myst-border-color: #333333;
     """
 
 
@@ -1075,6 +1077,7 @@ def _place_status_zoom_nav_row(
             "myst-nav-bar-row",
             "myst-status-preset-nav-wrap",
             "myst-gravity-child-nav-row",
+            "myst-gravity-demo-nav-wrap",
         ],
     ):
         gr.HTML(
@@ -2687,7 +2690,9 @@ footer {{
 .gradio-container .myst-unified-nav-host + .column.myst-render-page,
 .gradio-container .myst-unified-nav-host + .myst-render-page,
 .gradio-container .myst-unified-nav-host + .column.myst-status-page,
-.gradio-container .myst-unified-nav-host + .myst-status-page {{
+.gradio-container .myst-unified-nav-host + .myst-status-page,
+.gradio-container .myst-render-page:not(.hide):not(.hidden),
+.gradio-container .myst-status-page:not(.hide):not(.hidden) {{
     margin-top: 0 !important;
     padding-top: 0 !important;
 }}
@@ -2703,10 +2708,24 @@ footer {{
 }}
 .gradio-container .myst-render-page .myst-render-stack > .block:first-child,
 .gradio-container .myst-render-page .myst-render-stack > .form:first-child,
+.gradio-container .myst-render-page .myst-render-stack > .column:first-child,
 .gradio-container .myst-status-page .myst-status-stack > .block:first-child,
-.gradio-container .myst-status-page .myst-status-stack > .form:first-child {{
+.gradio-container .myst-status-page .myst-status-stack > .form:first-child,
+.gradio-container .myst-status-page .myst-status-stack > .column:first-child {{
     margin-top: 0 !important;
     padding-top: 0 !important;
+}}
+.gradio-container .myst-render-page .myst-secondary-nav-panel .myst-gap-row-host-after-demo-nav,
+.gradio-container .myst-render-page .myst-secondary-nav-panel #myst-gap-row-after-demo-nav,
+.gradio-container .myst-status-page .myst-secondary-nav-panel .myst-gap-row-host-after-demo-nav,
+.gradio-container .myst-status-page .myst-secondary-nav-panel #myst-gap-row-after-demo-nav {{
+    margin: 0 !important;
+    padding: 0 !important;
+    min-height: var(--myst-default-gap-height, {_myst_default_gap_height}) !important;
+    height: var(--myst-default-gap-height, {_myst_default_gap_height}) !important;
+    max-height: var(--myst-default-gap-height, {_myst_default_gap_height}) !important;
+    flex: 0 0 var(--myst-default-gap-height, {_myst_default_gap_height}) !important;
+    overflow: hidden !important;
 }}
 /* Demo bar → viewport: theme gap only (0.20rem) */
 .gradio-container .myst-gravity-page > .block:has(#myst-gap-row-after-demo-nav),
@@ -2737,10 +2756,26 @@ footer {{
 .gradio-container .myst-unified-nav-host .myst-secondary-nav {{
     margin: 0 !important;
 }}
+.gradio-container .myst-secondary-nav-panel,
+.gradio-container .myst-render-nav-panel,
+.gradio-container .myst-status-nav-panel {{
+    background: var(--myst-panel-bg, #1a1a1a) !important;
+    border: 1px solid var(--myst-border-color, #333333) !important;
+    border-radius: 10px !important;
+    padding: 6px 12px !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3) !important;
+    width: 100% !important;
+    gap: 0 !important;
+    row-gap: 0 !important;
+    flex-shrink: 0 !important;
+    flex-direction: column !important;
+    box-sizing: border-box !important;
+}}
 .gradio-container .myst-home-demo-nav-section {{
     width: 100% !important;
     margin: 0 !important;
-    padding: 0 !important;
     gap: 0 !important;
     row-gap: 0 !important;
     min-height: fit-content !important;
@@ -2835,11 +2870,21 @@ footer {{
     margin-top: 0 !important;
     gap: var(--nav-grid-gap, 4px) !important;
 }}
-/* Render / Presets page sub-nav — single theme gap below unified host */
+/* Render / Presets Demo row — no extra top margin (unified after-main-nav gap only) */
+.gradio-container .myst-render-page .myst-secondary-nav-panel,
+.gradio-container .myst-status-page .myst-secondary-nav-panel,
 .gradio-container .myst-render-page #myst-render-sub-nav.myst-secondary-nav,
 .gradio-container .myst-status-page #myst-status-zoom-nav.myst-secondary-nav {{
-    margin-top: var(--myst-default-gap-height, {_myst_default_gap_height}) !important;
+    margin-top: 0 !important;
     margin-bottom: 0 !important;
+}}
+.gradio-container .myst-render-page #myst-render-sub-nav,
+.gradio-container .myst-status-page #myst-status-zoom-nav {{
+    display: flex !important;
+    align-items: center !important;
+    gap: var(--nav-grid-gap, 4px) !important;
+    flex-wrap: nowrap !important;
+    width: 100% !important;
 }}
 .gradio-container .myst-render-page .myst-render-catalog-host:not(.hide):not(.hidden) {{
     margin-top: var(--myst-default-gap-height, {_myst_default_gap_height}) !important;
@@ -6754,6 +6799,16 @@ footer {{ visibility: hidden; }}
     margin-right: 0 !important;
     align-items: stretch !important;
 }}
+.gradio-container .myst-render-page .myst-secondary-nav-panel:not(.hide):not(.hidden),
+.gradio-container .myst-render-page .myst-render-nav-panel:not(.hide):not(.hidden),
+.gradio-container .myst-status-page .myst-secondary-nav-panel:not(.hide):not(.hidden),
+.gradio-container .myst-status-page .myst-status-nav-panel:not(.hide):not(.hidden),
+.gradio-container .myst-home-demo-nav-section:not(.hide):not(.hidden) {{
+    background: var(--myst-panel-bg, #1a1a1a) !important;
+    border: 1px solid var(--myst-border-color, #333333) !important;
+    border-radius: 10px !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3) !important;
+}}
 @media (max-width: 1100px) {{
     .gradio-container .myst-status-page .myst-status-grid {{
         grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
@@ -8505,6 +8560,7 @@ def _place_render_sub_nav_row(
             "myst-nav-bar-row",
             "myst-render-preset-nav-wrap",
             "myst-demo-preset-nav-row",
+            "myst-gravity-demo-nav-wrap",
             "vqc-status-preset-nav-row",
         ],
     ):
@@ -10017,7 +10073,7 @@ def build_app() -> gr.Blocks:
             with gr.Column(
                 visible=True,
                 elem_id="myst-home-demo-nav-section",
-                elem_classes=["myst-home-demo-nav-section"],
+                elem_classes=["myst-home-demo-nav-section", "myst-secondary-nav-panel"],
             ) as home_demo_nav_section:
                 gravity_child_nav = _place_gravity_child_nav_row()
                 _add_gap_row(slot="after-demo-nav")
@@ -10054,11 +10110,14 @@ def build_app() -> gr.Blocks:
         render_plot_cache = gr.State([None] * _STATUS_GRID_PRESET_COUNT)
         with gr.Column(visible=False, elem_classes=["myst-render-page"]) as page_render:
             with gr.Column(visible=True, elem_classes=["myst-render-stack"]) as render_content_col:
-                _render_sub_nav = _place_render_sub_nav_row(
-                    active_slot=-1,
-                    zoom_slot=-1,
-                )
-                _add_gap_row(slot="after-demo-nav")
+                with gr.Column(
+                    elem_classes=["myst-render-nav-panel", "myst-secondary-nav-panel"],
+                ):
+                    _render_sub_nav = _place_render_sub_nav_row(
+                        active_slot=-1,
+                        zoom_slot=-1,
+                    )
+                    _add_gap_row(slot="after-demo-nav")
                 with gr.Row(elem_classes=["myst-render-action-row"]):
                     render_action_btn = _nav_theme_button(
                         "Render",
@@ -10161,8 +10220,11 @@ def build_app() -> gr.Blocks:
             status_zoom_edit_open = gr.State(False)
             save_button_state = gr.State(False)
             with gr.Column(visible=True, elem_classes=["myst-status-stack"]) as status_content_col:
-                _status_zoom_nav = _place_status_zoom_nav_row(active_slot=-1)
-                _add_gap_row(slot="after-demo-nav")
+                with gr.Column(
+                    elem_classes=["myst-status-nav-panel", "myst-secondary-nav-panel"],
+                ):
+                    _status_zoom_nav = _place_status_zoom_nav_row(active_slot=-1)
+                    _add_gap_row(slot="after-demo-nav")
                 status_zoom_save_btn, status_zoom_edit_btn = _place_status_save_edit_row()
                 _add_gap_row(slot="after-save-edit")
                 status_zoom_btns = [
