@@ -140,7 +140,9 @@ NAV_THEME: dict = {
         "font_weight": "500",
         "text_color": "#e0e0e0",
         "padding_right": "10px",
+        "width": "4.75rem",
     },
+    "nav_grid_gap": "4px",
     "nav_button": {
         "height": "2.05rem",
         "min_width": "58px",
@@ -905,6 +907,8 @@ def _nav_theme_gradio_css_vars() -> str:
     --nav-label-font-weight: {nl["font_weight"]};
     --nav-label-text-color: {nl["text_color"]};
     --nav-label-padding-right: {nl["padding_right"]};
+    --nav-label-width: {nl["width"]};
+    --nav-grid-gap: {NAV_THEME["nav_grid_gap"]};
     --nav-btn-height: {nb["height"]};
     --nav-btn-min-width: {nb["min_width"]};
     --nav-btn-padding: {nb["padding"]};
@@ -1032,26 +1036,27 @@ def _place_unified_main_nav(
         elem_id="myst-unified-main-nav",
         elem_classes=[
             "myst-main-nav",
+            "myst-nav-bar-row",
             "vqc-source-tabs-row",
-            "vqc-nav-spreadsheet-row",
             "vqc-main-nav-row",
         ],
     ):
         gr.HTML('<span class="vqc-source-label vqc-nav-row-label">Mystery:</span>')
-        for page_id, label in _MAIN_NAV_TAB_SPECS:
-            is_active = page_id == active
-            buttons[page_id] = _nav_theme_button(
-                label,
-                elem_classes=_main_nav_btn_classes(page_id, active),
-                interactive=not is_active,
-            )
-        for shape_id in _SHAPE_NAV_IDS:
-            is_active = shape_id == default_shape
-            buttons[shape_id] = _nav_theme_button(
-                shape_id,
-                elem_classes=_shape_btn_classes(shape_id, default_shape),
-                interactive=not is_active,
-            )
+        with gr.Row(elem_classes=["nav-button-grid"]):
+            for page_id, label in _MAIN_NAV_TAB_SPECS:
+                is_active = page_id == active
+                buttons[page_id] = _nav_theme_button(
+                    label,
+                    elem_classes=_main_nav_btn_classes(page_id, active),
+                    interactive=not is_active,
+                )
+            for shape_id in _SHAPE_NAV_IDS:
+                is_active = shape_id == default_shape
+                buttons[shape_id] = _nav_theme_button(
+                    shape_id,
+                    elem_classes=_shape_btn_classes(shape_id, default_shape),
+                    interactive=not is_active,
+                )
     return buttons
 
 
@@ -1065,54 +1070,60 @@ def _place_status_zoom_nav_row(
         elem_id="myst-status-zoom-nav",
         elem_classes=[
             "myst-secondary-nav",
+            "myst-nav-bar-row",
             "myst-status-preset-nav-wrap",
             "myst-gravity-child-nav-row",
-            "vqc-nav-spreadsheet-row",
         ],
     ):
         gr.HTML(
             '<span class="vqc-source-label vqc-nav-row-label myst-gravity-child-nav-label">'
             "Demo:</span>"
         )
-        for slot in range(_STATUS_ZOOM_PRESET_COUNT):
-            preset_id = _gravity_preset_id(slot)
-            is_active = slot == active
-            classes = ["vqc-source-tab", "demo-btn", "myst-status-preset-btn"]
-            if is_active:
-                classes.append("active")
-            buttons[str(slot)] = _nav_theme_button(
-                preset_id,
-                elem_id=f"myst-status-preset-btn-{preset_id}",
-                elem_classes=classes,
-                interactive=not is_active,
-            )
+        with gr.Row(elem_classes=["nav-button-grid"]):
+            for slot in range(_STATUS_ZOOM_PRESET_COUNT):
+                preset_id = _gravity_preset_id(slot)
+                is_active = slot == active
+                classes = ["vqc-source-tab", "demo-btn", "myst-status-preset-btn"]
+                if is_active:
+                    classes.append("active")
+                buttons[str(slot)] = _nav_theme_button(
+                    preset_id,
+                    elem_id=f"myst-status-preset-btn-{preset_id}",
+                    elem_classes=classes,
+                    interactive=not is_active,
+                )
     return buttons
 
 
 def _place_status_save_edit_row() -> tuple[gr.Button, gr.Button]:
     """Presets page — Save + Edit on one row below the Demo: numeric bar."""
-    with gr.Row(elem_classes=["myst-save-edit-row"]):
-        save_btn = gr.Button(
-            "Save",
-            variant="secondary",
-            elem_classes=[
-                *_STATUS_ZOOM_SAVE_BTN_CLASSES,
-                "save-btn",
-                "placeholder-btn",
-            ],
-            interactive=False,
-            scale=1,
+    with gr.Row(elem_classes=["myst-save-edit-row", "myst-nav-bar-row"]):
+        gr.HTML(
+            '<span class="vqc-source-label vqc-nav-row-label vqc-nav-label-spacer" '
+            'aria-hidden="true">&nbsp;</span>'
         )
-        edit_btn = _nav_theme_button(
-            "Edit",
-            elem_id="myst-status-nav-edit-btn",
-            elem_classes=[
-                "vqc-source-tab",
-                "myst-status-preset-btn",
-                "myst-status-nav-edit-btn",
-                "edit-btn",
-            ],
-        )
+        with gr.Row(elem_classes=["nav-button-grid", "nav-button-grid-pair"]):
+            save_btn = gr.Button(
+                "Save",
+                variant="secondary",
+                elem_classes=[
+                    *_STATUS_ZOOM_SAVE_BTN_CLASSES,
+                    "save-btn",
+                    "placeholder-btn",
+                ],
+                interactive=False,
+                scale=1,
+            )
+            edit_btn = _nav_theme_button(
+                "Edit",
+                elem_id="myst-status-nav-edit-btn",
+                elem_classes=[
+                    "vqc-source-tab",
+                    "myst-status-preset-btn",
+                    "myst-status-nav-edit-btn",
+                    "edit-btn",
+                ],
+            )
     return save_btn, edit_btn
 
 
@@ -2103,7 +2114,9 @@ footer {{
     display: flex !important;
     align-items: center !important;
     justify-content: flex-start !important;
-    min-width: 4.75rem !important;
+    min-width: var(--nav-label-width, 4.75rem) !important;
+    max-width: var(--nav-label-width, 4.75rem) !important;
+    flex: 0 0 var(--nav-label-width, 4.75rem) !important;
     width: 100% !important;
     height: 100% !important;
     padding-right: var(--nav-label-padding-right, 10px) !important;
@@ -2247,12 +2260,92 @@ footer {{
     text-decoration: none !important;
     cursor: default !important;
 }}
-/* Gravity child nav — uniform sizing + align with main nav */
-.gradio-container .vqc-nav-spreadsheet-row.myst-gravity-child-nav-row {{
+/* ========== 9-COLUMN NAV BAR (label + button grid) ========== */
+.gradio-container .myst-nav-bar-row {{
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: stretch !important;
+    width: 100% !important;
+    gap: var(--nav-grid-gap, 4px) !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}}
+.gradio-container .myst-nav-bar-row > .gap {{
+    display: none !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}}
+.gradio-container .myst-nav-bar-row > .block:has(.vqc-source-label),
+.gradio-container .myst-nav-bar-row > .form:has(.vqc-source-label) {{
+    flex: 0 0 var(--nav-label-width, 4.75rem) !important;
+    width: var(--nav-label-width, 4.75rem) !important;
+    min-width: var(--nav-label-width, 4.75rem) !important;
+    max-width: var(--nav-label-width, 4.75rem) !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}}
+.gradio-container .myst-nav-bar-row > .block:has(.nav-button-grid),
+.gradio-container .myst-nav-bar-row > .form:has(.nav-button-grid) {{
+    flex: 1 1 0% !important;
+    min-width: 0 !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}}
+.gradio-container .myst-render-nav-bar-row > .block:has(#myst-render-nav-render-btn),
+.gradio-container .myst-render-nav-bar-row > .form:has(#myst-render-nav-render-btn) {{
+    flex: 0 0 minmax(3.6rem, 1fr) !important;
+    min-width: 3.6rem !important;
+    max-width: 5.5rem !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}}
+.gradio-container .nav-button-grid,
+.gradio-container .row.nav-button-grid,
+.gradio-container .myst-nav-bar-row .nav-button-grid {{
     display: grid !important;
-    grid-template-columns: 4.75rem repeat(9, minmax(0, 1fr)) !important;
-    gap: 0.2rem 0.45rem !important;
-    align-items: center !important;
+    grid-template-columns: repeat(9, minmax(0, 1fr)) !important;
+    gap: var(--nav-grid-gap, 4px) !important;
+    width: 100% !important;
+    align-items: stretch !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    flex: 1 1 auto !important;
+}}
+.gradio-container .nav-button-grid > .gap {{
+    display: none !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}}
+.gradio-container .nav-button-grid > .block,
+.gradio-container .nav-button-grid > .form {{
+    min-width: 0 !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}}
+.gradio-container .nav-button-grid button.vqc-source-tab,
+.gradio-container .nav-button-grid button.save-btn,
+.gradio-container .nav-button-grid button.edit-btn {{
+    width: 100% !important;
+    min-width: 0 !important;
+    height: var(--nav-btn-height, 2.05rem) !important;
+    min-height: var(--nav-btn-height, 2.05rem) !important;
+    margin: 0 !important;
+}}
+.gradio-container .vqc-nav-label-spacer {{
+    visibility: hidden !important;
+}}
+/* Gravity child nav — uniform sizing + align with main nav */
+.gradio-container .myst-gravity-child-nav-row {{
     padding-left: 0 !important;
     margin-left: 0 !important;
     width: 100% !important;
@@ -2542,19 +2635,9 @@ footer {{
 .gradio-container .vqc-optics-panel-nav .vqc-source-tabs-row {{
     margin: 0 !important;
 }}
-.gradio-container .vqc-nav-spreadsheet-row {{
-    display: grid !important;
-    gap: 0.2rem 0.45rem !important;
-    align-items: center !important;
-    width: 100% !important;
-    margin: 0 !important;
-    padding: 0 !important;
-}}
 .gradio-container .myst-main-nav,
-.gradio-container .vqc-nav-spreadsheet-row.vqc-main-nav-row {{
-    grid-template-columns: 4.75rem repeat(9, minmax(0, 1fr)) !important;
+.gradio-container .vqc-main-nav-row {{
     margin-bottom: 0 !important;
-    gap: 3px 0.35rem !important;
 }}
 /* Equal-width nav buttons — Mystery + Demo rows share 9-column grid */
 .gradio-container .myst-main-nav button.vqc-source-tab,
@@ -2768,14 +2851,8 @@ footer {{
 .gradio-container .vqc-nav-spreadsheet-row.vqc-nav-spreadsheet-row-8 {{
     grid-template-columns: 4.75rem repeat(8, minmax(3.2rem, 1fr)) !important;
 }}
-.gradio-container .vqc-nav-spreadsheet-row.vqc-status-preset-nav-row,
-.gradio-container .vqc-nav-spreadsheet-row.myst-demo-preset-nav-row {{
-    display: grid !important;
-    grid-template-columns: 4.75rem repeat(9, minmax(0, 1fr)) minmax(3.6rem, 1fr) !important;
-    grid-auto-flow: column !important;
-    flex-wrap: nowrap !important;
-    align-items: stretch !important;
-    gap: 0.2rem 0.45rem !important;
+.gradio-container .myst-demo-preset-nav-row,
+.gradio-container .vqc-status-preset-nav-row {{
     margin: 0.04rem 0 0.12rem 0 !important;
     width: 100% !important;
     overflow: visible !important;
@@ -2823,12 +2900,10 @@ footer {{
     text-align: var(--nav-btn-text-align, center) !important;
 }}
 .gradio-container .myst-save-edit-row {{
-    display: flex !important;
     align-items: stretch !important;
     width: 100% !important;
     margin-top: 0 !important;
     margin-bottom: 0 !important;
-    gap: var(--default-gap, {DEFAULT_GAP}) !important;
 }}
 .gradio-container .myst-main-nav button.vqc-source-tab,
 .gradio-container .myst-secondary-nav button.vqc-source-tab {{
@@ -8246,26 +8321,27 @@ def _place_gravity_child_nav_row() -> dict[str, gr.Button]:
         elem_id="myst-gravity-child-nav",
         elem_classes=[
             "myst-secondary-nav",
+            "myst-nav-bar-row",
             "myst-gravity-child-nav-row",
             "myst-gravity-demo-nav-wrap",
-            "vqc-nav-spreadsheet-row",
         ],
     ):
         gr.HTML(
             '<span class="vqc-source-label vqc-nav-row-label myst-gravity-child-nav-label">'
             "Demo:</span>"
         )
-        for letter in _GRAVITY_CHILD_NAV_LETTERS:
-            buttons[letter] = _nav_theme_button(
-                letter,
-                elem_id=f"myst-gravity-preset-btn-{letter}",
-                elem_classes=[
-                    "vqc-source-tab",
-                    "demo-btn",
-                    "myst-status-preset-btn",
-                    "myst-gravity-preset-btn",
-                ],
-            )
+        with gr.Row(elem_classes=["nav-button-grid"]):
+            for letter in _GRAVITY_CHILD_NAV_LETTERS:
+                buttons[letter] = _nav_theme_button(
+                    letter,
+                    elem_id=f"myst-gravity-preset-btn-{letter}",
+                    elem_classes=[
+                        "vqc-source-tab",
+                        "demo-btn",
+                        "myst-status-preset-btn",
+                        "myst-gravity-preset-btn",
+                    ],
+                )
     if not buttons:
         raise RuntimeError("_place_gravity_child_nav_row produced no Demo buttons")
     return buttons
@@ -8284,9 +8360,10 @@ def _place_render_sub_nav_row(
         elem_id="myst-render-sub-nav",
         elem_classes=[
             "myst-secondary-nav",
+            "myst-nav-bar-row",
+            "myst-render-nav-bar-row",
             "myst-render-preset-nav-wrap",
             "myst-demo-preset-nav-row",
-            "vqc-nav-spreadsheet-row",
             "vqc-status-preset-nav-row",
         ],
     ):
@@ -8294,18 +8371,19 @@ def _place_render_sub_nav_row(
             '<span class="vqc-source-label vqc-nav-row-label myst-gravity-child-nav-label">'
             "Demo:</span>"
         )
-        for slot in range(_STATUS_ZOOM_PRESET_COUNT):
-            preset_id = _gravity_preset_id(slot)
-            is_active = slot == active
-            classes = ["vqc-source-tab", "demo-btn", "myst-status-preset-btn", "myst-render-preset-btn"]
-            if is_active:
-                classes.append("active")
-            buttons[str(slot)] = _nav_theme_button(
-                preset_id,
-                elem_id=f"myst-render-preset-btn-{preset_id}",
-                elem_classes=classes,
-                interactive=not is_active,
-            )
+        with gr.Row(elem_classes=["nav-button-grid"]):
+            for slot in range(_STATUS_ZOOM_PRESET_COUNT):
+                preset_id = _gravity_preset_id(slot)
+                is_active = slot == active
+                classes = ["vqc-source-tab", "demo-btn", "myst-status-preset-btn", "myst-render-preset-btn"]
+                if is_active:
+                    classes.append("active")
+                buttons[str(slot)] = _nav_theme_button(
+                    preset_id,
+                    elem_id=f"myst-render-preset-btn-{preset_id}",
+                    elem_classes=classes,
+                    interactive=not is_active,
+                )
         render_btn = _nav_theme_button(
             "Render",
             elem_id="myst-render-nav-render-btn",
