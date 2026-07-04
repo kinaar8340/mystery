@@ -2312,13 +2312,36 @@ footer {{
     margin: 0 !important;
     padding: 0 !important;
 }}
-.gradio-container .myst-render-nav-bar-row > .block:has(#myst-render-nav-render-btn),
-.gradio-container .myst-render-nav-bar-row > .form:has(#myst-render-nav-render-btn) {{
-    flex: 0 0 minmax(3.6rem, 1fr) !important;
-    min-width: 3.6rem !important;
-    max-width: 5.5rem !important;
+.gradio-container .myst-render-action-row {{
+    width: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
+    gap: 0 !important;
+}}
+.gradio-container .myst-render-action-row > .block,
+.gradio-container .myst-render-action-row > .form {{
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}}
+.gradio-container button.full-width-btn,
+.gradio-container button.myst-render-nav-render-btn.full-width-btn {{
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
+    height: var(--nav-btn-height, 2.05rem) !important;
+    min-height: var(--nav-btn-height, 2.05rem) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: var(--nav-btn-font-size, 14px) !important;
+    font-weight: var(--nav-btn-font-weight, 500) !important;
+    box-sizing: border-box !important;
+}}
+.gradio-container button.full-width-btn:not(.active):hover,
+.gradio-container button.myst-render-nav-render-btn.full-width-btn:not(.active):hover {{
+    background: linear-gradient(180deg, #4a4a4a 0%, #3a3a3a 100%) !important;
+    border-color: #8b6914 !important;
 }}
 .gradio-container .nav-button-grid,
 .gradio-container .row.nav-button-grid,
@@ -6726,10 +6749,7 @@ footer {{ visibility: hidden; }}
     margin: 0 !important;
     padding: 0 !important;
 }}
-.gradio-container .myst-render-preset-nav-wrap button.myst-render-nav-render-btn {{
-    min-width: 82px !important;
-    width: 82px !important;
-}}
+
 .gradio-container .myst-status-preset-nav-wrap button.myst-status-nav-back-btn {{
     min-width: 82px !important;
     width: 82px !important;
@@ -8429,7 +8449,13 @@ def _render_sub_nav_render_btn_update(
     rendering: bool = False,
     on_grid: bool = True,
 ) -> gr.Update:
-    classes = ["vqc-source-tab", "myst-status-preset-btn", "myst-render-nav-render-btn"]
+    classes = [
+        "vqc-source-tab",
+        "demo-btn",
+        "myst-status-preset-btn",
+        "myst-render-nav-render-btn",
+        "full-width-btn",
+    ]
     if rendering:
         classes.append("active")
     return gr.update(
@@ -8477,8 +8503,8 @@ def _place_render_sub_nav_row(
     active_slot: int = -1,
     *,
     zoom_slot: int = -1,
-) -> tuple[dict[str, gr.Button], gr.Button]:
-    """Render sub-nav — Demo: label, nine presets (01 … 09), and Render."""
+) -> dict[str, gr.Button]:
+    """Render sub-nav — Demo: label and nine presets (01 … 09) only."""
     _ = zoom_slot
     buttons: dict[str, gr.Button] = {}
     active = int(active_slot)
@@ -8487,7 +8513,6 @@ def _place_render_sub_nav_row(
         elem_classes=[
             "myst-secondary-nav",
             "myst-nav-bar-row",
-            "myst-render-nav-bar-row",
             "myst-render-preset-nav-wrap",
             "myst-demo-preset-nav-row",
             "vqc-status-preset-nav-row",
@@ -8510,17 +8535,7 @@ def _place_render_sub_nav_row(
                     elem_classes=classes,
                     interactive=not is_active,
                 )
-        render_btn = _nav_theme_button(
-            "Render",
-            elem_id="myst-render-nav-render-btn",
-            elem_classes=[
-                "vqc-source-tab",
-                "demo-btn",
-                "myst-status-preset-btn",
-                "myst-render-nav-render-btn",
-            ],
-        )
-    return buttons, render_btn
+    return buttons
 
 
 def _render_detail_view_updates(slot: int) -> tuple:
@@ -10017,11 +10032,24 @@ def build_app() -> gr.Blocks:
         render_plot_cache = gr.State([None] * _STATUS_GRID_PRESET_COUNT)
         with gr.Column(visible=False, elem_classes=["myst-render-page"]) as page_render:
             with gr.Column(visible=True, elem_classes=["myst-render-stack"]) as render_content_col:
-                _render_sub_nav, render_all_btn = _place_render_sub_nav_row(
+                _render_sub_nav = _place_render_sub_nav_row(
                     active_slot=-1,
                     zoom_slot=-1,
                 )
-                _add_gap_row(slot="after-demo-nav")
+                _add_gap_row(slot="before-render-btn")
+                with gr.Row(elem_classes=["myst-render-action-row"]):
+                    render_all_btn = _nav_theme_button(
+                        "Render",
+                        elem_id="myst-render-nav-render-btn",
+                        elem_classes=[
+                            "vqc-source-tab",
+                            "demo-btn",
+                            "myst-status-preset-btn",
+                            "myst-render-nav-render-btn",
+                            "full-width-btn",
+                        ],
+                    )
+                _add_gap_row(slot="after-render-btn")
                 render_sub_nav_btns = [
                     _render_sub_nav[str(i)] for i in range(_STATUS_ZOOM_PRESET_COUNT)
                 ]
