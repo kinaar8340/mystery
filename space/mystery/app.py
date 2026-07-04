@@ -1032,17 +1032,28 @@ def _place_status_save_edit_row() -> tuple[gr.Button, gr.Button]:
 
 
 def _add_gap_row(*, slot: str | None = None, half_height: bool = False) -> None:
-    """Insert a consistent empty row with the global default gap height."""
+    """Inserts a reliable gap row using the global DEFAULT_GAP_HEIGHT."""
     slot_key = str(slot or "default").strip() or "default"
-    classes = ["myst-default-gap-row", "myst-status-gap-row", f"myst-gap-row-{slot_key}"]
+    height = DEFAULT_GAP_HEIGHT if not half_height else max(1, DEFAULT_GAP_HEIGHT // 2)
+    row_classes = ["myst-gap-row-host", "myst-status-gap-row", f"myst-gap-row-host-{slot_key}"]
     if half_height:
-        classes.append("myst-gap-row-half")
-        classes.append("myst-status-gap-half")
-    with gr.Row(elem_id=f"myst-gap-row-{slot_key}", elem_classes=classes):
+        row_classes.append("myst-gap-row-half")
+        row_classes.append("myst-status-gap-half")
+    with gr.Row(elem_id=f"myst-gap-row-{slot_key}", elem_classes=row_classes):
         gr.HTML(
-            f'<div class="myst-gap-fill myst-status-gap-fill" '
-            f'style="height:{DEFAULT_GAP_HEIGHT}px;" aria-hidden="true"></div>',
-            elem_classes=["myst-gap-fill-host", "myst-status-gap-fill-host"],
+            f"""
+            <div class="myst-default-gap-row"
+                 style="height: {height}px;
+                        min-height: {height}px;
+                        max-height: {height}px;
+                        width: 100%;
+                        margin: 0;
+                        padding: 0;
+                        line-height: 0;
+                        display: block;
+                        flex-shrink: 0;"
+                 aria-hidden="true"></div>
+            """
         )
 
 
@@ -1175,6 +1186,7 @@ def _nav_to_page(page: str) -> tuple:
         gr.update(visible=on_readme),
         gr.update(visible=on_status),
         gr.update(visible=False),
+        gr.update(visible=on_home),
         _main_nav_btn_update("home", active=on_home),
         _main_nav_btn_update("render", active=on_render),
         _main_nav_btn_update("readme", active=on_readme),
@@ -2392,6 +2404,59 @@ footer {{
     width: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
+    gap: 0 !important;
+    row-gap: 0 !important;
+}}
+.gradio-container .myst-unified-nav-host > .gap {{
+    display: none !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    max-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+}}
+.gradio-container .myst-unified-nav-host + .gap {{
+    display: none !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    max-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+}}
+.gradio-container .myst-unified-nav-host .vqc-source-tabs-row,
+.gradio-container .myst-unified-nav-host .myst-main-nav,
+.gradio-container .myst-unified-nav-host .myst-secondary-nav {{
+    margin: 0 !important;
+}}
+.gradio-container .myst-home-demo-nav-section {{
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    gap: 0 !important;
+    row-gap: 0 !important;
+}}
+.gradio-container .myst-home-demo-nav-section > .gap {{
+    display: none !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    max-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+}}
+.gradio-container .myst-gap-row-host,
+.gradio-container .myst-gap-row-host > .block,
+.gradio-container .myst-gap-row-host > .form {{
+    margin: 0 !important;
+    padding: 0 !important;
+    min-height: 0 !important;
+    gap: 0 !important;
+    flex-shrink: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
 }}
 .gradio-container .myst-secondary-nav {{
     margin-bottom: 0 !important;
@@ -2407,6 +2472,7 @@ footer {{
     padding: 0 !important;
     overflow: hidden !important;
     flex: 0 0 auto !important;
+    flex-shrink: 0 !important;
 }}
 .gradio-container .myst-default-gap-row > .block,
 .gradio-container .myst-default-gap-row > .form {{
@@ -9467,7 +9533,13 @@ def build_app() -> gr.Blocks:
                 active_page="home",
                 default_shape=_DEFAULT_ACTIVE_SHAPE,
             )
-            _add_gap_row(slot="after-main-nav")
+            with gr.Column(
+                visible=True,
+                elem_classes=["myst-home-demo-nav-section"],
+            ) as home_demo_nav_section:
+                _add_gap_row(slot="after-main-nav")
+                gravity_child_nav = _place_gravity_child_nav_row()
+                _add_gap_row(slot="after-demo-nav")
 
         _init_re_metrics, _init_unit_cell_header, _init_unit_cell_fig = run_residual_explorer(
             1.0, 1.0, 1.0, KAPPA_DOC, 0.1, 1.0, 1.0, 0.35, 22.0, 45.0
@@ -9483,6 +9555,7 @@ def build_app() -> gr.Blocks:
 
         readme_return_page = gr.State("home")
         with gr.Column(visible=False, elem_classes=["myst-readme-page"]) as page_readme:
+            _add_gap_row(slot="before-docs-content")
             with gr.Row(elem_classes=["myst-readme-back-row"]):
                 readme_back_btn = _place_back_button("← Back to App", min_width=110)
             with gr.Column(
@@ -9500,6 +9573,7 @@ def build_app() -> gr.Blocks:
         render_plot_cache = gr.State([None] * _STATUS_GRID_PRESET_COUNT)
         with gr.Column(visible=False, elem_classes=["myst-render-page"]) as page_render:
             with gr.Column(visible=True, elem_classes=["myst-render-stack"]) as render_content_col:
+                _add_gap_row(slot="before-demo-nav")
                 _render_sub_nav, render_all_btn = _place_render_sub_nav_row(
                     active_slot=-1,
                     zoom_slot=-1,
@@ -9597,6 +9671,7 @@ def build_app() -> gr.Blocks:
             status_zoom_edit_open = gr.State(False)
             save_button_state = gr.State(False)
             with gr.Column(visible=True, elem_classes=["myst-status-stack"]) as status_content_col:
+                _add_gap_row(slot="before-demo-nav")
                 _status_zoom_nav = _place_status_zoom_nav_row(active_slot=-1)
                 _add_gap_row(slot="after-demo-nav")
                 status_zoom_save_btn, status_zoom_edit_btn = _place_status_save_edit_row()
@@ -9869,11 +9944,9 @@ def build_app() -> gr.Blocks:
                         )
 
         with gr.Column(visible=True, elem_classes=["myst-gravity-page"], scale=1) as page_gravity:
-            gravity_child_nav = _place_gravity_child_nav_row()
             gravity_letter_btns = {
                 letter: gravity_child_nav[letter] for letter in _GRAVITY_CHILD_NAV_LETTERS
             }
-            _add_gap_row(slot="after-demo-nav")
             gravity_active_letter = gr.State("A")
             with gr.Column(
                 elem_classes=["myst-gravity-single-viewport"],
@@ -10106,6 +10179,7 @@ def build_app() -> gr.Blocks:
             page_readme,
             page_status,
             page_edit,
+            home_demo_nav_section,
             unified_nav["home"],
             unified_nav["render"],
             unified_nav["readme"],
