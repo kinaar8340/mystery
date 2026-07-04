@@ -1689,14 +1689,14 @@ WALLPAPER_HEAD = f"""
         var host = document.getElementById('myst-render-grid-host');
         if (host) {{
             window.__mystRenderGridObs.observe(host, {{
-                subtree: true, childList: true, attributes: true
+                subtree: true, childList: true
             }});
         }}
         var detailHost = document.getElementById('myst-render-detail-wrapper')
             || document.querySelector('.myst-render-detail-view');
         if (detailHost) {{
             window.__mystRenderGridObs.observe(detailHost, {{
-                subtree: true, childList: true, attributes: true
+                subtree: true, childList: true
             }});
         }}
         window.addEventListener('resize', function() {{
@@ -2945,8 +2945,6 @@ footer {{
     visibility: visible !important;
     margin-top: 0 !important;
     padding-top: 0 !important;
-    height: auto !important;
-    min-height: 0 !important;
     overflow: visible !important;
     pointer-events: auto !important;
 }}
@@ -6422,7 +6420,7 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-render-page .myst-render-grid {{
     display: grid !important;
     grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-    grid-template-rows: repeat(3, minmax(0, 1fr)) !important;
+    grid-template-rows: repeat(3, minmax(10rem, 1fr)) !important;
     gap: var(--myst-render-grid-gap, 0.18rem) !important;
     width: 100% !important;
     height: calc(100dvh - 7.5rem - var(--myst-render-grid-bottom-frame, 0.38rem)) !important;
@@ -6750,7 +6748,7 @@ footer {{ visibility: hidden; }}
 }}
 .gradio-container .myst-render-page .myst-render-plot-host {{
     flex: 1 1 auto !important;
-    min-height: 0 !important;
+    min-height: 9rem !important;
     width: 100% !important;
     height: 100% !important;
     display: flex !important;
@@ -6761,10 +6759,11 @@ footer {{ visibility: hidden; }}
     padding: 0 !important;
     margin: 0 !important;
 }}
-.gradio-container .myst-render-page .myst-render-plot-host .myst-unit-cell-viewport-inner {{
+.gradio-container .myst-render-page .myst-render-plot-host .myst-unit-cell-viewport-inner,
+.gradio-container .myst-render-page .myst-render-plot-host .myst-render-grid-viewport {{
     width: 100% !important;
     height: 100% !important;
-    min-height: 0 !important;
+    min-height: 9rem !important;
     max-height: none !important;
     max-width: none !important;
     display: block !important;
@@ -6777,6 +6776,7 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-render-page .myst-render-plot-host img {{
     width: 100% !important;
     height: 100% !important;
+    min-height: 8rem !important;
     max-width: 100% !important;
     max-height: 100% !important;
     object-fit: contain !important;
@@ -6786,7 +6786,7 @@ footer {{ visibility: hidden; }}
 }}
 .gradio-container .myst-render-page .myst-render-plot-placeholder {{
     flex: 1 1 auto !important;
-    min-height: 0 !important;
+    min-height: 9rem !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -6794,6 +6794,9 @@ footer {{ visibility: hidden; }}
     color: rgba(245, 230, 200, 0.55) !important;
     font-size: 0.78rem !important;
     letter-spacing: 0.04em !important;
+}}
+.gradio-container .myst-render-page .myst-render-plot-placeholder.myst-render-plot-loading {{
+    color: rgba(212, 175, 55, 0.82) !important;
 }}
 .gradio-container .myst-render-page .myst-render-accent {{
     color: #d4af37 !important;
@@ -8424,6 +8427,7 @@ def _format_render_cell_html(
     *,
     plot_html: str | None = None,
     active: bool = False,
+    loading: bool = False,
 ) -> str:
     """Single Render grid cell — preset label plus plot or placeholder."""
     preset_id = _gravity_preset_id(slot)
@@ -8433,6 +8437,12 @@ def _format_render_cell_html(
     panel_index = slot + 1
     if plot_html:
         body = f'<div class="myst-render-plot-host">{plot_html}</div>'
+    elif loading:
+        body = (
+            '<div class="myst-render-plot-placeholder myst-render-plot-loading">'
+            f'Rendering preset <span class="myst-render-accent">{preset_id}</span>…'
+            "</div>"
+        )
     else:
         body = (
             '<div class="myst-render-plot-placeholder">'
@@ -8458,6 +8468,7 @@ def _format_render_grid_html(
     plot_htmls: list[str | None] | None = None,
     *,
     active_slot: int | None = None,
+    render_in_progress: bool = False,
 ) -> str:
     """3×3 Render page grid — preset plots or placeholders."""
     cells = [
@@ -8465,6 +8476,11 @@ def _format_render_grid_html(
             slot,
             plot_html=None if plot_htmls is None else plot_htmls[slot],
             active=(active_slot is not None and active_slot == slot),
+            loading=bool(
+                render_in_progress
+                and plot_htmls is not None
+                and not plot_htmls[slot]
+            ),
         )
         for slot in range(_STATUS_GRID_PRESET_COUNT)
     ]
@@ -8674,22 +8690,17 @@ def _render_open_detail(slot: int, plot_cache: list[str | None] | None = None) -
     return (gr.skip(), *_render_detail_view_updates(int(slot)))
 
 
-def _render_load_all_presets(active_slot: int, zoom_slot: int) -> tuple:
-    """Render all nine preset plots into the Render grid (or refresh open detail)."""
-    plots = [_render_preset_plot_html(slot) for slot in range(_STATUS_GRID_PRESET_COUNT)]
-    zs = int(zoom_slot)
-    nav_active = int(active_slot) if int(active_slot) >= 0 else -1
-    if zs >= 0:
-        return (
-            gr.skip(),
-            plots,
-            *_render_detail_view_updates(zs),
-        )
-    highlight = nav_active if nav_active >= 0 else None
-    html = _format_render_grid_html(plots, active_slot=highlight)
+def _render_grid_load_yield(
+    html: str,
+    plots: list[str | None],
+    nav_active: int,
+    *,
+    rendering: bool,
+) -> tuple:
+    """One progressive Render-grid update while presets are generated."""
     return (
         html,
-        plots,
+        list(plots),
         -1,
         nav_active,
         gr.update(visible=True),
@@ -8698,8 +8709,44 @@ def _render_load_all_presets(active_slot: int, zoom_slot: int) -> tuple:
         "",
         -1,
         *_render_sub_nav_btn_updates(nav_active),
-        _render_sub_nav_render_btn_update(rendering=True, on_grid=True),
+        _render_sub_nav_render_btn_update(rendering=rendering, on_grid=True),
     )
+
+
+def _render_load_all_presets(active_slot: int, zoom_slot: int):
+    """Render all nine preset plots into the Render grid (progressive yields)."""
+    plots: list[str | None] = [None] * _STATUS_GRID_PRESET_COUNT
+    zs = int(zoom_slot)
+    nav_active = int(active_slot) if int(active_slot) >= 0 else -1
+    highlight = nav_active if nav_active >= 0 else None
+    on_grid = zs < 0
+    if on_grid:
+        html = _format_render_grid_html(
+            plots,
+            active_slot=highlight,
+            render_in_progress=True,
+        )
+        yield _render_grid_load_yield(html, plots, nav_active, rendering=True)
+    for slot in range(_STATUS_GRID_PRESET_COUNT):
+        plots[slot] = _render_preset_plot_html(slot)
+        if on_grid:
+            html = _format_render_grid_html(
+                plots,
+                active_slot=highlight,
+                render_in_progress=(slot < _STATUS_GRID_PRESET_COUNT - 1),
+            )
+            yield _render_grid_load_yield(
+                html,
+                plots,
+                nav_active,
+                rendering=(slot == _STATUS_GRID_PRESET_COUNT - 1),
+            )
+    if zs >= 0:
+        yield (
+            gr.skip(),
+            list(plots),
+            *_render_detail_view_updates(zs),
+        )
 
 
 def _format_gravity_status_zoom_html(
@@ -9040,14 +9087,14 @@ def figure_to_render_grid_viewport_html(path: str, *, png_bytes: int | None = No
     html = (
         '<div class="myst-unit-cell-viewport-inner myst-render-grid-viewport" '
         'style="height:100% !important;width:100% !important;max-width:100% !important;'
-        'min-height:100% !important;background:#000000;display:block !important;'
+        'min-height:9rem !important;background:#000000;display:block !important;'
         'overflow:hidden !important;box-sizing:border-box !important;margin:0 !important;'
         'padding:0 !important;">'
         f'<img src="/gradio_api/file={path}" '
-        'style="width:100% !important;height:100% !important;'
+        'style="width:100% !important;height:100% !important;min-height:8rem !important;'
         'max-width:100% !important;max-height:100% !important;'
         'object-fit:contain !important;display:block !important;margin:0 !important;" '
-        'alt="Unit cell viewport" loading="eager" decoding="sync" />'
+        'alt="Unit cell viewport" loading="eager" />'
         "</div>"
     )
     print(
