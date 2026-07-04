@@ -1932,6 +1932,53 @@ def plotly_figure_to_render_detail_html(fig) -> str:
     return f'<div class="myst-render-detail-plotly-wrap">{div}</div>'
 
 
+def plotly_figure_to_gravity_viewport_html(fig, *, autoplay: bool = False) -> str:
+    """Embed Plotly in Home viewport — HTML path works for animated frames (gr.Plot does not)."""
+    import plotly.io as pio
+
+    has_frames = bool(getattr(fig, "frames", None))
+    should_autoplay = bool(autoplay and has_frames)
+    div = pio.to_html(
+        fig,
+        full_html=False,
+        include_plotlyjs="cdn",
+        auto_play=should_autoplay,
+        animation_opts={
+            "frame": {"duration": 70, "redraw": True},
+            "transition": {"duration": 0},
+            "mode": "immediate",
+        },
+        config={
+            "responsive": True,
+            "displayModeBar": True,
+            "scrollZoom": True,
+            "displaylogo": False,
+        },
+        div_id="myst-gravity-viewport-plotly",
+    )
+    loop_script = ""
+    if should_autoplay:
+        loop_script = """
+<script>
+(function() {
+    function mystGravityBreathingLoop() {
+        var plot = document.getElementById('myst-gravity-viewport-plotly');
+        if (!plot || !window.Plotly) { setTimeout(mystGravityBreathingLoop, 300); return; }
+        var n = (plot._transitionData && plot._transitionData.frames && plot._transitionData.frames.length) || 0;
+        if (n < 2) { setTimeout(mystGravityBreathingLoop, 300); return; }
+        var opts = {frame: {duration: 70, redraw: true}, transition: {duration: 0}, mode: 'immediate'};
+        plot.on('plotly_animated', function() { Plotly.animate(plot, null, opts); });
+    }
+    setTimeout(mystGravityBreathingLoop, 900);
+})();
+</script>
+"""
+    return (
+        '<div class="myst-gravity-viewport-plot-host">'
+        f"{div}{loop_script}</div>"
+    )
+
+
 def run_residual_explorer(
     phi_sq_scale: float,
     e_sq_scale: float,

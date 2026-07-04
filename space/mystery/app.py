@@ -50,6 +50,7 @@ from demo_core import (
     run_residual_explorer,
     run_residual_explorer_plotly,
     plotly_figure_to_render_detail_html,
+    plotly_figure_to_gravity_viewport_html,
 
     terminal_directory_help,
     terminal_figures_index,
@@ -1447,10 +1448,9 @@ WALLPAPER_HEAD = f"""
 }})();
 (function() {{
     function mystBreathingPlotDiv() {{
-        var host = document.getElementById('myst-gravity-viewport');
-        if (!host) return null;
-        return host.querySelector('.plotly-graph-div')
-            || document.querySelector('#myst-gravity-viewport .plotly-graph-div');
+        return document.getElementById('myst-gravity-viewport-plotly')
+            || document.querySelector('#myst-gravity-viewport .plotly-graph-div')
+            || document.querySelector('.myst-gravity-viewport-plot-host .plotly-graph-div');
     }}
     function mystResizeGravityPlot() {{
         var host = document.getElementById('myst-gravity-viewport-wrapper')
@@ -2024,9 +2024,22 @@ footer {{
     padding: 0 !important;
     background: #0a0a0f !important;
 }}
-#myst-gravity-viewport .plotly-graph-div {{
+#myst-gravity-viewport .plotly-graph-div,
+#myst-gravity-viewport-plotly,
+.gradio-container .myst-gravity-viewport-plot-host,
+.gradio-container .myst-gravity-viewport-plot-host .plotly-graph-div,
+.gradio-container .myst-gravity-viewport-plot-host #myst-gravity-viewport-plotly {{
     height: 100% !important;
     min-height: 600px !important;
+    width: 100% !important;
+}}
+.gradio-container .myst-gravity-page #myst-gravity-viewport .html-container,
+.gradio-container .myst-gravity-page #myst-gravity-viewport .prose {{
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 600px !important;
+    padding: 0 !important;
+    margin: 0 !important;
 }}
 .gradio-container .myst-gravity-page #myst-gravity-viewport {{
     flex: 1 1 auto !important;
@@ -6725,10 +6738,22 @@ def _create_breathing_animation(*, fresh: bool = False):
     return create_breathing_animation(fresh=fresh)
 
 
+def _breathing_animation_html(*, fresh: bool = False) -> str:
+    """Home viewport HTML embed — gr.Plot fails on animated Mesh3d in Gradio."""
+    fig = _create_breathing_animation(fresh=fresh)
+    return plotly_figure_to_gravity_viewport_html(fig, autoplay=True)
+
+
+def _static_demo_viewport_html(letter: str) -> str:
+    """Static preset cube for Demo B–I."""
+    fig = _get_gravity_demo_plotly_figure(letter)
+    return plotly_figure_to_gravity_viewport_html(fig, autoplay=False)
+
+
 def _launch_demo_a() -> tuple:
     """Demo A — breathing animation; styling updated separately from binding."""
     return (
-        _create_breathing_animation(fresh=True),
+        _breathing_animation_html(fresh=True),
         *_demo_active_tab_updates("A"),
         "A",
     )
@@ -6764,9 +6789,8 @@ def _switch_gravity_demo(letter: str) -> tuple:
     """Switch the Home viewport to the demo for the selected letter (B–I)."""
     letter = str(letter).strip().upper()
     slot = _gravity_demo_letter_slot(letter)
-    fig = _get_gravity_demo_plotly_figure(letter)
     return (
-        fig,
+        _static_demo_viewport_html(letter),
         *_demo_active_tab_updates(letter),
         letter,
     )
@@ -7949,7 +7973,7 @@ def _run_residual_explorer_ui(
         metrics,
         metrics,
         header,
-        _create_breathing_animation(),
+        _breathing_animation_html(),
         _gravity_clear_video_update(),
         control_levels,
         gr.skip(),
@@ -9333,13 +9357,12 @@ def build_app() -> gr.Blocks:
                 elem_classes=["myst-gravity-single-viewport"],
                 elem_id="myst-gravity-viewport-wrapper",
             ) as viewport_col:
-                gravity_viewport = gr.Plot(
-                    value=_create_breathing_animation(),
-                    label="",
-                    show_label=False,
-                    container=True,
+                gravity_viewport = gr.HTML(
+                    value=_breathing_animation_html(),
                     elem_id="myst-gravity-viewport",
-                    scale=1,
+                    elem_classes=["myst-gravity-viewport"],
+                    container=True,
+                    show_label=False,
                 )
             with gr.Column(visible=False, elem_classes=["myst-gravity-wired-hidden"]):
                 re_active_preset = gr.State(0)
@@ -9723,7 +9746,7 @@ def build_app() -> gr.Blocks:
         def _app_boot() -> tuple:
             return (
                 *_nav_to_page("home"),
-                _create_breathing_animation(),
+                _breathing_animation_html(),
                 *_demo_active_tab_updates("A"),
                 "A",
             )
