@@ -2411,6 +2411,7 @@ footer {{
     padding: 0 !important;
     gap: 0 !important;
     row-gap: 0 !important;
+    flex-shrink: 0 !important;
 }}
 .gradio-container .myst-unified-nav-host > .gap {{
     display: none !important;
@@ -2441,6 +2442,15 @@ footer {{
     padding: 0 !important;
     gap: 0 !important;
     row-gap: 0 !important;
+    min-height: fit-content !important;
+    flex-shrink: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+}}
+.gradio-container .myst-home-demo-nav-section:not(.hide) #myst-gravity-child-nav {{
+    display: flex !important;
+    visibility: visible !important;
+    width: 100% !important;
 }}
 .gradio-container .myst-home-demo-nav-section > .gap {{
     display: none !important;
@@ -9538,11 +9548,11 @@ def build_app() -> gr.Blocks:
                 active_page="home",
                 default_shape=_DEFAULT_ACTIVE_SHAPE,
             )
+            _add_gap_row(slot="after-main-nav")
             with gr.Column(
                 visible=True,
                 elem_classes=["myst-home-demo-nav-section"],
             ) as home_demo_nav_section:
-                _add_gap_row(slot="after-main-nav")
                 gravity_child_nav = _place_gravity_child_nav_row()
                 _add_gap_row(slot="after-demo-nav")
 
@@ -10375,6 +10385,11 @@ def build_app() -> gr.Blocks:
         ).then(
             _app_boot_deferred_video,
             outputs=[gravity_viewport_plot, gravity_viewport_video],
+            show_progress="hidden",
+        )
+        demo.load(
+            lambda: _home_demo_nav_visible(True),
+            outputs=[home_demo_nav_section],
             show_progress="hidden",
         )
 
