@@ -1284,49 +1284,18 @@ def _readme_back_to_app(return_page: str) -> tuple:
     return _nav_to_page_with_demo(page)
 
 
-_HOME_DEMO_NAV_CLASSES = ["myst-home-demo-nav-section", "myst-secondary-nav-panel"]
-_RENDER_DEMO_NAV_CLASSES = [
-    "myst-render-demo-nav-section",
-    "myst-render-nav-panel",
-    "myst-secondary-nav-panel",
-]
 _HOME_DEMO_PAGES = frozenset({"home", "gravity"})
 _RENDER_DEMO_PAGES = frozenset({"render", "figures"})
 
 
-def _home_demo_nav_visible(visible: bool) -> gr.Update:
-    """Show or hide the Home-only Demo: A–I bar section."""
-    return gr.update(
-        visible=bool(visible),
-        elem_classes=list(_HOME_DEMO_NAV_CLASSES),
-    )
-
-
-def _render_demo_nav_visible(visible: bool) -> gr.Update:
-    """Show or hide the Figures-only Demo: 01–09 bar section."""
-    return gr.update(
-        visible=bool(visible),
-        elem_classes=list(_RENDER_DEMO_NAV_CLASSES),
-    )
-
-
 def _sync_demo_nav_sections(page: str) -> tuple[gr.Update, gr.Update]:
-    """Toggle Home Demo A–I vs Figures Demo 01–09 in the unified nav host."""
+    """Toggle Home Demo A–I vs Figures Demo 01–09 rows in the unified nav host."""
     active = str(page or "home").strip().lower()
     if active in _HOME_DEMO_PAGES:
-        return (
-            _home_demo_nav_visible(True),
-            _render_demo_nav_visible(False),
-        )
+        return (gr.update(visible=True), gr.update(visible=False))
     if active in _RENDER_DEMO_PAGES:
-        return (
-            _home_demo_nav_visible(False),
-            _render_demo_nav_visible(True),
-        )
-    return (
-        _home_demo_nav_visible(False),
-        _render_demo_nav_visible(False),
-    )
+        return (gr.update(visible=False), gr.update(visible=True))
+    return (gr.update(visible=False), gr.update(visible=False))
 
 
 def _nav_to_page_with_demo(page: str) -> tuple:
@@ -2714,7 +2683,7 @@ footer {{
     row-gap: 0 !important;
     flex-shrink: 0 !important;
 }}
-.gradio-container .myst-unified-nav-host > .gap:not(:has(#myst-home-demo-nav-section)):not(:has(#myst-render-demo-nav-section)):not(:has(.myst-main-nav)):not(:has(.myst-gap-row-host)) {{
+.gradio-container .myst-unified-nav-host > .gap:not(:has(.myst-gap-row-host)):not(:has(.myst-demo-nav-section)):not(:has(.myst-main-nav)) {{
     display: none !important;
     height: 0 !important;
     min-height: 0 !important;
@@ -2722,66 +2691,6 @@ footer {{
     margin: 0 !important;
     padding: 0 !important;
     overflow: hidden !important;
-}}
-.gradio-container .myst-unified-nav-host > .gap:has(#myst-home-demo-nav-section:not(.hide):not(.hidden)),
-.gradio-container .myst-unified-nav-host > .block:has(#myst-home-demo-nav-section:not(.hide):not(.hidden)),
-.gradio-container .myst-unified-nav-host > .form:has(#myst-home-demo-nav-section:not(.hide):not(.hidden)),
-.gradio-container .myst-unified-nav-host > .column:has(#myst-home-demo-nav-section:not(.hide):not(.hidden)),
-.gradio-container .myst-unified-nav-host > .gap:has(#myst-render-demo-nav-section:not(.hide):not(.hidden)),
-.gradio-container .myst-unified-nav-host > .block:has(#myst-render-demo-nav-section:not(.hide):not(.hidden)),
-.gradio-container .myst-unified-nav-host > .form:has(#myst-render-demo-nav-section:not(.hide):not(.hidden)),
-.gradio-container .myst-unified-nav-host > .column:has(#myst-render-demo-nav-section:not(.hide):not(.hidden)) {{
-    display: flex !important;
-    visibility: visible !important;
-    height: auto !important;
-    min-height: fit-content !important;
-    max-height: none !important;
-    overflow: visible !important;
-    flex-shrink: 0 !important;
-}}
-.gradio-container .myst-unified-nav-host > .gap:has(#myst-home-demo-nav-section.hide),
-.gradio-container .myst-unified-nav-host > .gap:has(#myst-home-demo-nav-section.hidden),
-.gradio-container .myst-unified-nav-host > .block:has(#myst-home-demo-nav-section.hide),
-.gradio-container .myst-unified-nav-host > .block:has(#myst-home-demo-nav-section.hidden),
-.gradio-container .myst-unified-nav-host > .form:has(#myst-home-demo-nav-section.hide),
-.gradio-container .myst-unified-nav-host > .form:has(#myst-home-demo-nav-section.hidden),
-.gradio-container .myst-unified-nav-host > .column:has(#myst-home-demo-nav-section.hide),
-.gradio-container .myst-unified-nav-host > .column:has(#myst-home-demo-nav-section.hidden),
-.gradio-container .myst-unified-nav-host > .gap:has(#myst-render-demo-nav-section.hide),
-.gradio-container .myst-unified-nav-host > .gap:has(#myst-render-demo-nav-section.hidden),
-.gradio-container .myst-unified-nav-host > .block:has(#myst-render-demo-nav-section.hide),
-.gradio-container .myst-unified-nav-host > .block:has(#myst-render-demo-nav-section.hidden),
-.gradio-container .myst-unified-nav-host > .form:has(#myst-render-demo-nav-section.hide),
-.gradio-container .myst-unified-nav-host > .form:has(#myst-render-demo-nav-section.hidden),
-.gradio-container .myst-unified-nav-host > .column:has(#myst-render-demo-nav-section.hide),
-.gradio-container .myst-unified-nav-host > .column:has(#myst-render-demo-nav-section.hidden) {{
-    display: none !important;
-    visibility: hidden !important;
-    height: 0 !important;
-    min-height: 0 !important;
-    max-height: 0 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    overflow: hidden !important;
-    opacity: 0 !important;
-    pointer-events: none !important;
-}}
-.gradio-container .myst-unified-nav-host > .gap.hide:has(#myst-render-demo-nav-section:not(.hide):not(.hidden)),
-.gradio-container .myst-unified-nav-host > .block.hide:has(#myst-render-demo-nav-section:not(.hide):not(.hidden)),
-.gradio-container .myst-unified-nav-host > .form.hide:has(#myst-render-demo-nav-section:not(.hide):not(.hidden)),
-.gradio-container .myst-unified-nav-host > .column.hide:has(#myst-render-demo-nav-section:not(.hide):not(.hidden)),
-.gradio-container .myst-unified-nav-host > .gap.hide:has(#myst-home-demo-nav-section:not(.hide):not(.hidden)),
-.gradio-container .myst-unified-nav-host > .block.hide:has(#myst-home-demo-nav-section:not(.hide):not(.hidden)),
-.gradio-container .myst-unified-nav-host > .form.hide:has(#myst-home-demo-nav-section:not(.hide):not(.hidden)),
-.gradio-container .myst-unified-nav-host > .column.hide:has(#myst-home-demo-nav-section:not(.hide):not(.hidden)) {{
-    display: flex !important;
-    visibility: visible !important;
-    height: auto !important;
-    min-height: fit-content !important;
-    max-height: none !important;
-    overflow: visible !important;
-    opacity: 1 !important;
-    pointer-events: auto !important;
 }}
 .gradio-container .myst-unified-nav-host + .gap {{
     display: none !important;
@@ -2822,8 +2731,6 @@ footer {{
     margin-top: 0 !important;
     padding-top: 0 !important;
 }}
-.gradio-container .myst-render-page .myst-secondary-nav-panel .myst-gap-row-host-after-demo-nav,
-.gradio-container .myst-render-page .myst-secondary-nav-panel #myst-gap-row-after-demo-nav,
 .gradio-container .myst-status-page .myst-secondary-nav-panel .myst-gap-row-host-after-demo-nav,
 .gradio-container .myst-status-page .myst-secondary-nav-panel #myst-gap-row-after-demo-nav {{
     margin: 0 !important;
@@ -2863,108 +2770,66 @@ footer {{
 .gradio-container .myst-unified-nav-host .myst-secondary-nav {{
     margin: 0 !important;
 }}
-.gradio-container .myst-secondary-nav-panel,
-.gradio-container .myst-render-nav-panel,
-.gradio-container .myst-status-nav-panel {{
-    background: var(--myst-panel-bg, #1a1a1a) !important;
-    border: 1px solid var(--myst-border-color, #333333) !important;
-    border-radius: 10px !important;
-    padding: 6px 12px !important;
-    margin-top: 0 !important;
-    margin-bottom: 0 !important;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3) !important;
-    width: 100% !important;
-    gap: 0 !important;
-    row-gap: 0 !important;
-    flex-shrink: 0 !important;
+.gradio-container .myst-demo-nav-section {{
+    display: flex !important;
     flex-direction: column !important;
-    box-sizing: border-box !important;
-}}
-.gradio-container .myst-home-demo-nav-section,
-.gradio-container .myst-render-demo-nav-section {{
     width: 100% !important;
     margin: 0 !important;
+    padding: 0 !important;
     gap: 0 !important;
     row-gap: 0 !important;
-    min-height: fit-content !important;
     flex-shrink: 0 !important;
-    flex-direction: column !important;
 }}
-.gradio-container .myst-home-demo-nav-section.hide,
-.gradio-container .myst-home-demo-nav-section.hidden,
-.gradio-container .myst-render-demo-nav-section.hide,
-.gradio-container .myst-render-demo-nav-section.hidden {{
+.gradio-container .myst-home-demo-nav.hide,
+.gradio-container .myst-home-demo-nav.hidden,
+.gradio-container .myst-render-demo-nav.hide,
+.gradio-container .myst-render-demo-nav.hidden,
+.gradio-container #myst-home-demo-nav-wrap.hide,
+.gradio-container #myst-home-demo-nav-wrap.hidden,
+.gradio-container #myst-render-demo-nav-wrap.hide,
+.gradio-container #myst-render-demo-nav-wrap.hidden {{
     display: none !important;
     visibility: hidden !important;
     height: 0 !important;
     min-height: 0 !important;
     max-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
     overflow: hidden !important;
     opacity: 0 !important;
     pointer-events: none !important;
 }}
-.gradio-container .myst-home-demo-nav-section:not(.hide):not(.hidden),
-.gradio-container .myst-render-demo-nav-section:not(.hide):not(.hidden) {{
+.gradio-container .myst-home-demo-nav:not(.hide):not(.hidden),
+.gradio-container .myst-render-demo-nav:not(.hide):not(.hidden),
+.gradio-container #myst-home-demo-nav-wrap:not(.hide):not(.hidden),
+.gradio-container #myst-render-demo-nav-wrap:not(.hide):not(.hidden) {{
     display: flex !important;
-    visibility: visible !important;
-    height: auto !important;
-    min-height: fit-content !important;
-    max-height: none !important;
-    overflow: visible !important;
-    opacity: 1 !important;
-    pointer-events: auto !important;
-}}
-.gradio-container .myst-render-demo-nav-section:not(.hide):not(.hidden) {{
-    margin-bottom: var(--myst-default-gap-height, {_myst_default_gap_height}) !important;
-}}
-.gradio-container .myst-render-demo-nav-section:not(.hide):not(.hidden) > .gap:has(#myst-render-sub-nav),
-.gradio-container .myst-render-demo-nav-section:not(.hide):not(.hidden) > .block:has(#myst-render-sub-nav),
-.gradio-container .myst-render-demo-nav-section:not(.hide):not(.hidden) > .form:has(#myst-render-sub-nav),
-.gradio-container .myst-unified-nav-host .myst-render-demo-nav-section:not(.hide):not(.hidden) #myst-render-sub-nav {{
-    display: flex !important;
-    visibility: visible !important;
+    flex-direction: column !important;
     width: 100% !important;
-    height: auto !important;
-    min-height: fit-content !important;
-    max-height: none !important;
-    overflow: visible !important;
-    opacity: 1 !important;
-    pointer-events: auto !important;
     margin: 0 !important;
     padding: 0 !important;
 }}
-.gradio-container .myst-unified-nav-host #myst-render-sub-nav.myst-secondary-nav {{
+.gradio-container #myst-gravity-child-nav.myst-home-demo-nav,
+.gradio-container #myst-render-sub-nav.myst-render-demo-nav,
+.gradio-container .myst-unified-nav-host #myst-gravity-child-nav,
+.gradio-container .myst-unified-nav-host #myst-render-sub-nav {{
     display: flex !important;
     align-items: center !important;
     gap: var(--nav-grid-gap, 4px) !important;
     flex-wrap: nowrap !important;
     width: 100% !important;
-}}
-.gradio-container .myst-home-demo-nav-section:not(.hide):not(.hidden) > .gap:has(#myst-gravity-child-nav),
-.gradio-container .myst-home-demo-nav-section:not(.hide):not(.hidden) > .block:has(#myst-gravity-child-nav),
-.gradio-container .myst-home-demo-nav-section:not(.hide):not(.hidden) > .form:has(#myst-gravity-child-nav),
-.gradio-container .myst-home-demo-nav-section:not(.hide):not(.hidden) #myst-gravity-child-nav {{
-    display: flex !important;
-    visibility: visible !important;
-    width: 100% !important;
-    height: auto !important;
-    min-height: fit-content !important;
-    max-height: none !important;
-    overflow: visible !important;
-    opacity: 1 !important;
-    pointer-events: auto !important;
-}}
-.gradio-container .myst-home-demo-nav-section:not(.hide):not(.hidden) .myst-gap-row-host-after-demo-nav,
-.gradio-container .myst-home-demo-nav-section:not(.hide):not(.hidden) #myst-gap-row-after-demo-nav {{
-    display: flex !important;
-    visibility: visible !important;
     margin: 0 !important;
     padding: 0 !important;
-    min-height: var(--myst-default-gap-height, {_myst_default_gap_height}) !important;
-    height: var(--myst-default-gap-height, {_myst_default_gap_height}) !important;
-    max-height: var(--myst-default-gap-height, {_myst_default_gap_height}) !important;
-    flex: 0 0 var(--myst-default-gap-height, {_myst_default_gap_height}) !important;
-    overflow: hidden !important;
+}}
+.gradio-container .myst-status-nav-panel {{
+    background: var(--myst-panel-bg, #1a1a1a) !important;
+    border: 1px solid var(--myst-border-color, #333333) !important;
+    border-radius: 10px !important;
+    padding: 6px 12px !important;
+    margin: 0 !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3) !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
 }}
 /* Render / Presets secondary nav — same theme grid as Home */
 .gradio-container .myst-render-page .myst-nav-bar-row,
@@ -2978,15 +2843,7 @@ footer {{
     grid-template-columns: repeat(9, minmax(0, 1fr)) !important;
     gap: var(--nav-grid-gap, 4px) !important;
 }}
-.gradio-container .myst-home-demo-nav-section > .gap:not(:has(#myst-gravity-child-nav)):not(:has(.myst-gap-row-host-after-demo-nav)) {{
-    display: none !important;
-    height: 0 !important;
-    min-height: 0 !important;
-    max-height: 0 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    overflow: hidden !important;
-}}
+
 .gradio-container .myst-gap-row-host,
 .gradio-container .myst-gap-row-host > .block,
 .gradio-container .myst-gap-row-host > .form {{
@@ -3007,15 +2864,12 @@ footer {{
     margin-top: 0 !important;
     gap: var(--nav-grid-gap, 4px) !important;
 }}
-/* Render / Presets Demo row — no extra top margin (unified after-main-nav gap only) */
-.gradio-container .myst-render-page .myst-secondary-nav-panel,
+/* Presets Demo row — no extra top margin (unified after-main-nav gap only) */
 .gradio-container .myst-status-page .myst-secondary-nav-panel,
-.gradio-container .myst-render-page #myst-render-sub-nav.myst-secondary-nav,
 .gradio-container .myst-status-page #myst-status-zoom-nav.myst-secondary-nav {{
     margin-top: 0 !important;
     margin-bottom: 0 !important;
 }}
-.gradio-container .myst-render-page #myst-render-sub-nav,
 .gradio-container .myst-status-page #myst-status-zoom-nav {{
     display: flex !important;
     align-items: center !important;
@@ -6936,12 +6790,8 @@ footer {{ visibility: hidden; }}
     margin-right: 0 !important;
     align-items: stretch !important;
 }}
-.gradio-container .myst-render-page .myst-secondary-nav-panel:not(.hide):not(.hidden),
-.gradio-container .myst-render-page .myst-render-nav-panel:not(.hide):not(.hidden),
 .gradio-container .myst-status-page .myst-secondary-nav-panel:not(.hide):not(.hidden),
-.gradio-container .myst-status-page .myst-status-nav-panel:not(.hide):not(.hidden),
-.gradio-container .myst-home-demo-nav-section:not(.hide):not(.hidden),
-.gradio-container .myst-render-demo-nav-section:not(.hide):not(.hidden) {{
+.gradio-container .myst-status-page .myst-status-nav-panel:not(.hide):not(.hidden) {{
     background: var(--myst-panel-bg, #1a1a1a) !important;
     border: 1px solid var(--myst-border-color, #333333) !important;
     border-radius: 10px !important;
@@ -8658,7 +8508,7 @@ def _place_gravity_child_nav_row() -> dict[str, gr.Button]:
             "myst-secondary-nav",
             "myst-nav-bar-row",
             "myst-gravity-child-nav-row",
-            "myst-gravity-demo-nav-wrap",
+            "myst-home-demo-nav",
         ],
     ):
         gr.HTML(
@@ -8698,7 +8548,7 @@ def _place_render_sub_nav_row(
             "myst-nav-bar-row",
             "myst-render-preset-nav-wrap",
             "myst-demo-preset-nav-row",
-            "myst-gravity-demo-nav-wrap",
+            "myst-render-demo-nav",
             "vqc-status-preset-nav-row",
         ],
     ):
@@ -10209,25 +10059,25 @@ def build_app() -> gr.Blocks:
             )
             _add_gap_row(slot="after-main-nav")
             with gr.Column(
-                visible=True,
-                elem_id="myst-home-demo-nav-section",
-                elem_classes=["myst-home-demo-nav-section", "myst-secondary-nav-panel"],
-            ) as home_demo_nav_section:
-                gravity_child_nav = _place_gravity_child_nav_row()
-                _add_gap_row(slot="after-demo-nav")
-            with gr.Column(
-                visible=False,
-                elem_id="myst-render-demo-nav-section",
-                elem_classes=[
-                    "myst-render-demo-nav-section",
-                    "myst-render-nav-panel",
-                    "myst-secondary-nav-panel",
-                ],
-            ) as render_demo_nav_section:
-                _render_sub_nav = _place_render_sub_nav_row(
-                    active_slot=-1,
-                    zoom_slot=-1,
-                )
+                elem_id="myst-demo-nav-section",
+                elem_classes=["myst-demo-nav-section"],
+            ):
+                with gr.Column(
+                    visible=True,
+                    elem_id="myst-home-demo-nav-wrap",
+                    elem_classes=["myst-home-demo-nav"],
+                ) as home_demo_nav_row:
+                    gravity_child_nav = _place_gravity_child_nav_row()
+                with gr.Column(
+                    visible=False,
+                    elem_id="myst-render-demo-nav-wrap",
+                    elem_classes=["myst-render-demo-nav"],
+                ) as render_demo_nav_row:
+                    _render_sub_nav = _place_render_sub_nav_row(
+                        active_slot=-1,
+                        zoom_slot=-1,
+                    )
+            _add_gap_row(slot="after-demo-nav")
 
         _init_re_metrics, _init_unit_cell_header, _init_unit_cell_fig = run_residual_explorer(
             1.0, 1.0, 1.0, KAPPA_DOC, 0.1, 1.0, 1.0, 0.35, 22.0, 45.0
@@ -10885,7 +10735,7 @@ def build_app() -> gr.Blocks:
             claims_open,
             current_page,
         ]
-        demo_nav_outputs = [home_demo_nav_section, render_demo_nav_section]
+        demo_nav_outputs = [home_demo_nav_row, render_demo_nav_row]
         readme_nav_outputs = [*nav_outputs, readme_return_page, *demo_nav_outputs]
 
         status_nav_outputs = [
