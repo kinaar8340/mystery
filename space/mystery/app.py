@@ -1459,7 +1459,7 @@ WALLPAPER_HEAD = f"""
             if (plotDiv.dataset.mystBreathingLoop === '1') return;
             plotDiv.dataset.mystBreathingLoop = '1';
             var animOpts = {{
-                frame: {{ duration: 90, redraw: true }},
+                frame: {{ duration: 85, redraw: true }},
                 transition: {{ duration: 0 }},
                 mode: 'immediate'
             }};
@@ -1878,7 +1878,20 @@ footer {{
     color: #B85C00 !important;
     -webkit-text-fill-color: #B85C00 !important;
 }}
-/* Gravity child nav — uniform sizing + matrix-green active (matches main nav) */
+/* Demo tabs (A–I) — active state = dark orange */
+#myst-gravity-child-nav button.myst-gravity-preset-btn.active,
+#myst-gravity-child-nav button.vqc-source-tab.active {{
+    color: #B85C00 !important;
+    -webkit-text-fill-color: #B85C00 !important;
+    font-weight: 700 !important;
+}}
+/* Keep main nav tabs matrix green */
+.vqc-main-nav-row button.vqc-source-tab.active,
+.vqc-main-nav-row button.vqc-source-tab.active span {{
+    color: {_VQC_MATRIX_GREEN} !important;
+    -webkit-text-fill-color: {_VQC_MATRIX_GREEN} !important;
+}}
+/* Gravity child nav — uniform sizing */
 #myst-gravity-child-nav button.myst-status-preset-btn,
 #myst-gravity-child-nav button.myst-gravity-preset-btn,
 #myst-gravity-child-nav button.myst-gravity-nav-back-btn {{
@@ -1888,10 +1901,6 @@ footer {{
     padding: 0 12px !important;
     font-size: 0.95rem !important;
     font-weight: 600 !important;
-}}
-#myst-gravity-child-nav button.vqc-source-tab.active {{
-    color: {_VQC_MATRIX_GREEN} !important;
-    -webkit-text-fill-color: {_VQC_MATRIX_GREEN} !important;
 }}
 /* Main nav tabs — match Demo (A–I) child tab height */
 .gradio-container .vqc-main-nav-row button.vqc-source-tab,
@@ -1917,20 +1926,27 @@ footer {{
     text-transform: uppercase !important;
     white-space: nowrap !important;
 }}
+#myst-gravity-viewport-wrapper,
 .gradio-container .myst-gravity-page .myst-gravity-single-viewport {{
+    min-height: 620px !important;
+    height: 620px !important;
     flex: 1 1 auto !important;
     width: 100% !important;
-    min-height: calc(100dvh - 9.5rem) !important;
     display: flex !important;
     flex-direction: column !important;
     margin: 0 !important;
     padding: 0 !important;
+    background: #0a0a0f !important;
 }}
-.gradio-container .myst-gravity-page .myst-gravity-viewport,
+#myst-gravity-viewport .plotly-graph-div {{
+    height: 100% !important;
+    min-height: 600px !important;
+}}
 .gradio-container .myst-gravity-page #myst-gravity-viewport {{
     flex: 1 1 auto !important;
     width: 100% !important;
-    min-height: calc(100dvh - 9.5rem) !important;
+    height: 100% !important;
+    min-height: 600px !important;
     margin: 0 !important;
     padding: 0 !important;
     background: #0a0a0f !important;
@@ -1970,35 +1986,31 @@ footer {{
     object-fit: contain !important;
     background: #000000 !important;
 }}
-.gradio-container .myst-gravity-page .myst-gravity-viewport .block,
 .gradio-container .myst-gravity-page #myst-gravity-viewport .block {{
     flex: 1 1 auto !important;
     width: 100% !important;
     height: 100% !important;
-    min-height: 0 !important;
+    min-height: 600px !important;
     display: flex !important;
     flex-direction: column !important;
     margin: 0 !important;
     padding: 0 !important;
 }}
-.gradio-container .myst-gravity-page .myst-gravity-viewport .plot-container,
 .gradio-container .myst-gravity-page #myst-gravity-viewport .plot-container {{
     flex: 1 1 auto !important;
     width: 100% !important;
     height: 100% !important;
-    min-height: calc(100dvh - 12rem) !important;
+    min-height: 600px !important;
     background: #000000 !important;
     padding: 0 !important;
     margin: 0 !important;
 }}
-.gradio-container .myst-gravity-page .myst-gravity-viewport .plotly-graph-div,
-.gradio-container .myst-gravity-page .myst-gravity-viewport .js-plotly-plot,
 .gradio-container .myst-gravity-page #myst-gravity-viewport .plotly-graph-div,
 .gradio-container .myst-gravity-page #myst-gravity-viewport .js-plotly-plot {{
     flex: 1 1 auto !important;
     width: 100% !important;
     height: 100% !important;
-    min-height: calc(100dvh - 12rem) !important;
+    min-height: 600px !important;
     max-height: none !important;
 }}
 .gradio-container .myst-gravity-page .myst-gravity-viewport .modebar,
@@ -6619,12 +6631,14 @@ def _create_breathing_animation():
     """Looping breathing Plotly figure for Demo A — ready to animate on load."""
     fig = build_breathing_animation_figure()
     fig.update_layout(
+        height=620,
+        margin=dict(l=0, r=0, t=40, b=0),
         updatemenus=[
             {
                 "type": "buttons",
                 "showactive": False,
-                "y": 1.08,
-                "x": 0.05,
+                "y": 1.1,
+                "x": 0.02,
                 "buttons": [
                     {
                         "label": "▶ Breathing",
@@ -6632,7 +6646,7 @@ def _create_breathing_animation():
                         "args": [
                             None,
                             {
-                                "frame": {"duration": 90, "redraw": True},
+                                "frame": {"duration": 85, "redraw": True},
                                 "fromcurrent": True,
                                 "mode": "immediate",
                                 "transition": {"duration": 0},
@@ -6663,8 +6677,8 @@ def _get_gravity_demo_plotly_figure(letter: str):
         dials["azim"],
     )
     fig.update_layout(
-        height=650,
-        margin=dict(l=0, r=0, t=8, b=0),
+        height=620,
+        margin=dict(l=0, r=0, t=40, b=0),
         paper_bgcolor="#000000",
         plot_bgcolor="#000000",
         uirevision=f"mystery-demo-{letter.lower()}",
@@ -9244,14 +9258,17 @@ def build_app() -> gr.Blocks:
             }
             _place_status_gap_row(slot="after-preset-nav")
             gravity_active_letter = gr.State("A")
-            with gr.Column(elem_classes=["myst-gravity-single-viewport"]):
+            with gr.Column(
+                elem_classes=["myst-gravity-single-viewport"],
+                elem_id="myst-gravity-viewport-wrapper",
+            ) as viewport_col:
                 gravity_viewport = gr.Plot(
                     value=_create_breathing_animation(),
                     label="",
                     show_label=False,
                     container=True,
                     elem_id="myst-gravity-viewport",
-                    elem_classes=["myst-gravity-viewport"],
+                    scale=1,
                 )
             with gr.Column(visible=False, elem_classes=["myst-gravity-wired-hidden"]):
                 re_active_preset = gr.State(0)
