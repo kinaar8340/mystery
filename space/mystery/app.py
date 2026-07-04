@@ -135,8 +135,8 @@ _VQC_MATRIX_GREEN = "#33ff66"
 DEFAULT_BUTTON_BORDER_COLOR = "#6b4f1d"
 DEFAULT_BUTTON_BODY_HEIGHT = "2.05rem"
 DEFAULT_GAP = "8px"
-# Global vertical rhythm between nav/button bars and content (~25% below legacy 0.84rem).
-DEFAULT_GAP_HEIGHT = 12
+# Global vertical rhythm between nav/button bars and content.
+DEFAULT_GAP_HEIGHT = 4
 _MYST_DEFAULT_GAP_HEIGHT = f"{DEFAULT_GAP_HEIGHT}px"
 _MYST_STATUS_LAYER_ALPHA = 0.2
 # Individual preset panel backgrounds: 30% transparent (30% opaque).
@@ -2400,9 +2400,9 @@ footer {{
 .gradio-container .myst-default-gap-row {{
     display: block !important;
     width: 100% !important;
-    min-height: var(--myst-default-gap-height) !important;
-    height: var(--myst-default-gap-height) !important;
-    max-height: var(--myst-default-gap-height) !important;
+    min-height: var(--myst-default-gap-height, {DEFAULT_GAP_HEIGHT}px) !important;
+    height: var(--myst-default-gap-height, {DEFAULT_GAP_HEIGHT}px) !important;
+    max-height: var(--myst-default-gap-height, {DEFAULT_GAP_HEIGHT}px) !important;
     margin: 0 !important;
     padding: 0 !important;
     overflow: hidden !important;
