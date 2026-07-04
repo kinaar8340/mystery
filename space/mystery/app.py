@@ -1272,12 +1272,21 @@ def _open_readme_page(from_page: str) -> tuple:
 def _readme_back_to_app(return_page: str) -> tuple:
     """Return from README to the tab the user came from."""
     page = _readme_return_page(return_page)
-    return (*_nav_to_page(page), _home_demo_nav_visible(page == "home"))
+    return (*_nav_to_page(page), *_sync_demo_nav_sections(page))
 
 
 def _home_demo_nav_visible(visible: bool) -> gr.Update:
     """Show or hide the Home-only Demo: A–I bar section."""
     return gr.update(visible=bool(visible))
+
+
+def _sync_demo_nav_sections(page: str) -> tuple[gr.Update, gr.Update]:
+    """Toggle Home Demo A–I vs Figures Demo 01–09 in the unified nav host."""
+    active = str(page or "home").strip().lower()
+    return (
+        _home_demo_nav_visible(active == "home"),
+        gr.update(visible=active == "render"),
+    )
 
 
 def _nav_to_page(page: str) -> tuple:
@@ -2249,6 +2258,11 @@ footer {{
     padding: 0 !important;
     gap: 0 !important;
 }}
+.gradio-container .myst-render-page:not(.hide):not(.hidden) .myst-render-stack > .block:has(.myst-render-action-row),
+.gradio-container .myst-render-page:not(.hide):not(.hidden) .myst-render-stack > .form:has(.myst-render-action-row),
+.gradio-container .myst-render-page:not(.hide):not(.hidden) .myst-render-action-row {{
+    margin-top: var(--myst-default-gap-height, {_myst_default_gap_height}) !important;
+}}
 .gradio-container .myst-render-action-row > .block,
 .gradio-container .myst-render-action-row > .form {{
     width: 100% !important;
@@ -2655,7 +2669,7 @@ footer {{
     row-gap: 0 !important;
     flex-shrink: 0 !important;
 }}
-.gradio-container .myst-unified-nav-host > .gap:not(:has(#myst-home-demo-nav-section)):not(:has(.myst-main-nav)):not(:has(.myst-gap-row-host)) {{
+.gradio-container .myst-unified-nav-host > .gap:not(:has(#myst-home-demo-nav-section)):not(:has(#myst-render-demo-nav-section)):not(:has(.myst-main-nav)):not(:has(.myst-gap-row-host)) {{
     display: none !important;
     height: 0 !important;
     min-height: 0 !important;
@@ -2664,10 +2678,14 @@ footer {{
     padding: 0 !important;
     overflow: hidden !important;
 }}
-.gradio-container .myst-unified-nav-host > .gap:has(#myst-home-demo-nav-section),
-.gradio-container .myst-unified-nav-host > .block:has(#myst-home-demo-nav-section),
-.gradio-container .myst-unified-nav-host > .form:has(#myst-home-demo-nav-section),
-.gradio-container .myst-unified-nav-host > .column:has(#myst-home-demo-nav-section) {{
+.gradio-container .myst-unified-nav-host > .gap:has(#myst-home-demo-nav-section:not(.hide):not(.hidden)),
+.gradio-container .myst-unified-nav-host > .block:has(#myst-home-demo-nav-section:not(.hide):not(.hidden)),
+.gradio-container .myst-unified-nav-host > .form:has(#myst-home-demo-nav-section:not(.hide):not(.hidden)),
+.gradio-container .myst-unified-nav-host > .column:has(#myst-home-demo-nav-section:not(.hide):not(.hidden)),
+.gradio-container .myst-unified-nav-host > .gap:has(#myst-render-demo-nav-section:not(.hide):not(.hidden)),
+.gradio-container .myst-unified-nav-host > .block:has(#myst-render-demo-nav-section:not(.hide):not(.hidden)),
+.gradio-container .myst-unified-nav-host > .form:has(#myst-render-demo-nav-section:not(.hide):not(.hidden)),
+.gradio-container .myst-unified-nav-host > .column:has(#myst-render-demo-nav-section:not(.hide):not(.hidden)) {{
     display: flex !important;
     visibility: visible !important;
     height: auto !important;
@@ -2675,6 +2693,33 @@ footer {{
     max-height: none !important;
     overflow: visible !important;
     flex-shrink: 0 !important;
+}}
+.gradio-container .myst-unified-nav-host > .gap:has(#myst-home-demo-nav-section.hide),
+.gradio-container .myst-unified-nav-host > .gap:has(#myst-home-demo-nav-section.hidden),
+.gradio-container .myst-unified-nav-host > .block:has(#myst-home-demo-nav-section.hide),
+.gradio-container .myst-unified-nav-host > .block:has(#myst-home-demo-nav-section.hidden),
+.gradio-container .myst-unified-nav-host > .form:has(#myst-home-demo-nav-section.hide),
+.gradio-container .myst-unified-nav-host > .form:has(#myst-home-demo-nav-section.hidden),
+.gradio-container .myst-unified-nav-host > .column:has(#myst-home-demo-nav-section.hide),
+.gradio-container .myst-unified-nav-host > .column:has(#myst-home-demo-nav-section.hidden),
+.gradio-container .myst-unified-nav-host > .gap:has(#myst-render-demo-nav-section.hide),
+.gradio-container .myst-unified-nav-host > .gap:has(#myst-render-demo-nav-section.hidden),
+.gradio-container .myst-unified-nav-host > .block:has(#myst-render-demo-nav-section.hide),
+.gradio-container .myst-unified-nav-host > .block:has(#myst-render-demo-nav-section.hidden),
+.gradio-container .myst-unified-nav-host > .form:has(#myst-render-demo-nav-section.hide),
+.gradio-container .myst-unified-nav-host > .form:has(#myst-render-demo-nav-section.hidden),
+.gradio-container .myst-unified-nav-host > .column:has(#myst-render-demo-nav-section.hide),
+.gradio-container .myst-unified-nav-host > .column:has(#myst-render-demo-nav-section.hidden) {{
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    max-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
 }}
 .gradio-container .myst-unified-nav-host + .gap {{
     display: none !important;
@@ -2773,7 +2818,8 @@ footer {{
     flex-direction: column !important;
     box-sizing: border-box !important;
 }}
-.gradio-container .myst-home-demo-nav-section {{
+.gradio-container .myst-home-demo-nav-section,
+.gradio-container .myst-render-demo-nav-section {{
     width: 100% !important;
     margin: 0 !important;
     gap: 0 !important;
@@ -2783,7 +2829,9 @@ footer {{
     flex-direction: column !important;
 }}
 .gradio-container .myst-home-demo-nav-section.hide,
-.gradio-container .myst-home-demo-nav-section.hidden {{
+.gradio-container .myst-home-demo-nav-section.hidden,
+.gradio-container .myst-render-demo-nav-section.hide,
+.gradio-container .myst-render-demo-nav-section.hidden {{
     display: none !important;
     visibility: hidden !important;
     height: 0 !important;
@@ -2793,7 +2841,8 @@ footer {{
     opacity: 0 !important;
     pointer-events: none !important;
 }}
-.gradio-container .myst-home-demo-nav-section:not(.hide):not(.hidden) {{
+.gradio-container .myst-home-demo-nav-section:not(.hide):not(.hidden),
+.gradio-container .myst-render-demo-nav-section:not(.hide):not(.hidden) {{
     display: flex !important;
     visibility: visible !important;
     height: auto !important;
@@ -2802,6 +2851,17 @@ footer {{
     overflow: visible !important;
     opacity: 1 !important;
     pointer-events: auto !important;
+}}
+.gradio-container .myst-render-demo-nav-section:not(.hide):not(.hidden) #myst-render-sub-nav {{
+    display: flex !important;
+    visibility: visible !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: fit-content !important;
+    max-height: none !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
 }}
 .gradio-container .myst-home-demo-nav-section:not(.hide):not(.hidden) > .gap:has(#myst-gravity-child-nav),
 .gradio-container .myst-home-demo-nav-section:not(.hide):not(.hidden) > .block:has(#myst-gravity-child-nav),
@@ -6803,7 +6863,8 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-render-page .myst-render-nav-panel:not(.hide):not(.hidden),
 .gradio-container .myst-status-page .myst-secondary-nav-panel:not(.hide):not(.hidden),
 .gradio-container .myst-status-page .myst-status-nav-panel:not(.hide):not(.hidden),
-.gradio-container .myst-home-demo-nav-section:not(.hide):not(.hidden) {{
+.gradio-container .myst-home-demo-nav-section:not(.hide):not(.hidden),
+.gradio-container .myst-render-demo-nav-section:not(.hide):not(.hidden) {{
     background: var(--myst-panel-bg, #1a1a1a) !important;
     border: 1px solid var(--myst-border-color, #333333) !important;
     border-radius: 10px !important;
@@ -10077,6 +10138,19 @@ def build_app() -> gr.Blocks:
             ) as home_demo_nav_section:
                 gravity_child_nav = _place_gravity_child_nav_row()
                 _add_gap_row(slot="after-demo-nav")
+            with gr.Column(
+                visible=False,
+                elem_id="myst-render-demo-nav-section",
+                elem_classes=[
+                    "myst-render-demo-nav-section",
+                    "myst-render-nav-panel",
+                    "myst-secondary-nav-panel",
+                ],
+            ) as render_demo_nav_section:
+                _render_sub_nav = _place_render_sub_nav_row(
+                    active_slot=-1,
+                    zoom_slot=-1,
+                )
 
         _init_re_metrics, _init_unit_cell_header, _init_unit_cell_fig = run_residual_explorer(
             1.0, 1.0, 1.0, KAPPA_DOC, 0.1, 1.0, 1.0, 0.35, 22.0, 45.0
@@ -10110,14 +10184,6 @@ def build_app() -> gr.Blocks:
         render_plot_cache = gr.State([None] * _STATUS_GRID_PRESET_COUNT)
         with gr.Column(visible=False, elem_classes=["myst-render-page"]) as page_render:
             with gr.Column(visible=True, elem_classes=["myst-render-stack"]) as render_content_col:
-                with gr.Column(
-                    elem_classes=["myst-render-nav-panel", "myst-secondary-nav-panel"],
-                ):
-                    _render_sub_nav = _place_render_sub_nav_row(
-                        active_slot=-1,
-                        zoom_slot=-1,
-                    )
-                    _add_gap_row(slot="after-demo-nav")
                 with gr.Row(elem_classes=["myst-render-action-row"]):
                     render_action_btn = _nav_theme_button(
                         "Render",
@@ -10751,19 +10817,21 @@ def build_app() -> gr.Blocks:
             *status_zoom_back_outputs,
         ]
 
+        demo_nav_outputs = [home_demo_nav_section, render_demo_nav_section]
+
         def _bind_nav(
             btn: gr.Button,
             page: str,
             *,
-            show_home_demo: bool | None = None,
+            sync_demo_nav: bool = True,
             refresh_gravity: bool = False,
             reset_save: bool = False,
         ) -> None:
             chain = btn.click(lambda: _nav_to_page(page), outputs=nav_outputs)
-            if show_home_demo is not None:
+            if sync_demo_nav:
                 chain = chain.then(
-                    lambda visible=show_home_demo: _home_demo_nav_visible(visible),
-                    outputs=[home_demo_nav_section],
+                    lambda p=page: _sync_demo_nav_sections(p),
+                    outputs=demo_nav_outputs,
                 )
             if reset_save:
                 chain = chain.then(_unlatch_save_button, outputs=save_unlatch_outputs)
@@ -10776,8 +10844,8 @@ def build_app() -> gr.Blocks:
 
         def _bind_readme_nav(btn: gr.Button) -> None:
             btn.click(_open_readme_page, inputs=[current_page], outputs=readme_nav_outputs).then(
-                lambda: _home_demo_nav_visible(False),
-                outputs=[home_demo_nav_section],
+                lambda: _sync_demo_nav_sections("readme"),
+                outputs=demo_nav_outputs,
             ).then(
                 _unlatch_save_button,
                 outputs=save_unlatch_outputs,
@@ -10789,8 +10857,8 @@ def build_app() -> gr.Blocks:
                 inputs=[current_page, status_content_open],
                 outputs=status_nav_outputs,
             ).then(
-                lambda: _home_demo_nav_visible(False),
-                outputs=[home_demo_nav_section],
+                lambda: _sync_demo_nav_sections("status"),
+                outputs=demo_nav_outputs,
             ).then(
                 _run_residual_explorer_ui,
                 inputs=gravity_dial_inputs,
@@ -10861,17 +10929,16 @@ def build_app() -> gr.Blocks:
         _bind_nav(
             unified_nav["home"],
             "home",
-            show_home_demo=True,
             refresh_gravity=True,
             reset_save=True,
         )
-        _bind_nav(unified_nav["render"], "render", show_home_demo=False, reset_save=True)
+        _bind_nav(unified_nav["render"], "render", reset_save=True)
         _bind_readme_nav(unified_nav["readme"])
         _bind_status_nav(unified_nav["status"])
         readme_back_btn.click(
             _readme_back_to_app,
             inputs=[readme_return_page],
-            outputs=[*nav_outputs, home_demo_nav_section],
+            outputs=[*nav_outputs, *demo_nav_outputs],
         ).then(
             _unlatch_save_button,
             outputs=save_unlatch_outputs,
@@ -10906,8 +10973,8 @@ def build_app() -> gr.Blocks:
                 return _demo_viewport_show_plot(_get_rigid_preset_plotly_figure())
 
         demo.load(
-            lambda: _home_demo_nav_visible(True),
-            outputs=[home_demo_nav_section],
+            lambda: _sync_demo_nav_sections("home"),
+            outputs=demo_nav_outputs,
             show_progress="hidden",
         ).then(
             _app_boot,
@@ -10921,8 +10988,8 @@ def build_app() -> gr.Blocks:
             ],
             show_progress="hidden",
         ).then(
-            lambda: _home_demo_nav_visible(True),
-            outputs=[home_demo_nav_section],
+            lambda: _sync_demo_nav_sections("home"),
+            outputs=demo_nav_outputs,
             show_progress="hidden",
         ).then(
             _app_boot_deferred_video,
