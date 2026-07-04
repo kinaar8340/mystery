@@ -2310,7 +2310,54 @@ def build_breathing_animation_figure(
             }
         ],
     )
+    print(
+        f"[breathing] build_breathing_animation_figure: {len(frames)} frames",
+        flush=True,
+    )
     _BREATHING_ANIMATION_CACHE = fig
+    return fig
+
+
+def create_breathing_animation(*, fresh: bool = False):
+    """Viewport-ready Plotly breathing figure (54 frames) for Demo A."""
+    import plotly.graph_objects as go
+
+    fig = build_breathing_animation_figure()
+    if not fig.frames:
+        print("WARNING: No frames found in breathing animation!", flush=True)
+    else:
+        print(f"[breathing] create_breathing_animation: {len(fig.frames)} frames", flush=True)
+
+    fig.update_layout(
+        height=620,
+        margin=dict(l=0, r=0, t=40, b=0),
+        updatemenus=[
+            {
+                "type": "buttons",
+                "showactive": False,
+                "y": 1.1,
+                "x": 0.02,
+                "buttons": [
+                    {
+                        "label": "▶ Breathing",
+                        "method": "animate",
+                        "args": [
+                            None,
+                            {
+                                "frame": {"duration": 85, "redraw": True},
+                                "fromcurrent": True,
+                                "mode": "immediate",
+                                "transition": {"duration": 0},
+                            },
+                        ],
+                    }
+                ],
+            }
+        ],
+    )
+    if fresh:
+        fig = go.Figure(fig.to_dict())
+        fig.update_layout(uirevision="mystery-breathing-fresh")
     return fig
 
 

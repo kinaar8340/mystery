@@ -44,6 +44,7 @@ from demo_core import (
     render_unit_cell_deformation_video,
     render_gravity_demo_animation_video,
     build_breathing_animation_figure,
+    create_breathing_animation,
     figure_to_viewport_cached_html,
     residual_from_scales,
     run_residual_explorer,
@@ -1445,51 +1446,65 @@ WALLPAPER_HEAD = f"""
     window.addEventListener('load', bootRenderGridClicks);
 }})();
 (function() {{
-    function startBreathingAnimation() {{
-        var plotDiv = document.querySelector('#myst-gravity-viewport .plotly-graph-div');
-        if (!plotDiv || !plotDiv.data || plotDiv.data.length === 0) {{
-            setTimeout(startBreathingAnimation, 300);
+    function mystBreathingPlotDiv() {{
+        var host = document.getElementById('myst-gravity-viewport');
+        if (!host) return null;
+        return host.querySelector('.plotly-graph-div')
+            || document.querySelector('#myst-gravity-viewport .plotly-graph-div');
+    }}
+    function startBreathingLoop() {{
+        var plot = mystBreathingPlotDiv();
+        if (!plot || !plot.data || plot.data.length === 0) {{
+            setTimeout(startBreathingLoop, 400);
             return;
         }}
         if (!window.Plotly) {{
-            setTimeout(startBreathingAnimation, 300);
+            setTimeout(startBreathingLoop, 400);
             return;
         }}
-        if (plotDiv._transitionData && plotDiv._transitionData.frames && plotDiv._transitionData.frames.length > 0) {{
-            if (plotDiv.dataset.mystBreathingLoop === '1') return;
-            plotDiv.dataset.mystBreathingLoop = '1';
-            var animOpts = {{
-                frame: {{ duration: 85, redraw: true }},
-                transition: {{ duration: 0 }},
-                mode: 'immediate'
-            }};
-            window.Plotly.animate(plotDiv, null, animOpts).then(function() {{
-                plotDiv.on('plotly_animated', function() {{
-                    window.Plotly.animate(plotDiv, null, animOpts);
-                }});
+        var frameCount = 0;
+        if (plot._transitionData && plot._transitionData.frames) {{
+            frameCount = plot._transitionData.frames.length;
+        }} else if (plot.frames) {{
+            frameCount = plot.frames.length;
+        }}
+        if (frameCount <= 10) {{
+            return;
+        }}
+        if (plot.dataset.mystBreathingLoop === '1') {{
+            return;
+        }}
+        plot.dataset.mystBreathingLoop = '1';
+        var animOpts = {{
+            frame: {{ duration: 85, redraw: true }},
+            transition: {{ duration: 0 }},
+            mode: 'immediate'
+        }};
+        window.Plotly.animate(plot, null, animOpts);
+        plot.on('plotly_animated', function() {{
+            window.Plotly.animate(plot, null, animOpts);
+        }});
+    }}
+    function bootBreathingLoop() {{
+        setTimeout(startBreathingLoop, 1200);
+        if (window.__mystGravityBreathingObs) return;
+        window.__mystGravityBreathingObs = new MutationObserver(function() {{
+            var plot = mystBreathingPlotDiv();
+            if (!plot) return;
+            plot.dataset.mystBreathingLoop = '0';
+            setTimeout(startBreathingLoop, 400);
+        }});
+        var host = document.getElementById('myst-gravity-viewport')
+            || document.querySelector('.myst-gravity-page');
+        if (host) {{
+            window.__mystGravityBreathingObs.observe(host, {{
+                subtree: true, childList: true
             }});
         }}
     }}
-    document.addEventListener('DOMContentLoaded', function() {{
-        setTimeout(startBreathingAnimation, 800);
-    }});
-    window.addEventListener('plotly_afterplot', function() {{
-        setTimeout(startBreathingAnimation, 400);
-    }});
-    if (window.__mystGravityBreathingObs) return;
-    window.__mystGravityBreathingObs = new MutationObserver(function() {{
-        var plotDiv = document.querySelector('#myst-gravity-viewport .plotly-graph-div');
-        if (!plotDiv) return;
-        plotDiv.dataset.mystBreathingLoop = '0';
-        setTimeout(startBreathingAnimation, 400);
-    }});
-    var mystBreathingHost = document.getElementById('myst-gravity-viewport')
-        || document.querySelector('.myst-gravity-page');
-    if (mystBreathingHost) {{
-        window.__mystGravityBreathingObs.observe(mystBreathingHost, {{
-            subtree: true, childList: true
-        }});
-    }}
+    document.addEventListener('DOMContentLoaded', bootBreathingLoop);
+    if (document.body) bootBreathingLoop();
+    window.addEventListener('load', bootBreathingLoop);
 }})();
 </script>
 """
@@ -6627,37 +6642,18 @@ def _get_gravity_animation_html(letter: str) -> str:
     )
 
 
-def _create_breathing_animation():
+def _create_breathing_animation(*, fresh: bool = False):
     """Looping breathing Plotly figure for Demo A — ready to animate on load."""
-    fig = build_breathing_animation_figure()
-    fig.update_layout(
-        height=620,
-        margin=dict(l=0, r=0, t=40, b=0),
-        updatemenus=[
-            {
-                "type": "buttons",
-                "showactive": False,
-                "y": 1.1,
-                "x": 0.02,
-                "buttons": [
-                    {
-                        "label": "▶ Breathing",
-                        "method": "animate",
-                        "args": [
-                            None,
-                            {
-                                "frame": {"duration": 85, "redraw": True},
-                                "fromcurrent": True,
-                                "mode": "immediate",
-                                "transition": {"duration": 0},
-                            },
-                        ],
-                    }
-                ],
-            }
-        ],
+    return create_breathing_animation(fresh=fresh)
+
+
+def _launch_demo_a_breathing() -> tuple:
+    """Demo A — full breathing cycle (05→01→05→09→08→07→06→05)."""
+    return (
+        _create_breathing_animation(fresh=True),
+        *_gravity_child_nav_output_updates(0),
+        "A",
     )
-    return fig
 
 
 def _get_gravity_demo_plotly_figure(letter: str):
@@ -6687,13 +6683,10 @@ def _get_gravity_demo_plotly_figure(letter: str):
 
 
 def _switch_gravity_demo(letter: str) -> tuple:
-    """Switch the Home viewport to the demo for the selected letter."""
+    """Switch the Home viewport to the demo for the selected letter (B–I)."""
     letter = str(letter).strip().upper()
     slot = _gravity_demo_letter_slot(letter)
-    if letter == "A":
-        fig = _create_breathing_animation()
-    else:
-        fig = _get_gravity_demo_plotly_figure(letter)
+    fig = _get_gravity_demo_plotly_figure(letter)
     return (
         fig,
         *_gravity_child_nav_output_updates(slot),
@@ -9344,7 +9337,14 @@ def build_app() -> gr.Blocks:
                 *[gravity_letter_btns[letter] for letter in _GRAVITY_CHILD_NAV_LETTERS],
                 gravity_active_letter,
             ]
+            gravity_letter_btns["A"].click(
+                _launch_demo_a_breathing,
+                outputs=gravity_demo_outputs,
+                show_progress="hidden",
+            )
             for letter, btn in gravity_letter_btns.items():
+                if letter == "A":
+                    continue
                 btn.click(
                     lambda l=letter: _switch_gravity_demo(l),
                     outputs=gravity_demo_outputs,
