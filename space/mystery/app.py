@@ -2267,10 +2267,13 @@ footer {{
     padding: 0 !important;
 }}
 .gradio-container .myst-render-action-row {{
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    align-items: stretch !important;
     width: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
-    gap: 0 !important;
+    gap: var(--nav-grid-gap, 4px) !important;
 }}
 .gradio-container .myst-render-page:not(.hide):not(.hidden) .myst-render-stack > .block:has(.myst-render-action-row),
 .gradio-container .myst-render-page:not(.hide):not(.hidden) .myst-render-stack > .form:has(.myst-render-action-row),
@@ -2279,9 +2282,20 @@ footer {{
 }}
 .gradio-container .myst-render-action-row > .block,
 .gradio-container .myst-render-action-row > .form {{
-    width: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
+    min-width: 0 !important;
+    width: auto !important;
+}}
+.gradio-container .myst-render-action-row > .block:has(button.myst-standard-back-btn),
+.gradio-container .myst-render-action-row > .form:has(button.myst-standard-back-btn) {{
+    flex: 0 0 auto !important;
+    width: auto !important;
+}}
+.gradio-container .myst-render-action-row > .block:has(button.myst-render-nav-render-btn),
+.gradio-container .myst-render-action-row > .form:has(button.myst-render-nav-render-btn) {{
+    flex: 1 1 0% !important;
+    width: auto !important;
 }}
 .gradio-container button.full-width-btn,
 .gradio-container button.myst-render-nav-render-btn.full-width-btn {{
@@ -8510,19 +8524,39 @@ def _render_sub_nav_btn_updates(active_slot: int) -> tuple:
     )
 
 
+def _render_back_btn_update(*, on_detail: bool = False) -> gr.Update:
+    """Show Back in the action row only while Preset Details | Viewport is open."""
+    return gr.update(visible=on_detail)
+
+
 def _render_action_btn_update(
     *,
     rendering: bool = False,
     on_grid: bool = True,
 ) -> gr.Update:
-    classes = ["demo-btn", "myst-render-nav-render-btn", "full-width-btn"]
+    classes = ["demo-btn", "myst-render-nav-render-btn"]
+    if on_grid:
+        classes.append("full-width-btn")
     if rendering:
         classes.append("active")
     return gr.update(
         value="Render",
-        visible=on_grid,
+        visible=True,
         elem_classes=classes,
         variant="secondary",
+    )
+
+
+def _render_back_to_grid(
+    plot_cache: list[str | None] | None,
+    active_slot: int,
+) -> tuple:
+    """Leave preset detail and restore the 3×3 Figures grid."""
+    has_plots = bool(plot_cache) and any(plot_cache)
+    return _render_grid_view_updates(
+        plot_cache,
+        active_slot,
+        rendering=has_plots,
     )
 
 
@@ -8610,6 +8644,7 @@ def _render_detail_view_updates(slot: int) -> tuple:
         slot,
         *_render_sub_nav_btn_updates(slot),
         _render_action_btn_update(rendering=True, on_grid=False),
+        _render_back_btn_update(on_detail=True),
     )
 
 
@@ -8638,6 +8673,7 @@ def _render_grid_view_updates(
         -1,
         *_render_sub_nav_btn_updates(nav_active if nav_active >= 0 else -1),
         _render_action_btn_update(rendering=rendering and has_plots, on_grid=True),
+        _render_back_btn_update(on_detail=False),
     )
 
 
@@ -8667,6 +8703,7 @@ def _render_grid_load_yield(
         -1,
         *_render_sub_nav_btn_updates(nav_active),
         _render_action_btn_update(rendering=rendering, on_grid=True),
+        _render_back_btn_update(on_detail=False),
     )
 
 
@@ -10137,6 +10174,11 @@ def build_app() -> gr.Blocks:
         with gr.Column(visible=False, elem_classes=["myst-render-page"]) as page_render:
             with gr.Column(visible=True, elem_classes=["myst-render-stack"]) as render_content_col:
                 with gr.Row(elem_classes=["myst-render-action-row"]):
+                    render_back_btn = _place_back_button(
+                        "← Back",
+                        elem_id="myst-render-back-btn",
+                        visible=False,
+                    )
                     render_action_btn = _nav_theme_button(
                         "Render",
                         elem_id="myst-render-nav-render-btn",
@@ -10824,6 +10866,7 @@ def build_app() -> gr.Blocks:
             render_detail_slot,
             *render_sub_nav_btns,
             render_action_btn,
+            render_back_btn,
         ]
         render_load_outputs = [
             render_panel_html,
@@ -10837,6 +10880,7 @@ def build_app() -> gr.Blocks:
             render_detail_slot,
             *render_sub_nav_btns,
             render_action_btn,
+            render_back_btn,
         ]
 
         def _make_render_open_detail(slot: int):
@@ -10849,6 +10893,12 @@ def build_app() -> gr.Blocks:
             _render_load_all_presets,
             inputs=[render_active_slot, render_zoom_slot],
             outputs=render_load_outputs,
+            show_progress="hidden",
+        )
+        render_back_btn.click(
+            _render_back_to_grid,
+            inputs=[render_plot_cache, render_active_slot],
+            outputs=render_panel_outputs,
             show_progress="hidden",
         )
         for slot, btn in enumerate(render_sub_nav_btns):
