@@ -2683,7 +2683,8 @@ footer {{
     row-gap: 0 !important;
     flex-shrink: 0 !important;
 }}
-.gradio-container .myst-unified-nav-host > .gap:not(:has(.myst-gap-row-host)):not(:has(.myst-demo-nav-section)):not(:has(.myst-main-nav)) {{
+/* Gradio Columns use class "gap"; hide empty wrappers only — not self-tagged demo section */
+.gradio-container .myst-unified-nav-host > .gap:not(:has(.myst-gap-row-host)):not(:has(.myst-demo-nav-section)):not(:has(.myst-main-nav)):not(.myst-demo-nav-section):not(#myst-demo-nav-section):not(.myst-home-demo-nav):not(.myst-render-demo-nav):not(#myst-home-demo-nav-wrap):not(#myst-render-demo-nav-wrap) {{
     display: none !important;
     height: 0 !important;
     min-height: 0 !important;
@@ -2691,6 +2692,15 @@ footer {{
     margin: 0 !important;
     padding: 0 !important;
     overflow: hidden !important;
+}}
+.gradio-container .myst-unified-nav-host > .myst-demo-nav-section,
+.gradio-container .myst-unified-nav-host > #myst-demo-nav-section {{
+    display: flex !important;
+    flex-direction: column !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
 }}
 .gradio-container .myst-unified-nav-host + .gap {{
     display: none !important;
