@@ -65,28 +65,6 @@ from demo_core import (
 )
 
 
-def _figures_grid_html() -> str:
-    """2×2 grid of reference figures on the Figures page."""
-    labels = ("φ-e-π triangle", "κ sweep", "3-6-9 clock", "Conduit angular")
-    imgs = "".join(
-        f'<figure class="vqc-screencast-video-wrap">'
-        f'<img class="vqc-screencast-video" src="{url}" alt="{label}" loading="lazy" />'
-        f'<figcaption>{label}</figcaption></figure>'
-        for url, label in zip(FIGURE_URLS, labels, strict=True)
-    )
-    return f'<div class="vqc-screencast-wrap">{imgs}</div>'
-
-
-def _figures_links_md() -> str:
-    links = " · ".join(
-        f"[{label}]({url})" for label, url in zip(
-            ("Triangle", "κ sweep", "369 clock", "Conduit"),
-            FIGURE_URLS,
-            strict=True,
-        )
-    )
-    return links
-
 logger = logging.getLogger(__name__)
 
 
@@ -164,8 +142,6 @@ _STATUS_ZOOM_PRESET_COUNT = 9
 _VQC_MATRIX_GREEN_BG = "#0a1f12"
 _VQC_LOGO_GOLD = "#c9a227"
 _VQC_HOME_KEY_BG = "#000000"
-
-FIGURES_INTRO_MD_LOCAL = FIGURES_INTRO_MD
 
 OPTICS_LOGO_HTML = """
 <div class="vqc-optics-logo" role="img" aria-label="Mystery φ-e-π Control Panel">
