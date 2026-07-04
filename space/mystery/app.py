@@ -962,28 +962,23 @@ def _place_unified_main_nav(
 
 def _place_status_zoom_nav_row(
     active_slot: int = -1,
-) -> tuple[gr.Button, dict[str, gr.Button], gr.Button]:
-    """Status sub-nav — Back, nine presets (01 … 09), and Edit in one grid row."""
+) -> tuple[dict[str, gr.Button], gr.Button]:
+    """Status sub-nav — Demo: label, nine presets (01 … 09), and Edit."""
     buttons: dict[str, gr.Button] = {}
     active = int(active_slot)
-    on_grid = active < 0
     with gr.Row(
         elem_id="myst-status-zoom-nav",
         elem_classes=[
             "myst-secondary-nav",
             "myst-status-preset-nav-wrap",
+            "myst-demo-preset-nav-row",
             "vqc-nav-spreadsheet-row",
             "vqc-status-preset-nav-row",
         ],
     ):
-        back_classes = ["vqc-source-tab", "demo-btn", "myst-status-preset-btn", "myst-status-nav-back-btn"]
-        if on_grid:
-            back_classes.append("active")
-        back_btn = _place_back_button(
-            "Back",
-            elem_id="myst-status-nav-back-btn",
-            elem_classes=back_classes,
-            min_width=82,
+        gr.HTML(
+            '<span class="vqc-source-label vqc-nav-row-label myst-gravity-child-nav-label">'
+            "Demo:</span>"
         )
         for slot in range(_STATUS_ZOOM_PRESET_COUNT):
             preset_id = _gravity_preset_id(slot)
@@ -996,8 +991,7 @@ def _place_status_zoom_nav_row(
                 elem_id=f"myst-status-preset-btn-{preset_id}",
                 elem_classes=classes,
                 interactive=not is_active,
-                scale=0,
-                min_width=0,
+                scale=1,
                 variant="secondary",
             )
         edit_btn = gr.Button(
@@ -1009,11 +1003,10 @@ def _place_status_zoom_nav_row(
                 "myst-status-nav-edit-btn",
             ],
             interactive=False,
-            scale=0,
-            min_width=0,
+            scale=1,
             variant="secondary",
         )
-    return back_btn, buttons, edit_btn
+    return buttons, edit_btn
 
 
 def _place_status_gap_row(*, slot: str, half_height: bool = False) -> None:
@@ -1036,19 +1029,6 @@ def _place_status_gap_row(*, slot: str, half_height: bool = False) -> None:
         )
 
 
-def _status_zoom_nav_back_btn_update(active_slot: int) -> gr.Update:
-    on_grid = int(active_slot) < 0
-    classes = ["vqc-source-tab", "myst-status-preset-btn", "myst-status-nav-back-btn"]
-    if on_grid:
-        classes.append("active")
-    return gr.update(
-        value="Back",
-        interactive=True,
-        elem_classes=classes,
-        variant="secondary",
-    )
-
-
 def _status_zoom_nav_edit_btn_update(*, in_zoom: bool, edit_open: bool) -> gr.Update:
     classes = ["vqc-source-tab", "myst-status-preset-btn", "myst-status-nav-edit-btn"]
     if edit_open:
@@ -1063,7 +1043,6 @@ def _status_zoom_back_to_grid() -> tuple:
     return (
         *_status_panel_levels_update(-1, grid_active_slot=None, visible=True),
         *_status_zoom_btn_updates(-1),
-        _status_zoom_nav_back_btn_update(-1),
         -1,
         False,
         gr.update(visible=False),
@@ -2426,16 +2405,32 @@ footer {{
 .gradio-container .vqc-nav-spreadsheet-row.vqc-nav-spreadsheet-row-8 {{
     grid-template-columns: 4.75rem repeat(8, minmax(3.2rem, 1fr)) !important;
 }}
-.gradio-container .vqc-nav-spreadsheet-row.vqc-status-preset-nav-row {{
+.gradio-container .vqc-nav-spreadsheet-row.vqc-status-preset-nav-row,
+.gradio-container .vqc-nav-spreadsheet-row.myst-demo-preset-nav-row {{
     display: grid !important;
-    grid-template-columns: minmax(5rem, 1.15fr) repeat(9, minmax(2.1rem, 1fr)) minmax(3rem, 0.9fr) !important;
+    grid-template-columns: 4.75rem repeat(9, minmax(0, 1fr)) minmax(3.6rem, 1fr) !important;
     grid-auto-flow: column !important;
     flex-wrap: nowrap !important;
     align-items: stretch !important;
-    gap: 0.18rem 0.28rem !important;
+    gap: 0.2rem 0.45rem !important;
     margin: 0.04rem 0 0.12rem 0 !important;
     width: 100% !important;
     overflow: visible !important;
+}}
+.gradio-container .myst-secondary-nav .vqc-source-label {{
+    display: flex !important;
+    align-items: center !important;
+    padding: 0 8px !important;
+    font-weight: 600 !important;
+    color: #cccccc !important;
+    white-space: nowrap !important;
+}}
+#myst-render-sub-nav button.vqc-source-tab,
+#myst-status-zoom-nav button.vqc-source-tab {{
+    min-width: 0 !important;
+    width: 100% !important;
+    padding: 6px 8px !important;
+    box-sizing: border-box !important;
 }}
 .gradio-container .vqc-status-preset-nav-row > .block,
 .gradio-container .vqc-status-preset-nav-row > .form,
@@ -7807,19 +7802,6 @@ def _render_sub_nav_btn_updates(active_slot: int) -> tuple:
     )
 
 
-def _render_sub_nav_back_update(zoom_slot: int) -> gr.Update:
-    """Back button update — label locked to 'Back'."""
-    on_grid = int(zoom_slot) < 0
-    back_classes = ["vqc-source-tab", "myst-status-preset-btn", "myst-render-nav-back-btn"]
-    return gr.update(
-        value="Back",
-        visible=not on_grid,
-        interactive=True,
-        elem_classes=back_classes,
-        variant="secondary",
-    )
-
-
 def _render_sub_nav_render_btn_update(
     *,
     rendering: bool = False,
@@ -7872,8 +7854,9 @@ def _place_render_sub_nav_row(
     active_slot: int = -1,
     *,
     zoom_slot: int = -1,
-) -> tuple[gr.Button, dict[str, gr.Button], gr.Button]:
-    """Render sub-nav — Back, nine presets (01 … 09), and Render in one row."""
+) -> tuple[dict[str, gr.Button], gr.Button]:
+    """Render sub-nav — Demo: label, nine presets (01 … 09), and Render."""
+    _ = zoom_slot
     buttons: dict[str, gr.Button] = {}
     active = int(active_slot)
     with gr.Row(
@@ -7881,21 +7864,14 @@ def _place_render_sub_nav_row(
         elem_classes=[
             "myst-secondary-nav",
             "myst-render-preset-nav-wrap",
+            "myst-demo-preset-nav-row",
             "vqc-nav-spreadsheet-row",
             "vqc-status-preset-nav-row",
         ],
     ):
-        back_btn = _place_back_button(
-            "Back",
-            elem_id="myst-render-nav-back-btn",
-            elem_classes=[
-                "vqc-source-tab",
-                "demo-btn",
-                "myst-status-preset-btn",
-                "myst-render-nav-back-btn",
-            ],
-            visible=False,
-            min_width=82,
+        gr.HTML(
+            '<span class="vqc-source-label vqc-nav-row-label myst-gravity-child-nav-label">'
+            "Demo:</span>"
         )
         for slot in range(_STATUS_ZOOM_PRESET_COUNT):
             preset_id = _gravity_preset_id(slot)
@@ -7908,8 +7884,7 @@ def _place_render_sub_nav_row(
                 elem_id=f"myst-render-preset-btn-{preset_id}",
                 elem_classes=classes,
                 interactive=not is_active,
-                scale=0,
-                min_width=0,
+                scale=1,
                 variant="secondary",
             )
         render_btn = gr.Button(
@@ -7917,14 +7892,14 @@ def _place_render_sub_nav_row(
             elem_id="myst-render-nav-render-btn",
             elem_classes=[
                 "vqc-source-tab",
+                "demo-btn",
                 "myst-status-preset-btn",
                 "myst-render-nav-render-btn",
             ],
-            scale=0,
-            min_width=82,
+            scale=1,
             variant="secondary",
         )
-    return back_btn, buttons, render_btn
+    return buttons, render_btn
 
 
 def _render_detail_view_updates(slot: int) -> tuple:
@@ -7939,7 +7914,6 @@ def _render_detail_view_updates(slot: int) -> tuple:
         _format_render_detail_description(slot),
         slot,
         *_render_sub_nav_btn_updates(slot),
-        _render_sub_nav_back_update(slot),
         _render_sub_nav_render_btn_update(rendering=True, on_grid=False),
     )
 
@@ -7968,7 +7942,6 @@ def _render_grid_view_updates(
         "",
         -1,
         *_render_sub_nav_btn_updates(nav_active if nav_active >= 0 else -1),
-        _render_sub_nav_back_update(-1),
         _render_sub_nav_render_btn_update(rendering=rendering and has_plots, on_grid=True),
     )
 
@@ -8011,7 +7984,6 @@ def _render_load_all_presets(active_slot: int, zoom_slot: int) -> tuple:
         "",
         -1,
         *_render_sub_nav_btn_updates(nav_active),
-        _render_sub_nav_back_update(-1),
         _render_sub_nav_render_btn_update(rendering=True, on_grid=True),
     )
 
@@ -8046,7 +8018,6 @@ def _status_zoom_select(slot: int) -> tuple:
     return (
         *_status_panel_levels_update(slot, dials=dials, visible=True),
         *_status_zoom_btn_updates(slot),
-        _status_zoom_nav_back_btn_update(slot),
         slot,
         False,
         gr.update(visible=False),
@@ -9379,8 +9350,9 @@ def build_app() -> gr.Blocks:
         render_plot_cache = gr.State([None] * _STATUS_GRID_PRESET_COUNT)
         with gr.Column(visible=False, elem_classes=["myst-render-page"]) as page_render:
             with gr.Column(visible=True, elem_classes=["myst-render-stack"]) as render_content_col:
-                render_back_btn, _render_sub_nav, render_all_btn = (
-                    _place_render_sub_nav_row(active_slot=-1, zoom_slot=-1)
+                _render_sub_nav, render_all_btn = _place_render_sub_nav_row(
+                    active_slot=-1,
+                    zoom_slot=-1,
                 )
                 _place_status_gap_row(slot="after-preset-nav")
                 render_sub_nav_btns = [
@@ -9480,8 +9452,8 @@ def build_app() -> gr.Blocks:
             status_zoom_slot = gr.State(-1)
             status_zoom_edit_open = gr.State(False)
             with gr.Column(visible=True, elem_classes=["myst-status-stack"]) as status_content_col:
-                status_zoom_back_btn, _status_zoom_nav, status_zoom_edit_btn = (
-                    _place_status_zoom_nav_row(active_slot=-1)
+                _status_zoom_nav, status_zoom_edit_btn = _place_status_zoom_nav_row(
+                    active_slot=-1
                 )
                 _place_status_gap_row(slot="after-preset-nav")
                 status_zoom_btns = [
@@ -9907,7 +9879,6 @@ def build_app() -> gr.Blocks:
                 status_panel_levels,
                 status_panels_host,
                 *status_zoom_btns,
-                status_zoom_back_btn,
                 status_zoom_slot,
                 status_zoom_edit_open,
                 status_zoom_edit_drawer,
@@ -9967,7 +9938,6 @@ def build_app() -> gr.Blocks:
                 status_panel_levels,
                 status_panels_host,
                 *status_zoom_btns,
-                status_zoom_back_btn,
                 status_zoom_slot,
                 status_zoom_edit_open,
                 status_zoom_edit_drawer,
@@ -10044,7 +10014,6 @@ def build_app() -> gr.Blocks:
             render_detail_description,
             render_detail_slot,
             *render_sub_nav_btns,
-            render_back_btn,
             render_all_btn,
         ]
         render_load_outputs = [
@@ -10058,7 +10027,6 @@ def build_app() -> gr.Blocks:
             render_detail_description,
             render_detail_slot,
             *render_sub_nav_btns,
-            render_back_btn,
             render_all_btn,
         ]
 
@@ -10072,12 +10040,6 @@ def build_app() -> gr.Blocks:
             _render_load_all_presets,
             inputs=[render_active_slot, render_zoom_slot],
             outputs=render_load_outputs,
-            show_progress="hidden",
-        )
-        render_back_btn.click(
-            _render_back_to_grid,
-            inputs=[render_plot_cache, render_active_slot],
-            outputs=render_panel_outputs,
             show_progress="hidden",
         )
         render_back_to_grid_btn.click(
@@ -10112,7 +10074,6 @@ def build_app() -> gr.Blocks:
         _bind_nav(unified_nav["render"], "render")
         _bind_readme_nav(unified_nav["readme"])
         _bind_status_nav(unified_nav["status"])
-        _bind_nav(status_zoom_back_btn, "home", refresh_gravity=True)
         readme_back_btn.click(
             _readme_back_to_app,
             inputs=[readme_return_page],
