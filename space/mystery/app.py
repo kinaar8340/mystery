@@ -134,7 +134,7 @@ _VQC_MATRIX_GREEN = "#33ff66"
 
 # ====================== GLOBAL STYLING THEME ======================
 NAV_THEME: dict = {
-    "default_gap_height": 0.25,
+    "default_gap_height": 0.20,
     "nav_button": {
         "height": "2.05rem",
         "min_width": "58px",
