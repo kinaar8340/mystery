@@ -885,7 +885,7 @@ def _shape_btn_classes(shape: str, active_shape: str) -> list[str]:
 
 
 def _set_active_shape(new_shape: str) -> tuple:
-    """Latching updates for Platonic shape selector (one active at a time)."""
+    """Latching updates for D4–D20; active button gets cyan text + strong cyan glow."""
     shape = str(new_shape or _DEFAULT_ACTIVE_SHAPE).strip().upper()
     if shape not in _SHAPE_NAV_IDS:
         shape = _DEFAULT_ACTIVE_SHAPE
@@ -2395,13 +2395,20 @@ footer {{
     color: cyan !important;
     -webkit-text-fill-color: cyan !important;
     border-color: cyan !important;
-    box-shadow: 0 0 8px rgba(0, 255, 255, 0.65), 0 0 0 1px cyan !important;
+    box-shadow: 0 0 14px rgba(0, 255, 255, 0.85), 0 0 26px rgba(0, 255, 255, 0.5), 0 0 0 1px cyan !important;
     font-weight: 600 !important;
 }}
 /* ========== DEMO: BAR (A–I) + Render/Presets 01–09 ========== */
 .gradio-container button.vqc-source-tab.demo-btn.active,
+.gradio-container button.vqc-source-tab.demo-btn.active span,
 .gradio-container button.vqc-source-tab.demo-btn.active:disabled,
-.gradio-container button.vqc-source-tab.demo-btn.active[disabled] {{
+.gradio-container button.vqc-source-tab.demo-btn.active[disabled],
+.gradio-container button.vqc-source-tab.demo-btn.active:disabled span,
+.gradio-container button.vqc-source-tab.demo-btn.active[disabled] span,
+#myst-gravity-child-nav button.vqc-source-tab.demo-btn.active,
+#myst-gravity-child-nav button.vqc-source-tab.demo-btn.active span {{
+    color: orange !important;
+    -webkit-text-fill-color: orange !important;
     border-color: orange !important;
     box-shadow: 0 0 0 1px orange !important;
     font-weight: 600 !important;
