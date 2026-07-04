@@ -2378,7 +2378,7 @@ footer {{
     color: #00FF00 !important;
     -webkit-text-fill-color: #00FF00 !important;
     border-color: #00FF00 !important;
-    box-shadow: 0 0 0 1px #00FF00 !important;
+    box-shadow: 0 0 12px rgba(0, 255, 0, 0.75), 0 0 22px rgba(0, 255, 0, 0.45), 0 0 0 1px #00FF00 !important;
     font-weight: 600 !important;
 }}
 /* ========== SHAPE TABS (D4, D6, D8, D12, D20) ========== */
@@ -2400,17 +2400,11 @@ footer {{
 }}
 /* ========== DEMO: BAR (A–I) + Render/Presets 01–09 ========== */
 .gradio-container button.vqc-source-tab.demo-btn.active,
-.gradio-container button.vqc-source-tab.demo-btn.active span,
 .gradio-container button.vqc-source-tab.demo-btn.active:disabled,
 .gradio-container button.vqc-source-tab.demo-btn.active[disabled],
-.gradio-container button.vqc-source-tab.demo-btn.active:disabled span,
-.gradio-container button.vqc-source-tab.demo-btn.active[disabled] span,
-#myst-gravity-child-nav button.vqc-source-tab.demo-btn.active,
-#myst-gravity-child-nav button.vqc-source-tab.demo-btn.active span {{
-    color: orange !important;
-    -webkit-text-fill-color: orange !important;
+#myst-gravity-child-nav button.vqc-source-tab.demo-btn.active {{
     border-color: orange !important;
-    box-shadow: 0 0 0 1px orange !important;
+    box-shadow: 0 0 12px rgba(255, 165, 0, 0.8), 0 0 22px rgba(255, 165, 0, 0.5), 0 0 0 1px orange !important;
     font-weight: 600 !important;
 }}
 .gradio-container .vqc-nav-spreadsheet-row.vqc-nav-spreadsheet-row-8 {{
