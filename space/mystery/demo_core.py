@@ -232,7 +232,7 @@ not decoration.</p>
 <li><strong>Start on Home</strong> &mdash; watch Demo&nbsp;A breathe; explore presets B&ndash;I.</li>
 <li><strong>Presets</strong> &mdash; nine locked unit-cell shapes (max convex &rarr; rigid &rarr; max concave).</li>
 <li><strong>Render</strong> &mdash; 3&times;3 grid of all presets at once.</li>
-<li><strong>Figures</strong> &mdash; reference plots from the 11-probe suite.</li>
+<li><strong>Shape</strong> &mdash; D4/D6/D8/D12/D20 Platonic solid selector (D6 cube active by default).</li>
 <li><strong>Depth</strong> &mdash; full derivations and scripts on
 <a href="{html.escape(GITHUB_URL)}">github.com/kinaar8340/mystery</a>.</li>
 </ul>
@@ -249,7 +249,7 @@ precession made visible.</li>
 <em>RIGID CUBE</em> (phase-locked, mass-like rest state).</li>
 <li><strong>Open Presets</strong> &mdash; tap any slot in the 3&times;3 grid; use <em>Edit</em> to tune
 κ, deformation pressure, and view angles live.</li>
-<li><strong>Figures</strong> &mdash; open the reference plots that ground the numerical claims below.</li>
+<li><strong>Shape D6</strong> &mdash; default cube; try D4/D8/D12/D20 as other Platonic presets come online.</li>
 </ol>
 <h3>Example Parameter Settings</h3>
 <table class="myst-readme-table">

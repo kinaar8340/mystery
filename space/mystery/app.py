@@ -21,7 +21,7 @@ from demo_core import (
     E_OVER_PI,
     EXPLORE_FURTHER_MD,
     FIGURE_URLS,
-    FIGURES_INTRO_MD,
+
     GITHUB_URL,
     HF_SPACE_URL,
     KAPPA_DOC,
@@ -869,8 +869,10 @@ _MAIN_NAV_TAB_SPECS = (
     ("render", "Render"),
     ("status", "Presets"),
     ("readme", "README"),
-    ("animations", "Figures"),
 )
+
+_SHAPE_NAV_IDS: tuple[str, ...] = ("D4", "D6", "D8", "D12", "D20")
+_DEFAULT_ACTIVE_SHAPE = "D6"
 
 
 def _place_back_button(
@@ -901,8 +903,57 @@ def _place_back_button(
     return gr.Button(label, **kwargs)
 
 
+def _shape_btn_classes(shape: str, active_shape: str) -> list[str]:
+    classes = ["vqc-source-tab", "shape-btn"]
+    if shape == active_shape:
+        classes.append("active")
+    return classes
+
+
+def _set_active_shape(new_shape: str) -> tuple:
+    """Latching updates for Platonic shape selector (one active at a time)."""
+    shape = str(new_shape or _DEFAULT_ACTIVE_SHAPE).strip().upper()
+    if shape not in _SHAPE_NAV_IDS:
+        shape = _DEFAULT_ACTIVE_SHAPE
+    updates: list = [gr.update(value=shape)]
+    for shape_id in _SHAPE_NAV_IDS:
+        is_active = shape_id == shape
+        updates.append(
+            gr.update(
+                elem_classes=_shape_btn_classes(shape_id, shape),
+                interactive=not is_active,
+                variant="secondary",
+            )
+        )
+    return tuple(updates)
+
+
+def _place_shape_nav_row(*, default: str = _DEFAULT_ACTIVE_SHAPE) -> dict[str, gr.Button]:
+    """Shape: D4–D20 row — matrix-green active latch, D6 default."""
+    buttons: dict[str, gr.Button] = {}
+    default_shape = default if default in _SHAPE_NAV_IDS else _DEFAULT_ACTIVE_SHAPE
+    with gr.Row(
+        elem_id="myst-shape-nav",
+        elem_classes=["myst-shape-row", "vqc-nav-spreadsheet-row"],
+    ):
+        gr.HTML(
+            '<span class="vqc-source-label vqc-nav-row-label myst-shape-label">Shape:</span>'
+        )
+        for shape_id in _SHAPE_NAV_IDS:
+            is_active = shape_id == default_shape
+            buttons[shape_id] = gr.Button(
+                shape_id,
+                elem_classes=_shape_btn_classes(shape_id, default_shape),
+                interactive=not is_active,
+                scale=0,
+                min_width=52,
+                variant="secondary",
+            )
+    return buttons
+
+
 def _place_main_nav_row(active_page: str) -> dict[str, gr.Button]:
-    """Mystery: spreadsheet nav — one compact row of five main tabs."""
+    """Mystery: spreadsheet nav — one compact row of four main tabs."""
     buttons: dict[str, gr.Button] = {}
     with gr.Row(
         elem_classes=[
@@ -1104,7 +1155,7 @@ def _nav_to_status_page(current_page: str, content_open: bool) -> tuple:
     )
 
 
-_README_RETURN_PAGES = frozenset({"home", "render", "animations", "status"})
+_README_RETURN_PAGES = frozenset({"home", "render", "status"})
 
 
 def _readme_return_page(from_page: str) -> str:
@@ -1123,9 +1174,8 @@ def _readme_back_to_app(return_page: str) -> tuple:
 
 
 def _nav_to_page(page: str) -> tuple:
-    """Switch between render, figures, home, readme, status, and edit; refresh nav highlights."""
+    """Switch between home, render, readme, status, and edit; refresh nav highlights."""
     on_render = page == "render"
-    on_anim = page == "animations"
     on_home = page == "home"
     on_readme = page == "readme"
     on_status = page == "status"
@@ -1133,19 +1183,16 @@ def _nav_to_page(page: str) -> tuple:
     tab_home = _source_tab_btn_update(active=on_home)
     tab_render = _source_tab_btn_update(active=on_render)
     tab_readme = _source_tab_btn_update(active=on_readme)
-    tab_anim = _source_tab_btn_update(active=on_anim)
     tab_status = _source_tab_btn_update(active=on_status)
-    page_tabs = (tab_home, tab_render, tab_readme, tab_anim, tab_status)
+    page_tabs = (tab_home, tab_render, tab_readme, tab_status)
     return (
         gr.update(visible=on_home),
         gr.update(visible=on_render),
-        gr.update(visible=on_anim),
         gr.update(visible=on_readme),
         gr.update(visible=on_status),
         gr.update(visible=False),
         *page_tabs,
         *closed,
-        *page_tabs,
         *page_tabs,
         *page_tabs,
         *page_tabs,
@@ -2353,7 +2400,32 @@ footer {{
     padding: 0 !important;
 }}
 .gradio-container .vqc-nav-spreadsheet-row.vqc-main-nav-row {{
-    grid-template-columns: 4.75rem repeat(6, minmax(3.8rem, 1fr)) !important;
+    grid-template-columns: 4.75rem repeat(4, minmax(3.8rem, 1fr)) !important;
+}}
+.gradio-container .myst-shape-nav-host {{
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}}
+.gradio-container .myst-shape-row {{
+    display: grid !important;
+    grid-template-columns: 4.75rem repeat(5, minmax(3.2rem, 1fr)) !important;
+    gap: 0.2rem 0.45rem !important;
+    align-items: center !important;
+    margin-top: 4px !important;
+    margin-bottom: 8px !important;
+    width: 100% !important;
+}}
+.gradio-container button.shape-btn {{
+    font-weight: 600 !important;
+    min-width: 52px !important;
+}}
+.gradio-container button.shape-btn.active,
+.gradio-container button.shape-btn.active span {{
+    background-color: {_VQC_MATRIX_GREEN_BG} !important;
+    color: {_VQC_MATRIX_GREEN} !important;
+    -webkit-text-fill-color: {_VQC_MATRIX_GREEN} !important;
+    border-color: {_VQC_MATRIX_GREEN} !important;
 }}
 .gradio-container .vqc-nav-spreadsheet-row.vqc-nav-spreadsheet-row-8 {{
     grid-template-columns: 4.75rem repeat(8, minmax(3.2rem, 1fr)) !important;
@@ -9280,11 +9352,6 @@ def build_app() -> gr.Blocks:
                 elem_classes=["vqc-source-tab"],
                 variant="secondary",
             )
-            tab_anim_btn = gr.Button(
-                "Figures",
-                elem_classes=["vqc-source-tab"],
-                variant="secondary",
-            )
             tab_claims_btn = gr.Button(
                 "Claims",
                 elem_classes=["vqc-source-tab"],
@@ -9296,17 +9363,9 @@ def build_app() -> gr.Blocks:
                 variant="secondary",
             )
 
-        with gr.Column(visible=False, elem_classes=["vqc-animations-page"]) as page_animations:
-            _anim_nav = _place_main_nav_row("animations")
-            anim_tab_home_btn = _anim_nav["home"]
-            anim_tab_render_btn = _anim_nav["render"]
-            anim_tab_readme_btn = _anim_nav["readme"]
-            anim_tab_anim_btn = _anim_nav["animations"]
-            anim_tab_status_btn = _anim_nav["status"]
-            gr.Markdown("## Reference figures")
-            gr.Markdown(FIGURES_INTRO_MD_LOCAL)
-            gr.HTML(_figures_grid_html())
-            gr.Markdown(_figures_links_md())
+        active_shape = gr.State(_DEFAULT_ACTIVE_SHAPE)
+        with gr.Column(elem_classes=["myst-shape-nav-host"], scale=0):
+            shape_nav_btns = _place_shape_nav_row(default=_DEFAULT_ACTIVE_SHAPE)
 
         _init_re_metrics, _init_unit_cell_header, _init_unit_cell_fig = run_residual_explorer(
             1.0, 1.0, 1.0, KAPPA_DOC, 0.1, 1.0, 1.0, 0.35, 22.0, 45.0
@@ -9326,7 +9385,6 @@ def build_app() -> gr.Blocks:
             readme_tab_home_btn = _readme_nav["home"]
             readme_tab_render_btn = _readme_nav["render"]
             readme_tab_readme_btn = _readme_nav["readme"]
-            readme_tab_anim_btn = _readme_nav["animations"]
             readme_tab_status_btn = _readme_nav["status"]
             with gr.Row(elem_classes=["myst-readme-back-row"]):
                 readme_back_btn = _place_back_button("← Back to App", min_width=110)
@@ -9349,7 +9407,6 @@ def build_app() -> gr.Blocks:
             render_tab_home_btn = _render_nav["home"]
             render_tab_render_btn = _render_nav["render"]
             render_tab_readme_btn = _render_nav["readme"]
-            render_tab_anim_btn = _render_nav["animations"]
             render_tab_status_btn = _render_nav["status"]
             _place_status_gap_row(slot="after-main-nav", half_height=True)
             with gr.Column(visible=True, elem_classes=["myst-render-stack"]) as render_content_col:
@@ -9456,7 +9513,6 @@ def build_app() -> gr.Blocks:
             status_tab_home_btn = _status_nav["home"]
             status_tab_render_btn = _status_nav["render"]
             status_tab_readme_btn = _status_nav["readme"]
-            status_tab_anim_btn = _status_nav["animations"]
             status_tab_status_btn = _status_nav["status"]
             _place_status_gap_row(slot="after-main-nav", half_height=True)
             status_zoom_slot = gr.State(-1)
@@ -9611,7 +9667,6 @@ def build_app() -> gr.Blocks:
             edit_tab_home_btn = _edit_nav["home"]
             edit_tab_render_btn = _edit_nav["render"]
             edit_tab_readme_btn = _edit_nav["readme"]
-            edit_tab_anim_btn = _edit_nav["animations"]
             edit_tab_status_btn = _edit_nav["status"]
             with gr.Column(
                 elem_classes=[
@@ -9751,7 +9806,6 @@ def build_app() -> gr.Blocks:
             grav_tab_home_btn = _grav_nav["home"]
             grav_tab_render_btn = _grav_nav["render"]
             grav_tab_readme_btn = _grav_nav["readme"]
-            grav_tab_anim_btn = _grav_nav["animations"]
             grav_tab_status_btn = _grav_nav["status"]
             _place_status_gap_row(slot="after-main-nav", half_height=True)
             gravity_child_nav = _place_gravity_child_nav_row()
@@ -9973,17 +10027,19 @@ def build_app() -> gr.Blocks:
 
         newhere_outputs = [panel_newhere, tab_newhere_btn, newhere_open, panel_claims, tab_claims_btn, claims_open]
         claims_outputs = [panel_claims, tab_claims_btn, claims_open, panel_newhere, tab_newhere_btn, newhere_open]
+        shape_outputs = [
+            active_shape,
+            *[shape_nav_btns[shape_id] for shape_id in _SHAPE_NAV_IDS],
+        ]
         nav_outputs = [
             page_gravity,
             page_render,
-            page_animations,
             page_readme,
             page_status,
             page_edit,
             tab_home_btn,
             tab_render_btn,
             tab_readme_btn,
-            tab_anim_btn,
             tab_status_btn,
             panel_newhere,
             tab_newhere_btn,
@@ -9991,35 +10047,25 @@ def build_app() -> gr.Blocks:
             panel_claims,
             tab_claims_btn,
             claims_open,
-            anim_tab_home_btn,
-            anim_tab_render_btn,
-            anim_tab_readme_btn,
-            anim_tab_anim_btn,
-            anim_tab_status_btn,
             grav_tab_home_btn,
             grav_tab_render_btn,
             grav_tab_readme_btn,
-            grav_tab_anim_btn,
             grav_tab_status_btn,
             readme_tab_home_btn,
             readme_tab_render_btn,
             readme_tab_readme_btn,
-            readme_tab_anim_btn,
             readme_tab_status_btn,
             status_tab_home_btn,
             status_tab_render_btn,
             status_tab_readme_btn,
-            status_tab_anim_btn,
             status_tab_status_btn,
             edit_tab_home_btn,
             edit_tab_render_btn,
             edit_tab_readme_btn,
-            edit_tab_anim_btn,
             edit_tab_status_btn,
             render_tab_home_btn,
             render_tab_render_btn,
             render_tab_readme_btn,
-            render_tab_anim_btn,
             render_tab_status_btn,
             current_page,
         ]
@@ -10124,41 +10170,37 @@ def build_app() -> gr.Blocks:
                 show_progress="hidden",
             )
 
+        for shape_id in _SHAPE_NAV_IDS:
+            shape_nav_btns[shape_id].click(
+                lambda s=shape_id: _set_active_shape(s),
+                outputs=shape_outputs,
+                show_progress="hidden",
+            )
+
         _bind_nav(tab_render_btn, "render")
-        _bind_nav(tab_anim_btn, "animations")
         _bind_readme_nav(tab_readme_btn)
         _bind_status_nav(tab_status_btn)
         _bind_nav(tab_home_btn, "home", refresh_gravity=True)
-        _bind_nav(anim_tab_render_btn, "render")
-        _bind_nav(anim_tab_anim_btn, "animations")
-        _bind_readme_nav(anim_tab_readme_btn)
-        _bind_status_nav(anim_tab_status_btn)
-        _bind_nav(anim_tab_home_btn, "home", refresh_gravity=True)
         _bind_nav(grav_tab_render_btn, "render")
-        _bind_nav(grav_tab_anim_btn, "animations")
         _bind_readme_nav(grav_tab_readme_btn)
         _bind_status_nav(grav_tab_status_btn)
         _bind_nav(grav_tab_home_btn, "home", refresh_gravity=True)
         _bind_nav(readme_tab_home_btn, "home", refresh_gravity=True)
         _bind_nav(readme_tab_render_btn, "render")
-        _bind_nav(readme_tab_anim_btn, "animations")
         _bind_readme_nav(readme_tab_readme_btn)
         _bind_status_nav(readme_tab_status_btn)
         _bind_nav(status_zoom_back_btn, "home", refresh_gravity=True)
         _bind_nav(status_tab_home_btn, "home", refresh_gravity=True)
         _bind_nav(status_tab_render_btn, "render")
         _bind_readme_nav(status_tab_readme_btn)
-        _bind_nav(status_tab_anim_btn, "animations")
         _bind_status_nav(status_tab_status_btn)
         _bind_nav(edit_tab_home_btn, "home", refresh_gravity=True)
         _bind_nav(edit_tab_render_btn, "render")
         _bind_readme_nav(edit_tab_readme_btn)
-        _bind_nav(edit_tab_anim_btn, "animations")
         _bind_status_nav(edit_tab_status_btn)
         _bind_nav(render_tab_home_btn, "home", refresh_gravity=True)
         _bind_nav(render_tab_render_btn, "render")
         _bind_readme_nav(render_tab_readme_btn)
-        _bind_nav(render_tab_anim_btn, "animations")
         _bind_status_nav(render_tab_status_btn)
         readme_back_btn.click(
             _readme_back_to_app,
@@ -10186,6 +10228,7 @@ def build_app() -> gr.Blocks:
                 *viewport,
                 *_demo_active_tab_updates("A"),
                 "A",
+                *_set_active_shape(_DEFAULT_ACTIVE_SHAPE),
             )
 
         demo.load(
@@ -10196,6 +10239,7 @@ def build_app() -> gr.Blocks:
                 gravity_viewport_video,
                 *[gravity_letter_btns[letter] for letter in _GRAVITY_CHILD_NAV_LETTERS],
                 gravity_active_letter,
+                *shape_outputs,
             ],
             show_progress="hidden",
         )
