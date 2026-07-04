@@ -887,7 +887,6 @@ def _place_back_button(
     if elem_classes:
         classes.extend(elem_classes)
     kwargs: dict = {
-        "label": label,
         "elem_classes": classes,
         "variant": "secondary",
         "scale": 0,
@@ -899,7 +898,7 @@ def _place_back_button(
         kwargs["visible"] = False
     if not interactive:
         kwargs["interactive"] = interactive
-    return gr.Button(**kwargs)
+    return gr.Button(label, **kwargs)
 
 
 def _place_main_nav_row(active_page: str) -> dict[str, gr.Button]:
@@ -4470,7 +4469,9 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-readme-page {{
     width: 100% !important;
     max-width: none !important;
-    min-height: calc(100dvh - 3.5rem) !important;
+    height: calc(100dvh - 3.5rem) !important;
+    max-height: calc(100dvh - 3.5rem) !important;
+    min-height: 0 !important;
     background: #000000 !important;
     padding: 0 !important;
     margin: 0 !important;
@@ -4478,24 +4479,81 @@ footer {{ visibility: hidden; }}
     display: flex !important;
     flex-direction: column !important;
     align-items: stretch !important;
+    overflow: hidden !important;
 }}
-.gradio-container .myst-readme-page .myst-readme-body {{
+.gradio-container .myst-readme-page > .block,
+.gradio-container .myst-readme-page > .form {{
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    max-height: 100% !important;
+    overflow: hidden !important;
+}}
+.gradio-container .myst-scrollable-panel,
+.gradio-container .myst-readme-scrollable-content {{
+    max-height: calc(100dvh - 10rem) !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    padding-right: 12px !important;
+    scrollbar-width: thin !important;
+    scrollbar-color: #4a4a6a #1a1a22 !important;
+}}
+.gradio-container .myst-scrollable-panel::-webkit-scrollbar,
+.gradio-container .myst-readme-scrollable-content::-webkit-scrollbar {{
+    width: 8px !important;
+}}
+.gradio-container .myst-scrollable-panel::-webkit-scrollbar-track,
+.gradio-container .myst-readme-scrollable-content::-webkit-scrollbar-track {{
+    background: #1a1a22 !important;
+    border-radius: 4px !important;
+}}
+.gradio-container .myst-scrollable-panel::-webkit-scrollbar-thumb,
+.gradio-container .myst-readme-scrollable-content::-webkit-scrollbar-thumb {{
+    background-color: #4a4a6a !important;
+    border-radius: 4px !important;
+    border: 2px solid #1a1a22 !important;
+}}
+.gradio-container .myst-scrollable-panel::-webkit-scrollbar-thumb:hover,
+.gradio-container .myst-readme-scrollable-content::-webkit-scrollbar-thumb:hover {{
+    background-color: #6a6a8a !important;
+}}
+.gradio-container .myst-readme-page .myst-readme-body,
+.gradio-container .myst-readme-page #readme-scroll-container {{
     flex: 1 1 auto !important;
     width: 100% !important;
+    min-height: 0 !important;
+    max-height: calc(100dvh - 10rem) !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
     background: #000000 !important;
     padding: 0 0 3rem !important;
-    scrollbar-color: #333333 #000000 !important;
+    scrollbar-color: #4a4a6a #1a1a22 !important;
     scrollbar-width: thin !important;
 }}
+.gradio-container .myst-readme-page .myst-readme-body > .block,
+.gradio-container .myst-readme-page .myst-readme-body > .form,
+.gradio-container .myst-readme-page #readme-scroll-container > .block,
+.gradio-container .myst-readme-page #readme-scroll-container > .form {{
+    min-height: 0 !important;
+    max-height: inherit !important;
+    overflow: visible !important;
+}}
 .gradio-container .myst-readme-page .myst-readme-body .html-container,
-.gradio-container .myst-readme-page .myst-readme-body .prose {{
+.gradio-container .myst-readme-page .myst-readme-body .prose,
+.gradio-container .myst-readme-page #readme-scroll-container .html-container,
+.gradio-container .myst-readme-page #readme-scroll-container .prose {{
     width: 100% !important;
     max-width: none !important;
     padding: 0 !important;
     margin: 0 !important;
     background: #000000 !important;
+}}
+.gradio-container .myst-readme-heading {{
+    color: #e0e0e0 !important;
+    margin-top: 1.5rem !important;
+    margin-bottom: 0.75rem !important;
 }}
 .gradio-container .myst-readme-fullpage {{
     color: #ffffff !important;
@@ -9272,7 +9330,14 @@ def build_app() -> gr.Blocks:
             readme_tab_status_btn = _readme_nav["status"]
             with gr.Row(elem_classes=["myst-readme-back-row"]):
                 readme_back_btn = _place_back_button("← Back to App", min_width=110)
-            with gr.Column(elem_classes=["myst-readme-body"]):
+            with gr.Column(
+                elem_classes=[
+                    "myst-readme-body",
+                    "myst-readme-scrollable-content",
+                    "myst-scrollable-panel",
+                ],
+                elem_id="readme-scroll-container",
+            ):
                 gr.HTML(build_readme_full_page_html())
 
         render_active_slot = gr.State(-1)
