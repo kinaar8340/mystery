@@ -2816,9 +2816,9 @@ footer {{
     overflow: hidden !important;
     opacity: 0 !important;
 }}
-.gradio-container:has(.myst-render-page:not(.hide)) .myst-home-demo-nav-section,
-.gradio-container:has(.myst-status-page:not(.hide)) .myst-home-demo-nav-section,
-.gradio-container:has(.myst-readme-page:not(.hide)) .myst-home-demo-nav-section {{
+.gradio-container:has(.myst-render-page:not(.hide):not(.hidden)) .myst-home-demo-nav-section,
+.gradio-container:has(.myst-status-page:not(.hide):not(.hidden)) .myst-home-demo-nav-section,
+.gradio-container:has(.myst-readme-page:not(.hide):not(.hidden)) .myst-home-demo-nav-section {{
     display: none !important;
     visibility: hidden !important;
     height: 0 !important;
@@ -2844,9 +2844,9 @@ footer {{
     opacity: 1 !important;
 }}
 .gradio-container .myst-home-demo-nav-section.hide #myst-gravity-child-nav,
-.gradio-container:has(.myst-render-page:not(.hide)) #myst-gravity-child-nav,
-.gradio-container:has(.myst-status-page:not(.hide)) #myst-gravity-child-nav,
-.gradio-container:has(.myst-readme-page:not(.hide)) #myst-gravity-child-nav {{
+.gradio-container:has(.myst-render-page:not(.hide):not(.hidden)) #myst-gravity-child-nav,
+.gradio-container:has(.myst-status-page:not(.hide):not(.hidden)) #myst-gravity-child-nav,
+.gradio-container:has(.myst-readme-page:not(.hide):not(.hidden)) #myst-gravity-child-nav {{
     display: none !important;
     visibility: hidden !important;
     height: 0 !important;
@@ -2900,8 +2900,8 @@ footer {{
 .gradio-container .myst-unified-nav-host .myst-main-nav + .myst-gap-row-host-after-main-nav + .myst-home-demo-nav-section.myst-force-visible:not(.hide) .myst-secondary-nav {{
     margin-top: 0 !important;
 }}
-.gradio-container:has(.myst-render-page:not(.hide)) #myst-gap-row-after-main-nav,
-.gradio-container:has(.myst-render-page:not(.hide)) .myst-gap-row-host-after-main-nav {{
+.gradio-container:has(.myst-render-page:not(.hide):not(.hidden)) #myst-gap-row-after-main-nav,
+.gradio-container:has(.myst-render-page:not(.hide):not(.hidden)) .myst-gap-row-host-after-main-nav {{
     min-height: 0 !important;
     height: 0 !important;
     max-height: 0 !important;
@@ -2910,8 +2910,8 @@ footer {{
     padding: 0 !important;
     overflow: hidden !important;
 }}
-.gradio-container:has(.myst-status-page:not(.hide)) #myst-gap-row-after-main-nav,
-.gradio-container:has(.myst-status-page:not(.hide)) .myst-gap-row-host-after-main-nav {{
+.gradio-container:has(.myst-status-page:not(.hide):not(.hidden)) #myst-gap-row-after-main-nav,
+.gradio-container:has(.myst-status-page:not(.hide):not(.hidden)) .myst-gap-row-host-after-main-nav {{
     min-height: 0 !important;
     height: 0 !important;
     max-height: 0 !important;
@@ -2920,8 +2920,8 @@ footer {{
     padding: 0 !important;
     overflow: hidden !important;
 }}
-.gradio-container:has(.myst-readme-page:not(.hide)) #myst-gap-row-after-main-nav,
-.gradio-container:has(.myst-readme-page:not(.hide)) .myst-gap-row-host-after-main-nav {{
+.gradio-container:has(.myst-readme-page:not(.hide):not(.hidden)) #myst-gap-row-after-main-nav,
+.gradio-container:has(.myst-readme-page:not(.hide):not(.hidden)) .myst-gap-row-host-after-main-nav {{
     min-height: 0 !important;
     height: 0 !important;
     max-height: 0 !important;
@@ -2930,31 +2930,45 @@ footer {{
     padding: 0 !important;
     overflow: hidden !important;
 }}
-.gradio-container:has(.myst-render-page:not(.hide)) .myst-unified-nav-host ~ .gap,
-.gradio-container:has(.myst-status-page:not(.hide)) .myst-unified-nav-host ~ .gap {{
-    display: none !important;
-    height: 0 !important;
-    min-height: 0 !important;
-    max-height: 0 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    overflow: hidden !important;
-}}
-.gradio-container:has(.myst-render-page:not(.hide)) .myst-render-page,
-.gradio-container:has(.myst-render-page:not(.hide)) .myst-render-page > .block,
-.gradio-container:has(.myst-render-page:not(.hide)) .myst-render-page > .form,
-.gradio-container:has(.myst-render-page:not(.hide)) .myst-render-page > .column,
-.gradio-container:has(.myst-render-page:not(.hide)) .myst-render-stack,
-.gradio-container:has(.myst-status-page:not(.hide)) .myst-status-page,
-.gradio-container:has(.myst-status-page:not(.hide)) .myst-status-page > .block,
-.gradio-container:has(.myst-status-page:not(.hide)) .myst-status-page > .form,
-.gradio-container:has(.myst-status-page:not(.hide)) .myst-status-page > .column,
-.gradio-container:has(.myst-status-page:not(.hide)) .myst-status-stack {{
+/* Gradio Columns also use class "gap" — never hide .myst-unified-nav-host ~ .gap (it hides page columns). */
+.gradio-container:has(.myst-render-page:not(.hide):not(.hidden)) .myst-render-page,
+.gradio-container:has(.myst-render-page:not(.hide):not(.hidden)) .myst-render-page > .block,
+.gradio-container:has(.myst-render-page:not(.hide):not(.hidden)) .myst-render-page > .form,
+.gradio-container:has(.myst-render-page:not(.hide):not(.hidden)) .myst-render-page > .column,
+.gradio-container:has(.myst-render-page:not(.hide):not(.hidden)) .myst-render-stack,
+.gradio-container:has(.myst-status-page:not(.hide):not(.hidden)) .myst-status-page,
+.gradio-container:has(.myst-status-page:not(.hide):not(.hidden)) .myst-status-page > .block,
+.gradio-container:has(.myst-status-page:not(.hide):not(.hidden)) .myst-status-page > .form,
+.gradio-container:has(.myst-status-page:not(.hide):not(.hidden)) .myst-status-page > .column,
+.gradio-container:has(.myst-status-page:not(.hide):not(.hidden)) .myst-status-stack {{
+    display: flex !important;
+    visibility: visible !important;
     margin-top: 0 !important;
     padding-top: 0 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    pointer-events: auto !important;
 }}
-.gradio-container:has(.myst-render-page:not(.hide)) #myst-render-sub-nav.myst-secondary-nav,
-.gradio-container:has(.myst-status-page:not(.hide)) #myst-status-zoom-nav.myst-secondary-nav {{
+.gradio-container:has(.myst-gravity-page:not(.hide):not(.hidden)) .myst-gravity-page,
+.gradio-container:has(.myst-gravity-page:not(.hide):not(.hidden)) .myst-gravity-page > .block,
+.gradio-container:has(.myst-gravity-page:not(.hide):not(.hidden)) .myst-gravity-page > .form,
+.gradio-container:has(.myst-gravity-page:not(.hide):not(.hidden)) .myst-gravity-page > .column,
+.gradio-container:has(.myst-gravity-page:not(.hide):not(.hidden)) #myst-gravity-viewport-wrapper,
+.gradio-container:has(.myst-gravity-page:not(.hide):not(.hidden)) .myst-gravity-single-viewport,
+.gradio-container:has(.myst-gravity-page:not(.hide):not(.hidden)) #myst-gravity-viewport-plot {{
+    display: flex !important;
+    visibility: visible !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    pointer-events: auto !important;
+}}
+.gradio-container:has(.myst-gravity-page:not(.hide):not(.hidden)) #myst-gravity-viewport-plot {{
+    display: block !important;
+}}
+.gradio-container:has(.myst-render-page:not(.hide):not(.hidden)) #myst-render-sub-nav.myst-secondary-nav,
+.gradio-container:has(.myst-status-page:not(.hide):not(.hidden)) #myst-status-zoom-nav.myst-secondary-nav {{
     margin-top: var(--myst-default-gap-height, {_myst_default_gap_height}) !important;
     margin-bottom: 0 !important;
 }}
@@ -3743,7 +3757,7 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-gravity-page .vqc-plot3d-panel img {{
     background-color: #000000 !important;
 }}
-.gradio-container:has(.myst-gravity-page) {{
+.gradio-container:has(.myst-gravity-page:not(.hide):not(.hidden)) {{
     overflow: hidden !important;
     max-height: 100dvh !important;
     padding: 0.15rem 0.5rem 0 !important;
@@ -3752,17 +3766,17 @@ footer {{ visibility: hidden; }}
     min-height: calc(100dvh - 3.5rem) !important;
     box-sizing: border-box !important;
 }}
-.gradio-container:has(.myst-gravity-page) .main,
-.gradio-container:has(.myst-gravity-page) .main > .wrap,
-.gradio-container:has(.myst-gravity-page) .contain {{
+.gradio-container:has(.myst-gravity-page:not(.hide):not(.hidden)) .main,
+.gradio-container:has(.myst-gravity-page:not(.hide):not(.hidden)) .main > .wrap,
+.gradio-container:has(.myst-gravity-page:not(.hide):not(.hidden)) .contain {{
     flex: 1 1 0 !important;
     min-height: 0 !important;
     height: 100% !important;
     display: flex !important;
     flex-direction: column !important;
 }}
-.gradio-container:has(.myst-gravity-page) .myst-app-footer,
-.gradio-container:has(.myst-gravity-page) .myst-app-footer.block {{
+.gradio-container:has(.myst-gravity-page:not(.hide):not(.hidden)) .myst-app-footer,
+.gradio-container:has(.myst-gravity-page:not(.hide):not(.hidden)) .myst-app-footer.block {{
     display: none !important;
     height: 0 !important;
     min-height: 0 !important;
@@ -6129,11 +6143,17 @@ footer {{ visibility: hidden; }}
     flex-direction: column !important;
 }}
 .gradio-container .myst-status-page.hide,
+.gradio-container .myst-status-page.hidden,
 .gradio-container .myst-render-page.hide,
+.gradio-container .myst-render-page.hidden,
 .gradio-container .myst-gravity-page.hide,
+.gradio-container .myst-gravity-page.hidden,
 .gradio-container .myst-edit-page.hide,
+.gradio-container .myst-edit-page.hidden,
 .gradio-container .myst-readme-page.hide,
-.gradio-container .vqc-animations-page.hide {{
+.gradio-container .myst-readme-page.hidden,
+.gradio-container .vqc-animations-page.hide,
+.gradio-container .vqc-animations-page.hidden {{
     display: none !important;
     visibility: hidden !important;
     height: 0 !important;
@@ -6482,7 +6502,7 @@ footer {{ visibility: hidden; }}
     align-items: unset !important;
     justify-content: unset !important;
 }}
-.gradio-container:has(.myst-render-page:not(.hide)) {{
+.gradio-container:has(.myst-render-page:not(.hide):not(.hidden)) {{
     padding-left: 0 !important;
     padding-right: 0 !important;
 }}
