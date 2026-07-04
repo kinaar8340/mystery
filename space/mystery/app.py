@@ -1452,21 +1452,56 @@ WALLPAPER_HEAD = f"""
         return host.querySelector('.plotly-graph-div')
             || document.querySelector('#myst-gravity-viewport .plotly-graph-div');
     }}
+    function mystResizeGravityPlot() {{
+        var host = document.getElementById('myst-gravity-viewport-wrapper')
+            || document.getElementById('myst-gravity-viewport');
+        var plot = mystBreathingPlotDiv();
+        if (!host || !plot || !window.Plotly) return;
+        var h = Math.max(580, Math.round(host.getBoundingClientRect().height) - 8);
+        plot.style.height = h + 'px';
+        plot.style.width = '100%';
+        try {{ window.Plotly.Plots.resize(plot); }} catch (_err) {{}}
+    }}
     function mystRunBreathingAnimate(plotDiv) {{
         if (!plotDiv || !window.Plotly) return false;
         var frames = (plotDiv._transitionData && plotDiv._transitionData.frames)
             || plotDiv.frames;
         if (!frames || frames.length <= 5) return false;
+        mystResizeGravityPlot();
         var animOpts = {{
             frame: {{ duration: 70, redraw: true }},
             transition: {{ duration: 0 }},
             mode: 'immediate'
         }};
-        window.Plotly.animate(plotDiv, null, animOpts);
-        plotDiv.on('plotly_animated', function() {{
+        try {{
             window.Plotly.animate(plotDiv, null, animOpts);
-        }});
+        }} catch (_err) {{
+            console.warn('Plotly.animate failed', _err);
+            return false;
+        }}
+        if (plotDiv.dataset.mystBreathingLoopBound !== '1') {{
+            plotDiv.dataset.mystBreathingLoopBound = '1';
+            plotDiv.on('plotly_animated', function() {{
+                window.Plotly.animate(plotDiv, null, animOpts);
+            }});
+        }}
         return true;
+    }}
+    function mystBindBreathingMenuButtons() {{
+        var host = document.getElementById('myst-gravity-viewport');
+        if (!host) return;
+        host.querySelectorAll('.updatemenu button, .modebar-btn').forEach(function(btn) {{
+            if (btn.dataset.mystBreathingBound === '1') return;
+            var label = (btn.getAttribute('data-title') || btn.textContent || '').toLowerCase();
+            if (label.indexOf('breathing') < 0 && label.indexOf('play') < 0) return;
+            btn.dataset.mystBreathingBound = '1';
+            btn.addEventListener('click', function() {{
+                setTimeout(function() {{
+                    var plot = mystBreathingPlotDiv();
+                    if (plot) mystRunBreathingAnimate(plot);
+                }}, 80);
+            }}, true);
+        }});
     }}
     function startBreathingAnimation() {{
         var plotDiv = mystBreathingPlotDiv();
@@ -1476,19 +1511,29 @@ WALLPAPER_HEAD = f"""
         }}
         if (plotDiv.dataset.mystBreathingPoll === '1') return;
         plotDiv.dataset.mystBreathingPoll = '1';
+        var tries = 0;
         var checkFrames = setInterval(function() {{
+            tries += 1;
             var plot = mystBreathingPlotDiv();
-            if (!plot || !window.Plotly) return;
+            if (!plot || !window.Plotly) {{
+                if (tries > 40) clearInterval(checkFrames);
+                return;
+            }}
             var frameCount = 0;
             if (plot._transitionData && plot._transitionData.frames) {{
                 frameCount = plot._transitionData.frames.length;
             }} else if (plot.frames) {{
                 frameCount = plot.frames.length;
             }}
+            mystBindBreathingMenuButtons();
+            mystResizeGravityPlot();
             if (frameCount > 5) {{
                 clearInterval(checkFrames);
                 plot.dataset.mystBreathingPoll = '0';
                 mystRunBreathingAnimate(plot);
+            }} else if (tries > 40) {{
+                clearInterval(checkFrames);
+                plot.dataset.mystBreathingPoll = '0';
             }}
         }}, 300);
     }}
@@ -1497,30 +1542,36 @@ WALLPAPER_HEAD = f"""
         if (window.__mystGravityBreathingObs) return;
         window.__mystGravityBreathingObs = new MutationObserver(function() {{
             var plot = mystBreathingPlotDiv();
-            if (plot) plot.dataset.mystBreathingPoll = '0';
+            if (plot) {{
+                plot.dataset.mystBreathingPoll = '0';
+                plot.dataset.mystBreathingLoopBound = '0';
+            }}
+            mystBindBreathingMenuButtons();
+            mystResizeGravityPlot();
             setTimeout(startBreathingAnimation, 400);
         }});
         var host = document.getElementById('myst-gravity-viewport')
+            || document.getElementById('myst-gravity-viewport-wrapper')
             || document.querySelector('.myst-gravity-page');
         if (host) {{
             window.__mystGravityBreathingObs.observe(host, {{
-                subtree: true, childList: true
+                subtree: true, childList: true, attributes: true
             }});
         }}
+        window.addEventListener('resize', function() {{
+            requestAnimationFrame(mystResizeGravityPlot);
+        }});
     }}
     window.mystForceBreathingAnimate = function() {{
-        var host = document.getElementById('myst-gravity-viewport');
         var plot = mystBreathingPlotDiv();
-        if (plot && plot._transitionData && plot._transitionData.frames) {{
-            console.log('Frames found:', plot._transitionData.frames.length);
-            return mystRunBreathingAnimate(plot);
+        if (!plot) {{
+            console.log('plotly-graph-div not ready');
+            return false;
         }}
-        if (host) {{
-            console.log('Host found; plotly-graph-div not ready — retry with mystForceBreathingAnimate()');
-        }} else {{
-            console.log('No frames or plot not ready');
-        }}
-        return false;
+        var n = (plot._transitionData && plot._transitionData.frames && plot._transitionData.frames.length)
+            || (plot.frames && plot.frames.length) || 0;
+        console.log('Frame count:', n);
+        return mystRunBreathingAnimate(plot);
     }};
     document.addEventListener('DOMContentLoaded', bootBreathingAnimation);
     if (document.body) bootBreathingAnimation();
@@ -6568,6 +6619,15 @@ def _gravity_child_nav_output_updates(active_slot: int = -1) -> tuple:
     return (gr.skip(), *_gravity_child_nav_btn_updates(active_slot))
 
 
+def _demo_active_tab_updates(active_letter: str) -> tuple:
+    """Orange active styling for Demo A–I — kept separate from click bindings."""
+    letter = str(active_letter).strip().upper()
+    if letter not in _GRAVITY_CHILD_NAV_LETTERS:
+        letter = "A"
+    slot = ord(letter) - ord("A")
+    return _gravity_child_nav_output_updates(slot)
+
+
 _GRAVITY_DEMO_VIDEO_CACHE: dict[str, str] = {}
 
 
@@ -6666,10 +6726,10 @@ def _create_breathing_animation(*, fresh: bool = False):
 
 
 def _launch_demo_a() -> tuple:
-    """Demo A — stable-topology breathing animation + orange active state."""
+    """Demo A — breathing animation; styling updated separately from binding."""
     return (
-        _create_breathing_animation(),
-        *_gravity_child_nav_output_updates(0),
+        _create_breathing_animation(fresh=True),
+        *_demo_active_tab_updates("A"),
         "A",
     )
 
@@ -6707,7 +6767,7 @@ def _switch_gravity_demo(letter: str) -> tuple:
     fig = _get_gravity_demo_plotly_figure(letter)
     return (
         fig,
-        *_gravity_child_nav_output_updates(slot),
+        *_demo_active_tab_updates(letter),
         letter,
     )
 
@@ -9664,7 +9724,7 @@ def build_app() -> gr.Blocks:
             return (
                 *_nav_to_page("home"),
                 _create_breathing_animation(),
-                *_gravity_child_nav_output_updates(0),
+                *_demo_active_tab_updates("A"),
                 "A",
             )
 

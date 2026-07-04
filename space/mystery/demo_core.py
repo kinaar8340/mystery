@@ -2359,50 +2359,65 @@ def create_simple_breathing_test_animation():
                         i=i,
                         j=j,
                         k=k,
-                        color="#4a90e2",
-                        opacity=0.7,
+                        color="#5eb3ff",
+                        opacity=1.0,
                         flatshading=True,
+                        lighting=dict(
+                            ambient=0.62,
+                            diffuse=0.92,
+                            specular=0.35,
+                            roughness=0.45,
+                        ),
+                        lightposition=dict(x=3, y=4, z=2),
+                        hoverinfo="skip",
+                        showscale=False,
                     )
                 ],
                 name=str(t),
             )
         )
 
-    fig = go.Figure(
-        data=frames[0].data,
-        frames=frames,
-        layout=go.Layout(
-            scene=dict(
-                aspectmode="cube",
-                xaxis=dict(visible=False),
-                yaxis=dict(visible=False),
-                zaxis=dict(visible=False),
-            ),
-            height=620,
-            margin=dict(l=0, r=0, t=30, b=0),
-            paper_bgcolor="#000000",
-            plot_bgcolor="#000000",
-            updatemenus=[
-                {
-                    "type": "buttons",
-                    "showactive": False,
-                    "buttons": [
-                        {
-                            "label": "▶ Breathing",
-                            "method": "animate",
-                            "args": [
-                                None,
-                                {
-                                    "frame": {"duration": 70, "redraw": True},
-                                    "mode": "immediate",
-                                    "transition": {"duration": 0},
-                                },
-                            ],
-                        }
-                    ],
-                }
-            ],
+    half = 2.5
+    fig = go.Figure(data=frames[0].data, frames=frames)
+    fig.update_layout(
+        height=620,
+        autosize=True,
+        margin=dict(l=0, r=0, t=36, b=0),
+        paper_bgcolor="#0a0a0f",
+        plot_bgcolor="#0a0a0f",
+        showlegend=False,
+        scene=dict(
+            aspectmode="cube",
+            bgcolor="#0a0a0f",
+            xaxis=dict(visible=False, range=[-half, half]),
+            yaxis=dict(visible=False, range=[-half, half]),
+            zaxis=dict(visible=False, range=[-half, half]),
+            camera=_plotly_camera_from_view(UNIT_CELL_VIEW_ELEV, UNIT_CELL_VIEW_AZIM),
+            dragmode="orbit",
         ),
+        updatemenus=[
+            {
+                "type": "buttons",
+                "showactive": False,
+                "y": 1.02,
+                "x": 0.02,
+                "buttons": [
+                    {
+                        "label": "▶ Breathing",
+                        "method": "animate",
+                        "args": [
+                            None,
+                            {
+                                "frame": {"duration": 70, "redraw": True},
+                                "fromcurrent": False,
+                                "mode": "immediate",
+                                "transition": {"duration": 0},
+                            },
+                        ],
+                    }
+                ],
+            }
+        ],
     )
     print(
         f"[breathing] create_simple_breathing_test_animation: {len(frames)} frames",
@@ -2416,7 +2431,10 @@ def create_breathing_animation(*, fresh: bool = False):
     import plotly.graph_objects as go
 
     if BREATHING_ANIMATION_MODE == "test_cube":
-        return create_simple_breathing_test_animation()
+        fig = create_simple_breathing_test_animation()
+        if fresh:
+            fig = go.Figure(fig.to_dict())
+        return fig
 
     fig = build_breathing_animation_figure()
     if not fig.frames:
