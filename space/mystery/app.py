@@ -2375,8 +2375,8 @@ footer {{
 .gradio-container .vqc-source-tabs-row button.vqc-source-tab.main-nav-btn.active[disabled],
 .gradio-container .vqc-source-tabs-row button.vqc-source-tab.main-nav-btn.active:disabled span,
 .gradio-container .vqc-source-tabs-row button.vqc-source-tab.main-nav-btn.active[disabled] span {{
-    color: #ffffff !important;
-    -webkit-text-fill-color: #ffffff !important;
+    color: #00FF00 !important;
+    -webkit-text-fill-color: #00FF00 !important;
     border-color: #00FF00 !important;
     box-shadow: 0 0 0 1px #00FF00 !important;
     font-weight: 600 !important;
@@ -2395,18 +2395,13 @@ footer {{
     color: cyan !important;
     -webkit-text-fill-color: cyan !important;
     border-color: cyan !important;
-    box-shadow: 0 0 0 1px cyan !important;
+    box-shadow: 0 0 8px rgba(0, 255, 255, 0.65), 0 0 0 1px cyan !important;
     font-weight: 600 !important;
 }}
 /* ========== DEMO: BAR (A–I) + Render/Presets 01–09 ========== */
 .gradio-container button.vqc-source-tab.demo-btn.active,
-.gradio-container button.vqc-source-tab.demo-btn.active span,
 .gradio-container button.vqc-source-tab.demo-btn.active:disabled,
-.gradio-container button.vqc-source-tab.demo-btn.active[disabled],
-.gradio-container button.vqc-source-tab.demo-btn.active:disabled span,
-.gradio-container button.vqc-source-tab.demo-btn.active[disabled] span {{
-    color: #ffffff !important;
-    -webkit-text-fill-color: #ffffff !important;
+.gradio-container button.vqc-source-tab.demo-btn.active[disabled] {{
     border-color: orange !important;
     box-shadow: 0 0 0 1px orange !important;
     font-weight: 600 !important;
