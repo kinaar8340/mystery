@@ -2887,10 +2887,76 @@ footer {{
     border: none !important;
     box-shadow: none !important;
 }}
+.gradio-container .myst-main-nav,
+.gradio-container .myst-secondary-nav {{
+    margin-bottom: 0 !important;
+}}
 .gradio-container .myst-secondary-nav {{
     margin-top: 0 !important;
-    margin-bottom: 0 !important;
     gap: var(--nav-grid-gap, 4px) !important;
+}}
+/* Mystery → Demo: theme gap only (Home: gap row; Render/Presets: page sub-nav margin) */
+.gradio-container .myst-unified-nav-host .myst-main-nav + .myst-gap-row-host-after-main-nav + .myst-home-demo-nav-section:not(.hide) .myst-secondary-nav,
+.gradio-container .myst-unified-nav-host .myst-main-nav + .myst-gap-row-host-after-main-nav + .myst-home-demo-nav-section.myst-force-visible:not(.hide) .myst-secondary-nav {{
+    margin-top: 0 !important;
+}}
+.gradio-container:has(.myst-render-page:not(.hide)) #myst-gap-row-after-main-nav,
+.gradio-container:has(.myst-render-page:not(.hide)) .myst-gap-row-host-after-main-nav {{
+    min-height: 0 !important;
+    height: 0 !important;
+    max-height: 0 !important;
+    flex: 0 0 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+}}
+.gradio-container:has(.myst-status-page:not(.hide)) #myst-gap-row-after-main-nav,
+.gradio-container:has(.myst-status-page:not(.hide)) .myst-gap-row-host-after-main-nav {{
+    min-height: 0 !important;
+    height: 0 !important;
+    max-height: 0 !important;
+    flex: 0 0 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+}}
+.gradio-container:has(.myst-readme-page:not(.hide)) #myst-gap-row-after-main-nav,
+.gradio-container:has(.myst-readme-page:not(.hide)) .myst-gap-row-host-after-main-nav {{
+    min-height: 0 !important;
+    height: 0 !important;
+    max-height: 0 !important;
+    flex: 0 0 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+}}
+.gradio-container:has(.myst-render-page:not(.hide)) .myst-unified-nav-host ~ .gap,
+.gradio-container:has(.myst-status-page:not(.hide)) .myst-unified-nav-host ~ .gap {{
+    display: none !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    max-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+}}
+.gradio-container:has(.myst-render-page:not(.hide)) .myst-render-page,
+.gradio-container:has(.myst-render-page:not(.hide)) .myst-render-page > .block,
+.gradio-container:has(.myst-render-page:not(.hide)) .myst-render-page > .form,
+.gradio-container:has(.myst-render-page:not(.hide)) .myst-render-page > .column,
+.gradio-container:has(.myst-render-page:not(.hide)) .myst-render-stack,
+.gradio-container:has(.myst-status-page:not(.hide)) .myst-status-page,
+.gradio-container:has(.myst-status-page:not(.hide)) .myst-status-page > .block,
+.gradio-container:has(.myst-status-page:not(.hide)) .myst-status-page > .form,
+.gradio-container:has(.myst-status-page:not(.hide)) .myst-status-page > .column,
+.gradio-container:has(.myst-status-page:not(.hide)) .myst-status-stack {{
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+}}
+.gradio-container:has(.myst-render-page:not(.hide)) #myst-render-sub-nav.myst-secondary-nav,
+.gradio-container:has(.myst-status-page:not(.hide)) #myst-status-zoom-nav.myst-secondary-nav {{
+    margin-top: var(--myst-default-gap-height, {_myst_default_gap_height}) !important;
+    margin-bottom: 0 !important;
 }}
 /* Consistent nav button width from NAV_THEME */
 .gradio-container button.vqc-source-tab.main-nav-btn,
@@ -3002,7 +3068,7 @@ footer {{
 }}
 .gradio-container .myst-demo-preset-nav-row,
 .gradio-container .vqc-status-preset-nav-row {{
-    margin: 0.04rem 0 0.12rem 0 !important;
+    margin: 0 !important;
     width: 100% !important;
     overflow: visible !important;
 }}
