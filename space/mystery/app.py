@@ -3773,16 +3773,7 @@ footer {{ visibility: hidden; }}
     display: flex !important;
     flex-direction: column !important;
 }}
-.gradio-container:has(.myst-gravity-page:not(.hide):not(.hidden)) .myst-app-footer,
-.gradio-container:has(.myst-gravity-page:not(.hide):not(.hidden)) .myst-app-footer.block {{
-    display: none !important;
-    height: 0 !important;
-    min-height: 0 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    overflow: hidden !important;
-    visibility: hidden !important;
-}}
+
 .gradio-container .myst-gravity-page {{
     --myst-gravity-ui-scale: 1.33;
     --myst-gravity-control-bar-height: calc(1.54rem * var(--myst-gravity-ui-scale));
@@ -5235,9 +5226,18 @@ footer {{ visibility: hidden; }}
     line-height: 1.45 !important;
 }}
 .gradio-container .myst-app-footer,
-.gradio-container .myst-app-footer.block {{
+.gradio-container .myst-app-footer.block,
+.gradio-container .myst-app-footer > .block,
+.gradio-container .myst-app-footer > .form {{
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    max-height: 0 !important;
     margin: 0 !important;
-    padding: 0.05rem 0.25rem !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    pointer-events: none !important;
     background: transparent !important;
     border: none !important;
     box-shadow: none !important;
@@ -6156,8 +6156,28 @@ footer {{ visibility: hidden; }}
     visibility: hidden !important;
     height: 0 !important;
     min-height: 0 !important;
+    max-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
     overflow: hidden !important;
     pointer-events: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    opacity: 0 !important;
+}}
+.gradio-container .myst-gravity-page.hide > .block,
+.gradio-container .myst-gravity-page.hide > .form,
+.gradio-container .myst-gravity-page.hidden > .block,
+.gradio-container .myst-gravity-page.hidden > .form,
+.gradio-container .myst-render-page.hide > .block,
+.gradio-container .myst-render-page.hide > .form,
+.gradio-container .myst-status-page.hide > .block,
+.gradio-container .myst-status-page.hide > .form {{
+    display: none !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
 }}
 .gradio-container .myst-status-page .myst-status-grid-wrap {{
     width: 100% !important;
@@ -6404,8 +6424,9 @@ footer {{ visibility: hidden; }}
 }}
 .gradio-container .myst-render-page .myst-render-grid-wrap {{
     width: 100% !important;
-    height: 100% !important;
-    min-height: calc(100dvh - 7.5rem - var(--myst-render-grid-bottom-frame, 0.38rem)) !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: calc(100dvh - 9rem - var(--myst-render-grid-bottom-frame, 0.38rem)) !important;
     flex: 1 1 auto !important;
     display: flex !important;
     flex-direction: column !important;
@@ -6414,22 +6435,24 @@ footer {{ visibility: hidden; }}
     justify-content: flex-start !important;
     padding: 0 0 var(--myst-render-grid-bottom-frame, 0.38rem) 0 !important;
     margin: 0 !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
     background: transparent !important;
     box-sizing: border-box !important;
 }}
 .gradio-container .myst-render-page .myst-render-grid {{
     display: grid !important;
     grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-    grid-template-rows: repeat(3, minmax(10rem, 1fr)) !important;
+    grid-template-rows: repeat(3, minmax(10rem, auto)) !important;
     gap: var(--myst-render-grid-gap, 0.18rem) !important;
     width: 100% !important;
-    height: calc(100dvh - 7.5rem - var(--myst-render-grid-bottom-frame, 0.38rem)) !important;
-    min-height: calc(100dvh - 7.5rem - var(--myst-render-grid-bottom-frame, 0.38rem)) !important;
-    flex: 1 1 auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+    flex: 0 0 auto !important;
     margin: 0 !important;
     padding: 0 !important;
     background: transparent !important;
-    align-content: stretch !important;
+    align-content: start !important;
     box-sizing: border-box !important;
 }}
 .gradio-container .myst-render-page .myst-render-grid-cell {{
@@ -6450,12 +6473,14 @@ footer {{ visibility: hidden; }}
 }}
 .gradio-container .myst-render-page .myst-render-catalog-host:not(.hide):not(.hidden) {{
     flex: 1 1 auto !important;
-    min-height: calc(100dvh - 8.5rem) !important;
+    min-height: 0 !important;
+    max-height: calc(100dvh - 9rem) !important;
     height: auto !important;
     display: flex !important;
     flex-direction: column !important;
     padding: 0 !important;
     margin: 0 !important;
+    overflow: hidden !important;
     align-items: stretch !important;
 }}
 .gradio-container .myst-render-page .myst-render-catalog-host:not(.hide):not(.hidden) #myst-render-grid-host,
@@ -6470,10 +6495,12 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-render-page #myst-render-grid-host .prose {{
     width: 100% !important;
     max-width: 100% !important;
-    min-height: calc(100dvh - 8.5rem - var(--myst-render-grid-bottom-frame, 0.38rem)) !important;
-    height: calc(100dvh - 7.5rem - var(--myst-render-grid-bottom-frame, 0.38rem)) !important;
+    min-height: 0 !important;
+    height: auto !important;
+    max-height: calc(100dvh - 9rem - var(--myst-render-grid-bottom-frame, 0.38rem)) !important;
     flex: 1 1 auto !important;
-    overflow: visible !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
     padding: 0 !important;
     margin: 0 !important;
     background: transparent !important;
@@ -6483,22 +6510,9 @@ footer {{ visibility: hidden; }}
     display: flex !important;
     flex-direction: column !important;
     align-items: stretch !important;
-    align-content: stretch !important;
+    align-content: start !important;
     justify-content: flex-start !important;
     box-sizing: border-box !important;
-}}
-.gradio-container .myst-render-page .myst-render-plot-host .myst-render-grid-viewport,
-.gradio-container .myst-render-page .myst-render-plot-host .myst-unit-cell-viewport-inner {{
-    width: 100% !important;
-    height: 100% !important;
-    min-height: 0 !important;
-    max-width: none !important;
-    max-height: none !important;
-    display: block !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    align-items: unset !important;
-    justify-content: unset !important;
 }}
 .gradio-container:has(.myst-render-page:not(.hide):not(.hidden)) {{
     padding-left: 0 !important;
@@ -6811,7 +6825,8 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-render-page .myst-render-stack {{
     width: 100% !important;
     flex: 1 1 auto !important;
-    min-height: calc(100dvh - 8rem) !important;
+    min-height: 0 !important;
+    max-height: calc(100dvh - 5.5rem) !important;
     height: auto !important;
     display: flex !important;
     flex-direction: column !important;
@@ -6820,15 +6835,18 @@ footer {{ visibility: hidden; }}
     gap: 0 !important;
     padding: 0 !important;
     margin: 0 !important;
+    overflow: hidden !important;
     background: transparent !important;
 }}
 .gradio-container .myst-render-page .myst-render-stack > .block:has(.myst-render-catalog-host):not(.hide):not(.hidden),
 .gradio-container .myst-render-page .myst-render-stack > .form:has(.myst-render-catalog-host):not(.hide):not(.hidden),
 .gradio-container .myst-render-page .myst-render-stack > .column.myst-render-catalog-host:not(.hide):not(.hidden) {{
     flex: 1 1 auto !important;
-    min-height: calc(100dvh - 8.5rem) !important;
+    min-height: 0 !important;
+    max-height: calc(100dvh - 9rem) !important;
     height: auto !important;
     width: 100% !important;
+    overflow: hidden !important;
     align-items: stretch !important;
 }}
 .gradio-container .myst-render-page .myst-render-preset-nav-wrap,
