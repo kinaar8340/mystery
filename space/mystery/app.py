@@ -45,6 +45,7 @@ from demo_core import (
     render_gravity_demo_animation_video,
     render_breathing_demo_video,
     build_breathing_animation_figure,
+    build_readme_full_page_html,
     create_breathing_animation,
     figure_to_viewport_cached_html,
     residual_from_scales,
@@ -1077,6 +1078,24 @@ def _nav_to_status_page(current_page: str, content_open: bool) -> tuple:
         True,
         *grid_reset,
     )
+
+
+_README_RETURN_PAGES = frozenset({"home", "render", "animations", "status"})
+
+
+def _readme_return_page(from_page: str) -> str:
+    page = str(from_page or "home").strip().lower()
+    return page if page in _README_RETURN_PAGES else "home"
+
+
+def _open_readme_page(from_page: str) -> tuple:
+    """Open README full-page view; remember prior tab for Back."""
+    return (*_nav_to_page("readme"), _readme_return_page(from_page))
+
+
+def _readme_back_to_app(return_page: str) -> tuple:
+    """Return from README to the tab the user came from."""
+    return _nav_to_page(_readme_return_page(return_page))
 
 
 def _nav_to_page(page: str) -> tuple:
@@ -4397,10 +4416,225 @@ footer {{ visibility: hidden; }}
 }}
 .gradio-container .myst-readme-page {{
     width: 100% !important;
+    max-width: none !important;
+    min-height: calc(100dvh - 3.5rem) !important;
+    background: #000000 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    position: relative !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
 }}
-.gradio-container .myst-readme-page .markdown.prose {{
-    font-size: 0.94rem !important;
-    line-height: 1.5 !important;
+.gradio-container .myst-readme-page .myst-readme-body {{
+    flex: 1 1 auto !important;
+    width: 100% !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    background: #000000 !important;
+    padding: 0 0 3rem !important;
+    scrollbar-color: #333333 #000000 !important;
+    scrollbar-width: thin !important;
+}}
+.gradio-container .myst-readme-page .myst-readme-body .html-container,
+.gradio-container .myst-readme-page .myst-readme-body .prose {{
+    width: 100% !important;
+    max-width: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: #000000 !important;
+}}
+.gradio-container .myst-readme-fullpage {{
+    color: #ffffff !important;
+    background: #000000 !important;
+    font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif !important;
+    font-size: 1.125rem !important;
+    line-height: 1.75 !important;
+    max-width: 52rem !important;
+    margin: 0 auto !important;
+    padding: 1.25rem 1.5rem 4rem !important;
+    box-sizing: border-box !important;
+}}
+.gradio-container .myst-readme-fullpage h1 {{
+    font-size: 2rem !important;
+    line-height: 1.2 !important;
+    font-weight: 700 !important;
+    color: #ffffff !important;
+    margin: 0.35rem 0 1rem !important;
+}}
+.gradio-container .myst-readme-fullpage h2 {{
+    font-size: 1.45rem !important;
+    line-height: 1.3 !important;
+    font-weight: 650 !important;
+    color: #ffffff !important;
+    margin: 0 0 0.85rem !important;
+}}
+.gradio-container .myst-readme-fullpage h3 {{
+    font-size: 1.15rem !important;
+    line-height: 1.35 !important;
+    font-weight: 600 !important;
+    color: #f0f0f0 !important;
+    margin: 1.25rem 0 0.65rem !important;
+}}
+.gradio-container .myst-readme-fullpage p,
+.gradio-container .myst-readme-fullpage li {{
+    color: #ffffff !important;
+    font-size: 1.125rem !important;
+    line-height: 1.75 !important;
+}}
+.gradio-container .myst-readme-fullpage a {{
+    color: #9ecbff !important;
+    text-decoration: underline !important;
+    text-underline-offset: 2px !important;
+}}
+.gradio-container .myst-readme-fullpage a:hover {{
+    color: #c8e4ff !important;
+}}
+.gradio-container .myst-readme-fullpage code {{
+    color: #e8e8e8 !important;
+    background: #1a1a1a !important;
+    padding: 0.1rem 0.35rem !important;
+    border-radius: 4px !important;
+    font-size: 0.95em !important;
+}}
+.gradio-container .myst-readme-fullpage blockquote {{
+    border-left: 3px solid #444444 !important;
+    margin: 1rem 0 !important;
+    padding: 0.35rem 0 0.35rem 1.1rem !important;
+    color: #dddddd !important;
+    font-style: italic !important;
+}}
+.gradio-container .myst-readme-kicker {{
+    font-size: 0.82rem !important;
+    letter-spacing: 0.12em !important;
+    text-transform: uppercase !important;
+    color: #888888 !important;
+    margin: 0 0 0.35rem !important;
+}}
+.gradio-container .myst-readme-lead {{
+    color: #cccccc !important;
+    margin-top: 0 !important;
+}}
+.gradio-container .myst-readme-muted {{
+    color: #aaaaaa !important;
+    font-size: 1rem !important;
+}}
+.gradio-container .myst-readme-formula {{
+    font-size: 1.55rem !important;
+    font-weight: 600 !important;
+    text-align: center !important;
+    letter-spacing: 0.04em !important;
+    margin: 1rem 0 1.25rem !important;
+    color: #ffffff !important;
+}}
+.gradio-container .myst-readme-divider {{
+    border: none !important;
+    border-top: 1px solid #2a2a2a !important;
+    margin: 2rem 0 !important;
+}}
+.gradio-container .myst-readme-card {{
+    background: #0a0a0a !important;
+    border: 1px solid #2a2a2a !important;
+    border-radius: 10px !important;
+    padding: 1.15rem 1.25rem !important;
+    margin-bottom: 1.5rem !important;
+}}
+.gradio-container .myst-readme-exec-title {{
+    margin-top: 0 !important;
+    font-size: 1.2rem !important;
+    color: #f5e6c8 !important;
+}}
+.gradio-container .myst-readme-exec-list,
+.gradio-container .myst-readme-steps {{
+    margin: 0.75rem 0 0 !important;
+    padding-left: 1.35rem !important;
+}}
+.gradio-container .myst-readme-table {{
+    width: 100% !important;
+    border-collapse: collapse !important;
+    margin-top: 0.75rem !important;
+    font-size: 1rem !important;
+}}
+.gradio-container .myst-readme-table th,
+.gradio-container .myst-readme-table td {{
+    border: 1px solid #333333 !important;
+    padding: 0.55rem 0.7rem !important;
+    text-align: left !important;
+    color: #ffffff !important;
+}}
+.gradio-container .myst-readme-table th {{
+    background: #141414 !important;
+    color: #dddddd !important;
+    font-weight: 600 !important;
+}}
+.gradio-container .myst-readme-figure-grid {{
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 1rem !important;
+    margin-top: 1rem !important;
+}}
+.gradio-container .myst-readme-figure {{
+    margin: 0 !important;
+    background: #0a0a0a !important;
+    border: 1px solid #2a2a2a !important;
+    border-radius: 8px !important;
+    overflow: hidden !important;
+}}
+.gradio-container .myst-readme-figure img {{
+    width: 100% !important;
+    height: auto !important;
+    display: block !important;
+    background: #000000 !important;
+}}
+.gradio-container .myst-readme-figure figcaption {{
+    padding: 0.45rem 0.6rem !important;
+    font-size: 0.88rem !important;
+    color: #aaaaaa !important;
+    text-align: center !important;
+}}
+.gradio-container .myst-readme-footer .myst-readme-tagline {{
+    font-size: 1.2rem !important;
+    margin: 1.25rem 0 0.5rem !important;
+}}
+.gradio-container .myst-readme-signature {{
+    color: #cccccc !important;
+    margin-top: 0.5rem !important;
+}}
+.gradio-container .myst-readme-back-row {{
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 40 !important;
+    display: flex !important;
+    justify-content: flex-end !important;
+    padding: 0.45rem 0.75rem !important;
+    background: linear-gradient(180deg, #000000 78%, transparent) !important;
+    pointer-events: none !important;
+}}
+.gradio-container .myst-readme-back-row .myst-readme-back-btn {{
+    pointer-events: auto !important;
+    min-width: 9.5rem !important;
+    background: #1a1a1a !important;
+    color: #ffffff !important;
+    border: 1px solid #444444 !important;
+    border-radius: 999px !important;
+    font-size: 0.88rem !important;
+    font-weight: 600 !important;
+    padding: 0.45rem 1rem !important;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.55) !important;
+}}
+.gradio-container .myst-readme-back-row .myst-readme-back-btn:hover {{
+    background: #2a2a2a !important;
+    border-color: #666666 !important;
+    color: #ffffff !important;
+}}
+@media (max-width: 720px) {{
+    .gradio-container .myst-readme-fullpage {{
+        padding: 1rem 1rem 3.5rem !important;
+        font-size: 1.05rem !important;
+    }}
+    .gradio-container .myst-readme-figure-grid {{
+        grid-template-columns: 1fr !important;
+    }}
 }}
 .gradio-container .myst-status-page,
 .gradio-container .myst-render-page,
@@ -9005,6 +9239,7 @@ def build_app() -> gr.Blocks:
         _init_status_panel = _format_gravity_status_grid_html(active_slot=None)
         _init_render_panel = _format_render_grid_html()
 
+        readme_return_page = gr.State("home")
         with gr.Column(visible=False, elem_classes=["myst-readme-page"]) as page_readme:
             _readme_nav = _place_main_nav_row("readme")
             readme_tab_home_btn = _readme_nav["home"]
@@ -9012,22 +9247,15 @@ def build_app() -> gr.Blocks:
             readme_tab_readme_btn = _readme_nav["readme"]
             readme_tab_anim_btn = _readme_nav["animations"]
             readme_tab_status_btn = _readme_nav["status"]
-            gr.HTML(
-                f'<p class="myst-github-banner">Full derivations, probe suite, and JSON outputs: '
-                f'<a href="{GITHUB_URL}" target="_blank" rel="noopener noreferrer">'
-                f'github.com/kinaar8340/mystery</a> · '
-                f'<a href="{GITHUB_URL}#physical-interpretation--emergent-gravity" '
-                f'target="_blank" rel="noopener noreferrer">README § Physical Interpretation</a></p>'
-            )
-            gr.Markdown(PHYSICAL_INTERPRETATION_INTRO_MD)
-            gr.Markdown(PHYSICAL_INTERPRETATION_MATH_MD)
-            gr.Markdown("### Probe hooks")
-            gr.Markdown(PROBE_HOOKS_TABLE_MD)
-            for title, script_url, snippet in PROBE_SNIPPETS:
-                with gr.Accordion(f"{title} — view snippet", open=False):
-                    gr.Markdown(f"Source: [{script_url.split('/')[-1]}]({script_url})")
-                    gr.Code(snippet, language="python", lines=10)
-            gr.Markdown(EXPLORE_FURTHER_MD)
+            with gr.Row(elem_classes=["myst-readme-back-row"]):
+                readme_back_btn = gr.Button(
+                    "← Back to App",
+                    elem_classes=["myst-readme-back-btn"],
+                    variant="secondary",
+                    scale=0,
+                )
+            with gr.Column(elem_classes=["myst-readme-body"]):
+                gr.HTML(build_readme_full_page_html())
 
         render_active_slot = gr.State(-1)
         render_zoom_slot = gr.State(-1)
@@ -9715,6 +9943,7 @@ def build_app() -> gr.Blocks:
             render_tab_status_btn,
             current_page,
         ]
+        readme_nav_outputs = [*nav_outputs, readme_return_page]
 
         gravity_back_btn.click(
             lambda: _nav_to_page("render"),
@@ -9737,6 +9966,9 @@ def build_app() -> gr.Blocks:
                 )
             else:
                 btn.click(lambda: _nav_to_page(page), outputs=nav_outputs)
+
+        def _bind_readme_nav(btn: gr.Button) -> None:
+            btn.click(_open_readme_page, inputs=[current_page], outputs=readme_nav_outputs)
 
         def _bind_status_nav(btn: gr.Button) -> None:
             btn.click(
@@ -9819,40 +10051,51 @@ def build_app() -> gr.Blocks:
 
         _bind_nav(tab_render_btn, "render")
         _bind_nav(tab_anim_btn, "animations")
-        _bind_nav(tab_readme_btn, "readme")
+        _bind_readme_nav(tab_readme_btn)
         _bind_status_nav(tab_status_btn)
         _bind_nav(tab_home_btn, "home", refresh_gravity=True)
         _bind_nav(anim_tab_render_btn, "render")
         _bind_nav(anim_tab_anim_btn, "animations")
-        _bind_nav(anim_tab_readme_btn, "readme")
+        _bind_readme_nav(anim_tab_readme_btn)
         _bind_status_nav(anim_tab_status_btn)
         _bind_nav(anim_tab_home_btn, "home", refresh_gravity=True)
         _bind_nav(grav_tab_render_btn, "render")
         _bind_nav(grav_tab_anim_btn, "animations")
-        _bind_nav(grav_tab_readme_btn, "readme")
+        _bind_readme_nav(grav_tab_readme_btn)
         _bind_status_nav(grav_tab_status_btn)
         _bind_nav(grav_tab_home_btn, "home", refresh_gravity=True)
         _bind_nav(readme_tab_home_btn, "home", refresh_gravity=True)
         _bind_nav(readme_tab_render_btn, "render")
         _bind_nav(readme_tab_anim_btn, "animations")
-        _bind_nav(readme_tab_readme_btn, "readme")
+        _bind_readme_nav(readme_tab_readme_btn)
         _bind_status_nav(readme_tab_status_btn)
         _bind_nav(status_zoom_back_btn, "home", refresh_gravity=True)
         _bind_nav(status_tab_home_btn, "home", refresh_gravity=True)
         _bind_nav(status_tab_render_btn, "render")
-        _bind_nav(status_tab_readme_btn, "readme")
+        _bind_readme_nav(status_tab_readme_btn)
         _bind_nav(status_tab_anim_btn, "animations")
         _bind_status_nav(status_tab_status_btn)
         _bind_nav(edit_tab_home_btn, "home", refresh_gravity=True)
         _bind_nav(edit_tab_render_btn, "render")
-        _bind_nav(edit_tab_readme_btn, "readme")
+        _bind_readme_nav(edit_tab_readme_btn)
         _bind_nav(edit_tab_anim_btn, "animations")
         _bind_status_nav(edit_tab_status_btn)
         _bind_nav(render_tab_home_btn, "home", refresh_gravity=True)
         _bind_nav(render_tab_render_btn, "render")
-        _bind_nav(render_tab_readme_btn, "readme")
+        _bind_readme_nav(render_tab_readme_btn)
         _bind_nav(render_tab_anim_btn, "animations")
         _bind_status_nav(render_tab_status_btn)
+        readme_back_btn.click(
+            _readme_back_to_app,
+            inputs=[readme_return_page],
+            outputs=nav_outputs,
+        ).then(
+            _run_residual_explorer_ui,
+            inputs=gravity_dial_inputs,
+            outputs=re_outputs,
+            show_progress="hidden",
+        )
+
         tab_newhere_btn.click(_toggle_newhere, inputs=[newhere_open], outputs=newhere_outputs)
         tab_claims_btn.click(_toggle_claims, inputs=[claims_open], outputs=claims_outputs)
         newhere_minimize_btn.click(_minimize_newhere, outputs=newhere_outputs[:3])

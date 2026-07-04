@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import base64
+import html
 import io
 import os
 import tempfile
@@ -199,6 +200,243 @@ EXPLORE_FURTHER_MD = f"""
 4. **Parent TOE stack** — [kinaar8340/toe]({TOE_URL}) for conduit PDE and meta-optimizer depth.
 5. **Tune interactively** — use the **Residual explorer** sliders on this tab to stress-test \\(R\\), \\(B(\\kappa)\\), and \\(\\delta_\\text{{side}}\\).
 """
+
+_TOE_PDF_URL = (
+    f"{TOE_URL}/blob/main/papers/Aaron%27s_TOE_Complete.pdf"
+)
+
+
+def build_readme_full_page_html() -> str:
+    """Single-scroll README view — black background, white text, embedded figures."""
+    fig_labels = (
+        "φ-e-π triangle",
+        "Residual κ sweep",
+        "3-6-9 vortex clock",
+        "Conduit angular histogram",
+    )
+    figure_blocks = "\n".join(
+        f'<figure class="myst-readme-figure">'
+        f'<img src="{html.escape(url)}" alt="{html.escape(label)}" loading="lazy" />'
+        f'<figcaption>{html.escape(label)}</figcaption></figure>'
+        for url, label in zip(FIGURE_URLS, fig_labels, strict=True)
+    )
+    return f"""<article class="myst-readme-fullpage" id="myst-readme-fullpage">
+<section class="myst-readme-exec myst-readme-card">
+<h2 class="myst-readme-exec-title">Executive Summary</h2>
+<p><strong>Mystery</strong> is an interactive probe asking whether the near-relation
+<strong>φ² + e² ≈ π²</strong> (residual <em>R</em> ≈ +0.137) can emerge naturally inside
+Aaron&rsquo;s gauged Hopf flux lattice with dual opposing flywheel dynamics. The deforming,
+breathing 3D cube is a direct visual metaphor for unit-cell behavior in that lattice &mdash;
+not decoration.</p>
+<ul class="myst-readme-exec-list">
+<li><strong>Start on Home</strong> &mdash; watch Demo&nbsp;A breathe; explore presets B&ndash;I.</li>
+<li><strong>Presets</strong> &mdash; nine locked unit-cell shapes (max convex &rarr; rigid &rarr; max concave).</li>
+<li><strong>Render</strong> &mdash; 3&times;3 grid of all presets at once.</li>
+<li><strong>Figures</strong> &mdash; reference plots from the 11-probe suite.</li>
+<li><strong>Depth</strong> &mdash; full derivations and scripts on
+<a href="{html.escape(GITHUB_URL)}">github.com/kinaar8340/mystery</a>.</li>
+</ul>
+</section>
+
+<section class="myst-readme-walkthrough myst-readme-card">
+<h2>First-Time Walkthrough</h2>
+<p class="myst-readme-lead">A 90-second path through the Space:</p>
+<ol class="myst-readme-steps">
+<li><strong>Home &rarr; Demo&nbsp;A</strong> &mdash; the cube breathes through the full deformation cycle
+(rigid &rarr; max convex &rarr; rigid &rarr; max concave &rarr; back). This is dual-opposing flywheel
+precession made visible.</li>
+<li><strong>Try Demo&nbsp;B and Demo&nbsp;C</strong> &mdash; compare <em>MAX CONVEX</em> (expansive flux) with
+<em>RIGID CUBE</em> (phase-locked, mass-like rest state).</li>
+<li><strong>Open Presets</strong> &mdash; tap any slot in the 3&times;3 grid; use <em>Edit</em> to tune
+κ, deformation pressure, and view angles live.</li>
+<li><strong>Figures</strong> &mdash; open the reference plots that ground the numerical claims below.</li>
+</ol>
+<h3>Example Parameter Settings</h3>
+<table class="myst-readme-table">
+<thead><tr><th>Goal</th><th>κ</th><th>Pressure</th><th>Preset / Demo</th></tr></thead>
+<tbody>
+<tr><td>See the breathing loop</td><td>0.85</td><td>0.35</td><td>Home &rarr; Demo&nbsp;A</td></tr>
+<tr><td>Max outward curvature</td><td>0.85</td><td>+0.65</td><td>Demo&nbsp;B (MAX CONVEX)</td></tr>
+<tr><td>Stable rigid rest state</td><td>0.85</td><td>0.00</td><td>Demo&nbsp;C (RIGID CUBE)</td></tr>
+<tr><td>Deep inward pinch</td><td>0.85</td><td>&minus;0.55</td><td>Demo&nbsp;I (MAX CONCAVE)</td></tr>
+<tr><td>Stress-test residual null</td><td>0.8513 (κ*)</td><td>varies</td><td>Presets &rarr; Edit sliders</td></tr>
+</tbody>
+</table>
+</section>
+
+<hr class="myst-readme-divider" />
+
+<header class="myst-readme-hero">
+<p class="myst-readme-kicker">Mystery &mdash; φ, e, π Emergent Signature</p>
+<h1>README &bull; Deep Context &amp; Model Foundation</h1>
+</header>
+
+<section class="myst-readme-section">
+<h2>Project Purpose</h2>
+<p>Mystery is an interactive research notebook and visualization probe. Its goal is to explore a
+striking numerical near-harmony:</p>
+<p class="myst-readme-formula">φ² + e² ≈ π²</p>
+<p>and to test whether this relation can appear as a natural emergent signature inside a deeper
+topological and dynamical framework &mdash; specifically Aaron&rsquo;s Theory of Everything based on
+the gauged Hopf flux lattice with dual opposing flywheel dynamics.</p>
+<p>This is not an attempt to prove an exact mathematical identity. It is an investigation into
+whether the small residual and the near-30-60-90 geometry can arise organically from the structure
+and dynamics of the underlying model. The 3D deforming cube, breathing animations, and parameter
+controls are not mere eye-candy &mdash; they are direct visual metaphors for unit-cell behavior in
+the gauged Hopf lattice.</p>
+</section>
+
+<hr class="myst-readme-divider" />
+
+<section class="myst-readme-section">
+<h2>The Prerequisite Model: Aaron&rsquo;s Theory of Everything</h2>
+<p class="myst-readme-muted">Detailed in
+<a href="{html.escape(_TOE_PDF_URL)}">Aaron&rsquo;s_TOE_Complete.pdf</a>
+&mdash; <a href="{html.escape(TOE_URL)}">{html.escape(TOE_URL)}</a></p>
+<p>At the foundation of this work lies a self-consistent topological model of reality called the
+<strong>Gauged Hopf Flux Lattice</strong>.</p>
+
+<h3>Core Structure</h3>
+<p>The vacuum is modeled as a porous sponge &mdash; a discrete lattice whose fundamental building
+blocks are gauged Hopf fibrations. In topological terms, this means circles (S¹) fibered over
+spheres (S²) inside a higher-dimensional manifold (classically S³), with gauge fields attached. The
+&ldquo;gauging&rdquo; allows the lattice to carry dynamic field strengths, phases, and fluxes that
+can braid, twist, and stabilize.</p>
+
+<h3>Dual Opposing Flywheel Dynamics</h3>
+<p>The active degrees of freedom in this lattice are <strong>flux flywheels</strong> &mdash; coherent,
+rotating or precessing configurations of topological flux that carry angular momentum. These flywheels
+do not exist in isolation. The model emphasizes <strong>dual opposing configurations</strong>: pairs
+(or larger coupled systems) of flywheels whose rotations or precessions are counter-directed. This
+opposition creates:</p>
+<ul>
+<li>Mechanical and topological stability (analogous to gyroscopic stabilization)</li>
+<li>Phase-locking and resonance conditions</li>
+<li>Emergent conserved quantities (spin, charge, mass-like invariants)</li>
+<li>Breathing / oscillatory modes when the system is excited</li>
+</ul>
+<p>Stable, locked configurations of these dual opposing flywheels correspond to the particles of the
+Standard Model. Different locking patterns, twist rates, and braiding phases produce the different
+elements of the periodic table as emergent, stable states within the lattice &ldquo;sponge.&rdquo;</p>
+
+<h3>Key Supporting Concepts</h3>
+<ul>
+<li><strong>Observer Synchronization</strong> &mdash; Local observers can be phase-desynchronized from
+the global lattice rhythm. This explains current experimental null results while predicting
+distinctive non-local signatures once synchronization thresholds are crossed.</li>
+<li><strong>Holonomy and Curvature</strong> &mdash; The lattice carries intrinsic holonomy. Small
+mismatches (holonomy gaps) can be scaled and related to observable residuals.</li>
+<li><strong>Gravity-like Effects</strong> &mdash; Lattice excitations and large-scale flux imbalances
+produce gravitational signatures (explored in companion papers on GW bursts, echoes, etc.).</li>
+<li><strong>Vortex-Math / 3-6-9 Geometry</strong> &mdash; Angular distributions and phase increments
+in the lattice naturally map onto positional geometries reminiscent of vortex mathematics.</li>
+</ul>
+<p>In short, the gauged Hopf flux lattice with dual opposing flywheel dynamics provides a unified
+geometric-dynamical substrate from which both matter and certain numerical harmonies can emerge.</p>
+</section>
+
+<hr class="myst-readme-divider" />
+
+<section class="myst-readme-section">
+<h2>How Mystery Connects to the TOE</h2>
+<p>The Mystery app takes the above framework and asks a concrete question:</p>
+<blockquote>Can the numerical relation φ² + e² ≈ π² appear as a natural scaling or harmonic
+feature when we examine the geometry and dynamics of the lattice&rsquo;s unit cells?</blockquote>
+<p>To make this explorable, the app represents lattice unit cells as deformable 3D cubes. These
+cubes are not arbitrary &mdash; they stand in for localized regions of the Hopf flux lattice
+supporting dual opposing flywheel activity.</p>
+
+<h3>Preset Interpretations (Gravity Unit-Cell Presets)</h3>
+<ul>
+<li><strong>MAX CONVEX</strong> &mdash; expansive, high-curvature flux states</li>
+<li><strong>RIGID CUBE</strong> &mdash; stable, phase-locked configurations (closest to &ldquo;rest&rdquo;
+mass-like states)</li>
+<li><strong>MAX CONCAVE / Bowl / Pinch</strong> &mdash; contracted or stressed flux regions, modeling
+curvature or gravitational-like effects</li>
+</ul>
+
+<h3>Breathing Animation</h3>
+<p>The rhythmic expansion/contraction of the cube visualizes the natural oscillatory modes that arise
+from dual opposing flywheel precession and flux breathing. Parameters such as deformation range,
+φ⁺ scale, e⁺ scale, and n² scaling directly modulate how strongly the golden-ratio and Euler-number
+influences appear in the deformation field.</p>
+
+<h3>Parameter Controls &amp; Live Probing</h3>
+<p>You can adjust the relative weighting of φ, e, and other factors while watching how the unit-cell
+geometry responds. This is a direct, visual way to probe whether the near-Pythagorean relation
+emerges under specific dynamical regimes of the lattice.</p>
+
+<h3>Analysis Layer (behind the visuals)</h3>
+<p>The repository contains multiple quantitative probes:</p>
+<ul>
+<li>Residual calculation (<em>R</em> ≈ +0.1375)</li>
+<li>Meta-optimization of scaling parameters (κ ≈ 0.85 is only 0.16% from the value that nulls the
+residual via holonomy-gap scaling)</li>
+<li>PDE relaxation simulations of lattice dynamics</li>
+<li>Conduit angular histograms linking to 3-6-9 vortex geometry</li>
+<li>Rodin-style Hopf fiber mapping</li>
+</ul>
+<p>Collectively these show that φ² + e² ≈ π² is a compatible emergent signature &mdash; not forced
+by any invariant, yet consistently reachable within the model&rsquo;s natural parameter space.</p>
+</section>
+
+<hr class="myst-readme-divider" />
+
+<section class="myst-readme-section">
+<h2>Project Specifics &amp; Current Capabilities</h2>
+<ul>
+<li>Live 3D cube rendering with smooth browser-based performance</li>
+<li>Preset catalog + fully manual parameter editing</li>
+<li>Animated breathing deformations</li>
+<li>Demo sequences and custom sequence builder</li>
+<li>Clean dark theme with mathematical labels (δ<sub>z</sub> push, δ<sub>side</sub> inward, T<sub>n</sub> terms, etc.)</li>
+<li>Reference grid and metric readouts</li>
+<li>Figures tab with supporting plots and derivations</li>
+<li>Full reproducibility via the GitHub repository (scripts, outputs, and sync tools)</li>
+</ul>
+<p>The app is deliberately focused. It is a probe, not a complete simulator. Its purpose is to make
+the abstract concepts of the gauged Hopf lattice tangible and to invite deeper exploration of the
+numerical harmony.</p>
+</section>
+
+<hr class="myst-readme-divider" />
+
+<section class="myst-readme-section myst-readme-figures-section">
+<h2>Supporting Figures</h2>
+<p class="myst-readme-muted">Reference plots from the Mystery probe suite &mdash; regenerate locally
+with <code>python run_all.py</code>.</p>
+<div class="myst-readme-figure-grid">{figure_blocks}</div>
+</section>
+
+<hr class="myst-readme-divider" />
+
+<section class="myst-readme-section">
+<h2>Further Reading &amp; Next Steps</h2>
+<ul>
+<li>Full theoretical foundation:
+<a href="{html.escape(_TOE_PDF_URL)}">Aaron&rsquo;s_TOE_Complete.pdf</a> and the entire
+<a href="{html.escape(TOE_URL)}">toe</a> repository</li>
+<li>Detailed analysis, scripts, and derivations:
+<a href="{html.escape(GITHUB_URL)}">github.com/kinaar8340/mystery</a></li>
+<li>Notes on angle derivation, emergent signatures, holonomy-gap scaling, and open questions are
+available in the <code>notes/</code> folder of the mystery repo</li>
+</ul>
+</section>
+
+<hr class="myst-readme-divider" />
+
+<footer class="myst-readme-section myst-readme-footer">
+<h2>Thank You for Exploring</h2>
+<p>Mystery exists because the near-relation between φ, e, and π feels too elegant to be pure
+coincidence, and because the gauged Hopf flux lattice with dual opposing flywheels offers a coherent
+geometric home in which such harmonies can arise naturally.</p>
+<p>Tweak the parameters. Watch the cube breathe. Ask what the deformations are telling you about the
+underlying lattice.</p>
+<p class="myst-readme-tagline"><em>Curiosity is the only prerequisite.</em></p>
+<p class="myst-readme-signature">&mdash; Aaron</p>
+</footer>
+</article>"""
+
 
 PROBE_SNIPPETS: tuple[tuple[str, str, str], ...] = (
     (
