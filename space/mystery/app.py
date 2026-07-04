@@ -945,8 +945,7 @@ def _place_unified_main_nav(
                 label,
                 elem_classes=_main_nav_btn_classes(page_id, active),
                 interactive=not is_active,
-                scale=0,
-                min_width=72,
+                scale=1,
                 variant="secondary",
             )
         for shape_id in _SHAPE_NAV_IDS:
@@ -955,8 +954,7 @@ def _place_unified_main_nav(
                 shape_id,
                 elem_classes=_shape_btn_classes(shape_id, default_shape),
                 interactive=not is_active,
-                scale=0,
-                min_width=52,
+                scale=1,
                 variant="secondary",
             )
     return buttons
@@ -2053,7 +2051,7 @@ footer {{
 /* Gravity child nav — uniform sizing + align with main nav */
 .gradio-container .vqc-nav-spreadsheet-row.myst-gravity-child-nav-row {{
     display: grid !important;
-    grid-template-columns: 4.75rem repeat(9, minmax(3.8rem, 1fr)) !important;
+    grid-template-columns: 4.75rem repeat(9, minmax(0, 1fr)) !important;
     gap: 0.2rem 0.45rem !important;
     align-items: center !important;
     padding-left: 0 !important;
@@ -2064,11 +2062,12 @@ footer {{
 #myst-gravity-child-nav button.myst-gravity-preset-btn {{
     min-height: 2.05rem !important;
     height: 2.05rem !important;
-    min-width: 82px !important;
-    padding: 0 12px !important;
+    min-width: 0 !important;
+    width: 100% !important;
+    padding: 6px 8px !important;
     font-size: 0.95rem !important;
     font-weight: 600 !important;
-    margin-right: 4px !important;
+    margin-right: 0 !important;
 }}
 #myst-gravity-child-nav .myst-gravity-child-nav-label {{
     color: #aaaaaa !important;
@@ -2355,9 +2354,26 @@ footer {{
 }}
 .gradio-container .myst-main-nav,
 .gradio-container .vqc-nav-spreadsheet-row.vqc-main-nav-row {{
-    grid-template-columns: 4.75rem repeat(4, minmax(3.6rem, 1fr)) repeat(5, minmax(2.8rem, 1fr)) !important;
+    grid-template-columns: 4.75rem repeat(9, minmax(0, 1fr)) !important;
     margin-bottom: 6px !important;
     gap: 3px 0.35rem !important;
+}}
+/* Equal-width nav buttons — Mystery + Demo rows share 9-column grid */
+.gradio-container .myst-main-nav button.vqc-source-tab,
+.gradio-container .myst-main-nav button.vqc-source-tab span,
+.gradio-container #myst-gravity-child-nav button.vqc-source-tab,
+.gradio-container #myst-gravity-child-nav button.vqc-source-tab span {{
+    min-width: 0 !important;
+    width: 100% !important;
+    flex: 1 1 0% !important;
+    text-align: center !important;
+    padding: 6px 8px !important;
+    box-sizing: border-box !important;
+}}
+.gradio-container .myst-main-nav > .block,
+.gradio-container #myst-gravity-child-nav > .block {{
+    min-width: 0 !important;
+    width: 100% !important;
 }}
 .gradio-container .myst-unified-nav-host {{
     width: 100% !important;
@@ -2384,7 +2400,7 @@ footer {{
 /* ========== SHAPE TABS (D4, D6, D8, D12, D20) ========== */
 .gradio-container button.shape-btn {{
     font-weight: 600 !important;
-    min-width: 52px !important;
+    min-width: 0 !important;
 }}
 .gradio-container .vqc-source-tabs-row button.vqc-source-tab.shape-btn.active,
 .gradio-container .vqc-source-tabs-row button.vqc-source-tab.shape-btn.active span,
@@ -7846,8 +7862,7 @@ def _place_gravity_child_nav_row() -> dict[str, gr.Button]:
                     "myst-status-preset-btn",
                     "myst-gravity-preset-btn",
                 ],
-                scale=0,
-                min_width=82,
+                scale=1,
                 variant="secondary",
             )
     return buttons
