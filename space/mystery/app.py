@@ -131,6 +131,8 @@ _VQC_TAB_ORANGE_BG = "#3d2a5c"
 _VQC_TAB_ORANGE_BORDER = "#6a4c93"
 _VQC_TAB_ORANGE_TEXT = "#d4b8ff"
 _VQC_MATRIX_GREEN = "#33ff66"
+# Global default button border — matches .vqc-source-tab (#6b4f1d).
+DEFAULT_BUTTON_BORDER_COLOR = "#6b4f1d"
 # Status page chrome: 80% transparent (20% opaque).
 _MYST_DEFAULT_GAP_HEIGHT = "0.84rem"
 _MYST_STATUS_LAYER_ALPHA = 0.2
@@ -1789,6 +1791,7 @@ body::before {{
     width: 100% !important;
 }}
 .gradio-container {{
+    --default-border-color: {DEFAULT_BUTTON_BORDER_COLOR};
     position: relative !important;
     width: 100% !important;
     max-width: 100% !important;
@@ -5309,11 +5312,12 @@ footer {{ visibility: hidden; }}
     visibility: visible !important;
     opacity: 1 !important;
 }}
+/* ========== SAVE BUTTON ========== */
 .gradio-container .myst-save-edit-row button.save-btn,
 .gradio-container .myst-save-edit-row button.save-btn span {{
     color: #ffffff !important;
     -webkit-text-fill-color: #ffffff !important;
-    border-color: #ffffff !important;
+    border-color: var(--default-border-color, {DEFAULT_BUTTON_BORDER_COLOR}) !important;
 }}
 .gradio-container .myst-save-edit-row button.save-btn.saved,
 .gradio-container .myst-save-edit-row button.save-btn.saved span {{
@@ -5321,6 +5325,15 @@ footer {{ visibility: hidden; }}
     -webkit-text-fill-color: #ff0000 !important;
     border-color: #ff0000 !important;
     font-weight: 600 !important;
+}}
+/* ========== EDIT BUTTON ========== */
+.gradio-container .myst-save-edit-row button.edit-btn,
+.gradio-container .myst-save-edit-row button.edit-btn span,
+.gradio-container .myst-status-page button.myst-status-nav-edit-btn.edit-btn,
+.gradio-container .myst-status-page button.myst-status-nav-edit-btn.edit-btn span {{
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    border-color: var(--default-border-color, {DEFAULT_BUTTON_BORDER_COLOR}) !important;
 }}
 .gradio-container .myst-status-page button.myst-status-zoom-save-btn {{
     padding-left: 0.78rem !important;
@@ -8067,13 +8080,13 @@ def _latch_save_button() -> tuple:
 
 
 def _unlatch_save_button() -> tuple:
-    """Slider change or navigation — white default styling."""
+    """Reset Save button — white text, global default border."""
     return (
         gr.update(
             value="Save",
             interactive=True,
             variant="secondary",
-            elem_classes=[*_STATUS_ZOOM_SAVE_BTN_CLASSES, "save-btn"],
+            elem_classes=["save-btn", *_STATUS_ZOOM_SAVE_BTN_CLASSES],
         ),
         False,
     )
