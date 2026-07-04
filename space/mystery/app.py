@@ -873,6 +873,35 @@ _MAIN_NAV_TAB_SPECS = (
 )
 
 
+def _place_back_button(
+    label: str = "← Back",
+    *,
+    elem_id: str | None = None,
+    elem_classes: list[str] | None = None,
+    visible: bool = True,
+    interactive: bool = True,
+    min_width: int = 110,
+) -> gr.Button:
+    """Standard pill back button — shared across README, Render, Presets, etc."""
+    classes = ["myst-standard-back-btn"]
+    if elem_classes:
+        classes.extend(elem_classes)
+    kwargs: dict = {
+        "label": label,
+        "elem_classes": classes,
+        "variant": "secondary",
+        "scale": 0,
+        "min_width": min_width,
+    }
+    if elem_id:
+        kwargs["elem_id"] = elem_id
+    if not visible:
+        kwargs["visible"] = False
+    if not interactive:
+        kwargs["interactive"] = interactive
+    return gr.Button(**kwargs)
+
+
 def _place_main_nav_row(active_page: str) -> dict[str, gr.Button]:
     """Mystery: spreadsheet nav — one compact row of five main tabs."""
     buttons: dict[str, gr.Button] = {}
@@ -919,15 +948,11 @@ def _place_status_zoom_nav_row(
         back_classes = ["vqc-source-tab", "myst-status-preset-btn", "myst-status-nav-back-btn"]
         if on_grid:
             back_classes.append("active")
-        back_btn = gr.Button(
+        back_btn = _place_back_button(
             "Back",
             elem_id="myst-status-nav-back-btn",
             elem_classes=back_classes,
-            visible=True,
-            interactive=True,
-            scale=0,
             min_width=82,
-            variant="secondary",
         )
         for slot in range(_STATUS_ZOOM_PRESET_COUNT):
             preset_id = _gravity_preset_id(slot)
@@ -1881,11 +1906,39 @@ footer {{
     margin: 0 !important;
 }}
 .gradio-container .vqc-source-label {{
-    color: #ffffff !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    min-width: 4.75rem !important;
+    color: #aaaaaa !important;
     font-size: 0.92rem !important;
     font-weight: 600 !important;
     margin-right: 0.35rem !important;
     line-height: 1.2 !important;
+}}
+.gradio-container button.myst-standard-back-btn {{
+    border-radius: 9999px !important;
+    padding: 0.45rem 1rem !important;
+    font-size: 0.88rem !important;
+    font-weight: 600 !important;
+    background: #1a1a1a !important;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    border: 1px solid #444444 !important;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.45) !important;
+}}
+.gradio-container button.myst-standard-back-btn:hover {{
+    background: #2a2a2a !important;
+    border-color: #666666 !important;
+    color: #ffffff !important;
+}}
+.gradio-container button.myst-standard-back-btn.vqc-source-tab {{
+    background: #1a1a1a !important;
+    border: 1px solid #444444 !important;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.45) !important;
+}}
+.gradio-container button.myst-standard-back-btn.vqc-source-tab.active {{
+    color: #B85C00 !important;
+    -webkit-text-fill-color: #B85C00 !important;
 }}
 .gradio-container .vqc-source-tab,
 .gradio-container .vqc-source-tabs-row button.vqc-source-tab,
@@ -1997,16 +2050,29 @@ footer {{
     color: {_VQC_MATRIX_GREEN} !important;
     -webkit-text-fill-color: {_VQC_MATRIX_GREEN} !important;
 }}
-/* Gravity child nav — uniform sizing */
+/* Gravity child nav — uniform sizing + align with main nav */
+.gradio-container .vqc-nav-spreadsheet-row.myst-gravity-child-nav-row {{
+    display: grid !important;
+    grid-template-columns: 4.75rem repeat(9, minmax(3.8rem, 1fr)) !important;
+    gap: 0.2rem 0.45rem !important;
+    align-items: center !important;
+    padding-left: 0 !important;
+    margin-left: 0 !important;
+    width: 100% !important;
+}}
 #myst-gravity-child-nav button.myst-status-preset-btn,
-#myst-gravity-child-nav button.myst-gravity-preset-btn,
-#myst-gravity-child-nav button.myst-gravity-nav-back-btn {{
+#myst-gravity-child-nav button.myst-gravity-preset-btn {{
     min-height: 2.05rem !important;
     height: 2.05rem !important;
     min-width: 82px !important;
     padding: 0 12px !important;
     font-size: 0.95rem !important;
     font-weight: 600 !important;
+    margin-right: 4px !important;
+}}
+#myst-gravity-child-nav .myst-gravity-child-nav-label {{
+    color: #aaaaaa !important;
+    text-transform: none !important;
 }}
 /* Main nav tabs — match Demo (A–I) child tab height */
 .gradio-container .vqc-main-nav-row button.vqc-source-tab,
@@ -2018,20 +2084,7 @@ footer {{
     font-size: 0.95rem !important;
     font-weight: 600 !important;
 }}
-.gradio-container .myst-gravity-page .myst-gravity-demo-label-wrap {{
-    display: flex !important;
-    align-items: center !important;
-    padding: 0 0.35rem 0 0.15rem !important;
-    margin: 0 !important;
-}}
-.gradio-container .myst-gravity-page .myst-gravity-demo-label {{
-    color: #aaaaaa !important;
-    font-size: 0.85rem !important;
-    font-weight: 600 !important;
-    letter-spacing: 0.4px !important;
-    text-transform: uppercase !important;
-    white-space: nowrap !important;
-}}
+
 #myst-gravity-viewport-wrapper,
 .gradio-container .myst-gravity-page .myst-gravity-single-viewport {{
     position: relative !important;
@@ -4610,22 +4663,9 @@ footer {{ visibility: hidden; }}
     background: linear-gradient(180deg, #000000 78%, transparent) !important;
     pointer-events: none !important;
 }}
-.gradio-container .myst-readme-back-row .myst-readme-back-btn {{
+.gradio-container .myst-readme-back-row .myst-standard-back-btn {{
     pointer-events: auto !important;
     min-width: 9.5rem !important;
-    background: #1a1a1a !important;
-    color: #ffffff !important;
-    border: 1px solid #444444 !important;
-    border-radius: 999px !important;
-    font-size: 0.88rem !important;
-    font-weight: 600 !important;
-    padding: 0.45rem 1rem !important;
-    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.55) !important;
-}}
-.gradio-container .myst-readme-back-row .myst-readme-back-btn:hover {{
-    background: #2a2a2a !important;
-    border-color: #666666 !important;
-    color: #ffffff !important;
 }}
 @media (max-width: 720px) {{
     .gradio-container .myst-readme-fullpage {{
@@ -6187,7 +6227,7 @@ _UNIT_CELL_IMAGE_DPI = 100
 _RENDER_GRID_IMAGE_DPI = 100
 _RENDER_DETAIL_IMAGE_DPI = 120
 # Index of unit_cell_image within gravity_preset_outputs
-# (16 keypad + 1 back + 9 child nav + 2 edit btns + 20 sliders + …).
+# (16 keypad + 1 legacy back skip + 9 child nav + 2 edit btns + 20 sliders + …).
 _GRAVITY_PRESET_IMAGE_OUT_INDEX = 51
 _GRAVITY_CHILD_NAV_LETTERS: tuple[str, ...] = tuple(chr(ord("A") + i) for i in range(9))
 _GRAVITY_HOME_DIALS = {
@@ -6895,17 +6935,17 @@ def _gravity_child_nav_btn_updates(active_slot: int = -1) -> tuple:
 
 
 def _gravity_child_nav_output_updates(active_slot: int = -1) -> tuple:
-    """Back button skip + A–I child nav updates for gravity_preset_outputs."""
+    """Wired preset outputs — skip legacy back slot, then A–I updates."""
     return (gr.skip(), *_gravity_child_nav_btn_updates(active_slot))
 
 
 def _demo_active_tab_updates(active_letter: str) -> tuple:
-    """Orange active styling for Demo A–I — kept separate from click bindings."""
+    """Orange active styling for Demo A–I — no back button in demo outputs."""
     letter = str(active_letter).strip().upper()
     if letter not in _GRAVITY_CHILD_NAV_LETTERS:
         letter = "A"
     slot = ord(letter) - ord("A")
-    return _gravity_child_nav_output_updates(slot)
+    return _gravity_child_nav_btn_updates(slot)
 
 
 _GRAVITY_DEMO_VIDEO_CACHE: dict[str, str] = {}
@@ -7671,34 +7711,19 @@ def _render_sub_nav_render_btn_update(
 
 
 def _place_gravity_child_nav_row() -> dict[str, gr.Button]:
-    """Gravity child nav — horizontal Demo: A–I row matching Render sub-nav style."""
+    """Demo navigation row for Home — no Back button; label aligns with Mystery:."""
     buttons: dict[str, gr.Button] = {}
     with gr.Row(
         elem_id="myst-gravity-child-nav",
         elem_classes=[
-            "myst-render-preset-nav-wrap",
+            "myst-gravity-child-nav-row",
             "myst-gravity-demo-nav-wrap",
             "vqc-nav-spreadsheet-row",
-            "vqc-status-preset-nav-row",
         ],
     ):
-        back_btn = gr.Button(
-            "Back",
-            elem_id="myst-gravity-nav-back-btn",
-            elem_classes=[
-                "vqc-source-tab",
-                "myst-status-preset-btn",
-                "myst-gravity-nav-back-btn",
-            ],
-            scale=0,
-            min_width=82,
-            variant="secondary",
-        )
-        buttons["back"] = back_btn
         gr.HTML(
-            "<span class='myst-gravity-demo-label'>Demo:</span>",
-            elem_classes=["myst-gravity-demo-label-wrap"],
-            container=False,
+            '<span class="vqc-source-label vqc-nav-row-label myst-gravity-child-nav-label">'
+            "Demo:</span>"
         )
         for letter in _GRAVITY_CHILD_NAV_LETTERS:
             buttons[letter] = gr.Button(
@@ -7732,7 +7757,7 @@ def _place_render_sub_nav_row(
             "vqc-status-preset-nav-row",
         ],
     ):
-        back_btn = gr.Button(
+        back_btn = _place_back_button(
             "Back",
             elem_id="myst-render-nav-back-btn",
             elem_classes=[
@@ -7741,9 +7766,7 @@ def _place_render_sub_nav_row(
                 "myst-render-nav-back-btn",
             ],
             visible=False,
-            scale=0,
-            min_width=0,
-            variant="secondary",
+            min_width=82,
         )
         for slot in range(_STATUS_ZOOM_PRESET_COUNT):
             preset_id = _gravity_preset_id(slot)
@@ -9248,12 +9271,7 @@ def build_app() -> gr.Blocks:
             readme_tab_anim_btn = _readme_nav["animations"]
             readme_tab_status_btn = _readme_nav["status"]
             with gr.Row(elem_classes=["myst-readme-back-row"]):
-                readme_back_btn = gr.Button(
-                    "← Back to App",
-                    elem_classes=["myst-readme-back-btn"],
-                    variant="secondary",
-                    scale=0,
-                )
+                readme_back_btn = _place_back_button("← Back to App", min_width=110)
             with gr.Column(elem_classes=["myst-readme-body"]):
                 gr.HTML(build_readme_full_page_html())
 
@@ -9306,11 +9324,10 @@ def build_app() -> gr.Blocks:
                     elem_classes=["myst-render-detail-wrapper", "myst-render-detail-view"],
                 ) as render_detail_col:
                     with gr.Row(elem_classes=["myst-render-detail-toolbar"]):
-                        render_back_to_grid_btn = gr.Button(
+                        render_back_to_grid_btn = _place_back_button(
                             "← Back to Grid",
-                            variant="secondary",
-                            scale=0,
                             elem_id="myst-render-back-to-grid-btn",
+                            min_width=130,
                         )
                     with gr.Row(
                         elem_classes=["myst-render-split-row"],
@@ -9673,7 +9690,6 @@ def build_app() -> gr.Blocks:
             grav_tab_status_btn = _grav_nav["status"]
             _place_status_gap_row(slot="after-main-nav", half_height=True)
             gravity_child_nav = _place_gravity_child_nav_row()
-            gravity_back_btn = gravity_child_nav["back"]
             gravity_letter_btns = {
                 letter: gravity_child_nav[letter] for letter in _GRAVITY_CHILD_NAV_LETTERS
             }
@@ -9776,7 +9792,6 @@ def build_app() -> gr.Blocks:
             gravity_demo_outputs = [
                 gravity_viewport_plot,
                 gravity_viewport_video,
-                gravity_back_btn,
                 *[gravity_letter_btns[letter] for letter in _GRAVITY_CHILD_NAV_LETTERS],
                 gravity_active_letter,
             ]
@@ -9944,11 +9959,6 @@ def build_app() -> gr.Blocks:
             current_page,
         ]
         readme_nav_outputs = [*nav_outputs, readme_return_page]
-
-        gravity_back_btn.click(
-            lambda: _nav_to_page("render"),
-            outputs=nav_outputs,
-        )
 
         status_nav_outputs = [
             *nav_outputs,
@@ -10119,7 +10129,6 @@ def build_app() -> gr.Blocks:
                 *nav_outputs,
                 gravity_viewport_plot,
                 gravity_viewport_video,
-                gravity_back_btn,
                 *[gravity_letter_btns[letter] for letter in _GRAVITY_CHILD_NAV_LETTERS],
                 gravity_active_letter,
             ],
