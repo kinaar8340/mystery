@@ -131,12 +131,35 @@ _VQC_TAB_ORANGE_BG = "#3d2a5c"
 _VQC_TAB_ORANGE_BORDER = "#6a4c93"
 _VQC_TAB_ORANGE_TEXT = "#d4b8ff"
 _VQC_MATRIX_GREEN = "#33ff66"
-# Global default button border — matches .vqc-source-tab (#6b4f1d).
-DEFAULT_BUTTON_BORDER_COLOR = "#6b4f1d"
-DEFAULT_BUTTON_BODY_HEIGHT = "2.05rem"
+
+# ====================== GLOBAL STYLING THEME ======================
+NAV_THEME: dict = {
+    "default_gap_height": 0.25,
+    "nav_button": {
+        "height": "2.05rem",
+        "min_width": "58px",
+        "padding": "0.34rem 0.78rem",
+        "font_size": "0.82rem",
+        "font_weight": "600",
+        "border_radius": "8px",
+        "border_width": "2px",
+        "transition": "background 0.15s ease, border-color 0.15s ease, color 0.15s ease",
+        "text_color": "#ffffff",
+        "body_color": "#2a1f10",
+        "border_color": "#6b4f1d",
+        "active": {
+            "text_color": "#00FF00",
+            "border_color": "#00FF00",
+            "body_color": "#1a3d2a",
+        },
+    },
+}
+
+# Legacy aliases — prefer NAV_THEME for new code.
+DEFAULT_BUTTON_BORDER_COLOR = NAV_THEME["nav_button"]["border_color"]
+DEFAULT_BUTTON_BODY_HEIGHT = NAV_THEME["nav_button"]["height"]
 DEFAULT_GAP = "8px"
-# Global vertical rhythm between nav/button bars and content (rem for responsive scaling).
-default_gap_height = 0.25
+default_gap_height = NAV_THEME["default_gap_height"]
 _myst_default_gap_height = f"{default_gap_height}rem"
 _MYST_STATUS_LAYER_ALPHA = 0.2
 # Individual preset panel backgrounds: 30% transparent (30% opaque).
@@ -854,6 +877,60 @@ _SHAPE_NAV_IDS: tuple[str, ...] = ("D4", "D6", "D8", "D12", "D20")
 _DEFAULT_ACTIVE_SHAPE = "D6"
 
 
+def _nav_theme_gap_rem(*, half: bool = False) -> float:
+    """Return gap height in rem from NAV_THEME."""
+    gap = float(NAV_THEME["default_gap_height"])
+    return gap / 2 if half else gap
+
+
+def _nav_theme_gradio_css_vars() -> str:
+    """CSS custom properties derived from NAV_THEME for injection into HFB_CSS."""
+    gap = NAV_THEME["default_gap_height"]
+    nb = NAV_THEME["nav_button"]
+    active = nb["active"]
+    return f"""
+    --myst-default-gap-height: {gap}rem;
+    --myst-half-gap-height: calc({gap}rem * 0.5);
+    --nav-btn-height: {nb["height"]};
+    --nav-btn-min-width: {nb["min_width"]};
+    --nav-btn-padding: {nb["padding"]};
+    --nav-btn-font-size: {nb["font_size"]};
+    --nav-btn-font-weight: {nb["font_weight"]};
+    --nav-btn-border-radius: {nb["border_radius"]};
+    --nav-btn-border-width: {nb["border_width"]};
+    --nav-btn-transition: {nb["transition"]};
+    --nav-btn-text-color: {nb["text_color"]};
+    --nav-btn-body-color: {nb["body_color"]};
+    --nav-btn-border-color: {nb["border_color"]};
+    --nav-btn-active-text-color: {active["text_color"]};
+    --nav-btn-active-border-color: {active["border_color"]};
+    --nav-btn-active-body-color: {active["body_color"]};
+    """
+
+
+def _nav_theme_button(
+    label: str,
+    *,
+    elem_classes: list[str] | None = None,
+    elem_id: str | None = None,
+    interactive: bool = True,
+    scale: int = 1,
+    **kwargs,
+) -> gr.Button:
+    """Create a navigation tab button using NAV_THEME defaults."""
+    btn_kwargs: dict = {
+        "variant": "secondary",
+        "scale": scale,
+        "interactive": interactive,
+    }
+    if elem_classes:
+        btn_kwargs["elem_classes"] = elem_classes
+    if elem_id:
+        btn_kwargs["elem_id"] = elem_id
+    btn_kwargs.update(kwargs)
+    return gr.Button(label, **btn_kwargs)
+
+
 def _place_back_button(
     label: str = "← Back",
     *,
@@ -946,21 +1023,17 @@ def _place_unified_main_nav(
         gr.HTML('<span class="vqc-source-label vqc-nav-row-label">Mystery:</span>')
         for page_id, label in _MAIN_NAV_TAB_SPECS:
             is_active = page_id == active
-            buttons[page_id] = gr.Button(
+            buttons[page_id] = _nav_theme_button(
                 label,
                 elem_classes=_main_nav_btn_classes(page_id, active),
                 interactive=not is_active,
-                scale=1,
-                variant="secondary",
             )
         for shape_id in _SHAPE_NAV_IDS:
             is_active = shape_id == default_shape
-            buttons[shape_id] = gr.Button(
+            buttons[shape_id] = _nav_theme_button(
                 shape_id,
                 elem_classes=_shape_btn_classes(shape_id, default_shape),
                 interactive=not is_active,
-                scale=1,
-                variant="secondary",
             )
     return buttons
 
@@ -990,13 +1063,11 @@ def _place_status_zoom_nav_row(
             classes = ["vqc-source-tab", "demo-btn", "myst-status-preset-btn"]
             if is_active:
                 classes.append("active")
-            buttons[str(slot)] = gr.Button(
+            buttons[str(slot)] = _nav_theme_button(
                 preset_id,
                 elem_id=f"myst-status-preset-btn-{preset_id}",
                 elem_classes=classes,
                 interactive=not is_active,
-                scale=1,
-                variant="secondary",
             )
     return buttons
 
@@ -1015,7 +1086,7 @@ def _place_status_save_edit_row() -> tuple[gr.Button, gr.Button]:
             interactive=False,
             scale=1,
         )
-        edit_btn = gr.Button(
+        edit_btn = _nav_theme_button(
             "Edit",
             elem_id="myst-status-nav-edit-btn",
             elem_classes=[
@@ -1024,17 +1095,14 @@ def _place_status_save_edit_row() -> tuple[gr.Button, gr.Button]:
                 "myst-status-nav-edit-btn",
                 "edit-btn",
             ],
-            interactive=True,
-            scale=1,
-            variant="secondary",
         )
     return save_btn, edit_btn
 
 
 def _add_gap_row(*, slot: str | None = None, half_height: bool = False) -> None:
-    """Inserts a consistent gap row using rem units from default_gap_height."""
+    """Inserts a consistent gap row using rem units from NAV_THEME."""
     slot_key = str(slot or "default").strip() or "default"
-    height_rem = default_gap_height if not half_height else default_gap_height / 2
+    height_rem = _nav_theme_gap_rem(half=half_height)
     row_classes = ["myst-gap-row-host", "myst-status-gap-row", f"myst-gap-row-host-{slot_key}"]
     if half_height:
         row_classes.append("myst-gap-row-half")
@@ -1730,6 +1798,7 @@ WALLPAPER_HEAD = f"""
 
 HFB_CSS = f"""
 :root, :root .dark {{
+    {_nav_theme_gradio_css_vars()}
     --myst-control-bar-height: 1.54rem;
     --myst-button-height: 26px;
     --myst-viewport-min-height: 18rem;
@@ -1875,11 +1944,10 @@ body::before {{
     width: 100% !important;
 }}
 .gradio-container {{
-    --default-border-color: {DEFAULT_BUTTON_BORDER_COLOR};
-    --button-body-height: {DEFAULT_BUTTON_BODY_HEIGHT};
+    {_nav_theme_gradio_css_vars()}
+    --default-border-color: var(--nav-btn-border-color, {DEFAULT_BUTTON_BORDER_COLOR});
+    --button-body-height: var(--nav-btn-height, {DEFAULT_BUTTON_BODY_HEIGHT});
     --default-gap: {DEFAULT_GAP};
-    --myst-default-gap-height: {_myst_default_gap_height};
-    --myst-half-gap-height: calc(var(--myst-default-gap-height) * 0.5);
     position: relative !important;
     width: 100% !important;
     max-width: 100% !important;
@@ -2055,29 +2123,30 @@ footer {{
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
-    padding: 0.34rem 0.78rem !important;
-    border: 2px solid #6b4f1d !important;
-    border-radius: 8px !important;
+    padding: var(--nav-btn-padding, 0.34rem 0.78rem) !important;
+    border: var(--nav-btn-border-width, 2px) solid var(--nav-btn-border-color, #6b4f1d) !important;
+    border-radius: var(--nav-btn-border-radius, 8px) !important;
     background: linear-gradient(180deg, #3d2e14 0%, #1f1608 100%) !important;
-    background-color: #2a1f10 !important;
+    background-color: var(--nav-btn-body-color, #2a1f10) !important;
     box-shadow: inset 0 1px 0 rgba(255, 220, 150, 0.12), 0 2px 4px rgba(0, 0, 0, 0.35) !important;
-    color: #ffffff !important;
-    -webkit-text-fill-color: #ffffff !important;
+    color: var(--nav-btn-text-color, #ffffff) !important;
+    -webkit-text-fill-color: var(--nav-btn-text-color, #ffffff) !important;
     text-decoration: none !important;
-    font-weight: 600 !important;
-    font-size: 0.82rem !important;
+    font-weight: var(--nav-btn-font-weight, 600) !important;
+    font-size: var(--nav-btn-font-size, 0.82rem) !important;
     line-height: 1.2 !important;
     letter-spacing: 0.03em !important;
     text-transform: none !important;
     white-space: nowrap !important;
-    min-height: var(--myst-control-bar-height, 2.05rem) !important;
-    height: var(--myst-control-bar-height, 2.05rem) !important;
+    min-width: var(--nav-btn-min-width, 58px) !important;
+    min-height: var(--nav-btn-height, var(--myst-control-bar-height, 2.05rem)) !important;
+    height: var(--nav-btn-height, var(--myst-control-bar-height, 2.05rem)) !important;
     box-sizing: border-box !important;
     width: auto !important;
     margin: 0 !important;
     opacity: 1 !important;
     text-shadow: none !important;
-    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    transition: var(--nav-btn-transition, background 0.15s ease, border-color 0.15s ease, color 0.15s ease);
 }}
 .gradio-container a.vqc-source-tab:hover,
 .gradio-container .vqc-source-tabs-row button.vqc-source-tab:not(.active):hover,
@@ -2601,10 +2670,11 @@ footer {{
 .gradio-container .vqc-source-tabs-row button.vqc-source-tab.main-nav-btn.active[disabled],
 .gradio-container .vqc-source-tabs-row button.vqc-source-tab.main-nav-btn.active:disabled span,
 .gradio-container .vqc-source-tabs-row button.vqc-source-tab.main-nav-btn.active[disabled] span {{
-    color: #00FF00 !important;
-    -webkit-text-fill-color: #00FF00 !important;
-    border-color: #00FF00 !important;
-    box-shadow: 0 0 12px rgba(0, 255, 0, 0.75), 0 0 22px rgba(0, 255, 0, 0.45), 0 0 0 1px #00FF00 !important;
+    color: var(--nav-btn-active-text-color, #00FF00) !important;
+    -webkit-text-fill-color: var(--nav-btn-active-text-color, #00FF00) !important;
+    border-color: var(--nav-btn-active-border-color, #00FF00) !important;
+    background-color: var(--nav-btn-active-body-color, #1a3d2a) !important;
+    box-shadow: 0 0 12px rgba(0, 255, 0, 0.75), 0 0 22px rgba(0, 255, 0, 0.45), 0 0 0 1px var(--nav-btn-active-border-color, #00FF00) !important;
     font-weight: 600 !important;
 }}
 /* ========== SHAPE TABS (D4, D6, D8, D12, D20) ========== */
@@ -2673,8 +2743,8 @@ footer {{
 }}
 .gradio-container .myst-main-nav button.vqc-source-tab,
 .gradio-container .myst-secondary-nav button.vqc-source-tab {{
-    height: var(--button-body-height, {DEFAULT_BUTTON_BODY_HEIGHT}) !important;
-    min-height: var(--button-body-height, {DEFAULT_BUTTON_BODY_HEIGHT}) !important;
+    height: var(--nav-btn-height, var(--button-body-height, {DEFAULT_BUTTON_BODY_HEIGHT})) !important;
+    min-height: var(--nav-btn-height, var(--button-body-height, {DEFAULT_BUTTON_BODY_HEIGHT})) !important;
 }}
 .gradio-container .myst-save-edit-row button.save-btn,
 .gradio-container .myst-save-edit-row button.edit-btn {{
@@ -5066,8 +5136,7 @@ footer {{ visibility: hidden; }}
 }}
 .gradio-container .myst-status-page,
 .gradio-container .myst-render-page {{
-    --myst-default-gap-height: {_myst_default_gap_height};
-    --myst-half-gap-height: calc(var(--myst-default-gap-height) * 0.5);
+    {_nav_theme_gradio_css_vars()}
     min-height: calc(100dvh - 4.25rem) !important;
     height: auto !important;
     display: flex !important;
@@ -8097,7 +8166,7 @@ def _place_gravity_child_nav_row() -> dict[str, gr.Button]:
             "Demo:</span>"
         )
         for letter in _GRAVITY_CHILD_NAV_LETTERS:
-            buttons[letter] = gr.Button(
+            buttons[letter] = _nav_theme_button(
                 letter,
                 elem_id=f"myst-gravity-preset-btn-{letter}",
                 elem_classes=[
@@ -8106,8 +8175,6 @@ def _place_gravity_child_nav_row() -> dict[str, gr.Button]:
                     "myst-status-preset-btn",
                     "myst-gravity-preset-btn",
                 ],
-                scale=1,
-                variant="secondary",
             )
     if not buttons:
         raise RuntimeError("_place_gravity_child_nav_row produced no Demo buttons")
@@ -8143,15 +8210,13 @@ def _place_render_sub_nav_row(
             classes = ["vqc-source-tab", "demo-btn", "myst-status-preset-btn", "myst-render-preset-btn"]
             if is_active:
                 classes.append("active")
-            buttons[str(slot)] = gr.Button(
+            buttons[str(slot)] = _nav_theme_button(
                 preset_id,
                 elem_id=f"myst-render-preset-btn-{preset_id}",
                 elem_classes=classes,
                 interactive=not is_active,
-                scale=1,
-                variant="secondary",
             )
-        render_btn = gr.Button(
+        render_btn = _nav_theme_button(
             "Render",
             elem_id="myst-render-nav-render-btn",
             elem_classes=[
@@ -8160,8 +8225,6 @@ def _place_render_sub_nav_row(
                 "myst-status-preset-btn",
                 "myst-render-nav-render-btn",
             ],
-            scale=1,
-            variant="secondary",
         )
     return buttons, render_btn
 
