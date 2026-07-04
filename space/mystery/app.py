@@ -136,8 +136,8 @@ DEFAULT_BUTTON_BORDER_COLOR = "#6b4f1d"
 DEFAULT_BUTTON_BODY_HEIGHT = "2.05rem"
 DEFAULT_GAP = "8px"
 # Global vertical rhythm between nav/button bars and content (rem for responsive scaling).
-DEFAULT_GAP_HEIGHT = 0.25
-_MYST_DEFAULT_GAP_HEIGHT = f"{DEFAULT_GAP_HEIGHT}rem"
+default_gap_height = 0.25
+_myst_default_gap_height = f"{default_gap_height}rem"
 _MYST_STATUS_LAYER_ALPHA = 0.2
 # Individual preset panel backgrounds: 30% transparent (30% opaque).
 _MYST_STATUS_PANEL_ALPHA = 0.3
@@ -1032,9 +1032,9 @@ def _place_status_save_edit_row() -> tuple[gr.Button, gr.Button]:
 
 
 def _add_gap_row(*, slot: str | None = None, half_height: bool = False) -> None:
-    """Inserts a consistent gap row using rem units from DEFAULT_GAP_HEIGHT."""
+    """Inserts a consistent gap row using rem units from default_gap_height."""
     slot_key = str(slot or "default").strip() or "default"
-    height_rem = DEFAULT_GAP_HEIGHT if not half_height else DEFAULT_GAP_HEIGHT / 2
+    height_rem = default_gap_height if not half_height else default_gap_height / 2
     row_classes = ["myst-gap-row-host", "myst-status-gap-row", f"myst-gap-row-host-{slot_key}"]
     if half_height:
         row_classes.append("myst-gap-row-half")
@@ -1820,7 +1820,7 @@ body::before {{
     --default-border-color: {DEFAULT_BUTTON_BORDER_COLOR};
     --button-body-height: {DEFAULT_BUTTON_BODY_HEIGHT};
     --default-gap: {DEFAULT_GAP};
-    --myst-default-gap-height: {_MYST_DEFAULT_GAP_HEIGHT};
+    --myst-default-gap-height: {_myst_default_gap_height};
     --myst-half-gap-height: calc(var(--myst-default-gap-height) * 0.5);
     position: relative !important;
     width: 100% !important;
@@ -2480,9 +2480,9 @@ footer {{
 .gradio-container .myst-default-gap-row {{
     display: block !important;
     width: 100% !important;
-    min-height: var(--myst-default-gap-height, {_MYST_DEFAULT_GAP_HEIGHT}) !important;
-    height: var(--myst-default-gap-height, {_MYST_DEFAULT_GAP_HEIGHT}) !important;
-    max-height: var(--myst-default-gap-height, {_MYST_DEFAULT_GAP_HEIGHT}) !important;
+    min-height: var(--myst-default-gap-height, {_myst_default_gap_height}) !important;
+    height: var(--myst-default-gap-height, {_myst_default_gap_height}) !important;
+    max-height: var(--myst-default-gap-height, {_myst_default_gap_height}) !important;
     margin: 0 !important;
     padding: 0 !important;
     overflow: hidden !important;
@@ -4996,7 +4996,7 @@ footer {{ visibility: hidden; }}
 }}
 .gradio-container .myst-status-page,
 .gradio-container .myst-render-page {{
-    --myst-default-gap-height: {_MYST_DEFAULT_GAP_HEIGHT};
+    --myst-default-gap-height: {_myst_default_gap_height};
     --myst-half-gap-height: calc(var(--myst-default-gap-height) * 0.5);
     min-height: calc(100dvh - 4.25rem) !important;
     height: auto !important;
