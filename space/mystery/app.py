@@ -7952,14 +7952,6 @@ def _render_open_detail(slot: int, plot_cache: list[str | None] | None = None) -
     return (gr.skip(), *_render_detail_view_updates(int(slot)))
 
 
-def _render_back_to_grid(
-    plot_cache: list[str | None],
-    active_slot: int,
-) -> tuple:
-    """Return from preset detail to the 3×3 Render grid."""
-    return _render_grid_view_updates(plot_cache, active_slot)
-
-
 def _render_load_all_presets(active_slot: int, zoom_slot: int) -> tuple:
     """Render all nine preset plots into the Render grid (or refresh open detail)."""
     plots = [_render_preset_plot_html(slot) for slot in range(_STATUS_GRID_PRESET_COUNT)]
@@ -9386,12 +9378,6 @@ def build_app() -> gr.Blocks:
                     elem_id="myst-render-detail-wrapper",
                     elem_classes=["myst-render-detail-wrapper", "myst-render-detail-view"],
                 ) as render_detail_col:
-                    with gr.Row(elem_classes=["myst-render-detail-toolbar"]):
-                        render_back_to_grid_btn = _place_back_button(
-                            "← Back to Grid",
-                            elem_id="myst-render-back-to-grid-btn",
-                            min_width=130,
-                        )
                     with gr.Row(
                         elem_classes=["myst-render-split-row"],
                         equal_height=True,
@@ -10040,12 +10026,6 @@ def build_app() -> gr.Blocks:
             _render_load_all_presets,
             inputs=[render_active_slot, render_zoom_slot],
             outputs=render_load_outputs,
-            show_progress="hidden",
-        )
-        render_back_to_grid_btn.click(
-            _render_back_to_grid,
-            inputs=[render_plot_cache, render_active_slot],
-            outputs=render_panel_outputs,
             show_progress="hidden",
         )
         for slot, btn in enumerate(render_sub_nav_btns):
