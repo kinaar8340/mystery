@@ -20,8 +20,6 @@ from demo_core import (
     CLAIMS_MD,
     E_OVER_PI,
     EXPLORE_FURTHER_MD,
-    FIGURE_URLS,
-
     GITHUB_URL,
     HF_SPACE_URL,
     KAPPA_DOC,
