@@ -2685,20 +2685,33 @@ footer {{
     box-sizing: border-box !important;
 }}
 .gradio-container .myst-main-nav > .block,
-.gradio-container #myst-gravity-child-nav > .block {{
+.gradio-container #myst-gravity-child-nav > .block:has(.nav-button-grid),
+.gradio-container #myst-render-sub-nav > .block:has(.nav-button-grid) {{
     min-width: 0 !important;
-    width: 100% !important;
+    width: auto !important;
+    flex: 1 1 0% !important;
+    max-width: 100% !important;
+}}
+.gradio-container #myst-gravity-child-nav > .block:has(.vqc-source-label),
+.gradio-container #myst-render-sub-nav > .block:has(.vqc-source-label) {{
+    min-width: 0 !important;
+    width: auto !important;
+    flex: 0 0 var(--nav-label-width, 4.75rem) !important;
 }}
 .gradio-container .myst-unified-nav-host {{
     width: 100% !important;
+    max-width: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
     gap: 0 !important;
     row-gap: 0 !important;
     flex-shrink: 0 !important;
+    overflow-x: hidden !important;
+    overflow-y: visible !important;
+    box-sizing: border-box !important;
 }}
 /* Gradio Columns use class "gap"; hide empty wrappers only — not self-tagged demo section */
-.gradio-container .myst-unified-nav-host > .gap:not(:has(.myst-gap-row-host)):not(:has(.myst-demo-nav-section)):not(:has(.myst-main-nav)):not(.myst-demo-nav-section):not(#myst-demo-nav-section):not(.myst-home-demo-nav):not(.myst-render-demo-nav):not(#myst-home-demo-nav-wrap):not(#myst-render-demo-nav-wrap) {{
+.gradio-container .myst-unified-nav-host > .gap:not(:has(.myst-gap-row-host)):not(:has(.myst-demo-nav-section)):not(:has(.myst-main-nav)):not(.myst-demo-nav-section):not(#myst-demo-nav-section):not(.myst-home-demo-nav):not(.myst-render-demo-nav):not(#myst-gravity-child-nav):not(#myst-render-sub-nav) {{
     display: none !important;
     height: 0 !important;
     min-height: 0 !important;
@@ -2714,7 +2727,10 @@ footer {{
     height: auto !important;
     min-height: 0 !important;
     max-height: none !important;
-    overflow: visible !important;
+    overflow: hidden !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
 }}
 .gradio-container .myst-unified-nav-host + .gap {{
     display: none !important;
@@ -2798,20 +2814,69 @@ footer {{
     display: flex !important;
     flex-direction: column !important;
     width: 100% !important;
+    max-width: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
     gap: 0 !important;
     row-gap: 0 !important;
     flex-shrink: 0 !important;
+    overflow: hidden !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}}
+.gradio-container .myst-unified-nav-host .demo-nav-clean,
+.gradio-container .myst-unified-nav-host #myst-gravity-child-nav.demo-nav-clean,
+.gradio-container .myst-unified-nav-host #myst-render-sub-nav.demo-nav-clean {{
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    flex-wrap: nowrap !important;
+    gap: var(--nav-grid-gap, 4px) !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    box-sizing: border-box !important;
+}}
+.gradio-container .myst-unified-nav-host .demo-nav-clean > .block,
+.gradio-container .myst-unified-nav-host .demo-nav-clean > .form,
+.gradio-container .myst-unified-nav-host .demo-nav-clean .block,
+.gradio-container .myst-unified-nav-host .demo-nav-clean .form,
+.gradio-container .myst-unified-nav-host .demo-nav-clean .html-container {{
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+}}
+.gradio-container .myst-unified-nav-host .demo-nav-clean > .block:has(.nav-button-grid),
+.gradio-container .myst-unified-nav-host .demo-nav-clean > .form:has(.nav-button-grid) {{
+    flex: 1 1 0% !important;
+    min-width: 0 !important;
+    width: auto !important;
+    max-width: 100% !important;
+}}
+.gradio-container .myst-unified-nav-host .demo-nav-clean .nav-button-grid {{
+    min-width: 0 !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
 }}
 .gradio-container .myst-home-demo-nav.hide,
 .gradio-container .myst-home-demo-nav.hidden,
 .gradio-container .myst-render-demo-nav.hide,
 .gradio-container .myst-render-demo-nav.hidden,
-.gradio-container #myst-home-demo-nav-wrap.hide,
-.gradio-container #myst-home-demo-nav-wrap.hidden,
-.gradio-container #myst-render-demo-nav-wrap.hide,
-.gradio-container #myst-render-demo-nav-wrap.hidden {{
+.gradio-container #myst-gravity-child-nav.hide,
+.gradio-container #myst-gravity-child-nav.hidden,
+.gradio-container #myst-render-sub-nav.hide,
+.gradio-container #myst-render-sub-nav.hidden {{
     display: none !important;
     visibility: hidden !important;
     height: 0 !important;
@@ -2823,26 +2888,21 @@ footer {{
     opacity: 0 !important;
     pointer-events: none !important;
 }}
-.gradio-container #myst-home-demo-nav-wrap:not(.hide):not(.hidden),
-.gradio-container #myst-render-demo-nav-wrap:not(.hide):not(.hidden) {{
-    display: flex !important;
-    flex-direction: column !important;
-    width: 100% !important;
-    margin: 0 !important;
-    padding: 0 !important;
-}}
-.gradio-container #myst-gravity-child-nav,
-.gradio-container #myst-render-sub-nav,
-.gradio-container .myst-unified-nav-host #myst-gravity-child-nav,
-.gradio-container .myst-unified-nav-host #myst-render-sub-nav {{
+.gradio-container #myst-gravity-child-nav:not(.hide):not(.hidden),
+.gradio-container #myst-render-sub-nav:not(.hide):not(.hidden),
+.gradio-container .myst-unified-nav-host #myst-gravity-child-nav:not(.hide):not(.hidden),
+.gradio-container .myst-unified-nav-host #myst-render-sub-nav:not(.hide):not(.hidden) {{
     display: flex !important;
     flex-direction: row !important;
     align-items: center !important;
     gap: var(--nav-grid-gap, 4px) !important;
     flex-wrap: nowrap !important;
     width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
     margin: 0 !important;
     padding: 0 !important;
+    overflow: hidden !important;
 }}
 .gradio-container .myst-status-nav-panel {{
     background: var(--myst-panel-bg, #1a1a1a) !important;
@@ -3028,7 +3088,8 @@ footer {{
 .gradio-container .vqc-status-preset-nav-row {{
     margin: 0 !important;
     width: 100% !important;
-    overflow: visible !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
 }}
 .gradio-container .myst-secondary-nav .vqc-source-label {{
     display: flex !important;
@@ -8581,17 +8642,21 @@ def _render_back_to_grid(
     )
 
 
-def _place_gravity_child_nav_row() -> dict[str, gr.Button]:
-    """Demo navigation row for Home — no Back button; label aligns with Mystery:."""
+def _place_gravity_child_nav_row(*, visible: bool = True) -> tuple[dict[str, gr.Button], gr.Row]:
+    """Demo navigation row for Home — inline with Mystery nav, no extra panel."""
     buttons: dict[str, gr.Button] = {}
     with gr.Row(
         elem_id="myst-gravity-child-nav",
+        visible=visible,
         elem_classes=[
             "myst-secondary-nav",
             "myst-nav-bar-row",
             "myst-gravity-child-nav-row",
+            "demo-nav-clean",
+            "vqc-source-tabs-row",
+            "myst-home-demo-nav",
         ],
-    ):
+    ) as row:
         gr.HTML(
             '<span class="vqc-source-label vqc-nav-row-label myst-gravity-child-nav-label">'
             "Demo:</span>"
@@ -8610,28 +8675,33 @@ def _place_gravity_child_nav_row() -> dict[str, gr.Button]:
                 )
     if not buttons:
         raise RuntimeError("_place_gravity_child_nav_row produced no Demo buttons")
-    return buttons
+    return buttons, row
 
 
 def _place_render_sub_nav_row(
     active_slot: int = -1,
     *,
     zoom_slot: int = -1,
-) -> dict[str, gr.Button]:
-    """Render sub-nav — Demo: label and nine presets (01 … 09) only."""
+    visible: bool = False,
+) -> tuple[dict[str, gr.Button], gr.Row]:
+    """Figures sub-nav — Demo: label and nine presets (01 … 09), same layer as Mystery nav."""
     _ = zoom_slot
     buttons: dict[str, gr.Button] = {}
     active = int(active_slot)
     with gr.Row(
         elem_id="myst-render-sub-nav",
+        visible=visible,
         elem_classes=[
             "myst-secondary-nav",
             "myst-nav-bar-row",
             "myst-render-preset-nav-wrap",
             "myst-demo-preset-nav-row",
             "vqc-status-preset-nav-row",
+            "demo-nav-clean",
+            "vqc-source-tabs-row",
+            "myst-render-demo-nav",
         ],
-    ):
+    ) as row:
         gr.HTML(
             '<span class="vqc-source-label vqc-nav-row-label myst-gravity-child-nav-label">'
             "Demo:</span>"
@@ -8649,7 +8719,7 @@ def _place_render_sub_nav_row(
                     elem_classes=classes,
                     interactive=not is_active,
                 )
-    return buttons
+    return buttons, row
 
 
 def _render_detail_view_updates(slot: int) -> tuple:
@@ -10145,21 +10215,14 @@ def build_app() -> gr.Blocks:
                 elem_id="myst-demo-nav-section",
                 elem_classes=["myst-demo-nav-section"],
             ):
-                with gr.Column(
+                gravity_child_nav, home_demo_nav_row = _place_gravity_child_nav_row(
                     visible=True,
-                    elem_id="myst-home-demo-nav-wrap",
-                    elem_classes=["myst-home-demo-nav"],
-                ) as home_demo_nav_row:
-                    gravity_child_nav = _place_gravity_child_nav_row()
-                with gr.Column(
+                )
+                _render_sub_nav, render_demo_nav_row = _place_render_sub_nav_row(
+                    active_slot=-1,
+                    zoom_slot=-1,
                     visible=False,
-                    elem_id="myst-render-demo-nav-wrap",
-                    elem_classes=["myst-render-demo-nav"],
-                ) as render_demo_nav_row:
-                    _render_sub_nav = _place_render_sub_nav_row(
-                        active_slot=-1,
-                        zoom_slot=-1,
-                    )
+                )
             _add_gap_row(slot="after-demo-nav")
 
         _init_re_metrics, _init_unit_cell_header, _init_unit_cell_fig = run_residual_explorer(
