@@ -962,8 +962,8 @@ def _place_unified_main_nav(
 
 def _place_status_zoom_nav_row(
     active_slot: int = -1,
-) -> tuple[dict[str, gr.Button], gr.Button]:
-    """Status sub-nav — Demo: label, nine presets (01 … 09), and Edit."""
+) -> dict[str, gr.Button]:
+    """Status sub-nav — Demo: label and nine presets (01 … 09)."""
     buttons: dict[str, gr.Button] = {}
     active = int(active_slot)
     with gr.Row(
@@ -971,9 +971,8 @@ def _place_status_zoom_nav_row(
         elem_classes=[
             "myst-secondary-nav",
             "myst-status-preset-nav-wrap",
-            "myst-demo-preset-nav-row",
+            "myst-gravity-child-nav-row",
             "vqc-nav-spreadsheet-row",
-            "vqc-status-preset-nav-row",
         ],
     ):
         gr.HTML(
@@ -994,6 +993,18 @@ def _place_status_zoom_nav_row(
                 scale=1,
                 variant="secondary",
             )
+    return buttons
+
+
+def _place_status_save_edit_row() -> tuple[gr.Button, gr.Button]:
+    """Presets page — Save + Edit on one row below the Demo: numeric bar."""
+    with gr.Row(elem_classes=["myst-save-edit-row"]):
+        save_btn = gr.Button(
+            "Save",
+            variant="secondary",
+            elem_classes=[*_STATUS_ZOOM_SAVE_BTN_CLASSES, "save-btn"],
+            scale=1,
+        )
         edit_btn = gr.Button(
             "Edit",
             elem_id="myst-status-nav-edit-btn",
@@ -1001,12 +1012,13 @@ def _place_status_zoom_nav_row(
                 "vqc-source-tab",
                 "myst-status-preset-btn",
                 "myst-status-nav-edit-btn",
+                "edit-btn",
             ],
             interactive=False,
             scale=1,
             variant="secondary",
         )
-    return buttons, edit_btn
+    return save_btn, edit_btn
 
 
 def _place_status_gap_row(*, slot: str, half_height: bool = False) -> None:
@@ -1030,7 +1042,12 @@ def _place_status_gap_row(*, slot: str, half_height: bool = False) -> None:
 
 
 def _status_zoom_nav_edit_btn_update(*, in_zoom: bool, edit_open: bool) -> gr.Update:
-    classes = ["vqc-source-tab", "myst-status-preset-btn", "myst-status-nav-edit-btn"]
+    classes = [
+        "vqc-source-tab",
+        "myst-status-preset-btn",
+        "myst-status-nav-edit-btn",
+        "edit-btn",
+    ]
     if edit_open:
         classes.append("active")
     return gr.update(interactive=in_zoom, elem_classes=classes, variant="secondary")
@@ -2431,6 +2448,20 @@ footer {{
     width: 100% !important;
     padding: 6px 8px !important;
     box-sizing: border-box !important;
+}}
+.gradio-container .myst-save-edit-row {{
+    display: flex !important;
+    align-items: stretch !important;
+    width: 100% !important;
+    margin-top: 4px !important;
+    margin-bottom: 12px !important;
+    gap: 8px !important;
+}}
+.gradio-container .myst-save-edit-row button.save-btn,
+.gradio-container .myst-save-edit-row button.edit-btn {{
+    min-width: 80px !important;
+    font-weight: 600 !important;
+    flex: 1 1 0% !important;
 }}
 .gradio-container .vqc-status-preset-nav-row > .block,
 .gradio-container .vqc-status-preset-nav-row > .form,
@@ -5266,9 +5297,10 @@ footer {{ visibility: hidden; }}
     min-height: 3.9rem !important;
     height: auto !important;
 }}
-.gradio-container .myst-status-page .myst-status-zoom-edit-save-row button.myst-status-zoom-save-btn {{
+.gradio-container .myst-status-page .myst-status-zoom-edit-save-row button.myst-status-zoom-save-btn,
+.gradio-container .myst-status-page .myst-save-edit-row button.myst-status-zoom-save-btn {{
     width: 100% !important;
-    min-width: 0 !important;
+    min-width: 80px !important;
     max-width: 100% !important;
     min-height: var(--myst-control-bar-height, 2.05rem) !important;
     height: var(--myst-control-bar-height, 2.05rem) !important;
@@ -9438,9 +9470,8 @@ def build_app() -> gr.Blocks:
             status_zoom_slot = gr.State(-1)
             status_zoom_edit_open = gr.State(False)
             with gr.Column(visible=True, elem_classes=["myst-status-stack"]) as status_content_col:
-                _status_zoom_nav, status_zoom_edit_btn = _place_status_zoom_nav_row(
-                    active_slot=-1
-                )
+                _status_zoom_nav = _place_status_zoom_nav_row(active_slot=-1)
+                status_zoom_save_btn, status_zoom_edit_btn = _place_status_save_edit_row()
                 _place_status_gap_row(slot="after-preset-nav")
                 status_zoom_btns = [
                     _status_zoom_nav[str(i)] for i in range(_STATUS_ZOOM_PRESET_COUNT)
@@ -9452,20 +9483,13 @@ def build_app() -> gr.Blocks:
                             "myst-status-zoom-edit-drawer",
                             "myst-gravity-control-panel",
                         ],
-                    ) as status_zoom_edit_drawer:
+                        ) as status_zoom_edit_drawer:
                         with gr.Column(
                             elem_classes=[
                                 "myst-status-zoom-edit-col",
                                 "vqc-optics-panel",
                             ],
                         ):
-                            with gr.Row(elem_classes=["myst-status-zoom-edit-save-row"]):
-                                status_zoom_save_btn = gr.Button(
-                                    "Save",
-                                    variant="secondary",
-                                    elem_classes=_STATUS_ZOOM_SAVE_BTN_CLASSES,
-                                )
-                            _place_status_gap_row(slot="after-save")
                             with gr.Row(elem_classes=["slider-row"]):
                                 sz_pressure = gr.Slider(
                                     0.0,
