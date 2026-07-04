@@ -145,6 +145,7 @@ NAV_THEME: dict = {
     "nav_grid_gap": "4px",
     "nav_button": {
         "height": "2.05rem",
+        "default_width": "58px",
         "min_width": "58px",
         "padding": "6px 12px",
         "shape_padding": "6px 10px",
@@ -910,6 +911,7 @@ def _nav_theme_gradio_css_vars() -> str:
     --nav-label-width: {nl["width"]};
     --nav-grid-gap: {NAV_THEME["nav_grid_gap"]};
     --nav-btn-height: {nb["height"]};
+    --nav-btn-default-width: {nb["default_width"]};
     --nav-btn-min-width: {nb["min_width"]};
     --nav-btn-padding: {nb["padding"]};
     --nav-btn-shape-padding: {nb["shape_padding"]};
@@ -2208,7 +2210,7 @@ footer {{
     letter-spacing: 0.03em !important;
     text-transform: none !important;
     white-space: nowrap !important;
-    min-width: var(--nav-btn-min-width, 58px) !important;
+    min-width: var(--nav-btn-default-width, var(--nav-btn-min-width, 58px)) !important;
     min-height: var(--nav-btn-height, var(--myst-control-bar-height, 2.05rem)) !important;
     height: var(--nav-btn-height, var(--myst-control-bar-height, 2.05rem)) !important;
     box-sizing: border-box !important;
@@ -2664,7 +2666,7 @@ footer {{
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    min-width: 0 !important;
+    min-width: var(--nav-btn-default-width, 58px) !important;
     width: 100% !important;
     flex: 1 1 0% !important;
     text-align: var(--nav-btn-text-align, center) !important;
@@ -2718,7 +2720,28 @@ footer {{
     overflow: hidden !important;
 }}
 .gradio-container .myst-unified-nav-host + .column.myst-gravity-page,
-.gradio-container .myst-unified-nav-host + .myst-gravity-page {{
+.gradio-container .myst-unified-nav-host + .myst-gravity-page,
+.gradio-container .myst-unified-nav-host + .column.myst-render-page,
+.gradio-container .myst-unified-nav-host + .myst-render-page,
+.gradio-container .myst-unified-nav-host + .column.myst-status-page,
+.gradio-container .myst-unified-nav-host + .myst-status-page {{
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+}}
+.gradio-container .myst-gap-row-host-after-main-nav,
+.gradio-container #myst-gap-row-after-main-nav {{
+    margin: 0 !important;
+    padding: 0 !important;
+    min-height: var(--myst-default-gap-height, {_myst_default_gap_height}) !important;
+    height: var(--myst-default-gap-height, {_myst_default_gap_height}) !important;
+    max-height: var(--myst-default-gap-height, {_myst_default_gap_height}) !important;
+    flex: 0 0 var(--myst-default-gap-height, {_myst_default_gap_height}) !important;
+    overflow: hidden !important;
+}}
+.gradio-container .myst-render-page .myst-render-stack > .block:first-child,
+.gradio-container .myst-render-page .myst-render-stack > .form:first-child,
+.gradio-container .myst-status-page .myst-status-stack > .block:first-child,
+.gradio-container .myst-status-page .myst-status-stack > .form:first-child {{
     margin-top: 0 !important;
     padding-top: 0 !important;
 }}
@@ -2842,8 +2865,26 @@ footer {{
     box-shadow: none !important;
 }}
 .gradio-container .myst-secondary-nav {{
+    margin-top: 0 !important;
     margin-bottom: 0 !important;
-    gap: 3px !important;
+    gap: var(--nav-grid-gap, 4px) !important;
+}}
+/* Consistent nav button width from NAV_THEME */
+.gradio-container button.vqc-source-tab.main-nav-btn,
+.gradio-container button.vqc-source-tab.shape-btn,
+.gradio-container button.vqc-source-tab.demo-btn,
+.gradio-container .myst-save-edit-row button.save-btn,
+.gradio-container .myst-save-edit-row button.edit-btn {{
+    min-width: var(--nav-btn-default-width, 58px) !important;
+    box-sizing: border-box !important;
+}}
+.gradio-container .nav-button-grid button.vqc-source-tab,
+.gradio-container .nav-button-grid button.save-btn,
+.gradio-container .nav-button-grid button.edit-btn {{
+    width: 100% !important;
+    min-width: var(--nav-btn-default-width, 58px) !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
 }}
 .gradio-container .myst-default-gap-row {{
     display: block !important;
@@ -9976,7 +10017,6 @@ def build_app() -> gr.Blocks:
         render_plot_cache = gr.State([None] * _STATUS_GRID_PRESET_COUNT)
         with gr.Column(visible=False, elem_classes=["myst-render-page"]) as page_render:
             with gr.Column(visible=True, elem_classes=["myst-render-stack"]) as render_content_col:
-                _add_gap_row(slot="before-demo-nav")
                 _render_sub_nav, render_all_btn = _place_render_sub_nav_row(
                     active_slot=-1,
                     zoom_slot=-1,
@@ -10074,7 +10114,6 @@ def build_app() -> gr.Blocks:
             status_zoom_edit_open = gr.State(False)
             save_button_state = gr.State(False)
             with gr.Column(visible=True, elem_classes=["myst-status-stack"]) as status_content_col:
-                _add_gap_row(slot="before-demo-nav")
                 _status_zoom_nav = _place_status_zoom_nav_row(active_slot=-1)
                 _add_gap_row(slot="after-demo-nav")
                 status_zoom_save_btn, status_zoom_edit_btn = _place_status_save_edit_row()
