@@ -2205,6 +2205,115 @@ def render_unit_cell_deformation_video(
     return video_path, metrics, header, fig, final_km
 
 
+def _breathing_deformation_path(*, n_per_segment: int = 12) -> list[float]:
+    """Full breathing cycle: rigid → max convex → rigid → max concave → 08 → 07 → 06 → rigid."""
+
+    def _segment(start: float, end: float, n: int, *, skip_first: bool = False) -> list[float]:
+        vals = np.linspace(float(start), float(end), max(2, int(n)), endpoint=True)
+        if skip_first and len(vals) > 1:
+            vals = vals[1:]
+        return [_clamp_deform_pressure(float(v)) for v in vals]
+
+    path: list[float] = []
+    path += _segment(0.0, 1.0, n_per_segment)  # Preset 05 → 01
+    path += _segment(1.0, 0.0, n_per_segment, skip_first=True)  # 01 → 05
+    path += _segment(0.0, -1.0, n_per_segment, skip_first=True)  # 05 → 09
+    for target in (-0.75, -0.5, -0.25, 0.0):  # 09 → 08 → 07 → 06 → 05
+        path += _segment(path[-1], target, max(4, n_per_segment // 2), skip_first=True)
+    return path
+
+
+_BREATHING_ANIMATION_CACHE: object | None = None
+
+
+def build_breathing_animation_figure(
+    *,
+    n_per_segment: int = 12,
+    frame_duration_ms: int = 90,
+):
+    """Looping Plotly breathing animation — rigid ↔ convex ↔ concave unit cell."""
+    global _BREATHING_ANIMATION_CACHE
+    if _BREATHING_ANIMATION_CACHE is not None:
+        return _BREATHING_ANIMATION_CACHE
+
+    import plotly.graph_objects as go
+
+    phi = 1.0
+    e = 1.0
+    pi = 1.0
+    kappa = KAPPA_DOC
+    delta_z = 0.1
+    alpha = 1.0
+    beta = 1.0
+    view_elev = UNIT_CELL_VIEW_ELEV
+    view_azim = UNIT_CELL_VIEW_AZIM
+    r_val = residual_from_scales(phi, e, pi)
+    d_side = delta_side_contraction(delta_z, r_val, kappa, alpha=alpha, beta=beta)
+    side = abs(d_side) * 0.5
+
+    pressures = _breathing_deformation_path(n_per_segment=n_per_segment)
+    frames: list[go.Frame] = []
+    first_data = None
+    half = float(max(2.0, UNIT_CELL_AXIS_HALF))
+
+    for idx, pressure in enumerate(pressures):
+        frame_fig = build_unit_cell_plotly_figure(
+            delta_z=delta_z,
+            delta_side=side,
+            pressure=pressure,
+            view_elev=view_elev,
+            view_azim=view_azim,
+            show_curvature_grid=False,
+        )
+        if first_data is None:
+            first_data = frame_fig.data
+        frames.append(go.Frame(data=frame_fig.data, name=str(idx)))
+
+    fig = go.Figure(data=first_data, frames=frames)
+    fig.update_layout(
+        paper_bgcolor="#000000",
+        plot_bgcolor="#000000",
+        margin=dict(l=0, r=0, t=8, b=0),
+        height=650,
+        autosize=True,
+        scene=dict(
+            xaxis=dict(range=[-half, half], visible=False, showbackground=False),
+            yaxis=dict(range=[-half, half], visible=False, showbackground=False),
+            zaxis=dict(range=[-half, half], visible=False, showbackground=False),
+            aspectmode="cube",
+            camera=_plotly_camera_from_view(view_elev, view_azim),
+            dragmode="orbit",
+        ),
+        showlegend=False,
+        uirevision="mystery-breathing",
+        updatemenus=[
+            {
+                "type": "buttons",
+                "showactive": False,
+                "y": 1.08,
+                "x": 0.05,
+                "buttons": [
+                    {
+                        "label": "▶ Breathing",
+                        "method": "animate",
+                        "args": [
+                            None,
+                            {
+                                "frame": {"duration": frame_duration_ms, "redraw": True},
+                                "fromcurrent": True,
+                                "transition": {"duration": 0},
+                                "mode": "immediate",
+                            },
+                        ],
+                    }
+                ],
+            }
+        ],
+    )
+    _BREATHING_ANIMATION_CACHE = fig
+    return fig
+
+
 def render_gravity_demo_animation_video(
     phi_sq_scale: float,
     e_sq_scale: float,

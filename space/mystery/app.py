@@ -43,6 +43,7 @@ from demo_core import (
     unit_cell_error_placeholder_html,
     render_unit_cell_deformation_video,
     render_gravity_demo_animation_video,
+    build_breathing_animation_figure,
     figure_to_viewport_cached_html,
     residual_from_scales,
     run_residual_explorer,
@@ -860,7 +861,7 @@ def _external_tab_html(label: str, url: str, tab_id: str) -> str:
 
 
 _MAIN_NAV_TAB_SPECS = (
-    ("gravity", "Gravity"),
+    ("home", "Home"),
     ("render", "Render"),
     ("status", "Presets"),
     ("readme", "README"),
@@ -1076,21 +1077,21 @@ def _nav_to_status_page(current_page: str, content_open: bool) -> tuple:
 
 
 def _nav_to_page(page: str) -> tuple:
-    """Switch between render, figures, gravity, readme, status, and edit; refresh nav highlights."""
+    """Switch between render, figures, home, readme, status, and edit; refresh nav highlights."""
     on_render = page == "render"
     on_anim = page == "animations"
-    on_gravity = page == "gravity"
+    on_home = page == "home"
     on_readme = page == "readme"
     on_status = page == "status"
     closed = _close_links_panels()
-    tab_gravity = _source_tab_btn_update(active=on_gravity)
+    tab_home = _source_tab_btn_update(active=on_home)
     tab_render = _source_tab_btn_update(active=on_render)
     tab_readme = _source_tab_btn_update(active=on_readme)
     tab_anim = _source_tab_btn_update(active=on_anim)
     tab_status = _source_tab_btn_update(active=on_status)
-    page_tabs = (tab_gravity, tab_render, tab_readme, tab_anim, tab_status)
+    page_tabs = (tab_home, tab_render, tab_readme, tab_anim, tab_status)
     return (
-        gr.update(visible=on_gravity),
+        gr.update(visible=on_home),
         gr.update(visible=on_render),
         gr.update(visible=on_anim),
         gr.update(visible=on_readme),
@@ -1442,6 +1443,53 @@ WALLPAPER_HEAD = f"""
     if (document.body) bootRenderGridClicks();
     document.addEventListener('DOMContentLoaded', bootRenderGridClicks);
     window.addEventListener('load', bootRenderGridClicks);
+}})();
+(function() {{
+    function startBreathingAnimation() {{
+        var plotDiv = document.querySelector('#myst-gravity-viewport .plotly-graph-div');
+        if (!plotDiv || !plotDiv.data || plotDiv.data.length === 0) {{
+            setTimeout(startBreathingAnimation, 300);
+            return;
+        }}
+        if (!window.Plotly) {{
+            setTimeout(startBreathingAnimation, 300);
+            return;
+        }}
+        if (plotDiv._transitionData && plotDiv._transitionData.frames && plotDiv._transitionData.frames.length > 0) {{
+            if (plotDiv.dataset.mystBreathingLoop === '1') return;
+            plotDiv.dataset.mystBreathingLoop = '1';
+            var animOpts = {{
+                frame: {{ duration: 90, redraw: true }},
+                transition: {{ duration: 0 }},
+                mode: 'immediate'
+            }};
+            window.Plotly.animate(plotDiv, null, animOpts).then(function() {{
+                plotDiv.on('plotly_animated', function() {{
+                    window.Plotly.animate(plotDiv, null, animOpts);
+                }});
+            }});
+        }}
+    }}
+    document.addEventListener('DOMContentLoaded', function() {{
+        setTimeout(startBreathingAnimation, 800);
+    }});
+    window.addEventListener('plotly_afterplot', function() {{
+        setTimeout(startBreathingAnimation, 400);
+    }});
+    if (window.__mystGravityBreathingObs) return;
+    window.__mystGravityBreathingObs = new MutationObserver(function() {{
+        var plotDiv = document.querySelector('#myst-gravity-viewport .plotly-graph-div');
+        if (!plotDiv) return;
+        plotDiv.dataset.mystBreathingLoop = '0';
+        setTimeout(startBreathingAnimation, 400);
+    }});
+    var mystBreathingHost = document.getElementById('myst-gravity-viewport')
+        || document.querySelector('.myst-gravity-page');
+    if (mystBreathingHost) {{
+        window.__mystGravityBreathingObs.observe(mystBreathingHost, {{
+            subtree: true, childList: true
+        }});
+    }}
 }})();
 </script>
 """
@@ -1921,6 +1969,42 @@ footer {{
     min-height: calc(100dvh - 12rem) !important;
     object-fit: contain !important;
     background: #000000 !important;
+}}
+.gradio-container .myst-gravity-page .myst-gravity-viewport .block,
+.gradio-container .myst-gravity-page #myst-gravity-viewport .block {{
+    flex: 1 1 auto !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}}
+.gradio-container .myst-gravity-page .myst-gravity-viewport .plot-container,
+.gradio-container .myst-gravity-page #myst-gravity-viewport .plot-container {{
+    flex: 1 1 auto !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: calc(100dvh - 12rem) !important;
+    background: #000000 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}}
+.gradio-container .myst-gravity-page .myst-gravity-viewport .plotly-graph-div,
+.gradio-container .myst-gravity-page .myst-gravity-viewport .js-plotly-plot,
+.gradio-container .myst-gravity-page #myst-gravity-viewport .plotly-graph-div,
+.gradio-container .myst-gravity-page #myst-gravity-viewport .js-plotly-plot {{
+    flex: 1 1 auto !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: calc(100dvh - 12rem) !important;
+    max-height: none !important;
+}}
+.gradio-container .myst-gravity-page .myst-gravity-viewport .modebar,
+.gradio-container .myst-gravity-page #myst-gravity-viewport .modebar {{
+    right: 0.35rem !important;
+    top: 0.2rem !important;
 }}
 .gradio-container a:hover:not(.vqc-source-tab),
 .gradio-container .markdown a:hover:not(.vqc-source-tab),
@@ -2661,10 +2745,11 @@ footer {{ visibility: hidden; }}
     margin-bottom: 0.5rem !important;
 }}
 .gradio-container .myst-gravity-page .plot-container {{
-    min-height: 360px !important;
+    flex: 1 1 auto !important;
+    width: 100% !important;
+    min-height: calc(100dvh - 12rem) !important;
     background-color: #000000 !important;
 }}
-/* viewport plot sizing: see KNOWN-GOOD block at end of HFB_CSS */
 .gradio-container .myst-gravity-page .vqc-plot3d-panel,
 .gradio-container .myst-gravity-page .vqc-plot3d-panel .block,
 .gradio-container .myst-gravity-page .vqc-plot3d-panel img {{
@@ -6530,12 +6615,73 @@ def _get_gravity_animation_html(letter: str) -> str:
     )
 
 
+def _create_breathing_animation():
+    """Looping breathing Plotly figure for Demo A — ready to animate on load."""
+    fig = build_breathing_animation_figure()
+    fig.update_layout(
+        updatemenus=[
+            {
+                "type": "buttons",
+                "showactive": False,
+                "y": 1.08,
+                "x": 0.05,
+                "buttons": [
+                    {
+                        "label": "▶ Breathing",
+                        "method": "animate",
+                        "args": [
+                            None,
+                            {
+                                "frame": {"duration": 90, "redraw": True},
+                                "fromcurrent": True,
+                                "mode": "immediate",
+                                "transition": {"duration": 0},
+                            },
+                        ],
+                    }
+                ],
+            }
+        ],
+    )
+    return fig
+
+
+def _get_gravity_demo_plotly_figure(letter: str):
+    """Static Plotly unit-cell figure for Demo letters B–I."""
+    slot = _gravity_demo_letter_slot(letter)
+    dials = _render_preset_dials_for_slot(slot)
+    fig = run_residual_explorer_plotly(
+        dials["phi"],
+        dials["e"],
+        dials["pi"],
+        dials["kappa"],
+        dials["dz"],
+        dials["alpha"],
+        dials["beta"],
+        dials["pressure"],
+        dials["elev"],
+        dials["azim"],
+    )
+    fig.update_layout(
+        height=650,
+        margin=dict(l=0, r=0, t=8, b=0),
+        paper_bgcolor="#000000",
+        plot_bgcolor="#000000",
+        uirevision=f"mystery-demo-{letter.lower()}",
+    )
+    return fig
+
+
 def _switch_gravity_demo(letter: str) -> tuple:
-    """Switch the Gravity viewport to the animation for the selected letter."""
+    """Switch the Home viewport to the demo for the selected letter."""
     letter = str(letter).strip().upper()
     slot = _gravity_demo_letter_slot(letter)
+    if letter == "A":
+        fig = _create_breathing_animation()
+    else:
+        fig = _get_gravity_demo_plotly_figure(letter)
     return (
-        _get_gravity_animation_html(letter),
+        fig,
         *_gravity_child_nav_output_updates(slot),
         letter,
     )
@@ -7718,7 +7864,7 @@ def _run_residual_explorer_ui(
         metrics,
         metrics,
         header,
-        _gravity_static_image_update(fig),
+        _create_breathing_animation(),
         _gravity_clear_video_update(),
         control_levels,
         gr.skip(),
@@ -8567,7 +8713,7 @@ def build_app() -> gr.Blocks:
         fill_width=True,
         fill_height=True,
     ) as demo:
-        current_page = gr.State("gravity")
+        current_page = gr.State("home")
         newhere_open = gr.State(False)
         claims_open = gr.State(False)
         with gr.Column(visible=False, elem_classes=["vqc-links-panel"]) as panel_claims:
@@ -8591,8 +8737,8 @@ def build_app() -> gr.Blocks:
                 )
             gr.Markdown(ONBOARDING_MD)
         with gr.Column(visible=False, elem_classes=["myst-gravity-wired-hidden"]):
-            tab_gravity_btn = gr.Button(
-                "Gravity",
+            tab_home_btn = gr.Button(
+                "Home",
                 elem_classes=["vqc-source-tab", "active"],
                 interactive=False,
                 variant="secondary",
@@ -8630,7 +8776,7 @@ def build_app() -> gr.Blocks:
 
         with gr.Column(visible=False, elem_classes=["vqc-animations-page"]) as page_animations:
             _anim_nav = _place_main_nav_row("animations")
-            anim_tab_gravity_btn = _anim_nav["gravity"]
+            anim_tab_home_btn = _anim_nav["home"]
             anim_tab_render_btn = _anim_nav["render"]
             anim_tab_readme_btn = _anim_nav["readme"]
             anim_tab_anim_btn = _anim_nav["animations"]
@@ -8654,7 +8800,7 @@ def build_app() -> gr.Blocks:
 
         with gr.Column(visible=False, elem_classes=["myst-readme-page"]) as page_readme:
             _readme_nav = _place_main_nav_row("readme")
-            readme_tab_gravity_btn = _readme_nav["gravity"]
+            readme_tab_home_btn = _readme_nav["home"]
             readme_tab_render_btn = _readme_nav["render"]
             readme_tab_readme_btn = _readme_nav["readme"]
             readme_tab_anim_btn = _readme_nav["animations"]
@@ -8682,7 +8828,7 @@ def build_app() -> gr.Blocks:
         with gr.Column(visible=False, elem_classes=["myst-render-page"]) as page_render:
             _place_status_gap_row(slot="before-main-nav")
             _render_nav = _place_main_nav_row("render")
-            render_tab_gravity_btn = _render_nav["gravity"]
+            render_tab_home_btn = _render_nav["home"]
             render_tab_render_btn = _render_nav["render"]
             render_tab_readme_btn = _render_nav["readme"]
             render_tab_anim_btn = _render_nav["animations"]
@@ -8790,7 +8936,7 @@ def build_app() -> gr.Blocks:
         with gr.Column(visible=False, elem_classes=["myst-status-page"]) as page_status:
             _place_status_gap_row(slot="before-main-nav")
             _status_nav = _place_main_nav_row("status")
-            status_tab_gravity_btn = _status_nav["gravity"]
+            status_tab_home_btn = _status_nav["home"]
             status_tab_render_btn = _status_nav["render"]
             status_tab_readme_btn = _status_nav["readme"]
             status_tab_anim_btn = _status_nav["animations"]
@@ -8945,7 +9091,7 @@ def build_app() -> gr.Blocks:
 
         with gr.Column(visible=False, elem_classes=["myst-edit-page"]) as page_edit:
             _edit_nav = _place_main_nav_row("edit")
-            edit_tab_gravity_btn = _edit_nav["gravity"]
+            edit_tab_home_btn = _edit_nav["home"]
             edit_tab_render_btn = _edit_nav["render"]
             edit_tab_readme_btn = _edit_nav["readme"]
             edit_tab_anim_btn = _edit_nav["animations"]
@@ -9084,8 +9230,8 @@ def build_app() -> gr.Blocks:
                         )
 
         with gr.Column(visible=True, elem_classes=["myst-gravity-page"], scale=1) as page_gravity:
-            _grav_nav = _place_main_nav_row("gravity")
-            grav_tab_gravity_btn = _grav_nav["gravity"]
+            _grav_nav = _place_main_nav_row("home")
+            grav_tab_home_btn = _grav_nav["home"]
             grav_tab_render_btn = _grav_nav["render"]
             grav_tab_readme_btn = _grav_nav["readme"]
             grav_tab_anim_btn = _grav_nav["animations"]
@@ -9099,11 +9245,13 @@ def build_app() -> gr.Blocks:
             _place_status_gap_row(slot="after-preset-nav")
             gravity_active_letter = gr.State("A")
             with gr.Column(elem_classes=["myst-gravity-single-viewport"]):
-                gravity_viewport = gr.HTML(
-                    value=_get_gravity_demo_static_html("A"),
+                gravity_viewport = gr.Plot(
+                    value=_create_breathing_animation(),
+                    label="",
+                    show_label=False,
+                    container=True,
                     elem_id="myst-gravity-viewport",
                     elem_classes=["myst-gravity-viewport"],
-                    container=False,
                 )
             with gr.Column(visible=False, elem_classes=["myst-gravity-wired-hidden"]):
                 re_active_preset = gr.State(0)
@@ -9291,7 +9439,7 @@ def build_app() -> gr.Blocks:
             page_readme,
             page_status,
             page_edit,
-            tab_gravity_btn,
+            tab_home_btn,
             tab_render_btn,
             tab_readme_btn,
             tab_anim_btn,
@@ -9302,32 +9450,32 @@ def build_app() -> gr.Blocks:
             panel_claims,
             tab_claims_btn,
             claims_open,
-            anim_tab_gravity_btn,
+            anim_tab_home_btn,
             anim_tab_render_btn,
             anim_tab_readme_btn,
             anim_tab_anim_btn,
             anim_tab_status_btn,
-            grav_tab_gravity_btn,
+            grav_tab_home_btn,
             grav_tab_render_btn,
             grav_tab_readme_btn,
             grav_tab_anim_btn,
             grav_tab_status_btn,
-            readme_tab_gravity_btn,
+            readme_tab_home_btn,
             readme_tab_render_btn,
             readme_tab_readme_btn,
             readme_tab_anim_btn,
             readme_tab_status_btn,
-            status_tab_gravity_btn,
+            status_tab_home_btn,
             status_tab_render_btn,
             status_tab_readme_btn,
             status_tab_anim_btn,
             status_tab_status_btn,
-            edit_tab_gravity_btn,
+            edit_tab_home_btn,
             edit_tab_render_btn,
             edit_tab_readme_btn,
             edit_tab_anim_btn,
             edit_tab_status_btn,
-            render_tab_gravity_btn,
+            render_tab_home_btn,
             render_tab_render_btn,
             render_tab_readme_btn,
             render_tab_anim_btn,
@@ -9440,34 +9588,34 @@ def build_app() -> gr.Blocks:
         _bind_nav(tab_anim_btn, "animations")
         _bind_nav(tab_readme_btn, "readme")
         _bind_status_nav(tab_status_btn)
-        _bind_nav(tab_gravity_btn, "gravity", refresh_gravity=True)
+        _bind_nav(tab_home_btn, "home", refresh_gravity=True)
         _bind_nav(anim_tab_render_btn, "render")
         _bind_nav(anim_tab_anim_btn, "animations")
         _bind_nav(anim_tab_readme_btn, "readme")
         _bind_status_nav(anim_tab_status_btn)
-        _bind_nav(anim_tab_gravity_btn, "gravity", refresh_gravity=True)
+        _bind_nav(anim_tab_home_btn, "home", refresh_gravity=True)
         _bind_nav(grav_tab_render_btn, "render")
         _bind_nav(grav_tab_anim_btn, "animations")
         _bind_nav(grav_tab_readme_btn, "readme")
         _bind_status_nav(grav_tab_status_btn)
-        _bind_nav(grav_tab_gravity_btn, "gravity", refresh_gravity=True)
-        _bind_nav(readme_tab_gravity_btn, "gravity", refresh_gravity=True)
+        _bind_nav(grav_tab_home_btn, "home", refresh_gravity=True)
+        _bind_nav(readme_tab_home_btn, "home", refresh_gravity=True)
         _bind_nav(readme_tab_render_btn, "render")
         _bind_nav(readme_tab_anim_btn, "animations")
         _bind_nav(readme_tab_readme_btn, "readme")
         _bind_status_nav(readme_tab_status_btn)
-        _bind_nav(status_zoom_back_btn, "gravity", refresh_gravity=True)
-        _bind_nav(status_tab_gravity_btn, "gravity", refresh_gravity=True)
+        _bind_nav(status_zoom_back_btn, "home", refresh_gravity=True)
+        _bind_nav(status_tab_home_btn, "home", refresh_gravity=True)
         _bind_nav(status_tab_render_btn, "render")
         _bind_nav(status_tab_readme_btn, "readme")
         _bind_nav(status_tab_anim_btn, "animations")
         _bind_status_nav(status_tab_status_btn)
-        _bind_nav(edit_tab_gravity_btn, "gravity", refresh_gravity=True)
+        _bind_nav(edit_tab_home_btn, "home", refresh_gravity=True)
         _bind_nav(edit_tab_render_btn, "render")
         _bind_nav(edit_tab_readme_btn, "readme")
         _bind_nav(edit_tab_anim_btn, "animations")
         _bind_status_nav(edit_tab_status_btn)
-        _bind_nav(render_tab_gravity_btn, "gravity", refresh_gravity=True)
+        _bind_nav(render_tab_home_btn, "home", refresh_gravity=True)
         _bind_nav(render_tab_render_btn, "render")
         _bind_nav(render_tab_readme_btn, "readme")
         _bind_nav(render_tab_anim_btn, "animations")
@@ -9477,7 +9625,7 @@ def build_app() -> gr.Blocks:
         newhere_minimize_btn.click(_minimize_newhere, outputs=newhere_outputs[:3])
         claims_minimize_btn.click(_minimize_claims, outputs=claims_outputs[:3])
         def _app_boot() -> tuple:
-            return (*_nav_to_page("gravity"), _get_gravity_demo_static_html("A"))
+            return (*_nav_to_page("home"), _create_breathing_animation())
 
         demo.load(
             _app_boot,
