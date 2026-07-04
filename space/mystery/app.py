@@ -6555,10 +6555,8 @@ def _gravity_child_nav_btn_updates(active_slot: int = -1) -> tuple:
     return tuple(
         gr.update(
             elem_classes=_gravity_child_nav_btn_classes(letter, active),
-            interactive=not (
-                0 <= active < len(_GRAVITY_CHILD_NAV_LETTERS)
-                and (ord(letter) - ord("A")) == active
-            ),
+            # Demo tabs stay clickable — A must relaunch breathing when re-selected.
+            interactive=True,
             variant="secondary",
         )
         for letter in _GRAVITY_CHILD_NAV_LETTERS
@@ -6665,6 +6663,15 @@ def _get_gravity_animation_html(letter: str) -> str:
 def _create_breathing_animation(*, fresh: bool = False):
     """Looping breathing Plotly figure for Demo A — ready to animate on load."""
     return create_breathing_animation(fresh=fresh)
+
+
+def _launch_demo_a() -> tuple:
+    """Demo A — stable-topology breathing animation + orange active state."""
+    return (
+        _create_breathing_animation(),
+        *_gravity_child_nav_output_updates(0),
+        "A",
+    )
 
 
 def _get_gravity_demo_plotly_figure(letter: str):
@@ -9348,19 +9355,20 @@ def build_app() -> gr.Blocks:
                 *[gravity_letter_btns[letter] for letter in _GRAVITY_CHILD_NAV_LETTERS],
                 gravity_active_letter,
             ]
-            gravity_letter_btns["A"].click(
-                lambda: _create_breathing_animation(),
-                outputs=gravity_viewport,
-                show_progress="hidden",
-            )
-            for letter, btn in gravity_letter_btns.items():
+            for letter in _GRAVITY_CHILD_NAV_LETTERS:
+                btn = gravity_letter_btns[letter]
                 if letter == "A":
-                    continue
-                btn.click(
-                    lambda l=letter: _switch_gravity_demo(l),
-                    outputs=gravity_demo_outputs,
-                    show_progress="hidden",
-                )
+                    btn.click(
+                        _launch_demo_a,
+                        outputs=gravity_demo_outputs,
+                        show_progress="hidden",
+                    )
+                else:
+                    btn.click(
+                        lambda l=letter: _switch_gravity_demo(l),
+                        outputs=gravity_demo_outputs,
+                        show_progress="hidden",
+                    )
 
             sz_inputs = [
                 sz_phi_scale,
@@ -9653,11 +9661,22 @@ def build_app() -> gr.Blocks:
         newhere_minimize_btn.click(_minimize_newhere, outputs=newhere_outputs[:3])
         claims_minimize_btn.click(_minimize_claims, outputs=claims_outputs[:3])
         def _app_boot() -> tuple:
-            return (*_nav_to_page("home"), _create_breathing_animation())
+            return (
+                *_nav_to_page("home"),
+                _create_breathing_animation(),
+                *_gravity_child_nav_output_updates(0),
+                "A",
+            )
 
         demo.load(
             _app_boot,
-            outputs=[*nav_outputs, gravity_viewport],
+            outputs=[
+                *nav_outputs,
+                gravity_viewport,
+                gravity_back_btn,
+                *[gravity_letter_btns[letter] for letter in _GRAVITY_CHILD_NAV_LETTERS],
+                gravity_active_letter,
+            ],
             show_progress=False,
         )
 
