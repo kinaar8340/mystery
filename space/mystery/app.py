@@ -1170,7 +1170,13 @@ def _open_readme_page(from_page: str) -> tuple:
 
 def _readme_back_to_app(return_page: str) -> tuple:
     """Return from README to the tab the user came from."""
-    return _nav_to_page(_readme_return_page(return_page))
+    page = _readme_return_page(return_page)
+    return (*_nav_to_page(page), _home_demo_nav_visible(page == "home"))
+
+
+def _home_demo_nav_visible(visible: bool) -> gr.Update:
+    """Show or hide the Home-only Demo: bar section."""
+    return gr.update(visible=bool(visible))
 
 
 def _nav_to_page(page: str) -> tuple:
@@ -1186,7 +1192,6 @@ def _nav_to_page(page: str) -> tuple:
         gr.update(visible=on_readme),
         gr.update(visible=on_status),
         gr.update(visible=False),
-        gr.update(visible=on_home),
         _main_nav_btn_update("home", active=on_home),
         _main_nav_btn_update("render", active=on_render),
         _main_nav_btn_update("readme", active=on_readme),
@@ -10179,7 +10184,6 @@ def build_app() -> gr.Blocks:
             page_readme,
             page_status,
             page_edit,
-            home_demo_nav_section,
             unified_nav["home"],
             unified_nav["render"],
             unified_nav["readme"],
@@ -10205,10 +10209,16 @@ def build_app() -> gr.Blocks:
             btn: gr.Button,
             page: str,
             *,
+            show_home_demo: bool | None = None,
             refresh_gravity: bool = False,
             reset_save: bool = False,
         ) -> None:
             chain = btn.click(lambda: _nav_to_page(page), outputs=nav_outputs)
+            if show_home_demo is not None:
+                chain = chain.then(
+                    lambda visible=show_home_demo: _home_demo_nav_visible(visible),
+                    outputs=[home_demo_nav_section],
+                )
             if reset_save:
                 chain = chain.then(_unlatch_save_button, outputs=save_unlatch_outputs)
             if refresh_gravity:
@@ -10220,6 +10230,9 @@ def build_app() -> gr.Blocks:
 
         def _bind_readme_nav(btn: gr.Button) -> None:
             btn.click(_open_readme_page, inputs=[current_page], outputs=readme_nav_outputs).then(
+                lambda: _home_demo_nav_visible(False),
+                outputs=[home_demo_nav_section],
+            ).then(
                 _unlatch_save_button,
                 outputs=save_unlatch_outputs,
             )
@@ -10229,6 +10242,9 @@ def build_app() -> gr.Blocks:
                 _nav_to_status_page,
                 inputs=[current_page, status_content_open],
                 outputs=status_nav_outputs,
+            ).then(
+                lambda: _home_demo_nav_visible(False),
+                outputs=[home_demo_nav_section],
             ).then(
                 _run_residual_explorer_ui,
                 inputs=gravity_dial_inputs,
@@ -10296,14 +10312,20 @@ def build_app() -> gr.Blocks:
                 show_progress="hidden",
             ).then(_unlatch_save_button, outputs=save_unlatch_outputs)
 
-        _bind_nav(unified_nav["home"], "home", refresh_gravity=True, reset_save=True)
-        _bind_nav(unified_nav["render"], "render", reset_save=True)
+        _bind_nav(
+            unified_nav["home"],
+            "home",
+            show_home_demo=True,
+            refresh_gravity=True,
+            reset_save=True,
+        )
+        _bind_nav(unified_nav["render"], "render", show_home_demo=False, reset_save=True)
         _bind_readme_nav(unified_nav["readme"])
         _bind_status_nav(unified_nav["status"])
         readme_back_btn.click(
             _readme_back_to_app,
             inputs=[readme_return_page],
-            outputs=nav_outputs,
+            outputs=[*nav_outputs, home_demo_nav_section],
         ).then(
             _unlatch_save_button,
             outputs=save_unlatch_outputs,
@@ -10323,6 +10345,7 @@ def build_app() -> gr.Blocks:
             viewport = _demo_viewport_show_plot(_get_rigid_preset_plotly_figure())
             return (
                 *_nav_to_page("home"),
+                _home_demo_nav_visible(True),
                 *viewport,
                 *_demo_active_tab_updates("A"),
                 "A",
@@ -10341,6 +10364,7 @@ def build_app() -> gr.Blocks:
             _app_boot,
             outputs=[
                 *nav_outputs,
+                home_demo_nav_section,
                 gravity_viewport_plot,
                 gravity_viewport_video,
                 *[gravity_letter_btns[letter] for letter in _GRAVITY_CHILD_NAV_LETTERS],
