@@ -2383,10 +2383,10 @@ footer {{
     margin-bottom: 6px !important;
     gap: 3px !important;
 }}
-.gradio-container button.demo-btn.active,
-.gradio-container button.demo-btn.active span {{
-    color: {_VQC_MATRIX_GREEN} !important;
-    -webkit-text-fill-color: {_VQC_MATRIX_GREEN} !important;
+.gradio-container button.main-nav-btn.active {{
+    border-color: #00FF00 !important;
+    box-shadow: 0 0 0 1px #00FF00 !important;
+    font-weight: 600 !important;
 }}
 .gradio-container button.shape-btn {{
     font-weight: 600 !important;
@@ -2394,10 +2394,15 @@ footer {{
 }}
 .gradio-container button.shape-btn.active,
 .gradio-container button.shape-btn.active span {{
-    background-color: {_VQC_MATRIX_GREEN_BG} !important;
-    color: {_VQC_MATRIX_GREEN} !important;
-    -webkit-text-fill-color: {_VQC_MATRIX_GREEN} !important;
-    border-color: {_VQC_MATRIX_GREEN} !important;
+    color: cyan !important;
+    -webkit-text-fill-color: cyan !important;
+    border-color: cyan !important;
+    box-shadow: 0 0 0 1px cyan !important;
+}}
+.gradio-container button.demo-btn.active {{
+    border-color: orange !important;
+    box-shadow: 0 0 0 1px orange !important;
+    font-weight: 600 !important;
 }}
 .gradio-container .vqc-nav-spreadsheet-row.vqc-nav-spreadsheet-row-8 {{
     grid-template-columns: 4.75rem repeat(8, minmax(3.2rem, 1fr)) !important;
