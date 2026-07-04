@@ -2318,9 +2318,85 @@ def build_breathing_animation_figure(
     return fig
 
 
-def create_breathing_animation(*, fresh: bool = False):
-    """Viewport-ready Plotly breathing figure (54 frames) for Demo A."""
+# Diagnostic: "test_cube" = simple scaling cube; "unit_cell" = full φ-e-π deformation path.
+BREATHING_ANIMATION_MODE = os.environ.get("MYST_BREATHING_MODE", "test_cube")
+
+
+def create_simple_breathing_test_animation():
+    """Minimal Mesh3d breathing cube — confirms Plotly animate works in Gradio."""
     import plotly.graph_objects as go
+
+    frames = []
+    n_steps = 40
+    for t in np.linspace(0, 2 * np.pi, n_steps):
+        scale = 1 + 0.4 * np.sin(t)
+        x = np.array([-1, 1, 1, -1, -1, 1, 1, -1]) * scale
+        y = np.array([-1, -1, 1, 1, -1, -1, 1, 1]) * scale
+        z = np.array([-1, -1, -1, -1, 1, 1, 1, 1])
+        frames.append(
+            go.Frame(
+                data=[
+                    go.Mesh3d(
+                        x=x,
+                        y=y,
+                        z=z,
+                        i=[0, 0, 0, 1, 1, 2, 2, 3, 4, 4, 5, 6],
+                        j=[1, 2, 3, 2, 3, 3, 0, 0, 5, 6, 6, 7],
+                        k=[2, 3, 0, 3, 0, 0, 1, 1, 6, 7, 4, 4],
+                        color="gold",
+                        opacity=0.3,
+                        flatshading=True,
+                    )
+                ],
+                name=str(t),
+            )
+        )
+
+    fig = go.Figure(
+        data=frames[0].data,
+        frames=frames,
+        layout=go.Layout(
+            scene=dict(aspectmode="cube"),
+            height=620,
+            paper_bgcolor="#000000",
+            plot_bgcolor="#000000",
+            updatemenus=[
+                {
+                    "type": "buttons",
+                    "showactive": False,
+                    "y": 1.1,
+                    "x": 0.02,
+                    "buttons": [
+                        {
+                            "label": "▶ Breathing",
+                            "method": "animate",
+                            "args": [
+                                None,
+                                {
+                                    "frame": {"duration": 80, "redraw": True},
+                                    "mode": "immediate",
+                                    "transition": {"duration": 0},
+                                },
+                            ],
+                        }
+                    ],
+                }
+            ],
+        ),
+    )
+    print(
+        f"[breathing] create_simple_breathing_test_animation: {len(frames)} frames",
+        flush=True,
+    )
+    return fig
+
+
+def create_breathing_animation(*, fresh: bool = False):
+    """Viewport-ready Plotly breathing figure for Demo A."""
+    import plotly.graph_objects as go
+
+    if BREATHING_ANIMATION_MODE == "test_cube":
+        return create_simple_breathing_test_animation()
 
     fig = build_breathing_animation_figure()
     if not fig.frames:
