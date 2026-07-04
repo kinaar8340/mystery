@@ -1458,7 +1458,7 @@ WALLPAPER_HEAD = f"""
             || plotDiv.frames;
         if (!frames || frames.length <= 5) return false;
         var animOpts = {{
-            frame: {{ duration: 80, redraw: true }},
+            frame: {{ duration: 70, redraw: true }},
             transition: {{ duration: 0 }},
             mode: 'immediate'
         }};

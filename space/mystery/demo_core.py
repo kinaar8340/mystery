@@ -2320,33 +2320,47 @@ def build_breathing_animation_figure(
     return fig
 
 
-# Diagnostic: set MYST_BREATHING_MODE=test_cube for simple gold-cube animation test.
-BREATHING_ANIMATION_MODE = os.environ.get("MYST_BREATHING_MODE", "unit_cell")
+# Diagnostic: test_cube = stable-topology Mesh3d; unit_cell = full deformation path.
+BREATHING_ANIMATION_MODE = os.environ.get("MYST_BREATHING_MODE", "test_cube")
 
 
 def create_simple_breathing_test_animation():
-    """Minimal Mesh3d breathing cube — confirms Plotly animate works in Gradio."""
+    """Stable-topology Mesh3d cube — only vertex coords change (Plotly-safe animate)."""
     import plotly.graph_objects as go
 
+    base_vertices = np.array(
+        [
+            [-1, -1, -1],
+            [1, -1, -1],
+            [1, 1, -1],
+            [-1, 1, -1],
+            [-1, -1, 1],
+            [1, -1, 1],
+            [1, 1, 1],
+            [-1, 1, 1],
+        ]
+    )
+    i = [0, 0, 0, 1, 1, 2, 2, 3, 4, 4, 5, 6]
+    j = [1, 2, 3, 2, 3, 3, 0, 0, 5, 6, 6, 7]
+    k = [2, 3, 0, 3, 0, 0, 1, 1, 6, 7, 4, 4]
+
     frames = []
-    n_steps = 40
-    for t in np.linspace(0, 2 * np.pi, n_steps):
-        scale = 1 + 0.4 * np.sin(t)
-        x = np.array([-1, 1, 1, -1, -1, 1, 1, -1]) * scale
-        y = np.array([-1, -1, 1, 1, -1, -1, 1, 1]) * scale
-        z = np.array([-1, -1, -1, -1, 1, 1, 1, 1])
+    n_frames = 60
+    for t in np.linspace(0, 2 * np.pi, n_frames):
+        scale = 1 + 0.35 * np.sin(t)
+        vertices = base_vertices * scale
         frames.append(
             go.Frame(
                 data=[
                     go.Mesh3d(
-                        x=x,
-                        y=y,
-                        z=z,
-                        i=[0, 0, 0, 1, 1, 2, 2, 3, 4, 4, 5, 6],
-                        j=[1, 2, 3, 2, 3, 3, 0, 0, 5, 6, 6, 7],
-                        k=[2, 3, 0, 3, 0, 0, 1, 1, 6, 7, 4, 4],
-                        color="gold",
-                        opacity=0.3,
+                        x=vertices[:, 0],
+                        y=vertices[:, 1],
+                        z=vertices[:, 2],
+                        i=i,
+                        j=j,
+                        k=k,
+                        color="#4a90e2",
+                        opacity=0.7,
                         flatshading=True,
                     )
                 ],
@@ -2358,16 +2372,20 @@ def create_simple_breathing_test_animation():
         data=frames[0].data,
         frames=frames,
         layout=go.Layout(
-            scene=dict(aspectmode="cube"),
+            scene=dict(
+                aspectmode="cube",
+                xaxis=dict(visible=False),
+                yaxis=dict(visible=False),
+                zaxis=dict(visible=False),
+            ),
             height=620,
+            margin=dict(l=0, r=0, t=30, b=0),
             paper_bgcolor="#000000",
             plot_bgcolor="#000000",
             updatemenus=[
                 {
                     "type": "buttons",
                     "showactive": False,
-                    "y": 1.1,
-                    "x": 0.02,
                     "buttons": [
                         {
                             "label": "▶ Breathing",
@@ -2375,7 +2393,7 @@ def create_simple_breathing_test_animation():
                             "args": [
                                 None,
                                 {
-                                    "frame": {"duration": 80, "redraw": True},
+                                    "frame": {"duration": 70, "redraw": True},
                                     "mode": "immediate",
                                     "transition": {"duration": 0},
                                 },
