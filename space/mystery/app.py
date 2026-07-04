@@ -2278,7 +2278,7 @@ footer {{
 .gradio-container .myst-render-page:not(.hide):not(.hidden) .myst-render-stack > .block:has(.myst-render-action-row),
 .gradio-container .myst-render-page:not(.hide):not(.hidden) .myst-render-stack > .form:has(.myst-render-action-row),
 .gradio-container .myst-render-page:not(.hide):not(.hidden) .myst-render-action-row {{
-    margin-top: var(--myst-default-gap-height, {_myst_default_gap_height}) !important;
+    margin-top: 0 !important;
 }}
 .gradio-container .myst-render-action-row > .block,
 .gradio-container .myst-render-action-row > .form {{
@@ -2901,7 +2901,7 @@ footer {{
     width: 100% !important;
 }}
 .gradio-container .myst-render-page .myst-render-catalog-host:not(.hide):not(.hidden) {{
-    margin-top: var(--myst-default-gap-height, {_myst_default_gap_height}) !important;
+    margin-top: 0 !important;
 }}
 /* Consistent nav button width from NAV_THEME */
 .gradio-container button.vqc-source-tab.main-nav-btn,
@@ -6466,9 +6466,30 @@ footer {{ visibility: hidden; }}
     padding-left: 0 !important;
     padding-right: 0 !important;
 }}
-.gradio-container .myst-render-page #myst-render-detail-wrapper,
-.gradio-container .myst-render-page .myst-render-detail-wrapper,
-.gradio-container .myst-render-page .myst-render-detail-view {{
+.gradio-container .myst-render-page #myst-render-detail-wrapper.hide,
+.gradio-container .myst-render-page #myst-render-detail-wrapper.hidden,
+.gradio-container .myst-render-page .myst-render-detail-wrapper.hide,
+.gradio-container .myst-render-page .myst-render-detail-wrapper.hidden,
+.gradio-container .myst-render-page .myst-render-detail-view.hide,
+.gradio-container .myst-render-page .myst-render-detail-view.hidden,
+.gradio-container .myst-render-page .myst-render-stack > .block:has(#myst-render-detail-wrapper.hide),
+.gradio-container .myst-render-page .myst-render-stack > .form:has(#myst-render-detail-wrapper.hide),
+.gradio-container .myst-render-page .myst-render-stack > .column:has(#myst-render-detail-wrapper.hide) {{
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    max-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    flex: 0 0 0 !important;
+}}
+.gradio-container .myst-render-page #myst-render-detail-wrapper:not(.hide):not(.hidden),
+.gradio-container .myst-render-page .myst-render-detail-wrapper:not(.hide):not(.hidden),
+.gradio-container .myst-render-page .myst-render-detail-view:not(.hide):not(.hidden) {{
     flex: 1 1 auto !important;
     width: 100% !important;
     min-height: 0 !important;
