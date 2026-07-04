@@ -2809,8 +2809,6 @@ footer {{
     opacity: 0 !important;
     pointer-events: none !important;
 }}
-.gradio-container .myst-home-demo-nav:not(.hide):not(.hidden),
-.gradio-container .myst-render-demo-nav:not(.hide):not(.hidden),
 .gradio-container #myst-home-demo-nav-wrap:not(.hide):not(.hidden),
 .gradio-container #myst-render-demo-nav-wrap:not(.hide):not(.hidden) {{
     display: flex !important;
@@ -2819,11 +2817,12 @@ footer {{
     margin: 0 !important;
     padding: 0 !important;
 }}
-.gradio-container #myst-gravity-child-nav.myst-home-demo-nav,
-.gradio-container #myst-render-sub-nav.myst-render-demo-nav,
+.gradio-container #myst-gravity-child-nav,
+.gradio-container #myst-render-sub-nav,
 .gradio-container .myst-unified-nav-host #myst-gravity-child-nav,
 .gradio-container .myst-unified-nav-host #myst-render-sub-nav {{
     display: flex !important;
+    flex-direction: row !important;
     align-items: center !important;
     gap: var(--nav-grid-gap, 4px) !important;
     flex-wrap: nowrap !important;
@@ -8518,7 +8517,6 @@ def _place_gravity_child_nav_row() -> dict[str, gr.Button]:
             "myst-secondary-nav",
             "myst-nav-bar-row",
             "myst-gravity-child-nav-row",
-            "myst-home-demo-nav",
         ],
     ):
         gr.HTML(
@@ -8558,7 +8556,6 @@ def _place_render_sub_nav_row(
             "myst-nav-bar-row",
             "myst-render-preset-nav-wrap",
             "myst-demo-preset-nav-row",
-            "myst-render-demo-nav",
             "vqc-status-preset-nav-row",
         ],
     ):
