@@ -1399,6 +1399,64 @@ WALLPAPER_HEAD = f"""
     window.addEventListener('load', bootViewportReflow);
 }})();
 (function() {{
+    function mystHomePageActive() {{
+        var gravityPage = document.querySelector('.myst-gravity-page');
+        return !!(gravityPage && !gravityPage.classList.contains('hide'));
+    }}
+    function mystSyncHomeDemoNav() {{
+        var section = document.getElementById('myst-home-demo-nav-section')
+            || document.querySelector('.myst-home-demo-nav-section');
+        var nav = document.getElementById('myst-gravity-child-nav');
+        if (!section) return;
+        var onHome = mystHomePageActive();
+        if (onHome) {{
+            section.classList.remove('hide');
+            section.classList.add('myst-force-visible');
+            section.style.setProperty('display', 'flex', 'important');
+            section.style.setProperty('visibility', 'visible', 'important');
+            if (nav) {{
+                nav.classList.remove('hide');
+                nav.style.setProperty('display', 'flex', 'important');
+                nav.style.setProperty('visibility', 'visible', 'important');
+            }}
+        }} else {{
+            section.classList.remove('myst-force-visible');
+            section.style.removeProperty('display');
+            section.style.removeProperty('visibility');
+            if (nav) {{
+                nav.style.removeProperty('display');
+                nav.style.removeProperty('visibility');
+            }}
+        }}
+    }}
+    function bootHomeDemoNav() {{
+        mystSyncHomeDemoNav();
+        requestAnimationFrame(mystSyncHomeDemoNav);
+        if (window.__mystHomeDemoNavObs) return;
+        window.__mystHomeDemoNavObs = new MutationObserver(function() {{
+            requestAnimationFrame(mystSyncHomeDemoNav);
+        }});
+        var page = document.querySelector('.myst-gravity-page');
+        if (page) {{
+            window.__mystHomeDemoNavObs.observe(page, {{
+                attributes: true,
+                attributeFilter: ['class', 'style'],
+            }});
+        }}
+        var section = document.getElementById('myst-home-demo-nav-section')
+            || document.querySelector('.myst-home-demo-nav-section');
+        if (section) {{
+            window.__mystHomeDemoNavObs.observe(section, {{
+                attributes: true,
+                attributeFilter: ['class', 'style'],
+            }});
+        }}
+    }}
+    if (document.body) bootHomeDemoNav();
+    document.addEventListener('DOMContentLoaded', bootHomeDemoNav);
+    window.addEventListener('load', bootHomeDemoNav);
+}})();
+(function() {{
     function mystOpenRenderDetail(slot) {{
         var btn = document.getElementById('myst-render-cell-btn-' + slot);
         if (btn) btn.click();
@@ -2447,10 +2505,22 @@ footer {{
     display: flex !important;
     flex-direction: column !important;
 }}
-.gradio-container .myst-home-demo-nav-section:not(.hide) #myst-gravity-child-nav {{
+.gradio-container .myst-home-demo-nav-section.myst-force-visible,
+.gradio-container .myst-home-demo-nav-section.myst-force-visible.hide {{
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    height: auto !important;
+    min-height: fit-content !important;
+    max-height: none !important;
+    overflow: visible !important;
+}}
+.gradio-container .myst-home-demo-nav-section:not(.hide) #myst-gravity-child-nav,
+.gradio-container .myst-home-demo-nav-section.myst-force-visible #myst-gravity-child-nav {{
     display: flex !important;
     visibility: visible !important;
     width: 100% !important;
+    opacity: 1 !important;
 }}
 .gradio-container .myst-home-demo-nav-section > .gap {{
     display: none !important;
@@ -8039,6 +8109,8 @@ def _place_gravity_child_nav_row() -> dict[str, gr.Button]:
                 scale=1,
                 variant="secondary",
             )
+    if not buttons:
+        raise RuntimeError("_place_gravity_child_nav_row produced no Demo buttons")
     return buttons
 
 
@@ -9551,7 +9623,8 @@ def build_app() -> gr.Blocks:
             _add_gap_row(slot="after-main-nav")
             with gr.Column(
                 visible=True,
-                elem_classes=["myst-home-demo-nav-section"],
+                elem_id="myst-home-demo-nav-section",
+                elem_classes=["myst-home-demo-nav-section", "myst-force-visible"],
             ) as home_demo_nav_section:
                 gravity_child_nav = _place_gravity_child_nav_row()
                 _add_gap_row(slot="after-demo-nav")
@@ -10329,6 +10402,10 @@ def build_app() -> gr.Blocks:
             refresh_gravity=True,
             reset_save=True,
         )
+        unified_nav["home"].click(
+            lambda: gr.update(visible=True),
+            outputs=[home_demo_nav_section],
+        )
         _bind_nav(unified_nav["render"], "render", show_home_demo=False, reset_save=True)
         _bind_readme_nav(unified_nav["readme"])
         _bind_status_nav(unified_nav["status"])
@@ -10355,7 +10432,6 @@ def build_app() -> gr.Blocks:
             viewport = _demo_viewport_show_plot(_get_rigid_preset_plotly_figure())
             return (
                 *_nav_to_page("home"),
-                _home_demo_nav_visible(True),
                 *viewport,
                 *_demo_active_tab_updates("A"),
                 "A",
@@ -10371,10 +10447,13 @@ def build_app() -> gr.Blocks:
                 return _demo_viewport_show_plot(_get_rigid_preset_plotly_figure())
 
         demo.load(
+            lambda: gr.update(visible=True),
+            outputs=[home_demo_nav_section],
+            show_progress="hidden",
+        ).then(
             _app_boot,
             outputs=[
                 *nav_outputs,
-                home_demo_nav_section,
                 gravity_viewport_plot,
                 gravity_viewport_video,
                 *[gravity_letter_btns[letter] for letter in _GRAVITY_CHILD_NAV_LETTERS],
@@ -10383,13 +10462,12 @@ def build_app() -> gr.Blocks:
             ],
             show_progress="hidden",
         ).then(
+            lambda: gr.update(visible=True),
+            outputs=[home_demo_nav_section],
+            show_progress="hidden",
+        ).then(
             _app_boot_deferred_video,
             outputs=[gravity_viewport_plot, gravity_viewport_video],
-            show_progress="hidden",
-        )
-        demo.load(
-            lambda: _home_demo_nav_visible(True),
-            outputs=[home_demo_nav_section],
             show_progress="hidden",
         )
 
