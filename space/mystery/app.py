@@ -880,7 +880,7 @@ def _external_tab_html(label: str, url: str, tab_id: str) -> str:
 
 _MAIN_NAV_TAB_SPECS = (
     ("home", "Home"),
-    ("render", "Render"),
+    ("render", "Figures"),
     ("status", "Presets"),
     ("readme", "Docs"),
 )
@@ -1030,7 +1030,7 @@ def _place_unified_main_nav(
     active_page: str = "home",
     default_shape: str = _DEFAULT_ACTIVE_SHAPE,
 ) -> dict[str, gr.Button]:
-    """Single top bar on all pages: Home/Render/Presets/Docs + D4–D20."""
+    """Single top bar on all pages: Home/Figures/Presets/Docs + D4–D20."""
     buttons: dict[str, gr.Button] = {}
     active = str(active_page or "home").strip().lower()
     default_shape = default_shape if default_shape in _SHAPE_NAV_IDS else _DEFAULT_ACTIVE_SHAPE
@@ -2865,7 +2865,7 @@ footer {{
     min-height: var(--myst-half-gap-height) !important;
     max-height: var(--myst-half-gap-height) !important;
 }}
-/* ========== MAIN MYSTERY: TABS (Home, Render, Presets, Docs) ========== */
+/* ========== MAIN MYSTERY: TABS (Home, Figures, Presets, Docs) ========== */
 .gradio-container .vqc-source-tabs-row button.vqc-source-tab.main-nav-btn.active,
 .gradio-container .vqc-source-tabs-row button.vqc-source-tab.main-nav-btn.active span,
 .gradio-container .vqc-source-tabs-row button.vqc-source-tab.main-nav-btn.active:disabled,
@@ -8397,18 +8397,12 @@ def _render_sub_nav_btn_updates(active_slot: int) -> tuple:
     )
 
 
-def _render_sub_nav_render_btn_update(
+def _render_action_btn_update(
     *,
     rendering: bool = False,
     on_grid: bool = True,
 ) -> gr.Update:
-    classes = [
-        "vqc-source-tab",
-        "demo-btn",
-        "myst-status-preset-btn",
-        "myst-render-nav-render-btn",
-        "full-width-btn",
-    ]
+    classes = ["demo-btn", "myst-render-nav-render-btn", "full-width-btn"]
     if rendering:
         classes.append("active")
     return gr.update(
@@ -8503,7 +8497,7 @@ def _render_detail_view_updates(slot: int) -> tuple:
         _format_render_detail_description(slot),
         slot,
         *_render_sub_nav_btn_updates(slot),
-        _render_sub_nav_render_btn_update(rendering=True, on_grid=False),
+        _render_action_btn_update(rendering=True, on_grid=False),
     )
 
 
@@ -8531,7 +8525,7 @@ def _render_grid_view_updates(
         "",
         -1,
         *_render_sub_nav_btn_updates(nav_active if nav_active >= 0 else -1),
-        _render_sub_nav_render_btn_update(rendering=rendering and has_plots, on_grid=True),
+        _render_action_btn_update(rendering=rendering and has_plots, on_grid=True),
     )
 
 
@@ -8560,7 +8554,7 @@ def _render_grid_load_yield(
         "",
         -1,
         *_render_sub_nav_btn_updates(nav_active),
-        _render_sub_nav_render_btn_update(rendering=rendering, on_grid=True),
+        _render_action_btn_update(rendering=rendering, on_grid=True),
     )
 
 
@@ -10022,13 +10016,11 @@ def build_app() -> gr.Blocks:
                 )
                 _add_gap_row(slot="after-demo-nav")
                 with gr.Row(elem_classes=["myst-render-action-row"]):
-                    render_all_btn = _nav_theme_button(
+                    render_action_btn = _nav_theme_button(
                         "Render",
                         elem_id="myst-render-nav-render-btn",
                         elem_classes=[
-                            "vqc-source-tab",
                             "demo-btn",
-                            "myst-status-preset-btn",
                             "myst-render-nav-render-btn",
                             "full-width-btn",
                         ],
@@ -10711,7 +10703,7 @@ def build_app() -> gr.Blocks:
             render_detail_description,
             render_detail_slot,
             *render_sub_nav_btns,
-            render_all_btn,
+            render_action_btn,
         ]
         render_load_outputs = [
             render_panel_html,
@@ -10724,7 +10716,7 @@ def build_app() -> gr.Blocks:
             render_detail_description,
             render_detail_slot,
             *render_sub_nav_btns,
-            render_all_btn,
+            render_action_btn,
         ]
 
         def _make_render_open_detail(slot: int):
@@ -10733,7 +10725,7 @@ def build_app() -> gr.Blocks:
 
             return _handler
 
-        render_all_btn.click(
+        render_action_btn.click(
             _render_load_all_presets,
             inputs=[render_active_slot, render_zoom_slot],
             outputs=render_load_outputs,
