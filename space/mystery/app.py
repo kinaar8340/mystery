@@ -842,7 +842,7 @@ _MAIN_NAV_TAB_SPECS = (
     ("home", "Home"),
     ("render", "Render"),
     ("status", "Presets"),
-    ("readme", "Documentation"),
+    ("readme", "Docs"),
 )
 
 _SHAPE_NAV_IDS: tuple[str, ...] = ("D4", "D6", "D8", "D12", "D20")
@@ -903,14 +903,14 @@ def _set_active_shape(new_shape: str) -> tuple:
 
 
 def _main_nav_btn_classes(page_id: str, active_page: str) -> list[str]:
-    classes = ["vqc-source-tab", "demo-btn"]
+    classes = ["vqc-source-tab", "main-nav-btn"]
     if page_id == active_page:
         classes.append("active")
     return classes
 
 
 def _main_nav_btn_update(page_id: str, *, active: bool) -> gr.Update:
-    classes = ["vqc-source-tab", "demo-btn"]
+    classes = ["vqc-source-tab", "main-nav-btn"]
     if active:
         classes.append("active")
     return gr.update(
@@ -2059,18 +2059,11 @@ footer {{
     color: #B85C00 !important;
     -webkit-text-fill-color: #B85C00 !important;
 }}
-/* Demo tabs (A–I) — active state = dark orange */
-#myst-gravity-child-nav button.myst-gravity-preset-btn.active,
-#myst-gravity-child-nav button.vqc-source-tab.active {{
-    color: #B85C00 !important;
-    -webkit-text-fill-color: #B85C00 !important;
-    font-weight: 700 !important;
-}}
-/* Keep main nav tabs matrix green */
-.vqc-main-nav-row button.vqc-source-tab.active,
-.vqc-main-nav-row button.vqc-source-tab.active span {{
-    color: {_VQC_MATRIX_GREEN} !important;
-    -webkit-text-fill-color: {_VQC_MATRIX_GREEN} !important;
+/* Demo tabs (A–I) — active border orange */
+#myst-gravity-child-nav button.demo-btn.active {{
+    border-color: orange !important;
+    box-shadow: 0 0 0 1px orange !important;
+    font-weight: 600 !important;
 }}
 /* Gravity child nav — uniform sizing + align with main nav */
 .gradio-container .vqc-nav-spreadsheet-row.myst-gravity-child-nav-row {{
