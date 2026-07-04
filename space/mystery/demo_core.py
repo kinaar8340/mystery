@@ -2518,6 +2518,44 @@ def create_breathing_animation(*, fresh: bool = False):
     return fig
 
 
+def render_breathing_demo_video(
+    *,
+    fps: int = 12,
+    dpi: int = 88,
+    n_per_segment: int = 12,
+) -> str:
+    """MP4 breathing cycle for Demo A — Gradio cannot animate Plotly frames reliably."""
+    phi = 1.0
+    e = 1.0
+    pi = 1.0
+    kappa = KAPPA_DOC
+    delta_z = 0.1
+    alpha = 1.0
+    beta = 1.0
+    view_elev = UNIT_CELL_VIEW_ELEV
+    view_azim = UNIT_CELL_VIEW_AZIM
+    r_val = residual_from_scales(phi, e, pi)
+    d_side = delta_side_contraction(delta_z, r_val, kappa, alpha=alpha, beta=beta)
+    side = abs(d_side) * 0.5
+    pressures = _breathing_deformation_path(n_per_segment=n_per_segment)
+    rgb_frames: list[np.ndarray] = []
+    for pressure_val in pressures:
+        fig = build_unit_cell_figure(
+            delta_z=delta_z,
+            delta_side=side,
+            r_val=r_val,
+            pressure=float(pressure_val),
+            view_elev=view_elev,
+            view_azim=view_azim,
+            show_curvature_grid=False,
+            dpi=dpi,
+        )
+        rgb_frames.append(_figure_to_rgb(fig, dpi=dpi))
+        plt.close(fig)
+    print(f"[breathing] render_breathing_demo_video: {len(rgb_frames)} frames", flush=True)
+    return _encode_loop_video(rgb_frames, fps=fps)
+
+
 def render_gravity_demo_animation_video(
     phi_sq_scale: float,
     e_sq_scale: float,

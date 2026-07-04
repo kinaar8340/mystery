@@ -43,6 +43,7 @@ from demo_core import (
     unit_cell_error_placeholder_html,
     render_unit_cell_deformation_video,
     render_gravity_demo_animation_video,
+    render_breathing_demo_video,
     build_breathing_animation_figure,
     create_breathing_animation,
     figure_to_viewport_cached_html,
@@ -50,7 +51,7 @@ from demo_core import (
     run_residual_explorer,
     run_residual_explorer_plotly,
     plotly_figure_to_render_detail_html,
-    plotly_figure_to_gravity_viewport_html,
+
 
     terminal_directory_help,
     terminal_figures_index,
@@ -2014,6 +2015,7 @@ footer {{
 }}
 #myst-gravity-viewport-wrapper,
 .gradio-container .myst-gravity-page .myst-gravity-single-viewport {{
+    position: relative !important;
     min-height: 620px !important;
     height: 620px !important;
     flex: 1 1 auto !important;
@@ -2023,6 +2025,33 @@ footer {{
     margin: 0 !important;
     padding: 0 !important;
     background: #0a0a0f !important;
+    overflow: visible !important;
+}}
+.gradio-container .myst-gravity-page .myst-gravity-video-host,
+.gradio-container .myst-gravity-page .myst-gravity-viewport-anim .html-container,
+.gradio-container .myst-gravity-page .myst-gravity-viewport-anim .prose {{
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 580px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+}}
+.gradio-container .myst-gravity-page .myst-gravity-video-host video,
+.gradio-container .myst-gravity-page #myst-gravity-viewport .myst-gravity-demo-video {{
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 580px !important;
+    max-height: 620px !important;
+    object-fit: contain !important;
+    background: #0a0a0f !important;
+    display: block !important;
+}}
+.gradio-container .myst-gravity-page #myst-gravity-viewport-plot,
+.gradio-container .myst-gravity-page .myst-gravity-viewport-plot {{
+    flex: 1 1 auto !important;
+    width: 100% !important;
+    min-height: 580px !important;
 }}
 #myst-gravity-viewport .plotly-graph-div,
 #myst-gravity-viewport-plotly,
@@ -6642,6 +6671,7 @@ def _demo_active_tab_updates(active_letter: str) -> tuple:
 
 
 _GRAVITY_DEMO_VIDEO_CACHE: dict[str, str] = {}
+_BREATHING_DEMO_VIDEO_CACHE: str | None = None
 
 
 def _gravity_demo_letter_slot(letter: str) -> int:
@@ -6738,22 +6768,47 @@ def _create_breathing_animation(*, fresh: bool = False):
     return create_breathing_animation(fresh=fresh)
 
 
-def _breathing_animation_html(*, fresh: bool = False) -> str:
-    """Home viewport HTML embed — gr.Plot fails on animated Mesh3d in Gradio."""
-    fig = _create_breathing_animation(fresh=fresh)
-    return plotly_figure_to_gravity_viewport_html(fig, autoplay=True)
+def _breathing_demo_video_html() -> str:
+    """Looping MP4 for Demo A — no Plotly scripts (Gradio strips them from gr.HTML)."""
+    global _BREATHING_DEMO_VIDEO_CACHE
+    if _BREATHING_DEMO_VIDEO_CACHE is None:
+        try:
+            _BREATHING_DEMO_VIDEO_CACHE = render_breathing_demo_video()
+        except Exception as exc:
+            logger.exception("breathing demo video failed")
+            return (
+                '<div class="myst-gravity-viewport-inner myst-gravity-demo-a">'
+                f'<div class="myst-gravity-viewport-error">Breathing video failed: {exc}</div>'
+                "</div>"
+            )
+    url = f"/gradio_api/file={_BREATHING_DEMO_VIDEO_CACHE}"
+    return (
+        '<div class="myst-gravity-viewport-inner myst-gravity-demo-a myst-gravity-video-host">'
+        '<video class="myst-gravity-demo-video" autoplay loop muted playsinline preload="auto">'
+        f'<source src="{url}" type="video/mp4" /></video></div>'
+    )
 
 
-def _static_demo_viewport_html(letter: str) -> str:
-    """Static preset cube for Demo B–I."""
-    fig = _get_gravity_demo_plotly_figure(letter)
-    return plotly_figure_to_gravity_viewport_html(fig, autoplay=False)
+def _demo_viewport_show_plot(fig) -> tuple:
+    """Show interactive Plotly preset (B–I)."""
+    return (
+        gr.update(value=fig, visible=True),
+        gr.update(value="", visible=False),
+    )
+
+
+def _demo_viewport_show_video(html: str) -> tuple:
+    """Show looping MP4 breathing animation (A)."""
+    return (
+        gr.update(visible=False),
+        gr.update(value=html, visible=True),
+    )
 
 
 def _launch_demo_a() -> tuple:
-    """Demo A — breathing animation; styling updated separately from binding."""
+    """Demo A — breathing MP4 video loop."""
     return (
-        _breathing_animation_html(fresh=True),
+        *_demo_viewport_show_video(_breathing_demo_video_html()),
         *_demo_active_tab_updates("A"),
         "A",
     )
@@ -6789,8 +6844,9 @@ def _switch_gravity_demo(letter: str) -> tuple:
     """Switch the Home viewport to the demo for the selected letter (B–I)."""
     letter = str(letter).strip().upper()
     slot = _gravity_demo_letter_slot(letter)
+    fig = _get_gravity_demo_plotly_figure(letter)
     return (
-        _static_demo_viewport_html(letter),
+        *_demo_viewport_show_plot(fig),
         *_demo_active_tab_updates(letter),
         letter,
     )
@@ -7973,7 +8029,7 @@ def _run_residual_explorer_ui(
         metrics,
         metrics,
         header,
-        _breathing_animation_html(),
+        *_demo_viewport_show_video(_breathing_demo_video_html()),
         _gravity_clear_video_update(),
         control_levels,
         gr.skip(),
@@ -8000,7 +8056,7 @@ def _run_residual_explorer_ui_manual(
 ) -> tuple:
     """Manual dial refresh — only when Manual Edit is latched (avoids preset cascade)."""
     if not edit_params_enabled:
-        return tuple(gr.skip() for _ in range(10))
+        return tuple(gr.skip() for _ in range(11))
     print("[DEBUG] _run_residual_explorer_ui_manual: manual dial release", flush=True)
     return _run_residual_explorer_ui(
         phi_sq_scale,
@@ -9357,10 +9413,19 @@ def build_app() -> gr.Blocks:
                 elem_classes=["myst-gravity-single-viewport"],
                 elem_id="myst-gravity-viewport-wrapper",
             ) as viewport_col:
-                gravity_viewport = gr.HTML(
-                    value=_breathing_animation_html(),
+                gravity_viewport_plot = gr.Plot(
+                    label="",
+                    show_label=False,
+                    container=True,
+                    visible=False,
+                    elem_id="myst-gravity-viewport-plot",
+                    elem_classes=["myst-gravity-viewport-plot"],
+                    scale=1,
+                )
+                gravity_viewport_anim = gr.HTML(
+                    value=_breathing_demo_video_html(),
                     elem_id="myst-gravity-viewport",
-                    elem_classes=["myst-gravity-viewport"],
+                    elem_classes=["myst-gravity-viewport", "myst-gravity-viewport-anim"],
                     container=True,
                     show_label=False,
                 )
@@ -9423,7 +9488,8 @@ def build_app() -> gr.Blocks:
                 re_metrics,
                 edit_re_metrics,
                 unit_cell_header,
-                gravity_viewport,
+                gravity_viewport_plot,
+                gravity_viewport_anim,
                 unit_cell_video,
                 re_control_levels,
                 status_catalog_col,
@@ -9433,7 +9499,8 @@ def build_app() -> gr.Blocks:
             ]
             gravity_dial_inputs = [*re_inputs, re_active_preset, status_zoom_slot]
             gravity_demo_outputs = [
-                gravity_viewport,
+                gravity_viewport_plot,
+                gravity_viewport_anim,
                 gravity_back_btn,
                 *[gravity_letter_btns[letter] for letter in _GRAVITY_CHILD_NAV_LETTERS],
                 gravity_active_letter,
@@ -9746,7 +9813,7 @@ def build_app() -> gr.Blocks:
         def _app_boot() -> tuple:
             return (
                 *_nav_to_page("home"),
-                _breathing_animation_html(),
+                *_demo_viewport_show_video(_breathing_demo_video_html()),
                 *_demo_active_tab_updates("A"),
                 "A",
             )
@@ -9755,7 +9822,8 @@ def build_app() -> gr.Blocks:
             _app_boot,
             outputs=[
                 *nav_outputs,
-                gravity_viewport,
+                gravity_viewport_plot,
+                gravity_viewport_anim,
                 gravity_back_btn,
                 *[gravity_letter_btns[letter] for letter in _GRAVITY_CHILD_NAV_LETTERS],
                 gravity_active_letter,
