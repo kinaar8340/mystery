@@ -133,6 +133,8 @@ _VQC_TAB_ORANGE_TEXT = "#d4b8ff"
 _VQC_MATRIX_GREEN = "#33ff66"
 # Global default button border — matches .vqc-source-tab (#6b4f1d).
 DEFAULT_BUTTON_BORDER_COLOR = "#6b4f1d"
+DEFAULT_BUTTON_BODY_HEIGHT = "2.05rem"
+DEFAULT_GAP = "8px"
 # Status page chrome: 80% transparent (20% opaque).
 _MYST_DEFAULT_GAP_HEIGHT = "0.84rem"
 _MYST_STATUS_LAYER_ALPHA = 0.2
@@ -1004,7 +1006,12 @@ def _place_status_save_edit_row() -> tuple[gr.Button, gr.Button]:
         save_btn = gr.Button(
             "Save",
             variant="secondary",
-            elem_classes=[*_STATUS_ZOOM_SAVE_BTN_CLASSES, "save-btn"],
+            elem_classes=[
+                *_STATUS_ZOOM_SAVE_BTN_CLASSES,
+                "save-btn",
+                "placeholder-btn",
+            ],
+            interactive=False,
             scale=1,
         )
         edit_btn = gr.Button(
@@ -1016,7 +1023,7 @@ def _place_status_save_edit_row() -> tuple[gr.Button, gr.Button]:
                 "myst-status-nav-edit-btn",
                 "edit-btn",
             ],
-            interactive=False,
+            interactive=True,
             scale=1,
             variant="secondary",
         )
@@ -1052,7 +1059,8 @@ def _status_zoom_nav_edit_btn_update(*, in_zoom: bool, edit_open: bool) -> gr.Up
     ]
     if edit_open:
         classes.append("active")
-    return gr.update(interactive=in_zoom, elem_classes=classes, variant="secondary")
+    _ = in_zoom
+    return gr.update(interactive=True, elem_classes=classes, variant="secondary")
 
 
 def _status_zoom_back_to_grid() -> tuple:
@@ -1067,7 +1075,7 @@ def _status_zoom_back_to_grid() -> tuple:
         gr.update(visible=False),
         _status_zoom_nav_edit_btn_update(in_zoom=False, edit_open=False),
         *slider_updates,
-        _status_zoom_save_btn_update(saved=False),
+        _status_zoom_save_btn_placeholder_update(),
         False,
     )
 
@@ -1792,6 +1800,8 @@ body::before {{
 }}
 .gradio-container {{
     --default-border-color: {DEFAULT_BUTTON_BORDER_COLOR};
+    --button-body-height: {DEFAULT_BUTTON_BODY_HEIGHT};
+    --default-gap: {DEFAULT_GAP};
     position: relative !important;
     width: 100% !important;
     max-width: 100% !important;
@@ -2457,9 +2467,24 @@ footer {{
     display: flex !important;
     align-items: stretch !important;
     width: 100% !important;
-    margin-top: 4px !important;
+    margin-top: var(--default-gap, {DEFAULT_GAP}) !important;
     margin-bottom: 12px !important;
-    gap: 8px !important;
+    gap: var(--default-gap, {DEFAULT_GAP}) !important;
+}}
+.gradio-container .myst-main-nav button.vqc-source-tab,
+.gradio-container .myst-secondary-nav button.vqc-source-tab {{
+    height: var(--button-body-height, {DEFAULT_BUTTON_BODY_HEIGHT}) !important;
+    min-height: var(--button-body-height, {DEFAULT_BUTTON_BODY_HEIGHT}) !important;
+}}
+.gradio-container .myst-save-edit-row button.save-btn,
+.gradio-container .myst-save-edit-row button.edit-btn {{
+    height: var(--button-body-height, {DEFAULT_BUTTON_BODY_HEIGHT}) !important;
+    min-height: var(--button-body-height, {DEFAULT_BUTTON_BODY_HEIGHT}) !important;
+}}
+.gradio-container .myst-save-edit-row button.save-btn.placeholder-btn,
+.gradio-container .myst-save-edit-row button.save-btn.placeholder-btn span {{
+    opacity: 0.55 !important;
+    cursor: not-allowed !important;
 }}
 .gradio-container .myst-save-edit-row button.save-btn,
 .gradio-container .myst-save-edit-row button.edit-btn {{
@@ -8054,7 +8079,7 @@ def _status_zoom_select(slot: int) -> tuple:
         gr.update(visible=False),
         _status_zoom_nav_edit_btn_update(in_zoom=True, edit_open=False),
         *slider_updates,
-        _status_zoom_save_btn_update(saved=False),
+        _status_zoom_save_btn_active_update(saved=False),
         False,
     )
 
@@ -8066,21 +8091,35 @@ _STATUS_ZOOM_SAVE_BTN_CLASSES = [
 ]
 
 
+def _status_zoom_save_btn_placeholder_update() -> gr.Update:
+    """Grid view — visible Save placeholder (non-interactive)."""
+    return gr.update(
+        value="Save",
+        interactive=False,
+        variant="secondary",
+        elem_classes=[
+            "save-btn",
+            "placeholder-btn",
+            *_STATUS_ZOOM_SAVE_BTN_CLASSES,
+        ],
+    )
+
+
 def _latch_save_button() -> tuple:
-    """Save clicked — red latched styling."""
+    """Save clicked — red latched styling (detail/edit view only)."""
     return (
         gr.update(
             value="Save",
             interactive=True,
             variant="secondary",
-            elem_classes=[*_STATUS_ZOOM_SAVE_BTN_CLASSES, "save-btn", "saved"],
+            elem_classes=["save-btn", "saved", *_STATUS_ZOOM_SAVE_BTN_CLASSES],
         ),
         True,
     )
 
 
 def _unlatch_save_button() -> tuple:
-    """Reset Save button — white text, global default border."""
+    """Reset Save — white text, global default border (detail/edit view)."""
     return (
         gr.update(
             value="Save",
@@ -8092,9 +8131,19 @@ def _unlatch_save_button() -> tuple:
     )
 
 
-def _status_zoom_save_btn_update(*, saved: bool = False) -> gr.Update:
+def _status_zoom_save_btn_active_update(*, saved: bool = False) -> gr.Update:
     btn_update, _ = _latch_save_button() if saved else _unlatch_save_button()
     return btn_update
+
+
+def _status_zoom_save_btn_update(
+    *,
+    saved: bool = False,
+    on_grid: bool = False,
+) -> gr.Update:
+    if on_grid:
+        return _status_zoom_save_btn_placeholder_update()
+    return _status_zoom_save_btn_active_update(saved=saved)
 
 
 def _status_zoom_edit_toggle(
@@ -8130,13 +8179,18 @@ def _status_zoom_edit_toggle(
         dials = _gravity_preset_dials_for_slot(int(zoom_slot))
     slider_updates = _gravity_slider_control_updates(dials, edit_enabled=show)
     edit_btn = _status_zoom_nav_edit_btn_update(in_zoom=True, edit_open=show)
-    save_btn = _status_zoom_save_btn_update(saved=False)
+    slot = int(zoom_slot)
+    save_btn = (
+        _status_zoom_save_btn_active_update(saved=False)
+        if slot >= 0
+        else _status_zoom_save_btn_placeholder_update()
+    )
     return (
         show,
         gr.update(visible=show),
         edit_btn,
         *slider_updates,
-        *_status_panel_levels_update(int(zoom_slot), dials=dials, visible=not show),
+        *_status_panel_levels_update(slot, dials=dials, visible=not show),
         save_btn,
         False,
     )
@@ -8173,7 +8227,7 @@ def _status_zoom_save_preset(
     )
     _GRAVITY_PRESET_PROFILES[slot] = dict(dials)
     slider_updates = _gravity_slider_control_updates(dials, edit_enabled=False)
-    saved_btn = _status_zoom_save_btn_update(saved=True)
+    saved_btn = _status_zoom_save_btn_active_update(saved=True)
     return (
         *_status_panel_levels_update(slot, dials=dials, visible=True),
         saved_btn,
