@@ -2265,9 +2265,11 @@ def build_breathing_animation_figure(
             view_azim=view_azim,
             show_curvature_grid=False,
         )
+        # Single Mesh3d trace per frame — mixed trace counts break Plotly.animate.
+        mesh_trace = frame_fig.data[0]
         if first_data is None:
-            first_data = frame_fig.data
-        frames.append(go.Frame(data=frame_fig.data, name=str(idx)))
+            first_data = [mesh_trace]
+        frames.append(go.Frame(data=[mesh_trace], name=str(idx)))
 
     fig = go.Figure(data=first_data, frames=frames)
     fig.update_layout(
@@ -2318,8 +2320,8 @@ def build_breathing_animation_figure(
     return fig
 
 
-# Diagnostic: "test_cube" = simple scaling cube; "unit_cell" = full φ-e-π deformation path.
-BREATHING_ANIMATION_MODE = os.environ.get("MYST_BREATHING_MODE", "test_cube")
+# Diagnostic: set MYST_BREATHING_MODE=test_cube for simple gold-cube animation test.
+BREATHING_ANIMATION_MODE = os.environ.get("MYST_BREATHING_MODE", "unit_cell")
 
 
 def create_simple_breathing_test_animation():
@@ -2406,13 +2408,11 @@ def create_breathing_animation(*, fresh: bool = False):
 
     fig.update_layout(
         height=620,
-        margin=dict(l=0, r=0, t=40, b=0),
+        transition={"duration": 0},
         updatemenus=[
             {
                 "type": "buttons",
                 "showactive": False,
-                "y": 1.1,
-                "x": 0.02,
                 "buttons": [
                     {
                         "label": "▶ Breathing",
@@ -2420,8 +2420,7 @@ def create_breathing_animation(*, fresh: bool = False):
                         "args": [
                             None,
                             {
-                                "frame": {"duration": 85, "redraw": True},
-                                "fromcurrent": True,
+                                "frame": {"duration": 80, "redraw": True},
                                 "mode": "immediate",
                                 "transition": {"duration": 0},
                             },
@@ -2433,7 +2432,6 @@ def create_breathing_animation(*, fresh: bool = False):
     )
     if fresh:
         fig = go.Figure(fig.to_dict())
-        fig.update_layout(uirevision="mystery-breathing-fresh")
     return fig
 
 

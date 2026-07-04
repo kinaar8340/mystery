@@ -1452,38 +1452,53 @@ WALLPAPER_HEAD = f"""
         return host.querySelector('.plotly-graph-div')
             || document.querySelector('#myst-gravity-viewport .plotly-graph-div');
     }}
-    function forceStartBreathing() {{
+    function mystRunBreathingAnimate(plotDiv) {{
+        if (!plotDiv || !window.Plotly) return false;
+        var frames = (plotDiv._transitionData && plotDiv._transitionData.frames)
+            || plotDiv.frames;
+        if (!frames || frames.length <= 5) return false;
+        var animOpts = {{
+            frame: {{ duration: 80, redraw: true }},
+            transition: {{ duration: 0 }},
+            mode: 'immediate'
+        }};
+        window.Plotly.animate(plotDiv, null, animOpts);
+        plotDiv.on('plotly_animated', function() {{
+            window.Plotly.animate(plotDiv, null, animOpts);
+        }});
+        return true;
+    }}
+    function startBreathingAnimation() {{
         var plotDiv = mystBreathingPlotDiv();
         if (!plotDiv) {{
-            setTimeout(forceStartBreathing, 500);
+            setTimeout(startBreathingAnimation, 500);
             return;
         }}
-        setTimeout(function() {{
+        if (plotDiv.dataset.mystBreathingPoll === '1') return;
+        plotDiv.dataset.mystBreathingPoll = '1';
+        var checkFrames = setInterval(function() {{
             var plot = mystBreathingPlotDiv();
             if (!plot || !window.Plotly) return;
-            var frames = (plot._transitionData && plot._transitionData.frames) || plot.frames;
-            if (!frames || !frames.length) return;
-            if (plot.dataset.mystBreathingLoop === '1') return;
-            plot.dataset.mystBreathingLoop = '1';
-            var animOpts = {{
-                frame: {{ duration: 80, redraw: true }},
-                transition: {{ duration: 0 }},
-                mode: 'immediate'
-            }};
-            window.Plotly.animate(plot, null, animOpts);
-            plot.on('plotly_animated', function() {{
-                window.Plotly.animate(plot, null, animOpts);
-            }});
-        }}, 600);
+            var frameCount = 0;
+            if (plot._transitionData && plot._transitionData.frames) {{
+                frameCount = plot._transitionData.frames.length;
+            }} else if (plot.frames) {{
+                frameCount = plot.frames.length;
+            }}
+            if (frameCount > 5) {{
+                clearInterval(checkFrames);
+                plot.dataset.mystBreathingPoll = '0';
+                mystRunBreathingAnimate(plot);
+            }}
+        }}, 300);
     }}
-    function bootForceBreathing() {{
-        setTimeout(forceStartBreathing, 1500);
+    function bootBreathingAnimation() {{
+        setTimeout(startBreathingAnimation, 1200);
         if (window.__mystGravityBreathingObs) return;
         window.__mystGravityBreathingObs = new MutationObserver(function() {{
             var plot = mystBreathingPlotDiv();
-            if (!plot) return;
-            plot.dataset.mystBreathingLoop = '0';
-            setTimeout(forceStartBreathing, 400);
+            if (plot) plot.dataset.mystBreathingPoll = '0';
+            setTimeout(startBreathingAnimation, 400);
         }});
         var host = document.getElementById('myst-gravity-viewport')
             || document.querySelector('.myst-gravity-page');
@@ -1493,9 +1508,23 @@ WALLPAPER_HEAD = f"""
             }});
         }}
     }}
-    document.addEventListener('DOMContentLoaded', bootForceBreathing);
-    if (document.body) bootForceBreathing();
-    window.addEventListener('load', bootForceBreathing);
+    window.mystForceBreathingAnimate = function() {{
+        var host = document.getElementById('myst-gravity-viewport');
+        var plot = mystBreathingPlotDiv();
+        if (plot && plot._transitionData && plot._transitionData.frames) {{
+            console.log('Frames found:', plot._transitionData.frames.length);
+            return mystRunBreathingAnimate(plot);
+        }}
+        if (host) {{
+            console.log('Host found; plotly-graph-div not ready — retry with mystForceBreathingAnimate()');
+        }} else {{
+            console.log('No frames or plot not ready');
+        }}
+        return false;
+    }};
+    document.addEventListener('DOMContentLoaded', bootBreathingAnimation);
+    if (document.body) bootBreathingAnimation();
+    window.addEventListener('load', bootBreathingAnimation);
 }})();
 </script>
 """
