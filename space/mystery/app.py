@@ -925,7 +925,7 @@ def _place_unified_main_nav(
     active_page: str = "home",
     default_shape: str = _DEFAULT_ACTIVE_SHAPE,
 ) -> dict[str, gr.Button]:
-    """Single top bar on all pages: Home/Render/Presets/Documentation + D4–D20."""
+    """Single top bar on all pages: Home/Render/Presets/Docs + D4–D20."""
     buttons: dict[str, gr.Button] = {}
     active = str(active_page or "home").strip().lower()
     default_shape = default_shape if default_shape in _SHAPE_NAV_IDS else _DEFAULT_ACTIVE_SHAPE
@@ -2023,13 +2023,13 @@ footer {{
     background: linear-gradient(180deg, #3d2e14 0%, #1f1608 100%) !important;
     text-decoration: none !important;
 }}
-.gradio-container .vqc-source-tab.active,
-.gradio-container .vqc-source-tabs-row button.vqc-source-tab.active,
-.gradio-container .vqc-source-tabs-row button.vqc-source-tab.active span,
-.gradio-container .vqc-source-tab.active:hover,
-.gradio-container .vqc-source-tabs-row button.vqc-source-tab.active:hover,
-.gradio-container .vqc-source-tabs-row button.vqc-source-tab.active:hover span,
-.gradio-container a.vqc-source-tab.active {{
+.gradio-container .vqc-source-tab.active:not(.main-nav-btn):not(.shape-btn):not(.demo-btn),
+.gradio-container .vqc-source-tabs-row button.vqc-source-tab.active:not(.main-nav-btn):not(.shape-btn):not(.demo-btn),
+.gradio-container .vqc-source-tabs-row button.vqc-source-tab.active:not(.main-nav-btn):not(.shape-btn):not(.demo-btn) span,
+.gradio-container .vqc-source-tab.active:not(.main-nav-btn):not(.shape-btn):not(.demo-btn):hover,
+.gradio-container .vqc-source-tabs-row button.vqc-source-tab.active:not(.main-nav-btn):not(.shape-btn):not(.demo-btn):hover,
+.gradio-container .vqc-source-tabs-row button.vqc-source-tab.active:not(.main-nav-btn):not(.shape-btn):not(.demo-btn):hover span,
+.gradio-container a.vqc-source-tab.active:not(.main-nav-btn):not(.shape-btn):not(.demo-btn) {{
     color: {_VQC_MATRIX_GREEN} !important;
     -webkit-text-fill-color: {_VQC_MATRIX_GREEN} !important;
     background: linear-gradient(180deg, #3d2e14 0%, #1f1608 100%) !important;
@@ -2039,31 +2039,16 @@ footer {{
     opacity: 1 !important;
     box-shadow: inset 0 1px 0 rgba(255, 220, 150, 0.12), 0 2px 4px rgba(0, 0, 0, 0.35) !important;
 }}
-.gradio-container .vqc-source-tabs-row button.vqc-source-tab.active:disabled,
-.gradio-container .vqc-source-tabs-row button.vqc-source-tab.active[disabled],
-.gradio-container .vqc-source-tabs-row button.vqc-source-tab.active:disabled span,
-.gradio-container .vqc-source-tabs-row button.vqc-source-tab.active[disabled] span {{
+.gradio-container .vqc-source-tabs-row button.vqc-source-tab.active:not(.main-nav-btn):not(.shape-btn):not(.demo-btn):disabled,
+.gradio-container .vqc-source-tabs-row button.vqc-source-tab.active:not(.main-nav-btn):not(.shape-btn):not(.demo-btn)[disabled],
+.gradio-container .vqc-source-tabs-row button.vqc-source-tab.active:not(.main-nav-btn):not(.shape-btn):not(.demo-btn):disabled span,
+.gradio-container .vqc-source-tabs-row button.vqc-source-tab.active:not(.main-nav-btn):not(.shape-btn):not(.demo-btn)[disabled] span {{
     color: {_VQC_MATRIX_GREEN} !important;
     -webkit-text-fill-color: {_VQC_MATRIX_GREEN} !important;
     background: linear-gradient(180deg, #3d2e14 0%, #1f1608 100%) !important;
     border-color: #6b4f1d !important;
     text-decoration: none !important;
     cursor: default !important;
-}}
-/* Child-level navigation (Render + Presets sub-nav) — active = dark orange */
-.gradio-container .myst-render-preset-nav-wrap button.vqc-source-tab.active,
-.gradio-container .myst-status-preset-nav-wrap button.vqc-source-tab.active,
-.gradio-container button.myst-render-preset-btn.active,
-.gradio-container button.myst-status-preset-btn.active,
-.gradio-container button.myst-render-nav-render-btn.active {{
-    color: #B85C00 !important;
-    -webkit-text-fill-color: #B85C00 !important;
-}}
-/* Demo tabs (A–I) — active border orange */
-#myst-gravity-child-nav button.demo-btn.active {{
-    border-color: orange !important;
-    box-shadow: 0 0 0 1px orange !important;
-    font-weight: 600 !important;
 }}
 /* Gravity child nav — uniform sizing + align with main nav */
 .gradio-container .vqc-nav-spreadsheet-row.myst-gravity-child-nav-row {{
@@ -2383,23 +2368,45 @@ footer {{
     margin-bottom: 6px !important;
     gap: 3px !important;
 }}
-.gradio-container button.main-nav-btn.active {{
+/* ========== MAIN MYSTERY: TABS (Home, Render, Presets, Docs) ========== */
+.gradio-container .vqc-source-tabs-row button.vqc-source-tab.main-nav-btn.active,
+.gradio-container .vqc-source-tabs-row button.vqc-source-tab.main-nav-btn.active span,
+.gradio-container .vqc-source-tabs-row button.vqc-source-tab.main-nav-btn.active:disabled,
+.gradio-container .vqc-source-tabs-row button.vqc-source-tab.main-nav-btn.active[disabled],
+.gradio-container .vqc-source-tabs-row button.vqc-source-tab.main-nav-btn.active:disabled span,
+.gradio-container .vqc-source-tabs-row button.vqc-source-tab.main-nav-btn.active[disabled] span {{
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
     border-color: #00FF00 !important;
     box-shadow: 0 0 0 1px #00FF00 !important;
     font-weight: 600 !important;
 }}
+/* ========== SHAPE TABS (D4, D6, D8, D12, D20) ========== */
 .gradio-container button.shape-btn {{
     font-weight: 600 !important;
     min-width: 52px !important;
 }}
-.gradio-container button.shape-btn.active,
-.gradio-container button.shape-btn.active span {{
+.gradio-container .vqc-source-tabs-row button.vqc-source-tab.shape-btn.active,
+.gradio-container .vqc-source-tabs-row button.vqc-source-tab.shape-btn.active span,
+.gradio-container .vqc-source-tabs-row button.vqc-source-tab.shape-btn.active:disabled,
+.gradio-container .vqc-source-tabs-row button.vqc-source-tab.shape-btn.active[disabled],
+.gradio-container .vqc-source-tabs-row button.vqc-source-tab.shape-btn.active:disabled span,
+.gradio-container .vqc-source-tabs-row button.vqc-source-tab.shape-btn.active[disabled] span {{
     color: cyan !important;
     -webkit-text-fill-color: cyan !important;
     border-color: cyan !important;
     box-shadow: 0 0 0 1px cyan !important;
+    font-weight: 600 !important;
 }}
-.gradio-container button.demo-btn.active {{
+/* ========== DEMO: BAR (A–I) + Render/Presets 01–09 ========== */
+.gradio-container button.vqc-source-tab.demo-btn.active,
+.gradio-container button.vqc-source-tab.demo-btn.active span,
+.gradio-container button.vqc-source-tab.demo-btn.active:disabled,
+.gradio-container button.vqc-source-tab.demo-btn.active[disabled],
+.gradio-container button.vqc-source-tab.demo-btn.active:disabled span,
+.gradio-container button.vqc-source-tab.demo-btn.active[disabled] span {{
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
     border-color: orange !important;
     box-shadow: 0 0 0 1px orange !important;
     font-weight: 600 !important;
