@@ -5548,8 +5548,26 @@ footer {{ visibility: hidden; }}
 }}
 .gradio-container .myst-render-page {{
     --myst-render-grid-gap: 0.18rem;
-    --myst-render-grid-bottom-frame: 0.38rem;
+    --myst-render-grid-bottom-frame: 0;
+    --myst-render-chrome-height: 8.75rem;
     padding: 0 !important;
+}}
+.gradio-container:has(.myst-render-page:not(.hide):not(.hidden)) .main,
+.gradio-container:has(.myst-render-page:not(.hide):not(.hidden)) .main > .wrap,
+.gradio-container:has(.myst-render-page:not(.hide):not(.hidden)) .contain {{
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: calc(100dvh - 3.5rem) !important;
+    height: 100% !important;
+}}
+.gradio-container:has(.myst-render-page:not(.hide):not(.hidden)) .myst-unified-nav-host {{
+    flex: 0 0 auto !important;
+}}
+.gradio-container:has(.myst-render-page:not(.hide):not(.hidden)) .myst-render-page:not(.hide):not(.hidden) {{
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    height: auto !important;
+    max-height: none !important;
 }}
 .gradio-container .myst-status-page .myst-status-gap-row,
 .gradio-container .myst-status-page .myst-default-gap-row,
@@ -5638,7 +5656,7 @@ footer {{ visibility: hidden; }}
     flex: 1 1 auto !important;
     width: 100% !important;
     max-width: 100% !important;
-    height: auto !important;
+    height: 100% !important;
     min-height: 0 !important;
     margin-top: 0 !important;
     padding-top: 0 !important;
@@ -5647,6 +5665,7 @@ footer {{ visibility: hidden; }}
     justify-content: flex-start !important;
     align-content: stretch !important;
     align-items: stretch !important;
+    overflow: hidden !important;
 }}
 .gradio-container .myst-status-page > .block,
 .gradio-container .myst-status-page > .form,
@@ -6429,37 +6448,50 @@ footer {{ visibility: hidden; }}
     letter-spacing: 0.1em !important;
     text-transform: uppercase !important;
 }}
+.gradio-container .myst-render-page .grid-container,
+.gradio-container .myst-render-page .myst-render-catalog-host.grid-container {{
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    height: 100% !important;
+    max-height: none !important;
+    display: flex !important;
+    flex-direction: column !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+}}
 .gradio-container .myst-render-page .myst-render-grid-wrap {{
     width: 100% !important;
-    height: auto !important;
+    height: 100% !important;
     min-height: 0 !important;
-    max-height: calc(100dvh - 9rem - var(--myst-render-grid-bottom-frame, 0.38rem)) !important;
+    max-height: none !important;
     flex: 1 1 auto !important;
     display: flex !important;
     flex-direction: column !important;
     align-items: stretch !important;
     align-content: stretch !important;
-    justify-content: flex-start !important;
-    padding: 0 0 var(--myst-render-grid-bottom-frame, 0.38rem) 0 !important;
+    justify-content: stretch !important;
+    padding: 0 !important;
     margin: 0 !important;
-    overflow-x: hidden !important;
-    overflow-y: auto !important;
+    overflow: hidden !important;
     background: transparent !important;
     box-sizing: border-box !important;
 }}
 .gradio-container .myst-render-page .myst-render-grid {{
     display: grid !important;
     grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-    grid-template-rows: repeat(3, minmax(10rem, auto)) !important;
+    grid-template-rows: repeat(3, minmax(0, 1fr)) !important;
     gap: var(--myst-render-grid-gap, 0.18rem) !important;
     width: 100% !important;
-    height: auto !important;
+    height: 100% !important;
     min-height: 0 !important;
-    flex: 0 0 auto !important;
+    flex: 1 1 auto !important;
     margin: 0 !important;
     padding: 0 !important;
     background: transparent !important;
-    align-content: start !important;
+    align-content: stretch !important;
+    align-items: stretch !important;
     box-sizing: border-box !important;
 }}
 .gradio-container .myst-render-page .myst-render-grid-cell {{
@@ -6481,14 +6513,12 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-render-page .myst-render-catalog-host:not(.hide):not(.hidden) {{
     flex: 1 1 auto !important;
     min-height: 0 !important;
-    max-height: calc(100dvh - 9rem) !important;
-    height: auto !important;
+    max-height: none !important;
+    height: 100% !important;
     display: flex !important;
     flex-direction: column !important;
     padding: 0 !important;
-    margin-left: 0 !important;
-    margin-right: 0 !important;
-    margin-bottom: 0 !important;
+    margin: 0 !important;
     overflow: hidden !important;
     align-items: stretch !important;
 }}
@@ -6501,15 +6531,16 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-render-page #myst-render-grid-host.block,
 .gradio-container .myst-render-page #myst-render-grid-host .wrap,
 .gradio-container .myst-render-page #myst-render-grid-host .gradio-html,
-.gradio-container .myst-render-page #myst-render-grid-host .prose {{
+.gradio-container .myst-render-page #myst-render-grid-host .prose,
+.gradio-container .myst-render-page .preset-grid,
+.gradio-container .myst-render-page .preset-grid .html-container {{
     width: 100% !important;
     max-width: 100% !important;
     min-height: 0 !important;
-    height: auto !important;
-    max-height: calc(100dvh - 9rem - var(--myst-render-grid-bottom-frame, 0.38rem)) !important;
+    height: 100% !important;
+    max-height: none !important;
     flex: 1 1 auto !important;
-    overflow-x: hidden !important;
-    overflow-y: auto !important;
+    overflow: hidden !important;
     padding: 0 !important;
     margin: 0 !important;
     background: transparent !important;
@@ -6519,8 +6550,8 @@ footer {{ visibility: hidden; }}
     display: flex !important;
     flex-direction: column !important;
     align-items: stretch !important;
-    align-content: start !important;
-    justify-content: flex-start !important;
+    align-content: stretch !important;
+    justify-content: stretch !important;
     box-sizing: border-box !important;
 }}
 .gradio-container:has(.myst-render-page:not(.hide):not(.hidden)) {{
@@ -6792,7 +6823,7 @@ footer {{ visibility: hidden; }}
 }}
 .gradio-container .myst-render-page .myst-render-plot-host {{
     flex: 1 1 auto !important;
-    min-height: 9rem !important;
+    min-height: 0 !important;
     width: 100% !important;
     height: 100% !important;
     display: flex !important;
@@ -6807,7 +6838,7 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-render-page .myst-render-plot-host .myst-render-grid-viewport {{
     width: 100% !important;
     height: 100% !important;
-    min-height: 9rem !important;
+    min-height: 0 !important;
     max-height: none !important;
     max-width: none !important;
     display: block !important;
@@ -6856,8 +6887,8 @@ footer {{ visibility: hidden; }}
     width: 100% !important;
     flex: 1 1 auto !important;
     min-height: 0 !important;
-    max-height: calc(100dvh - 5.5rem) !important;
-    height: auto !important;
+    max-height: none !important;
+    height: 100% !important;
     display: flex !important;
     flex-direction: column !important;
     align-items: stretch !important;
@@ -6868,13 +6899,17 @@ footer {{ visibility: hidden; }}
     overflow: hidden !important;
     background: transparent !important;
 }}
+.gradio-container .myst-render-page .myst-render-stack > .block:has(.myst-render-action-row),
+.gradio-container .myst-render-page .myst-render-stack > .form:has(.myst-render-action-row) {{
+    flex: 0 0 auto !important;
+}}
 .gradio-container .myst-render-page .myst-render-stack > .block:has(.myst-render-catalog-host):not(.hide):not(.hidden),
 .gradio-container .myst-render-page .myst-render-stack > .form:has(.myst-render-catalog-host):not(.hide):not(.hidden),
 .gradio-container .myst-render-page .myst-render-stack > .column.myst-render-catalog-host:not(.hide):not(.hidden) {{
     flex: 1 1 auto !important;
     min-height: 0 !important;
-    max-height: calc(100dvh - 9rem) !important;
-    height: auto !important;
+    max-height: none !important;
+    height: 100% !important;
     width: 100% !important;
     overflow: hidden !important;
     align-items: stretch !important;
@@ -10255,8 +10290,8 @@ def build_app() -> gr.Blocks:
         render_active_slot = gr.State(-1)
         render_zoom_slot = gr.State(-1)
         render_plot_cache = gr.State([None] * _STATUS_GRID_PRESET_COUNT)
-        with gr.Column(visible=False, elem_classes=["myst-render-page"]) as page_render:
-            with gr.Column(visible=True, elem_classes=["myst-render-stack"]) as render_content_col:
+        with gr.Column(visible=False, elem_classes=["myst-render-page"], scale=1) as page_render:
+            with gr.Column(visible=True, elem_classes=["myst-render-stack"], scale=1) as render_content_col:
                 with gr.Row(elem_classes=["myst-render-action-row"]):
                     render_back_btn = _place_back_button(
                         "← Back",
@@ -10286,7 +10321,8 @@ def build_app() -> gr.Blocks:
                     ]
                 with gr.Column(
                     visible=True,
-                    elem_classes=["myst-render-catalog-host"],
+                    scale=1,
+                    elem_classes=["myst-render-catalog-host", "grid-container"],
                 ) as render_catalog_col:
                     render_panel_html = gr.HTML(
                         _init_render_panel,
@@ -10295,6 +10331,7 @@ def build_app() -> gr.Blocks:
                             "myst-gravity-control-levels-wrap",
                             "myst-render-panel-host",
                             "myst-render-grid-host",
+                            "preset-grid",
                         ],
                     )
                 render_detail_slot = gr.State(-1)
