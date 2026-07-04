@@ -135,8 +135,9 @@ _VQC_MATRIX_GREEN = "#33ff66"
 DEFAULT_BUTTON_BORDER_COLOR = "#6b4f1d"
 DEFAULT_BUTTON_BODY_HEIGHT = "2.05rem"
 DEFAULT_GAP = "8px"
-# Status page chrome: 80% transparent (20% opaque).
-_MYST_DEFAULT_GAP_HEIGHT = "0.84rem"
+# Global vertical rhythm between nav/button bars and content (~25% below legacy 0.84rem).
+DEFAULT_GAP_HEIGHT = 12
+_MYST_DEFAULT_GAP_HEIGHT = f"{DEFAULT_GAP_HEIGHT}px"
 _MYST_STATUS_LAYER_ALPHA = 0.2
 # Individual preset panel backgrounds: 30% transparent (30% opaque).
 _MYST_STATUS_PANEL_ALPHA = 0.3
@@ -1030,24 +1031,24 @@ def _place_status_save_edit_row() -> tuple[gr.Button, gr.Button]:
     return save_btn, edit_btn
 
 
-def _place_status_gap_row(*, slot: str, half_height: bool = False) -> None:
-    """Empty spacer row on the Presets page — height uses --myst-default-gap-height."""
-    classes = [
-        "myst-status-gap-row",
-        "myst-default-gap-row",
-        f"myst-status-gap-{slot}",
-    ]
+def _add_gap_row(*, slot: str | None = None, half_height: bool = False) -> None:
+    """Insert a consistent empty row with the global default gap height."""
+    slot_key = str(slot or "default").strip() or "default"
+    classes = ["myst-default-gap-row", "myst-status-gap-row", f"myst-gap-row-{slot_key}"]
     if half_height:
+        classes.append("myst-gap-row-half")
         classes.append("myst-status-gap-half")
-    with gr.Row(
-        elem_id=f"myst-status-gap-{slot}",
-        elem_classes=classes,
-    ):
+    with gr.Row(elem_id=f"myst-gap-row-{slot_key}", elem_classes=classes):
         gr.HTML(
-            '<div class="myst-status-gap-fill" aria-hidden="true"></div>',
-            elem_id=f"myst-status-gap-fill-{slot}",
-            elem_classes=["myst-status-gap-fill-host"],
+            f'<div class="myst-gap-fill myst-status-gap-fill" '
+            f'style="height:{DEFAULT_GAP_HEIGHT}px;" aria-hidden="true"></div>',
+            elem_classes=["myst-gap-fill-host", "myst-status-gap-fill-host"],
         )
+
+
+def _place_status_gap_row(*, slot: str, half_height: bool = False) -> None:
+    """Backward-compatible alias for legacy Presets/Render gap rows."""
+    _add_gap_row(slot=slot, half_height=half_height)
 
 
 def _status_zoom_nav_edit_btn_update(*, in_zoom: bool, edit_open: bool) -> gr.Update:
@@ -1802,6 +1803,8 @@ body::before {{
     --default-border-color: {DEFAULT_BUTTON_BORDER_COLOR};
     --button-body-height: {DEFAULT_BUTTON_BODY_HEIGHT};
     --default-gap: {DEFAULT_GAP};
+    --myst-default-gap-height: {_MYST_DEFAULT_GAP_HEIGHT};
+    --myst-half-gap-height: calc(var(--myst-default-gap-height) * 0.5);
     position: relative !important;
     width: 100% !important;
     max-width: 100% !important;
@@ -2365,7 +2368,7 @@ footer {{
 .gradio-container .myst-main-nav,
 .gradio-container .vqc-nav-spreadsheet-row.vqc-main-nav-row {{
     grid-template-columns: 4.75rem repeat(9, minmax(0, 1fr)) !important;
-    margin-bottom: 6px !important;
+    margin-bottom: 0 !important;
     gap: 3px 0.35rem !important;
 }}
 /* Equal-width nav buttons — Mystery + Demo rows share 9-column grid */
@@ -2391,8 +2394,54 @@ footer {{
     padding: 0 !important;
 }}
 .gradio-container .myst-secondary-nav {{
-    margin-bottom: 6px !important;
+    margin-bottom: 0 !important;
     gap: 3px !important;
+}}
+.gradio-container .myst-default-gap-row {{
+    display: block !important;
+    width: 100% !important;
+    min-height: var(--myst-default-gap-height) !important;
+    height: var(--myst-default-gap-height) !important;
+    max-height: var(--myst-default-gap-height) !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    flex: 0 0 auto !important;
+}}
+.gradio-container .myst-default-gap-row > .block,
+.gradio-container .myst-default-gap-row > .form {{
+    width: 100% !important;
+    min-height: var(--myst-default-gap-height) !important;
+    height: var(--myst-default-gap-height) !important;
+    max-height: var(--myst-default-gap-height) !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}}
+.gradio-container .myst-gap-fill,
+.gradio-container .myst-gap-fill-host,
+.gradio-container .myst-gap-fill-host .html-container {{
+    display: block !important;
+    width: 100% !important;
+    min-height: var(--myst-default-gap-height) !important;
+    max-height: var(--myst-default-gap-height) !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    line-height: 0 !important;
+    font-size: 0 !important;
+    overflow: hidden !important;
+}}
+.gradio-container .myst-gap-row-half {{
+    min-height: var(--myst-half-gap-height) !important;
+    height: var(--myst-half-gap-height) !important;
+    max-height: var(--myst-half-gap-height) !important;
+}}
+.gradio-container .myst-gap-row-half .myst-gap-fill,
+.gradio-container .myst-gap-row-half .myst-gap-fill-host {{
+    min-height: var(--myst-half-gap-height) !important;
+    max-height: var(--myst-half-gap-height) !important;
 }}
 /* ========== MAIN MYSTERY: TABS (Home, Render, Presets, Docs) ========== */
 .gradio-container .vqc-source-tabs-row button.vqc-source-tab.main-nav-btn.active,
@@ -2467,8 +2516,8 @@ footer {{
     display: flex !important;
     align-items: stretch !important;
     width: 100% !important;
-    margin-top: var(--default-gap, {DEFAULT_GAP}) !important;
-    margin-bottom: 12px !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
     gap: var(--default-gap, {DEFAULT_GAP}) !important;
 }}
 .gradio-container .myst-main-nav button.vqc-source-tab,
@@ -4879,8 +4928,6 @@ footer {{ visibility: hidden; }}
     box-sizing: border-box !important;
 }}
 .gradio-container .myst-render-page {{
-    --myst-default-gap-height: 0.38rem;
-    --myst-half-gap-height: calc(var(--myst-default-gap-height) * 0.5);
     --myst-render-grid-gap: 0.18rem;
     --myst-render-grid-bottom-frame: 0.38rem;
     padding: 0 !important;
@@ -9420,6 +9467,7 @@ def build_app() -> gr.Blocks:
                 active_page="home",
                 default_shape=_DEFAULT_ACTIVE_SHAPE,
             )
+            _add_gap_row(slot="after-main-nav")
 
         _init_re_metrics, _init_unit_cell_header, _init_unit_cell_fig = run_residual_explorer(
             1.0, 1.0, 1.0, KAPPA_DOC, 0.1, 1.0, 1.0, 0.35, 22.0, 45.0
@@ -9456,7 +9504,7 @@ def build_app() -> gr.Blocks:
                     active_slot=-1,
                     zoom_slot=-1,
                 )
-                _place_status_gap_row(slot="after-preset-nav")
+                _add_gap_row(slot="after-demo-nav")
                 render_sub_nav_btns = [
                     _render_sub_nav[str(i)] for i in range(_STATUS_ZOOM_PRESET_COUNT)
                 ]
@@ -9550,8 +9598,9 @@ def build_app() -> gr.Blocks:
             save_button_state = gr.State(False)
             with gr.Column(visible=True, elem_classes=["myst-status-stack"]) as status_content_col:
                 _status_zoom_nav = _place_status_zoom_nav_row(active_slot=-1)
+                _add_gap_row(slot="after-demo-nav")
                 status_zoom_save_btn, status_zoom_edit_btn = _place_status_save_edit_row()
-                _place_status_gap_row(slot="after-preset-nav")
+                _add_gap_row(slot="after-save-edit")
                 status_zoom_btns = [
                     _status_zoom_nav[str(i)] for i in range(_STATUS_ZOOM_PRESET_COUNT)
                 ]
@@ -9824,7 +9873,7 @@ def build_app() -> gr.Blocks:
             gravity_letter_btns = {
                 letter: gravity_child_nav[letter] for letter in _GRAVITY_CHILD_NAV_LETTERS
             }
-            _place_status_gap_row(slot="after-preset-nav")
+            _add_gap_row(slot="after-demo-nav")
             gravity_active_letter = gr.State("A")
             with gr.Column(
                 elem_classes=["myst-gravity-single-viewport"],
