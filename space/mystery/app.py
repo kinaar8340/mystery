@@ -2702,6 +2702,35 @@ footer {{
     padding: 0 !important;
     overflow: hidden !important;
 }}
+.gradio-container .myst-unified-nav-host + .column.myst-gravity-page,
+.gradio-container .myst-unified-nav-host + .myst-gravity-page {{
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+}}
+/* Demo bar → viewport: theme gap only (0.20rem) */
+.gradio-container .myst-gravity-page > .block:has(#myst-gap-row-after-demo-nav),
+.gradio-container .myst-gravity-page > .form:has(#myst-gap-row-after-demo-nav),
+.gradio-container .myst-gap-row-host-after-demo-nav,
+.gradio-container #myst-gap-row-after-demo-nav {{
+    margin: 0 !important;
+    padding: 0 !important;
+    min-height: var(--myst-default-gap-height, {_myst_default_gap_height}) !important;
+    height: var(--myst-default-gap-height, {_myst_default_gap_height}) !important;
+    max-height: var(--myst-default-gap-height, {_myst_default_gap_height}) !important;
+    flex: 0 0 var(--myst-default-gap-height, {_myst_default_gap_height}) !important;
+    overflow: hidden !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}}
+.gradio-container .myst-gravity-page > .block:has(.myst-gravity-single-viewport),
+.gradio-container .myst-gravity-page > .block:has(#myst-gravity-viewport-wrapper),
+.gradio-container .myst-gravity-page #myst-gravity-viewport-plot,
+.gradio-container .myst-gravity-page #myst-gravity-viewport-wrapper,
+.gradio-container .myst-gravity-page .myst-gravity-single-viewport {{
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+}}
 .gradio-container .myst-unified-nav-host .vqc-source-tabs-row,
 .gradio-container .myst-unified-nav-host .myst-main-nav,
 .gradio-container .myst-unified-nav-host .myst-secondary-nav {{
@@ -9858,7 +9887,6 @@ def build_app() -> gr.Blocks:
                 elem_classes=["myst-home-demo-nav-section", "myst-force-visible"],
             ) as home_demo_nav_section:
                 gravity_child_nav = _place_gravity_child_nav_row()
-                _add_gap_row(slot="after-demo-nav")
 
         _init_re_metrics, _init_unit_cell_header, _init_unit_cell_fig = run_residual_explorer(
             1.0, 1.0, 1.0, KAPPA_DOC, 0.1, 1.0, 1.0, 0.35, 22.0, 45.0
@@ -10263,6 +10291,7 @@ def build_app() -> gr.Blocks:
                         )
 
         with gr.Column(visible=True, elem_classes=["myst-gravity-page"], scale=1) as page_gravity:
+            _add_gap_row(slot="after-demo-nav")
             gravity_letter_btns = {
                 letter: gravity_child_nav[letter] for letter in _GRAVITY_CHILD_NAV_LETTERS
             }
