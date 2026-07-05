@@ -217,8 +217,8 @@ _MYST_STATUS_PANEL_ALPHA = 0.7
 _MYST_README_PANEL_ALPHA = 0.7
 # Figures tab preset thumbnails/detail (unchanged).
 _MYST_RENDER_PANEL_ALPHA = 0.3
-# Demo F viewport panel background — 50% transparent.
-_MYST_DEMO_F_VIEWPORT_ALPHA = 0.5
+# Demo A–I viewport panel background — 50% transparent (wallpaper shows through).
+_MYST_DEMO_VIEWPORT_ALPHA = 0.5
 _STATUS_ZOOM_PRESET_COUNT = 9
 _VQC_MATRIX_GREEN_BG = "#0a1f12"
 _VQC_LOGO_GOLD = "#c9a227"
@@ -3011,25 +3011,32 @@ footer {{
     display: block !important;
     pointer-events: none !important;
 }}
-/* Demo F — 50% transparent viewport background (wallpaper shows through). */
-.gradio-container .myst-gravity-page .myst-gravity-single-viewport.myst-demo-f-viewport,
-.gradio-container .myst-gravity-page .myst-demo-f-viewport#myst-gravity-viewport-wrapper {{
-    background: rgba(10, 10, 15, {_MYST_DEMO_F_VIEWPORT_ALPHA}) !important;
+/* Demo A–I — 50% transparent viewport background (wallpaper shows through). */
+.gradio-container .myst-gravity-page .myst-gravity-single-viewport.myst-demo-viewport,
+.gradio-container .myst-gravity-page .myst-demo-viewport#myst-gravity-viewport-wrapper {{
+    background: rgba(10, 10, 15, {_MYST_DEMO_VIEWPORT_ALPHA}) !important;
 }}
-.gradio-container .myst-gravity-page .myst-demo-f-viewport #myst-gravity-viewport,
-.gradio-container .myst-gravity-page .myst-demo-f-viewport #myst-gravity-viewport .block,
-.gradio-container .myst-gravity-page .myst-demo-f-viewport #myst-gravity-viewport .video-container,
-.gradio-container .myst-gravity-page .myst-demo-f-viewport #myst-gravity-viewport .wrap,
-.gradio-container .myst-gravity-page .myst-demo-f-viewport #myst-gravity-viewport video,
-.gradio-container .myst-gravity-page .myst-demo-f-viewport #myst-gravity-viewport-plot,
-.gradio-container .myst-gravity-page .myst-demo-f-viewport #myst-gravity-viewport-plot .block,
-.gradio-container .myst-gravity-page .myst-demo-f-viewport #myst-gravity-viewport-plot .plot-container,
-.gradio-container .myst-gravity-page .myst-demo-f-viewport .plotly-graph-div,
-.gradio-container .myst-gravity-page .myst-demo-f-viewport .js-plotly-plot {{
-    background: rgba(10, 10, 15, {_MYST_DEMO_F_VIEWPORT_ALPHA}) !important;
+.gradio-container .myst-gravity-page .myst-demo-viewport #myst-gravity-viewport,
+.gradio-container .myst-gravity-page .myst-demo-viewport #myst-gravity-viewport .block,
+.gradio-container .myst-gravity-page .myst-demo-viewport #myst-gravity-viewport .video-container,
+.gradio-container .myst-gravity-page .myst-demo-viewport #myst-gravity-viewport .wrap,
+.gradio-container .myst-gravity-page .myst-demo-viewport #myst-gravity-viewport video,
+.gradio-container .myst-gravity-page .myst-demo-viewport #myst-gravity-viewport-plot,
+.gradio-container .myst-gravity-page .myst-demo-viewport #myst-gravity-viewport-plot .block,
+.gradio-container .myst-gravity-page .myst-demo-viewport #myst-gravity-viewport-plot .plot-container,
+.gradio-container .myst-gravity-page .myst-demo-viewport #myst-gravity-viewport-startup,
+.gradio-container .myst-gravity-page .myst-demo-viewport #myst-gravity-viewport-startup .block,
+.gradio-container .myst-gravity-page .myst-demo-viewport #myst-gravity-viewport-startup .html-container,
+.gradio-container .myst-gravity-page .myst-demo-viewport #myst-gravity-viewport-startup .prose,
+.gradio-container .myst-gravity-page .myst-demo-viewport .myst-gravity-viewport-startup .html-container,
+.gradio-container .myst-gravity-page .myst-demo-viewport .plotly-graph-div,
+.gradio-container .myst-gravity-page .myst-demo-viewport .js-plotly-plot,
+.gradio-container .myst-gravity-page .myst-demo-viewport .myst-gravity-startup-image,
+.gradio-container .myst-gravity-page .myst-demo-viewport .myst-gravity-startup-img {{
+    background: rgba(10, 10, 15, {_MYST_DEMO_VIEWPORT_ALPHA}) !important;
 }}
-.gradio-container .myst-gravity-page .myst-demo-f-viewport .plotly .main-svg .bg {{
-    fill: rgba(0, 0, 0, {_MYST_DEMO_F_VIEWPORT_ALPHA}) !important;
+.gradio-container .myst-gravity-page .myst-demo-viewport .plotly .main-svg .bg {{
+    fill: rgba(0, 0, 0, {_MYST_DEMO_VIEWPORT_ALPHA}) !important;
 }}
 #myst-gravity-viewport .plotly-graph-div,
 #myst-gravity-viewport-plotly,
@@ -8850,10 +8857,11 @@ def _demo_active_tab_updates(active_letter: str, *, b_i_enabled: bool = True) ->
 
 
 def _gravity_viewport_wrapper_classes(active_letter: str) -> list[str]:
-    """Viewport shell classes — Demo F adds semi-transparent panel background."""
+    """Viewport shell classes — Demo A–I use semi-transparent panel background."""
     classes = ["myst-gravity-single-viewport"]
-    if str(active_letter).strip().upper() == "F":
-        classes.append("myst-demo-f-viewport")
+    letter = str(active_letter or "A").strip().upper()
+    if letter in _GRAVITY_CHILD_NAV_LETTERS:
+        classes.append("myst-demo-viewport")
     return classes
 
 
