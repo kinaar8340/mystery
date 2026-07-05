@@ -3075,6 +3075,22 @@ footer {{
     -webkit-font-smoothing: antialiased !important;
     background: #0a0a0f !important;
 }}
+/* Loading — strip Gradio semi-transparent block layers so text stays bright white. */
+.gradio-container .myst-gravity-page .myst-demo-loading-active .myst-gravity-single-viewport > .block,
+.gradio-container .myst-gravity-page .myst-demo-loading-active .myst-gravity-single-viewport > .form,
+.gradio-container .myst-gravity-page .myst-demo-loading-active #myst-gravity-viewport-startup,
+.gradio-container .myst-gravity-page .myst-demo-loading-active #myst-gravity-viewport-startup .block,
+.gradio-container .myst-gravity-page .myst-demo-loading-active #myst-gravity-viewport-startup .html-container,
+.gradio-container .myst-gravity-page .myst-demo-loading-active #myst-gravity-viewport-startup .prose {{
+    background: transparent !important;
+    background-color: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    box-shadow: none !important;
+    border: none !important;
+    opacity: 1 !important;
+    filter: none !important;
+}}
 .gradio-container .myst-gravity-page #myst-gravity-viewport-startup .prose .myst-demo-viewport-loading,
 .gradio-container .myst-gravity-page #myst-gravity-viewport-startup .html-container .myst-demo-viewport-loading,
 .gradio-container .myst-gravity-page .myst-demo-viewport-loading {{
@@ -3087,7 +3103,7 @@ footer {{
     justify-content: center !important;
     padding: 1.5rem !important;
     box-sizing: border-box !important;
-    background: #12121a !important;
+    background: #101018 !important;
     opacity: 1 !important;
     filter: none !important;
     text-align: center !important;
@@ -3097,26 +3113,22 @@ footer {{
     flex-direction: column !important;
     align-items: center !important;
     justify-content: center !important;
-    gap: 0.75rem !important;
+    gap: 0.8rem !important;
     max-width: 34rem !important;
     width: min(92%, 34rem) !important;
-    padding: 1.65rem 1.85rem 1.5rem !important;
+    padding: 1.75rem 2rem 1.6rem !important;
     border-radius: 14px !important;
-    background: linear-gradient(165deg, #2a2a3d 0%, #1c1c2a 100%) !important;
-    border: 1px solid rgba(224, 64, 160, 0.55) !important;
-    box-shadow:
-        0 0 0 1px rgba(245, 230, 200, 0.12),
-        0 0 28px rgba(224, 64, 160, 0.22),
-        0 12px 36px rgba(0, 0, 0, 0.45) !important;
+    background: transparent !important;
+    border: 2px solid #ff62c8 !important;
+    box-shadow: 0 0 22px rgba(255, 98, 200, 0.35) !important;
     opacity: 1 !important;
     filter: none !important;
 }}
 .gradio-container .myst-gravity-page .myst-demo-viewport-loading-spinner {{
-    width: 3rem !important;
-    height: 3rem !important;
-    border: 4px solid rgba(245, 230, 200, 0.35) !important;
-    border-top-color: #ff5ec4 !important;
-    border-right-color: #f5e6c8 !important;
+    width: 3.1rem !important;
+    height: 3.1rem !important;
+    border: 4px solid #ffffff !important;
+    border-top-color: #ff62c8 !important;
     border-radius: 50% !important;
     animation: myst-demo-spinner 0.85s linear infinite !important;
     opacity: 1 !important;
@@ -3127,31 +3139,33 @@ footer {{
 }}
 .gradio-container .myst-gravity-page .myst-demo-viewport-loading-title,
 .gradio-container .myst-gravity-page .prose .myst-demo-viewport-loading-title {{
-    font-size: 1.18rem !important;
+    font-size: 1.22rem !important;
     font-weight: 700 !important;
     letter-spacing: 0.03em !important;
-    color: #fff8ec !important;
-    -webkit-text-fill-color: #fff8ec !important;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
     opacity: 1 !important;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45) !important;
+    text-shadow: none !important;
 }}
 .gradio-container .myst-gravity-page .myst-demo-viewport-loading-sub,
 .gradio-container .myst-gravity-page .prose .myst-demo-viewport-loading-sub {{
-    font-size: 0.92rem !important;
-    color: #ececf4 !important;
-    -webkit-text-fill-color: #ececf4 !important;
+    font-size: 0.95rem !important;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
     max-width: 28rem !important;
     opacity: 1 !important;
-    line-height: 1.4 !important;
+    line-height: 1.45 !important;
+    text-shadow: none !important;
 }}
 .gradio-container .myst-gravity-page .myst-demo-viewport-loading-hint,
 .gradio-container .myst-gravity-page .prose .myst-demo-viewport-loading-hint {{
-    font-size: 0.8rem !important;
-    color: #d4d4e4 !important;
-    -webkit-text-fill-color: #d4d4e4 !important;
+    font-size: 0.82rem !important;
+    color: #f2f2fa !important;
+    -webkit-text-fill-color: #f2f2fa !important;
     max-width: 26rem !important;
     opacity: 1 !important;
     line-height: 1.45 !important;
+    text-shadow: none !important;
 }}
 .gradio-container button.demo-btn.active.myst-demo-loading,
 .gradio-container button.demo-btn.active.myst-demo-loading span {{
@@ -9087,6 +9101,7 @@ def _gravity_viewport_wrapper_classes(
     active_letter: str,
     *,
     active_shape: str = _NO_ACTIVE_SHAPE,
+    loading: bool = False,
 ) -> list[str]:
     """Viewport shell classes — Demo A–I and latched D* use semi-transparent panel."""
     classes = ["myst-gravity-single-viewport", "myst-viewport-transition"]
@@ -9096,6 +9111,8 @@ def _gravity_viewport_wrapper_classes(
     elif _is_active_shape(active_shape):
         classes.append("myst-demo-viewport")
         classes.append("myst-platonic-viewport")
+    if loading:
+        classes.append("myst-demo-loading-active")
     return classes
 
 
@@ -9103,11 +9120,13 @@ def _gravity_viewport_wrapper_update(
     active_letter: str,
     *,
     active_shape: str = _NO_ACTIVE_SHAPE,
+    loading: bool = False,
 ) -> gr.Update:
     return gr.update(
         elem_classes=_gravity_viewport_wrapper_classes(
             active_letter,
             active_shape=active_shape,
+            loading=loading,
         )
     )
 
@@ -9505,10 +9524,7 @@ def _demo_viewport_show_loading(letter: str) -> tuple:
         gr.update(value=None, visible=False),
         gr.update(value=None, visible=False),
         gr.update(value=_demo_viewport_loading_html(active), visible=True),
-        _demo_viewport_overlay_update(
-            title=f"Rendering {title}…",
-            subtitle=subtitle,
-        ),
+        _demo_viewport_overlay_update(visible=False),
     )
 
 
@@ -9523,7 +9539,7 @@ def _demo_letter_click_begin(letter: str) -> tuple:
         *_demo_platonic_flip_clear_shape(),
         *_gravity_child_nav_btn_updates(active_slot, b_i_enabled=True, loading=True),
         latch,
-        _gravity_viewport_wrapper_update(latch),
+        _gravity_viewport_wrapper_update(latch, loading=True),
         *_demo_home_main_nav_unlock_updates(),
         *_demo_viewport_show_loading(latch),
     )
@@ -9539,6 +9555,7 @@ def _demo_letter_click_finish(letter: str) -> tuple:
     return (
         *_switch_gravity_demo_viewport_only(latch),
         *_gravity_child_nav_btn_updates(active_slot, b_i_enabled=True, loading=False),
+        _gravity_viewport_wrapper_update(latch, loading=False),
     )
 
 
@@ -12537,6 +12554,7 @@ def build_app() -> gr.Blocks:
             demo_letter_click_finish_outputs = [
                 *gravity_demo_viewport_outputs,
                 *[gravity_letter_btns[letter] for letter in _GRAVITY_CHILD_NAV_LETTERS],
+                viewport_col,
             ]
 
             def _make_demo_letter_click_begin(letter: str):
