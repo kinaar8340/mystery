@@ -113,7 +113,7 @@ def build_platonic_viewport_overlay_html(shape: str) -> str:
     title = f"{dim} · {platonic_solid_name(dim)}"
     desc = str(config.get("description", ""))
     return (
-        f'<div class="myst-gravity-viewport-overlay-inner myst-viewport-fade-in" role="status">'
+        f'<div class="myst-gravity-viewport-overlay-inner" role="status">'
         f'<div class="myst-gravity-viewport-overlay-title">{html.escape(title)}</div>'
         f'<div class="myst-gravity-viewport-overlay-sub">{html.escape(desc)}</div>'
         f"</div>"

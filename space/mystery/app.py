@@ -3043,46 +3043,54 @@ footer {{
 .gradio-container .myst-gravity-page .myst-demo-viewport .plotly .main-svg .bg {{
     fill: rgba(0, 0, 0, {_MYST_DEMO_VIEWPORT_ALPHA}) !important;
 }}
-.gradio-container .myst-gravity-page .myst-viewport-transition #myst-gravity-viewport-plot,
-.gradio-container .myst-gravity-page .myst-viewport-transition #myst-gravity-viewport,
-.gradio-container .myst-gravity-page .myst-viewport-transition #myst-gravity-viewport-startup {{
-    transition: opacity 0.38s ease !important;
+/* Opacity-only fade on demo video swaps — no transform (transform blurs text). */
+.gradio-container .myst-gravity-page .myst-viewport-transition #myst-gravity-viewport video {{
+    transition: opacity 0.32s ease !important;
 }}
-.gradio-container .myst-gravity-page .myst-viewport-transition #myst-gravity-viewport video,
-.gradio-container .myst-gravity-page .myst-viewport-transition #myst-gravity-viewport-plot .plot-container,
-.gradio-container .myst-gravity-page .myst-viewport-transition #myst-gravity-viewport-startup .html-container {{
-    animation: myst-viewport-fade-in 0.42s ease forwards;
+.gradio-container .myst-gravity-page .myst-viewport-transition.myst-viewport-swap #myst-gravity-viewport video {{
+    animation: myst-viewport-video-fade 0.32s ease;
 }}
-@keyframes myst-viewport-fade-in {{
-    from {{
-        opacity: 0;
-        transform: translateY(4px);
-    }}
-    to {{
-        opacity: 1;
-        transform: translateY(0);
-    }}
+@keyframes myst-viewport-video-fade {{
+    from {{ opacity: 0; }}
+    to {{ opacity: 1; }}
 }}
 .gradio-container .myst-gravity-page #myst-gravity-viewport-overlay,
 .gradio-container .myst-gravity-page .myst-gravity-viewport-overlay {{
     position: absolute !important;
-    inset: 0 !important;
+    left: 0 !important;
+    bottom: 0 !important;
     z-index: 8 !important;
+    width: auto !important;
+    height: auto !important;
     pointer-events: none !important;
     margin: 0 !important;
     padding: 0 !important;
     background: transparent !important;
     overflow: visible !important;
+    transform: none !important;
+    filter: none !important;
+    animation: none !important;
 }}
 .gradio-container .myst-gravity-page #myst-gravity-viewport-overlay .block,
 .gradio-container .myst-gravity-page #myst-gravity-viewport-overlay .html-container,
 .gradio-container .myst-gravity-page #myst-gravity-viewport-overlay .prose {{
-    position: absolute !important;
-    inset: 0 !important;
+    position: static !important;
+    width: auto !important;
+    height: auto !important;
     margin: 0 !important;
     padding: 0 !important;
     background: transparent !important;
     overflow: visible !important;
+    transform: none !important;
+    filter: none !important;
+    animation: none !important;
+}}
+.gradio-container .myst-gravity-page #myst-gravity-viewport-startup,
+.gradio-container .myst-gravity-page #myst-gravity-viewport-startup .html-container,
+.gradio-container .myst-gravity-page #myst-gravity-viewport-startup .prose {{
+    transform: none !important;
+    filter: none !important;
+    animation: none !important;
 }}
 .gradio-container .myst-gravity-page .myst-gravity-viewport-overlay-inner {{
     position: absolute !important;
@@ -3091,9 +3099,8 @@ footer {{
     max-width: min(22rem, 72%) !important;
     padding: 0.45rem 0.65rem 0.5rem !important;
     border-radius: 8px !important;
-    background: rgba(8, 8, 14, 0.62) !important;
+    background: rgba(8, 8, 14, 0.78) !important;
     border: 1px solid rgba(90, 90, 120, 0.45) !important;
-    backdrop-filter: blur(4px);
 }}
 .gradio-container .myst-gravity-page .myst-gravity-viewport-overlay-title {{
     color: #f5e6c8 !important;
@@ -8974,7 +8981,7 @@ def _demo_viewport_overlay_html(*, title: str = "", subtitle: str = "") -> str:
     safe_title = html.escape(title)
     safe_sub = html.escape(subtitle)
     return (
-        f'<div class="myst-gravity-viewport-overlay-inner myst-viewport-fade-in" role="status">'
+        f'<div class="myst-gravity-viewport-overlay-inner" role="status">'
         f'<div class="myst-gravity-viewport-overlay-title">{safe_title}</div>'
         f'<div class="myst-gravity-viewport-overlay-sub">{safe_sub}</div>'
         f"</div>"
