@@ -1266,6 +1266,16 @@ def _home_nav_interrupt() -> tuple:
     )
 
 
+def _figures_nav_open(active_shape: str = _NO_ACTIVE_SHAPE) -> tuple:
+    """Open Figures page — preset grid headers reflect latched active_shape."""
+    latched = _resolve_latched_platonic_shape(active_shape)
+    grid_html = _format_render_grid_html(shape=latched)
+    return (
+        *_nav_to_page_with_demo("render"),
+        gr.update(value=grid_html),
+    )
+
+
 def _main_nav_btn_classes(page_id: str, active_page: str) -> list[str]:
     classes = ["vqc-source-tab", "main-nav-btn"]
     if page_id == active_page:
@@ -8194,6 +8204,29 @@ _RENDER_PRESET_LABELS: dict[int, str] = {
 }
 
 
+def _render_geodesic_params_for_active_shape(
+    active_shape: str,
+) -> tuple[int, int, str]:
+    """Resolve face_count, subdiv, and latched D* id for Figures rendering."""
+    latched = _resolve_latched_platonic_shape(active_shape)
+    config_shape = _normalize_shape_id(latched or _NO_ACTIVE_SHAPE)
+    config = get_dimension_config(config_shape)
+    face_count = int(config.get("face_count", geodesic_face_count(config_shape)))
+    subdiv = int(config.get("subdiv", 8))
+    return face_count, subdiv, latched
+
+
+def _render_cell_title(active_shape: str, slot: int) -> str:
+    """Figures grid cell header — e.g. D6 · PRESET 01 · rigid cube."""
+    preset_id = _gravity_preset_id(slot)
+    profile = _RENDER_PRESET_LABELS.get(slot)
+    subtitle = f" · {profile}" if profile else ""
+    shape_metric = resolve_platonic_shape_metric(active_shape)
+    if shape_metric is not None:
+        return f"D{shape_metric} · PRESET {preset_id}{subtitle}"
+    return f"PRESET {preset_id}{subtitle}"
+
+
 def _render_preset_dials_for_slot(slot: int) -> dict[str, float]:
     """Dial bundle for Render tab presets 01–09 (slots 0–8)."""
     slot = int(slot)
@@ -9283,20 +9316,38 @@ def _dials_to_explorer_args(dials: dict[str, float]) -> tuple[float, ...]:
     )
 
 
-def _render_preset_plot_html(slot: int, *, dpi: int = _RENDER_GRID_IMAGE_DPI) -> str:
+def _render_preset_plot_html(
+    slot: int,
+    *,
+    active_shape: str = _NO_ACTIVE_SHAPE,
+    dpi: int = _RENDER_GRID_IMAGE_DPI,
+) -> str:
     """Render one preset's unit-cell plot as stretch-filled grid cell HTML."""
     dials = _render_preset_dials_for_slot(slot)
+    face_count, subdiv, _latched = _render_geodesic_params_for_active_shape(active_shape)
     _metrics, _header, fig = run_residual_explorer(
         *_dials_to_explorer_args(dials),
         shape_only=True,
+        subdiv=subdiv,
+        face_count=face_count,
     )
     return _gravity_fig_to_render_grid_file_html(fig, dpi=dpi)
 
 
-def _render_preset_detail_plot_html(slot: int) -> str:
+def _render_preset_detail_plot_html(
+    slot: int,
+    *,
+    active_shape: str = _NO_ACTIVE_SHAPE,
+) -> str:
     """Interactive Plotly unit-cell plot for the Render preset detail view."""
     dials = _render_preset_dials_for_slot(slot)
-    fig = run_residual_explorer_plotly(*_dials_to_explorer_args(dials), detail_scene=True)
+    face_count, subdiv, _latched = _render_geodesic_params_for_active_shape(active_shape)
+    fig = run_residual_explorer_plotly(
+        *_dials_to_explorer_args(dials),
+        detail_scene=True,
+        subdiv=subdiv,
+        face_count=face_count,
+    )
     return plotly_figure_to_render_detail_html(fig)
 
 
@@ -9333,12 +9384,22 @@ def _render_detail_plot_fallback(slot: int, error: Exception):
     return fig
 
 
-def _generate_render_detail_plot(slot: int):
+def _generate_render_detail_plot(
+    slot: int,
+    *,
+    active_shape: str = _NO_ACTIVE_SHAPE,
+):
     """Interactive Plotly 3D figure with grid, labels, and toolbar for preset detail."""
     slot = int(slot)
     try:
         dials = _render_preset_dials_for_slot(slot)
-        fig = run_residual_explorer_plotly(*_dials_to_explorer_args(dials), detail_scene=True)
+        face_count, subdiv, _latched = _render_geodesic_params_for_active_shape(active_shape)
+        fig = run_residual_explorer_plotly(
+            *_dials_to_explorer_args(dials),
+            detail_scene=True,
+            subdiv=subdiv,
+            face_count=face_count,
+        )
         fig.update_layout(
             autosize=True,
             height=680,
@@ -9381,11 +9442,10 @@ def _format_render_cell_html(
     plot_html: str | None = None,
     active: bool = False,
     loading: bool = False,
+    shape: str = _NO_ACTIVE_SHAPE,
 ) -> str:
     """Single Render grid cell — preset label plus plot or placeholder."""
     preset_id = _gravity_preset_id(slot)
-    profile = _RENDER_PRESET_LABELS.get(slot)
-    subtitle = f" · {profile}" if profile else ""
     active_cls = " myst-render-grid-cell-active" if active else ""
     panel_index = slot + 1
     if plot_html:
@@ -9408,7 +9468,7 @@ def _format_render_cell_html(
         f'aria-label="Open PRESET {preset_id} detail view">'
         '<div class="myst-gravity-level-panel myst-render-preset-panel">'
         '<div class="myst-render-preset-header">'
-        f'<div class="myst-gravity-level-title">PRESET {preset_id}{subtitle}</div>'
+        f'<div class="myst-gravity-level-title">{_render_cell_title(shape, slot)}</div>'
         '<hr class="myst-gravity-level-rule" />'
         '</div>'
         f"{body}"
@@ -9422,6 +9482,7 @@ def _format_render_grid_html(
     *,
     active_slot: int | None = None,
     render_in_progress: bool = False,
+    shape: str = _NO_ACTIVE_SHAPE,
 ) -> str:
     """3×3 Render page grid — preset plots or placeholders."""
     cells = [
@@ -9434,6 +9495,7 @@ def _format_render_grid_html(
                 and plot_htmls is not None
                 and not plot_htmls[slot]
             ),
+            shape=shape,
         )
         for slot in range(_STATUS_GRID_PRESET_COUNT)
     ]
@@ -9446,18 +9508,20 @@ def _format_render_grid_html(
     )
 
 
-def _format_render_detail_html(slot: int, *, plot_html: str | None = None) -> str:
+def _format_render_detail_html(
+    slot: int,
+    *,
+    plot_html: str | None = None,
+    active_shape: str = _NO_ACTIVE_SHAPE,
+) -> str:
     """Full-page preset detail — title plus large unit-cell plot."""
     slot = int(slot)
-    preset_id = _gravity_preset_id(slot)
-    profile = _GRAVITY_PRESET_SLOT_LABELS.get(slot)
-    subtitle = f" · {profile}" if profile else ""
-    plot = plot_html or _render_preset_detail_plot_html(slot)
+    plot = plot_html or _render_preset_detail_plot_html(slot, active_shape=active_shape)
     return (
         f'<div class="myst-render-detail-wrap myst-render-panel-{slot + 1}">'
         '<div class="myst-gravity-level-panel myst-render-detail-panel">'
         f'<div class="myst-render-detail-title myst-gravity-level-title">'
-        f"PRESET {preset_id}{subtitle}</div>"
+        f"{_render_cell_title(active_shape, slot)}</div>"
         '<hr class="myst-gravity-level-rule" />'
         f'<div class="myst-render-detail-plot-host">{plot}</div>'
         "</div>"
@@ -9470,13 +9534,16 @@ def _render_panel_html(
     plot_cache: list[str | None] | None = None,
     *,
     grid_active_slot: int | None = None,
+    active_shape: str = _NO_ACTIVE_SHAPE,
 ) -> str:
     """Render tab grid host HTML (detail view uses gr.Plot in a separate column)."""
     _ = zoom_slot
     has_plots = bool(plot_cache) and any(plot_cache)
+    latched = _resolve_latched_platonic_shape(active_shape)
     return _format_render_grid_html(
         plot_cache if has_plots else None,
         active_slot=grid_active_slot,
+        shape=latched,
     )
 
 
@@ -9530,6 +9597,7 @@ def _render_action_btn_update(
 def _render_back_to_grid(
     plot_cache: list[str | None] | None,
     active_slot: int,
+    active_shape: str = _NO_ACTIVE_SHAPE,
 ) -> tuple:
     """Leave preset detail and restore the 3×3 Figures grid."""
     has_plots = bool(plot_cache) and any(plot_cache)
@@ -9537,6 +9605,7 @@ def _render_back_to_grid(
         plot_cache,
         active_slot,
         rendering=has_plots,
+        active_shape=active_shape,
     )
 
 
@@ -9620,15 +9689,20 @@ def _place_render_sub_nav_row(
     return buttons, row
 
 
-def _render_detail_view_updates(slot: int) -> tuple:
+def _render_detail_view_updates(
+    slot: int,
+    *,
+    active_shape: str = _NO_ACTIVE_SHAPE,
+) -> tuple:
     """Show full-viewport interactive detail for one preset."""
     slot = int(slot)
+    latched = _resolve_latched_platonic_shape(active_shape)
     return (
         slot,
         slot,
         gr.update(visible=False),
         gr.update(visible=True),
-        _generate_render_detail_plot(slot),
+        _generate_render_detail_plot(slot, active_shape=latched),
         _format_render_detail_description(slot),
         slot,
         *_render_sub_nav_btn_updates(slot),
@@ -9642,14 +9716,17 @@ def _render_grid_view_updates(
     active_slot: int,
     *,
     rendering: bool = True,
+    active_shape: str = _NO_ACTIVE_SHAPE,
 ) -> tuple:
     """Restore the 3×3 overview grid and hide the detail column."""
     nav_active = int(active_slot) if int(active_slot) >= 0 else -1
     highlight = nav_active if nav_active >= 0 else None
     has_plots = bool(plot_cache) and any(plot_cache)
+    latched = _resolve_latched_platonic_shape(active_shape)
     html = _format_render_grid_html(
         plot_cache if has_plots else None,
         active_slot=highlight,
+        shape=latched,
     )
     return (
         html,
@@ -9696,27 +9773,34 @@ def _render_grid_load_yield(
     )
 
 
-def _render_load_all_presets(active_slot: int, zoom_slot: int):
+def _render_load_all_presets(
+    active_slot: int,
+    zoom_slot: int,
+    active_shape: str = _NO_ACTIVE_SHAPE,
+):
     """Render all nine preset plots into the Render grid (progressive yields)."""
     plots: list[str | None] = [None] * _STATUS_GRID_PRESET_COUNT
     zs = int(zoom_slot)
     nav_active = int(active_slot) if int(active_slot) >= 0 else -1
     highlight = nav_active if nav_active >= 0 else None
+    latched = _resolve_latched_platonic_shape(active_shape)
     on_grid = zs < 0
     if on_grid:
         html = _format_render_grid_html(
             plots,
             active_slot=highlight,
             render_in_progress=True,
+            shape=latched,
         )
         yield _render_grid_load_yield(html, plots, nav_active, rendering=True)
     for slot in range(_STATUS_GRID_PRESET_COUNT):
-        plots[slot] = _render_preset_plot_html(slot)
+        plots[slot] = _render_preset_plot_html(slot, active_shape=latched)
         if on_grid:
             html = _format_render_grid_html(
                 plots,
                 active_slot=highlight,
                 render_in_progress=(slot < _STATUS_GRID_PRESET_COUNT - 1),
+                shape=latched,
             )
             yield _render_grid_load_yield(
                 html,
@@ -9728,7 +9812,7 @@ def _render_load_all_presets(active_slot: int, zoom_slot: int):
         yield (
             gr.skip(),
             list(plots),
-            *_render_detail_view_updates(zs),
+            *_render_detail_view_updates(zs, active_shape=latched),
         )
 
 
@@ -11926,35 +12010,42 @@ def build_app() -> gr.Blocks:
             render_back_btn,
         ]
 
-        def _make_render_open_detail(slot: int):
-            def _handler(plot_cache: list[str | None]):
-                return _render_open_detail(slot, plot_cache)
-
-            return _handler
-
         render_action_btn.click(
             _render_load_all_presets,
-            inputs=[render_active_slot, render_zoom_slot],
+            inputs=[render_active_slot, render_zoom_slot, active_shape],
             outputs=render_load_outputs,
             show_progress="hidden",
         )
         render_back_btn.click(
             _render_back_to_grid,
-            inputs=[render_plot_cache, render_active_slot],
+            inputs=[render_plot_cache, render_active_slot, active_shape],
             outputs=render_panel_outputs,
             show_progress="hidden",
         )
+        def _make_render_open_detail(slot: int):
+            def _handler(
+                plot_cache: list[str | None],
+                active_shape: str,
+            ) -> tuple:
+                _ = plot_cache
+                return (gr.skip(), *_render_detail_view_updates(
+                    slot,
+                    active_shape=active_shape,
+                ))
+
+            return _handler
+
         for slot, btn in enumerate(render_sub_nav_btns):
             btn.click(
                 _make_render_open_detail(slot),
-                inputs=[render_plot_cache],
+                inputs=[render_plot_cache, active_shape],
                 outputs=render_panel_outputs,
                 show_progress="hidden",
             )
         for slot, btn in enumerate(render_cell_btns):
             btn.click(
                 _make_render_open_detail(slot),
-                inputs=[render_plot_cache],
+                inputs=[render_plot_cache, active_shape],
                 outputs=render_panel_outputs,
                 show_progress="hidden",
             )
@@ -11997,7 +12088,17 @@ def build_app() -> gr.Blocks:
             outputs=platonic_geo_interrupt_outputs,
             show_progress="hidden",
         )
-        _bind_nav(unified_nav["render"], "render")
+        figures_nav_outputs = [
+            *nav_outputs,
+            *demo_nav_outputs,
+            render_panel_html,
+        ]
+        unified_nav["render"].click(
+            _figures_nav_open,
+            inputs=[active_shape],
+            outputs=figures_nav_outputs,
+            show_progress="hidden",
+        )
         _bind_readme_nav(unified_nav["readme"])
         _bind_status_nav(unified_nav["status"])
         readme_back_btn.click(
