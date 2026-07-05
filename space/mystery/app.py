@@ -205,6 +205,8 @@ _myst_default_gap_height = f"{default_gap_height}rem"
 _MYST_STATUS_LAYER_ALPHA = 0.2
 # Presets tab — 9 grid panels + zoom catalogs: opacity 0.7.
 _MYST_STATUS_PANEL_ALPHA = 0.7
+# Docs tab — scroll panel + cards: opacity 0.7.
+_MYST_README_PANEL_ALPHA = 0.7
 # Figures tab preset thumbnails/detail (unchanged).
 _MYST_RENDER_PANEL_ALPHA = 0.3
 _STATUS_ZOOM_PRESET_COUNT = 9
@@ -5551,7 +5553,7 @@ footer {{ visibility: hidden; }}
     height: calc(100dvh - 3.5rem) !important;
     max-height: calc(100dvh - 3.5rem) !important;
     min-height: 0 !important;
-    background: #000000 !important;
+    background: transparent !important;
     padding: 0 !important;
     margin: 0 !important;
     position: relative !important;
@@ -5606,7 +5608,8 @@ footer {{ visibility: hidden; }}
     max-height: calc(100dvh - 10rem) !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
-    background: #000000 !important;
+    background: rgba(0, 0, 0, {_MYST_README_PANEL_ALPHA}) !important;
+    border: 2px inset rgba(92, 74, 31, {_MYST_README_PANEL_ALPHA}) !important;
     padding: 0 0 3rem !important;
     scrollbar-color: #4a4a6a #1a1a22 !important;
     scrollbar-width: thin !important;
@@ -5627,7 +5630,7 @@ footer {{ visibility: hidden; }}
     max-width: none !important;
     padding: 0 !important;
     margin: 0 !important;
-    background: #000000 !important;
+    background: transparent !important;
 }}
 .gradio-container .myst-readme-heading {{
     color: #e0e0e0 !important;
@@ -5636,7 +5639,7 @@ footer {{ visibility: hidden; }}
 }}
 .gradio-container .myst-readme-fullpage {{
     color: #ffffff !important;
-    background: #000000 !important;
+    background: transparent !important;
     font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif !important;
     font-size: 1.125rem !important;
     line-height: 1.75 !important;
@@ -5723,8 +5726,8 @@ footer {{ visibility: hidden; }}
     margin: 2rem 0 !important;
 }}
 .gradio-container .myst-readme-card {{
-    background: #0a0a0a !important;
-    border: 1px solid #2a2a2a !important;
+    background: rgba(10, 10, 10, {_MYST_README_PANEL_ALPHA}) !important;
+    border: 1px solid rgba(42, 42, 42, {_MYST_README_PANEL_ALPHA}) !important;
     border-radius: 10px !important;
     padding: 1.15rem 1.25rem !important;
     margin-bottom: 1.5rem !important;
@@ -5790,17 +5793,34 @@ footer {{ visibility: hidden; }}
     color: #cccccc !important;
     margin-top: 0.5rem !important;
 }}
-.gradio-container .myst-readme-back-row {{
+.gradio-container .myst-readme-page > .block:has(.myst-readme-back-float),
+.gradio-container .myst-readme-page > .form:has(.myst-readme-back-float),
+.gradio-container .myst-readme-page #readme-scroll-container > .block:has(.myst-readme-back-float),
+.gradio-container .myst-readme-page #readme-scroll-container > .form:has(.myst-readme-back-float) {{
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    min-height: 0 !important;
+}}
+.gradio-container .myst-readme-back-float {{
     position: sticky !important;
     top: 0 !important;
     z-index: 40 !important;
     display: flex !important;
     justify-content: flex-end !important;
-    padding: 0.45rem 0.75rem !important;
-    background: linear-gradient(180deg, #000000 78%, transparent) !important;
+    align-items: center !important;
+    width: 100% !important;
+    min-height: 0 !important;
+    padding: 0.35rem 0.75rem 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
     pointer-events: none !important;
 }}
-.gradio-container .myst-readme-back-row .myst-standard-back-btn {{
+.gradio-container .myst-readme-back-float .myst-standard-back-btn {{
     pointer-events: auto !important;
     min-width: 9.5rem !important;
 }}
@@ -10809,9 +10829,6 @@ def build_app() -> gr.Blocks:
             elem_id="myst-readme-page",
             elem_classes=["myst-readme-page"],
         ) as page_readme:
-            _add_gap_row(slot="before-docs-content")
-            with gr.Row(elem_classes=["myst-readme-back-row"]):
-                readme_back_btn = _place_back_button("← Back to App", min_width=110)
             with gr.Column(
                 elem_classes=[
                     "myst-readme-body",
@@ -10820,6 +10837,8 @@ def build_app() -> gr.Blocks:
                 ],
                 elem_id="readme-scroll-container",
             ):
+                with gr.Row(elem_classes=["myst-readme-back-float"]):
+                    readme_back_btn = _place_back_button("← Back to App", min_width=110)
                 gr.HTML(build_readme_full_page_html())
 
         render_active_slot = gr.State(-1)
