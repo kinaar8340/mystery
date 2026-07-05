@@ -949,12 +949,45 @@ def _is_demo_platonic_flip_letter(letter: str) -> bool:
     return str(letter or "").strip().upper() in _DEMO_PLATONIC_FLIP_LETTERS
 
 
-def _platonic_interrupt_demo_nav_updates(active_demo_letter: str) -> tuple:
-    """Platonic latch — unhighlight Demo B–I; leave Demo A styling if it was active."""
+def _demo_b_i_unlocked(current_page: str, active_shape: str) -> bool:
+    """Demo B–I selectable only when Home tab is latched (not platonic interrupt)."""
+    return _normalize_page_id(current_page) == "home" and not _is_active_shape(active_shape)
+
+
+def _home_demo_nav_updates(
+    active_demo_letter: str,
+    *,
+    current_page: str = "home",
+    active_shape: str = _NO_ACTIVE_SHAPE,
+) -> tuple:
+    """Demo row — freeze B–I off Home; clear B–I latch when gated."""
+    b_i_enabled = _demo_b_i_unlocked(current_page, active_shape)
     letter = _normalize_active_demo_letter(active_demo_letter)
-    if letter == "A":
-        return (*_demo_active_tab_updates("A"), "A")
-    return (*_gravity_child_nav_btn_updates(-1), _NO_ACTIVE_DEMO_LETTER)
+    if not b_i_enabled:
+        if letter == "A":
+            return (*_gravity_child_nav_btn_updates(0, b_i_enabled=False), "A")
+        return (
+            *_gravity_child_nav_btn_updates(-1, b_i_enabled=False),
+            _NO_ACTIVE_DEMO_LETTER,
+        )
+    active_slot = ord(letter) - ord("A") if letter else -1
+    return (
+        *_gravity_child_nav_btn_updates(active_slot, b_i_enabled=True),
+        letter or _NO_ACTIVE_DEMO_LETTER,
+    )
+
+
+def _platonic_interrupt_demo_nav_updates(
+    active_demo_letter: str,
+    *,
+    active_shape: str,
+) -> tuple:
+    """Platonic latch — unhighlight Demo B–I; leave Demo A styling if it was active."""
+    return _home_demo_nav_updates(
+        active_demo_letter,
+        current_page="home",
+        active_shape=active_shape,
+    )
 
 
 def _demo_platonic_flip_clear_shape() -> tuple:
@@ -1288,10 +1321,10 @@ def _platonic_geo_interrupt_home(new_shape: str, active_demo_letter: str = "A") 
     else:
         preserve_letter = _NO_ACTIVE_DEMO_LETTER
     return (
-        *_nav_to_platonic_home_with_demo(),
+        *_nav_to_platonic_home_with_demo(shape),
         *_set_active_shape_and_apply(shape, preserve_letter),
         *_platonic_geo_presets_interrupt_reset(shape),
-        *_platonic_interrupt_demo_nav_updates(active_demo_letter),
+        *_platonic_interrupt_demo_nav_updates(active_demo_letter, active_shape=shape),
     )
 
 
@@ -1303,21 +1336,28 @@ def _set_active_shape_and_apply_home(new_shape: str, active_demo_letter: str = "
 def _home_nav_interrupt() -> tuple:
     """Home interrupt — latch Home tab, clear platonic D* (flip-flop), restore Demo A startup."""
     return (
-        *_nav_to_page_with_demo("home"),
+        *_nav_to_page_with_demo("home", active_shape=_NO_ACTIVE_SHAPE),
         *_clear_active_shape(),
-        *_demo_active_tab_updates("A"),
-        "A",
+        *_home_demo_nav_updates("A", current_page="home", active_shape=_NO_ACTIVE_SHAPE),
         _gravity_viewport_wrapper_update("A"),
     )
 
 
-def _figures_nav_open(active_shape: str = _NO_ACTIVE_SHAPE) -> tuple:
-    """Open Figures page — preset grid headers reflect latched active_shape."""
+def _figures_nav_open(
+    active_shape: str = _NO_ACTIVE_SHAPE,
+    active_demo_letter: str = _NO_ACTIVE_DEMO_LETTER,
+) -> tuple:
+    """Open Figures page — requires latched platonic D*; freezes Demo B–I."""
     latched = _resolve_latched_platonic_shape(active_shape)
     grid_html = _format_render_grid_html(shape=latched)
     return (
-        *_nav_to_page_with_demo("render"),
+        *_nav_to_page_with_demo("render", active_shape=active_shape),
         gr.update(value=grid_html),
+        *_home_demo_nav_updates(
+            active_demo_letter,
+            current_page="render",
+            active_shape=active_shape,
+        ),
     )
 
 
@@ -1335,6 +1375,18 @@ def _main_nav_btn_update(page_id: str, *, active: bool) -> gr.Update:
     return gr.update(
         elem_classes=classes,
         interactive=not active,
+        variant="secondary",
+    )
+
+
+def _gated_main_nav_btn_update(page_id: str, *, active: bool, enabled: bool = True) -> gr.Update:
+    """Main nav button — Figures/Presets stay disabled until platonic D* latched."""
+    classes = ["vqc-source-tab", "main-nav-btn"]
+    if active:
+        classes.append("active")
+    return gr.update(
+        elem_classes=classes,
+        interactive=bool(enabled) and not active,
         variant="secondary",
     )
 
@@ -1363,10 +1415,14 @@ def _place_unified_main_nav(
         with gr.Row(elem_classes=["nav-button-grid"]):
             for page_id, label in _MAIN_NAV_TAB_SPECS:
                 is_active = page_id == active
+                if page_id in ("render", "status"):
+                    btn_interactive = False
+                else:
+                    btn_interactive = not is_active
                 buttons[page_id] = _nav_theme_button(
                     label,
                     elem_classes=_main_nav_btn_classes(page_id, active),
-                    interactive=not is_active,
+                    interactive=btn_interactive,
                 )
             for shape_id in _SHAPE_NAV_IDS:
                 buttons[shape_id] = _nav_theme_button(
@@ -1567,13 +1623,13 @@ def _nav_to_status_page(
         new_open = not bool(content_open)
         reset = grid_reset if (not bool(content_open) and new_open) else skip_reset
         return (
-            *_nav_to_page("status"),
+            *_nav_to_page("status", active_shape=active_shape),
             gr.update(visible=new_open),
             new_open,
             *reset,
         )
     return (
-        *_nav_to_page("status"),
+        *_nav_to_page("status", active_shape=active_shape),
         gr.update(visible=True),
         True,
         *grid_reset,
@@ -1584,11 +1640,17 @@ def _nav_to_status_page_with_demo(
     current_page: str,
     content_open: bool,
     active_shape: str = _NO_ACTIVE_SHAPE,
+    active_demo_letter: str = _NO_ACTIVE_DEMO_LETTER,
 ) -> tuple:
     """Status navigation plus unified-host demo bar sync."""
     return (
         *_nav_to_status_page(current_page, content_open, active_shape),
         *_sync_demo_nav_sections("status"),
+        *_home_demo_nav_updates(
+            active_demo_letter,
+            current_page="status",
+            active_shape=active_shape,
+        ),
     )
 
 
@@ -1600,19 +1662,39 @@ def _readme_return_page(from_page: str) -> str:
     return page if page in _README_RETURN_PAGES else "home"
 
 
-def _open_readme_page(from_page: str) -> tuple:
+def _open_readme_page(
+    from_page: str,
+    active_shape: str = _NO_ACTIVE_SHAPE,
+    active_demo_letter: str = _NO_ACTIVE_DEMO_LETTER,
+) -> tuple:
     """Open Documentation full-page view; remember prior tab for Back."""
     return (
-        *_nav_to_page("readme"),
+        *_nav_to_page("readme", active_shape=active_shape),
         _readme_return_page(from_page),
         *_sync_demo_nav_sections("readme"),
+        *_home_demo_nav_updates(
+            active_demo_letter,
+            current_page="readme",
+            active_shape=active_shape,
+        ),
     )
 
 
-def _readme_back_to_app(return_page: str) -> tuple:
+def _readme_back_to_app(
+    return_page: str,
+    active_shape: str = _NO_ACTIVE_SHAPE,
+    active_demo_letter: str = _NO_ACTIVE_DEMO_LETTER,
+) -> tuple:
     """Return from README to the tab the user came from."""
     page = _readme_return_page(return_page)
-    return _nav_to_page_with_demo(page)
+    return (
+        *_nav_to_page_with_demo(page, active_shape=active_shape),
+        *_home_demo_nav_updates(
+            active_demo_letter,
+            current_page=page,
+            active_shape=active_shape,
+        ),
+    )
 
 
 # "gravity" is a legacy alias for the Home tab (page_gravity / myst-gravity-page).
@@ -1658,41 +1740,44 @@ def _sync_demo_nav_sections(page: str) -> tuple[gr.Update, gr.Update, gr.Update]
     )
 
 
-def _nav_to_page_with_demo(page: str) -> tuple:
+def _nav_to_page_with_demo(page: str, *, active_shape: str = _NO_ACTIVE_SHAPE) -> tuple:
     """Switch pages and sync unified-host demo nav sections in one update."""
-    return (*_nav_to_page(page), *_sync_demo_nav_sections(page))
+    return (*_nav_to_page(page, active_shape=active_shape), *_sync_demo_nav_sections(page))
 
 
-def _nav_to_platonic_home_viewport() -> tuple:
-    """Home page content with platonic tab latched — Home main-nav button OFF (flip-flop)."""
+def _nav_to_platonic_home_viewport(shape: str) -> tuple:
+    """Home page with platonic latched — Home OFF, Figures/Presets unlocked."""
     closed = _close_links_panels()
+    platonic_latched = _is_active_shape(shape)
     return (
         gr.update(visible=True),
         gr.update(visible=False),
         gr.update(visible=False),
         gr.update(visible=False),
         gr.update(visible=False),
-        _main_nav_btn_update("home", active=False),
-        _main_nav_btn_update("render", active=False),
+        _gated_main_nav_btn_update("home", active=False),
+        _gated_main_nav_btn_update("render", active=False, enabled=platonic_latched),
         _main_nav_btn_update("readme", active=False),
-        _main_nav_btn_update("status", active=False),
+        _gated_main_nav_btn_update("status", active=False, enabled=platonic_latched),
         *closed,
         "home",
     )
 
 
-def _nav_to_platonic_home_with_demo() -> tuple:
+def _nav_to_platonic_home_with_demo(shape: str) -> tuple:
     """Platonic interrupt nav — Home viewport visible, demo row synced, Home tab unlatched."""
-    return (*_nav_to_platonic_home_viewport(), *_sync_demo_nav_sections("home"))
+    return (*_nav_to_platonic_home_viewport(shape), *_sync_demo_nav_sections("home"))
 
 
-def _nav_to_page(page: str) -> tuple:
+def _nav_to_page(page: str, *, active_shape: str = _NO_ACTIVE_SHAPE) -> tuple:
     """Switch between home, render, documentation, status, and edit; refresh unified nav."""
     active = _normalize_page_id(page)
+    platonic_latched = _is_active_shape(active_shape)
     on_render = active == "render"
     on_home = active == "home"
     on_readme = active == "readme"
     on_status = active == "status"
+    home_nav_active = on_home and not platonic_latched
     closed = _close_links_panels()
     return (
         gr.update(visible=on_home),
@@ -1700,10 +1785,10 @@ def _nav_to_page(page: str) -> tuple:
         gr.update(visible=on_readme),
         gr.update(visible=on_status),
         gr.update(visible=False),
-        _main_nav_btn_update("home", active=on_home),
-        _main_nav_btn_update("render", active=on_render),
+        _gated_main_nav_btn_update("home", active=home_nav_active),
+        _gated_main_nav_btn_update("render", active=on_render, enabled=platonic_latched),
         _main_nav_btn_update("readme", active=on_readme),
-        _main_nav_btn_update("status", active=on_status),
+        _gated_main_nav_btn_update("status", active=on_status, enabled=platonic_latched),
         *closed,
         active,
     )
@@ -8708,13 +8793,15 @@ def _gravity_child_nav_btn_classes(letter: str, active_slot: int) -> list[str]:
     return classes
 
 
-def _gravity_child_nav_btn_updates(active_slot: int = -1) -> tuple:
+def _gravity_child_nav_btn_updates(active_slot: int = -1, *, b_i_enabled: bool = True) -> tuple:
     active = int(active_slot)
     return tuple(
         gr.update(
-            elem_classes=_gravity_child_nav_btn_classes(letter, active),
-            # Demo tabs stay clickable — A startup, E D4 deform loop, F breathing.
-            interactive=True,
+            elem_classes=_gravity_child_nav_btn_classes(
+                letter,
+                active if (letter == "A" or b_i_enabled) else -1,
+            ),
+            interactive=(letter == "A" or b_i_enabled),
             variant="secondary",
         )
         for letter in _GRAVITY_CHILD_NAV_LETTERS
@@ -8726,13 +8813,13 @@ def _gravity_child_nav_output_updates(active_slot: int = -1) -> tuple:
     return (gr.skip(), *_gravity_child_nav_btn_updates(active_slot))
 
 
-def _demo_active_tab_updates(active_letter: str) -> tuple:
+def _demo_active_tab_updates(active_letter: str, *, b_i_enabled: bool = True) -> tuple:
     """Magenta active styling for Demo A–I — no back button in demo outputs."""
     letter = str(active_letter).strip().upper()
     if letter not in _GRAVITY_CHILD_NAV_LETTERS:
         letter = "A"
     slot = ord(letter) - ord("A")
-    return _gravity_child_nav_btn_updates(slot)
+    return _gravity_child_nav_btn_updates(slot, b_i_enabled=b_i_enabled)
 
 
 def _gravity_viewport_wrapper_classes(active_letter: str) -> list[str]:
@@ -8980,19 +9067,26 @@ def _demo_tab_latch_immediate(letter: str) -> tuple:
     )
 
 
+def _demo_home_main_nav_unlock_updates() -> tuple:
+    """Re-latch Home and lock Figures/Presets after leaving platonic selection."""
+    return (
+        _gated_main_nav_btn_update("home", active=True),
+        _gated_main_nav_btn_update("render", active=False, enabled=False),
+        _gated_main_nav_btn_update("status", active=False, enabled=False),
+    )
+
+
 def _demo_letter_nav_interrupt(letter: str) -> tuple:
-    """Demo B–I select — clear platonic D* latch, then latch the demo tab."""
+    """Demo select on Home — clear platonic D*, latch tab, unlock B–I row."""
     active = str(letter or "A").strip().upper()
     if active not in _GRAVITY_CHILD_NAV_LETTERS:
         active = "A"
-    if _is_demo_platonic_flip_letter(active):
-        return (
-            *_demo_platonic_flip_clear_shape(),
-            *_demo_tab_latch_immediate(active),
-        )
+    latch = active if _is_demo_platonic_flip_letter(active) else "A"
     return (
         *_demo_platonic_flip_clear_shape(),
-        *_demo_tab_latch_immediate("A"),
+        *_home_demo_nav_updates(latch, current_page="home", active_shape=_NO_ACTIVE_SHAPE),
+        _gravity_viewport_wrapper_update(latch),
+        *_demo_home_main_nav_unlock_updates(),
     )
 
 
@@ -11888,6 +11982,9 @@ def build_app() -> gr.Blocks:
                 *[gravity_letter_btns[letter] for letter in _GRAVITY_CHILD_NAV_LETTERS],
                 gravity_active_letter,
                 viewport_col,
+                unified_nav["home"],
+                unified_nav["render"],
+                unified_nav["status"],
             ]
             for letter in _GRAVITY_CHILD_NAV_LETTERS:
                 btn = gravity_letter_btns[letter]
@@ -12086,7 +12183,13 @@ def build_app() -> gr.Blocks:
             *[gravity_letter_btns[letter] for letter in _GRAVITY_CHILD_NAV_LETTERS],
             gravity_active_letter,
         ]
-        readme_nav_outputs = [*nav_outputs, readme_return_page, *demo_nav_outputs]
+        readme_nav_outputs = [
+            *nav_outputs,
+            readme_return_page,
+            *demo_nav_outputs,
+            *[gravity_letter_btns[letter] for letter in _GRAVITY_CHILD_NAV_LETTERS],
+            gravity_active_letter,
+        ]
 
         status_nav_outputs = [
             *nav_outputs,
@@ -12094,6 +12197,8 @@ def build_app() -> gr.Blocks:
             status_content_open,
             *status_zoom_back_outputs,
             *demo_nav_outputs,
+            *[gravity_letter_btns[letter] for letter in _GRAVITY_CHILD_NAV_LETTERS],
+            gravity_active_letter,
         ]
 
         def _bind_nav(
@@ -12118,12 +12223,21 @@ def build_app() -> gr.Blocks:
                 )
 
         def _bind_readme_nav(btn: gr.Button) -> None:
-            btn.click(_open_readme_page, inputs=[current_page], outputs=readme_nav_outputs)
+            btn.click(
+                _open_readme_page,
+                inputs=[current_page, active_shape, gravity_active_letter],
+                outputs=readme_nav_outputs,
+            )
 
         def _bind_status_nav(btn: gr.Button) -> None:
             btn.click(
                 _nav_to_status_page_with_demo,
-                inputs=[current_page, status_content_open, active_shape],
+                inputs=[
+                    current_page,
+                    status_content_open,
+                    active_shape,
+                    gravity_active_letter,
+                ],
                 outputs=status_nav_outputs,
             ).then(
                 _run_residual_explorer_ui,
@@ -12241,11 +12355,13 @@ def build_app() -> gr.Blocks:
         figures_nav_outputs = [
             *nav_outputs,
             *demo_nav_outputs,
+            *[gravity_letter_btns[letter] for letter in _GRAVITY_CHILD_NAV_LETTERS],
+            gravity_active_letter,
             render_panel_html,
         ]
         unified_nav["render"].click(
             _figures_nav_open,
-            inputs=[active_shape],
+            inputs=[active_shape, gravity_active_letter],
             outputs=figures_nav_outputs,
             show_progress="hidden",
         )
@@ -12253,8 +12369,8 @@ def build_app() -> gr.Blocks:
         _bind_status_nav(unified_nav["status"])
         readme_back_btn.click(
             _readme_back_to_app,
-            inputs=[readme_return_page],
-            outputs=[*nav_outputs, *demo_nav_outputs],
+            inputs=[readme_return_page, active_shape, gravity_active_letter],
+            outputs=readme_nav_outputs,
         ).then(
             _run_residual_explorer_ui,
             inputs=gravity_dial_inputs,
@@ -12288,9 +12404,8 @@ def build_app() -> gr.Blocks:
             header = build_unit_cell_viewport_header_html(pressure=float(dials["pressure"]))
             control_levels = _format_gravity_control_panel_html(dials, 0)
             return (
-                *_nav_to_page_with_demo("home"),
-                *_demo_active_tab_updates("A"),
-                "A",
+                *_nav_to_page_with_demo("home", active_shape=_NO_ACTIVE_SHAPE),
+                *_home_demo_nav_updates("A", current_page="home", active_shape=_NO_ACTIVE_SHAPE),
                 *_clear_active_shape(),
                 *slider_updates,
                 *viewport,
