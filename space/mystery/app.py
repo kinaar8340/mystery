@@ -1358,12 +1358,17 @@ def _status_back_btn_update(*, on_detail: bool) -> gr.Update:
     return gr.update(visible=on_detail)
 
 
-def _status_zoom_back_to_grid() -> tuple:
+def _status_zoom_back_to_grid(active_shape: str = _DEFAULT_ACTIVE_SHAPE) -> tuple:
     """Return from preset zoom to the 3×3 grid overview."""
     dials = dict(_GRAVITY_HOME_DIALS)
     slider_updates = _gravity_slider_control_updates(dials, edit_enabled=False)
     return (
-        *_status_panel_levels_update(-1, grid_active_slot=None, visible=True),
+        *_status_panel_levels_update(
+            -1,
+            grid_active_slot=None,
+            visible=True,
+            active_shape=active_shape,
+        ),
         *_status_zoom_btn_updates(-1),
         -1,
         False,
@@ -9033,18 +9038,29 @@ def _format_gravity_status_catalog_rows(
     return "".join(rows)
 
 
-def _format_gravity_status_cell_html(slot: int, *, active: bool = False) -> str:
-    """Compact parameter levels for one programmed preset (status grid cell)."""
-    dials = _gravity_preset_dials_for_slot(slot)
+def _gravity_status_panel_title(shape: str, slot: int) -> str:
+    """Presets panel title — e.g. D6 · PRESET 01 · menu · parameter catalog."""
+    dim = _normalize_shape_id(shape)
     preset_id = _gravity_preset_id(slot)
     profile = _GRAVITY_PRESET_SLOT_LABELS.get(slot)
     subtitle = f" · {profile}" if profile else ""
+    return f"{dim} · PRESET {preset_id}{subtitle}"
+
+
+def _format_gravity_status_cell_html(
+    slot: int,
+    *,
+    active: bool = False,
+    shape: str = _DEFAULT_ACTIVE_SHAPE,
+) -> str:
+    """Compact parameter levels for one programmed preset (status grid cell)."""
+    dials = _gravity_preset_dials_for_slot(slot)
     active_cls = " myst-status-grid-cell-active" if active else ""
     panel_index = slot + 1
     return (
         f'<div class="myst-status-grid-cell myst-status-panel-{panel_index}{active_cls}">'
         '<div class="myst-gravity-level-panel myst-status-preset-panel">'
-        f'<div class="myst-gravity-level-title">PRESET {preset_id}{subtitle}</div>'
+        f'<div class="myst-gravity-level-title">{_gravity_status_panel_title(shape, slot)}</div>'
         '<hr class="myst-gravity-level-rule" />'
         f"{_format_gravity_status_catalog_rows(dials, slot=slot)}"
         "</div>"
@@ -9057,12 +9073,13 @@ def _status_panel_html(
     *,
     grid_active_slot: int | None = None,
     dials: dict[str, float] | None = None,
+    active_shape: str = _DEFAULT_ACTIVE_SHAPE,
 ) -> str:
     """Single Status content host — 3×3 grid when zoom_slot < 0, else full-page preset."""
     zs = int(zoom_slot)
     if zs >= 0:
-        return _format_gravity_status_zoom_html(zs, dials)
-    return _format_gravity_status_grid_html(active_slot=grid_active_slot)
+        return _format_gravity_status_zoom_html(zs, dials, shape=active_shape)
+    return _format_gravity_status_grid_html(active_slot=grid_active_slot, shape=active_shape)
 
 
 def _status_panels_host_update(*, edit_active: bool) -> gr.Update:
@@ -9078,12 +9095,14 @@ def _status_catalog_updates(
     grid_active_slot: int | None = None,
     dials: dict[str, float] | None = None,
     visible: bool = True,
+    active_shape: str = _DEFAULT_ACTIVE_SHAPE,
 ) -> tuple[gr.Update, gr.Update]:
     """Refresh catalog HTML and show/hide the catalog column during manual edit."""
     html = _status_panel_html(
         zoom_slot,
         grid_active_slot=grid_active_slot,
         dials=dials,
+        active_shape=active_shape,
     )
     show = bool(visible)
     return (
@@ -9098,6 +9117,7 @@ def _status_panel_levels_update(
     grid_active_slot: int | None = None,
     dials: dict[str, float] | None = None,
     visible: bool = True,
+    active_shape: str = _DEFAULT_ACTIVE_SHAPE,
 ) -> tuple[gr.Update, gr.Update, gr.Update]:
     """Refresh Status panels — catalog column, HTML value, and panels-host edit class."""
     catalog_col, panel_html = _status_catalog_updates(
@@ -9105,6 +9125,7 @@ def _status_panel_levels_update(
         grid_active_slot=grid_active_slot,
         dials=dials,
         visible=visible,
+        active_shape=active_shape,
     )
     return (
         catalog_col,
@@ -9113,11 +9134,15 @@ def _status_panel_levels_update(
     )
 
 
-def _format_gravity_status_grid_html(active_slot: int | None = None) -> str:
+def _format_gravity_status_grid_html(
+    active_slot: int | None = None,
+    *,
+    shape: str = _DEFAULT_ACTIVE_SHAPE,
+) -> str:
     """3×3 status page grid — status_panel_1 … status_panel_9 programmed preset readouts."""
     active = int(active_slot) if active_slot is not None else None
     cells = [
-        _format_gravity_status_cell_html(slot, active=(active == slot))
+        _format_gravity_status_cell_html(slot, active=(active == slot), shape=shape)
         for slot in range(_STATUS_GRID_PRESET_COUNT)
     ]
     return (
@@ -9596,17 +9621,17 @@ def _render_load_all_presets(active_slot: int, zoom_slot: int):
 def _format_gravity_status_zoom_html(
     slot: int,
     dials: dict[str, float] | None = None,
+    *,
+    shape: str = _DEFAULT_ACTIVE_SHAPE,
 ) -> str:
     """Full-page preset readout for Status/01 … Status/09 zoom view."""
     slot = int(slot)
     dials = dials or _gravity_preset_dials_for_slot(slot)
     preset_id = _gravity_preset_id(slot)
-    profile = _GRAVITY_PRESET_SLOT_LABELS.get(slot)
-    subtitle = f" · {profile}" if profile else ""
     return (
         f'<div class="myst-status-zoom-wrap myst-status-panel-{slot + 1}">'
         '<div class="myst-gravity-level-panel myst-status-preset-panel myst-status-zoom-panel">'
-        f'<div class="myst-gravity-level-title">PRESET {preset_id}{subtitle}</div>'
+        f'<div class="myst-gravity-level-title">{_gravity_status_panel_title(shape, slot)}</div>'
         '<hr class="myst-gravity-level-rule" />'
         f"{_format_gravity_status_catalog_rows(dials, slot=slot, zoom=True)}"
         f'<div class="myst-gravity-level-foot">PRESET {preset_id} · parameter levels</div>'
@@ -9615,13 +9640,18 @@ def _format_gravity_status_zoom_html(
     )
 
 
-def _status_zoom_select(slot: int) -> tuple:
+def _status_zoom_select(slot: int, active_shape: str = _DEFAULT_ACTIVE_SHAPE) -> tuple:
     """Latch a Status/ preset zoom button and show the full-page preset readout."""
     slot = int(slot)
     dials = _gravity_preset_dials_for_slot(slot)
     slider_updates = _gravity_slider_control_updates(dials, edit_enabled=False)
     return (
-        *_status_panel_levels_update(slot, dials=dials, visible=True),
+        *_status_panel_levels_update(
+            slot,
+            dials=dials,
+            visible=True,
+            active_shape=active_shape,
+        ),
         *_status_zoom_btn_updates(slot),
         slot,
         False,
@@ -9771,6 +9801,7 @@ def _status_zoom_manual_refresh(
     view_azim: float,
     zoom_slot: int,
     edit_open: bool,
+    active_shape: str = _DEFAULT_ACTIVE_SHAPE,
 ) -> tuple:
     if not edit_open:
         return gr.skip(), gr.skip(), gr.skip()
@@ -9786,7 +9817,12 @@ def _status_zoom_manual_refresh(
         view_elev,
         view_azim,
     )
-    return _status_panel_levels_update(int(zoom_slot), dials=dials, visible=False)
+    return _status_panel_levels_update(
+        int(zoom_slot),
+        dials=dials,
+        visible=False,
+        active_shape=active_shape,
+    )
 
 
 def _format_gravity_preset_tui_html(
@@ -10047,6 +10083,7 @@ def _run_residual_explorer_ui(
         zoom_slot,
         grid_active_slot=slot,
         dials=_gravity_preset_dials_for_slot(zoom_slot) if zoom_slot >= 0 else None,
+        active_shape=active_shape,
     )
     print(f"[DEBUG] _run_residual_explorer_ui: preset={slot}", flush=True)
     viewport_updates = _demo_viewport_preserve_active_demo(
@@ -10189,6 +10226,7 @@ def _gravity_explorer_outputs(
     *,
     edit_params_enabled: bool = False,
     update_image: bool = True,
+    active_shape: str = _DEFAULT_ACTIVE_SHAPE,
 ) -> tuple:
     image_out = _gravity_static_image_update(fig) if update_image else gr.skip()
     edit_btn = _gravity_edit_params_btn_update(edit_params_enabled)
@@ -10201,6 +10239,7 @@ def _gravity_explorer_outputs(
         zoom_slot,
         grid_active_slot=active_slot,
         dials=_gravity_preset_dials_for_slot(zoom_slot) if zoom_slot >= 0 else None,
+        active_shape=active_shape,
     )
     child_active = int(active_slot) if 0 <= int(active_slot) < len(_GRAVITY_CHILD_NAV_LETTERS) else -1
     return (
@@ -11570,9 +11609,16 @@ def build_app() -> gr.Blocks:
                 *sz_inputs,
                 *status_action_outputs,
             ]
+            def _make_status_zoom_select(slot: int):
+                def handler(active_shape: str) -> tuple:
+                    return _status_zoom_select(slot, active_shape)
+
+                return handler
+
             for slot, zoom_btn in enumerate(status_zoom_btns):
                 zoom_btn.click(
-                    lambda s=slot: _status_zoom_select(s),
+                    _make_status_zoom_select(slot),
+                    inputs=[active_shape],
                     outputs=status_zoom_select_outputs,
                     show_progress="hidden",
                 )
@@ -11599,7 +11645,12 @@ def build_app() -> gr.Blocks:
                 outputs=status_zoom_back_outputs,
                 show_progress="hidden",
             )
-            sz_manual_inputs = [*sz_inputs, status_zoom_slot, status_zoom_edit_open]
+            sz_manual_inputs = [
+                *sz_inputs,
+                status_zoom_slot,
+                status_zoom_edit_open,
+                active_shape,
+            ]
             for slider in sz_inputs:
                 slider.release(
                     _status_zoom_manual_refresh,
@@ -11613,6 +11664,7 @@ def build_app() -> gr.Blocks:
                 )
             status_back_btn.click(
                 _status_zoom_back_to_grid,
+                inputs=[active_shape],
                 outputs=status_zoom_back_outputs,
                 show_progress="hidden",
             )
