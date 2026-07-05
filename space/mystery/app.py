@@ -8566,7 +8566,10 @@ def _dials_to_explorer_args(dials: dict[str, float]) -> tuple[float, ...]:
 def _render_preset_plot_html(slot: int, *, dpi: int = _RENDER_GRID_IMAGE_DPI) -> str:
     """Render one preset's unit-cell plot as stretch-filled grid cell HTML."""
     dials = _render_preset_dials_for_slot(slot)
-    _metrics, _header, fig = run_residual_explorer(*_dials_to_explorer_args(dials))
+    _metrics, _header, fig = run_residual_explorer(
+        *_dials_to_explorer_args(dials),
+        shape_only=True,
+    )
     return _gravity_fig_to_render_grid_file_html(fig, dpi=dpi)
 
 
@@ -9367,7 +9370,7 @@ def _gravity_fig_to_render_grid_file_html(fig: plt.Figure, *, dpi: int) -> str:
             dpi=dpi,
             facecolor="#000000",
             bbox_inches="tight",
-            pad_inches=0.02,
+            pad_inches=0,
         )
     finally:
         plt.close(fig)

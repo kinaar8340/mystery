@@ -29,6 +29,8 @@ UNIT_CELL_VIEW_ELEV = 26.0
 UNIT_CELL_VIEW_AZIM = 45.0
 UNIT_CELL_VIEW_DIST = 14.0
 UNIT_CELL_AXIS_HALF = 2.35
+UNIT_CELL_SHAPE_ONLY_AXIS_HALF = 1.35
+UNIT_CELL_SHAPE_ONLY_VIEW_DIST = 9.0
 
 BOOT_QUOTE_STRING = "TEST EVERYTHING, HOLD FAST WHAT IS GOOD AND KNOW YOUR GOD"
 
@@ -1213,6 +1215,33 @@ def _draw_leader_label(
     )
 
 
+def _hide_unit_cell_scene_axes(ax) -> None:
+    """Hide matplotlib 3D axes, panes, ticks, and grid — shape-only Figures grid."""
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.set_zticks([])
+    ax.set_xlabel("")
+    ax.set_ylabel("")
+    ax.set_zlabel("")
+    ax.grid(False)
+    for axis in (ax.xaxis, ax.yaxis, ax.zaxis):
+        axis.pane.fill = False
+        axis.pane.set_edgecolor((0.0, 0.0, 0.0, 0.0))
+        axis.pane.set_alpha(0.0)
+        axis._axinfo["grid"].update({"linewidth": 0})
+        axis.line.set_color((0.0, 0.0, 0.0, 0.0))
+        axis.set_tick_params(
+            bottom=False,
+            top=False,
+            left=False,
+            right=False,
+            labelbottom=False,
+            labeltop=False,
+            labelleft=False,
+            labelright=False,
+        )
+
+
 def export_figure_for_gradio(fig: plt.Figure, *, dpi: int = 80) -> str:
     """Write figure to a temp PNG and close it — safe for Gradio streaming."""
     import tempfile
@@ -1827,6 +1856,7 @@ def build_unit_cell_figure(
     view_dist: float = UNIT_CELL_VIEW_DIST,
     axis_half: float = UNIT_CELL_AXIS_HALF,
     show_curvature_grid: bool = True,
+    shape_only: bool = False,
     dpi: int = 150,
 ) -> plt.Figure:
     """Server-rendered deformable unit cell — bowing π-face, concave φ/e sides."""
@@ -1887,102 +1917,111 @@ def build_unit_cell_figure(
             zorder=5,
         )
 
-    arrow_scale = max(0.15, p_abs)
-    arrow_kw = dict(arrow_length_ratio=0.28, linewidth=2.2, alpha=1.0)
-    top_anchor = _anchor_point((0.0, 0.0, s), s, p, delta_z, side)
-    ax.quiver(
-        top_anchor[0],
-        top_anchor[1],
-        top_anchor[2] + 0.12,
-        0,
-        0,
-        -delta_z * 2.0 * arrow_scale,
-        color=eq_blue,
-        **arrow_kw,
-    )
-    phi_anchor = _anchor_point((-s, 0.0, 0.0), s, p, delta_z, side)
-    ax.quiver(
-        phi_anchor[0] - 0.12,
-        phi_anchor[1],
-        phi_anchor[2],
-        side * 2.0 * arrow_scale,
-        0,
-        0,
-        color=eq_red,
-        **arrow_kw,
-    )
-    e_anchor = _anchor_point((s, 0.0, 0.0), s, p, delta_z, side)
-    ax.quiver(
-        e_anchor[0] + 0.12,
-        e_anchor[1],
-        e_anchor[2],
-        -side * 2.0 * arrow_scale,
-        0,
-        0,
-        color=eq_green,
-        **arrow_kw,
-    )
+    if not shape_only:
+        arrow_scale = max(0.15, p_abs)
+        arrow_kw = dict(arrow_length_ratio=0.28, linewidth=2.2, alpha=1.0)
+        top_anchor = _anchor_point((0.0, 0.0, s), s, p, delta_z, side)
+        ax.quiver(
+            top_anchor[0],
+            top_anchor[1],
+            top_anchor[2] + 0.12,
+            0,
+            0,
+            -delta_z * 2.0 * arrow_scale,
+            color=eq_blue,
+            **arrow_kw,
+        )
+        phi_anchor = _anchor_point((-s, 0.0, 0.0), s, p, delta_z, side)
+        ax.quiver(
+            phi_anchor[0] - 0.12,
+            phi_anchor[1],
+            phi_anchor[2],
+            side * 2.0 * arrow_scale,
+            0,
+            0,
+            color=eq_red,
+            **arrow_kw,
+        )
+        e_anchor = _anchor_point((s, 0.0, 0.0), s, p, delta_z, side)
+        ax.quiver(
+            e_anchor[0] + 0.12,
+            e_anchor[1],
+            e_anchor[2],
+            -side * 2.0 * arrow_scale,
+            0,
+            0,
+            color=eq_green,
+            **arrow_kw,
+        )
 
-    phi_face = _anchor_point((s, 0.0, 0.0), s, p, delta_z, side)
-    e_face = _anchor_point((0.0, s, 0.0), s, p, delta_z, side)
-    pi_face = _anchor_point((0.0, 0.0, s), s, p, delta_z, side)
-    _draw_leader_label(
-        ax,
-        phi_face,
-        (2.35, 0.45, 0.25),
-        r"$T_\phi \propto \phi^2$",
-        eq_red,
-        fontsize=font_main,
-    )
-    _draw_leader_label(
-        ax,
-        e_face,
-        (0.45, 2.35, 0.25),
-        r"$T_e \propto e^2$",
-        eq_green,
-        fontsize=font_main,
-    )
-    _draw_leader_label(
-        ax,
-        pi_face,
-        (0.45, 0.25, 2.35),
-        r"$T_\pi \propto \pi^2$",
-        eq_blue,
-        fontsize=font_main,
-    )
-    _draw_leader_label(
-        ax,
-        _anchor_point((-s, 0.0, 0.0), s, p, delta_z, side),
-        (-2.35, -0.55, 0.35),
-        r"$\delta_\mathrm{side}$ (inward)",
-        eq_green,
-        fontsize=font_small,
-    )
-    _draw_leader_label(
-        ax,
-        pi_face,
-        (-0.55, -2.25, 2.35),
-        r"$\delta_z$ (push)",
-        eq_blue,
-        fontsize=font_small,
-    )
+        phi_face = _anchor_point((s, 0.0, 0.0), s, p, delta_z, side)
+        e_face = _anchor_point((0.0, s, 0.0), s, p, delta_z, side)
+        pi_face = _anchor_point((0.0, 0.0, s), s, p, delta_z, side)
+        _draw_leader_label(
+            ax,
+            phi_face,
+            (2.35, 0.45, 0.25),
+            r"$T_\phi \propto \phi^2$",
+            eq_red,
+            fontsize=font_main,
+        )
+        _draw_leader_label(
+            ax,
+            e_face,
+            (0.45, 2.35, 0.25),
+            r"$T_e \propto e^2$",
+            eq_green,
+            fontsize=font_main,
+        )
+        _draw_leader_label(
+            ax,
+            pi_face,
+            (0.45, 0.25, 2.35),
+            r"$T_\pi \propto \pi^2$",
+            eq_blue,
+            fontsize=font_main,
+        )
+        _draw_leader_label(
+            ax,
+            _anchor_point((-s, 0.0, 0.0), s, p, delta_z, side),
+            (-2.35, -0.55, 0.35),
+            r"$\delta_\mathrm{side}$ (inward)",
+            eq_green,
+            fontsize=font_small,
+        )
+        _draw_leader_label(
+            ax,
+            pi_face,
+            (-0.55, -2.25, 2.35),
+            r"$\delta_z$ (push)",
+            eq_blue,
+            fontsize=font_small,
+        )
 
-    half = float(max(2.0, axis_half))
+    if shape_only:
+        half = float(UNIT_CELL_SHAPE_ONLY_AXIS_HALF)
+        frame_dist = float(UNIT_CELL_SHAPE_ONLY_VIEW_DIST)
+    else:
+        half = float(max(2.0, axis_half))
+        frame_dist = float(view_dist)
     ax.set_xlim(-half, half)
     ax.set_ylim(-half, half)
     ax.set_zlim(-half, half)
-    ax.set_xlabel("φ-face", color=caption_neutral, fontsize=font_axis, labelpad=4)
-    ax.set_ylabel("e-face", color=caption_neutral, fontsize=font_axis, labelpad=4)
-    ax.set_zlabel("π-face", color=caption_neutral, fontsize=font_axis, labelpad=4)
-    ax.tick_params(colors=caption_neutral, labelsize=font_tick)
-    for axis in (ax.xaxis, ax.yaxis, ax.zaxis):
-        axis.pane.fill = False
-        axis.pane.set_edgecolor("#333333")
-    ax.grid(False)
+    if shape_only:
+        _hide_unit_cell_scene_axes(ax)
+    else:
+        ax.set_xlabel("φ-face", color=caption_neutral, fontsize=font_axis, labelpad=4)
+        ax.set_ylabel("e-face", color=caption_neutral, fontsize=font_axis, labelpad=4)
+        ax.set_zlabel("π-face", color=caption_neutral, fontsize=font_axis, labelpad=4)
+        ax.tick_params(colors=caption_neutral, labelsize=font_tick)
+        for axis in (ax.xaxis, ax.yaxis, ax.zaxis):
+            axis.pane.fill = False
+            axis.pane.set_edgecolor("#333333")
+        ax.grid(False)
     elev = float(np.clip(view_elev, 5.0, 85.0))
     azim = float(view_azim) % 360.0
     ax.view_init(elev=elev, azim=azim)
-    ax.dist = float(max(8.0, view_dist))
+    ax.dist = float(max(8.0, frame_dist))
     try:
         ax.set_box_aspect((1, 1, 1))
     except (AttributeError, TypeError, ValueError):
@@ -2253,6 +2292,7 @@ def run_residual_explorer(
     deform_pressure: float = 0.35,
     view_elev: float = UNIT_CELL_VIEW_ELEV,
     view_azim: float = UNIT_CELL_VIEW_AZIM,
+    shape_only: bool = False,
 ) -> tuple[str, str, plt.Figure]:
     """Return explorer metrics, viewport header HTML, and unit-cell figure."""
     r_val = residual_from_scales(phi_sq_scale, e_sq_scale, pi_sq_scale)
@@ -2274,6 +2314,7 @@ def run_residual_explorer(
         pressure=p,
         view_elev=view_elev,
         view_azim=view_azim,
+        shape_only=shape_only,
     )
     header = build_unit_cell_viewport_header_html(pressure=p, r_val=r_val)
     return metrics, header, fig
