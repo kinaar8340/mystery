@@ -930,6 +930,36 @@ _MAIN_NAV_TAB_SPECS = (
 _SHAPE_NAV_IDS: tuple[str, ...] = ("D4", "D6", "D8", "D12", "D20")
 _DEFAULT_ACTIVE_SHAPE = "D6"
 _NO_ACTIVE_SHAPE = ""
+_NO_ACTIVE_DEMO_LETTER = ""
+# Demo B–I flip-flop with platonic D* (Demo A is outside this group).
+_DEMO_PLATONIC_FLIP_LETTERS: frozenset[str] = frozenset(
+    letter for letter in tuple(chr(ord("A") + i) for i in range(9)) if letter != "A"
+)
+
+
+def _normalize_active_demo_letter(letter: str) -> str:
+    """Return A–I when latched, else empty (never default blank to A)."""
+    active = str(letter or "").strip().upper()
+    if active in _GRAVITY_CHILD_NAV_LETTERS:
+        return active
+    return _NO_ACTIVE_DEMO_LETTER
+
+
+def _is_demo_platonic_flip_letter(letter: str) -> bool:
+    return str(letter or "").strip().upper() in _DEMO_PLATONIC_FLIP_LETTERS
+
+
+def _platonic_interrupt_demo_nav_updates(active_demo_letter: str) -> tuple:
+    """Platonic latch — unhighlight Demo B–I; leave Demo A styling if it was active."""
+    letter = _normalize_active_demo_letter(active_demo_letter)
+    if letter == "A":
+        return (*_demo_active_tab_updates("A"), "A")
+    return (*_gravity_child_nav_btn_updates(-1), _NO_ACTIVE_DEMO_LETTER)
+
+
+def _demo_platonic_flip_clear_shape() -> tuple:
+    """Demo B–I interrupt — release latched platonic D* tab."""
+    return _clear_active_shape()
 
 
 def _nav_theme_gap_rem(*, half: bool = False) -> float:
@@ -1175,8 +1205,8 @@ def _demo_viewport_preserve_active_demo(
     dim_fig,
     active_shape: str = _NO_ACTIVE_SHAPE,
 ) -> tuple:
-    """Viewport stack — Demo E/F video loops win over platonic geodesic; else D* plot or Demo A."""
-    letter = str(active_demo_letter or "A").strip().upper()
+    """Viewport stack — latched Demo E/F video; else D* geodesic; else Demo A startup."""
+    letter = _normalize_active_demo_letter(active_demo_letter)
     if letter in _DEFORM_DEMO_LETTERS:
         try:
             return _demo_viewport_show_deform_video()
@@ -1246,14 +1276,22 @@ def _platonic_geo_presets_interrupt_reset(active_shape: str) -> tuple:
 
 
 def _platonic_geo_interrupt_home(new_shape: str, active_demo_letter: str = "A") -> tuple:
-    """Platonic D4–D20 interrupt — Home viewport, latch D*, unlatch Home tab (flip-flop)."""
+    """Platonic D4–D20 interrupt — latch D*, unlatch Home + Demo B–I (flip-flop)."""
     shape = str(new_shape or "").strip().upper()
     if shape not in _SHAPE_NAV_IDS:
         shape = _DEFAULT_ACTIVE_SHAPE
+    letter = _normalize_active_demo_letter(active_demo_letter)
+    if _is_demo_platonic_flip_letter(letter):
+        preserve_letter = _NO_ACTIVE_DEMO_LETTER
+    elif letter == "A":
+        preserve_letter = "A"
+    else:
+        preserve_letter = _NO_ACTIVE_DEMO_LETTER
     return (
         *_nav_to_platonic_home_with_demo(),
-        *_set_active_shape_and_apply(shape, active_demo_letter),
+        *_set_active_shape_and_apply(shape, preserve_letter),
         *_platonic_geo_presets_interrupt_reset(shape),
+        *_platonic_interrupt_demo_nav_updates(active_demo_letter),
     )
 
 
@@ -8942,6 +8980,35 @@ def _demo_tab_latch_immediate(letter: str) -> tuple:
     )
 
 
+def _demo_letter_nav_interrupt(letter: str) -> tuple:
+    """Demo B–I select — clear platonic D* latch, then latch the demo tab."""
+    active = str(letter or "A").strip().upper()
+    if active not in _GRAVITY_CHILD_NAV_LETTERS:
+        active = "A"
+    if _is_demo_platonic_flip_letter(active):
+        return (
+            *_demo_platonic_flip_clear_shape(),
+            *_demo_tab_latch_immediate(active),
+        )
+    return (
+        *_demo_platonic_flip_clear_shape(),
+        *_demo_tab_latch_immediate("A"),
+    )
+
+
+def _switch_gravity_demo_viewport_only(letter: str) -> tuple:
+    """Viewport stack only — demo tab latch handled separately."""
+    letter = str(letter or "A").strip().upper()
+    if letter == "A":
+        return _demo_startup_viewport_only()
+    if letter in _DEFORM_DEMO_LETTERS:
+        return _demo_deform_viewport_only()
+    if letter in _BREATHING_DEMO_LETTERS:
+        return _demo_breathing_viewport_only()
+    fig = _get_gravity_demo_plotly_figure(letter)
+    return _demo_viewport_show_plot(fig)
+
+
 def _demo_deform_viewport_only() -> tuple:
     """Demo E viewport — D4 tetrahedron deformation MP4 after tab latch."""
     try:
@@ -11819,8 +11886,8 @@ def build_app() -> gr.Blocks:
                 btn = gravity_letter_btns[letter]
                 if letter == "A":
                     btn.click(
-                        lambda: _demo_tab_latch_immediate("A"),
-                        outputs=gravity_demo_nav_outputs,
+                        lambda: _demo_letter_nav_interrupt("A"),
+                        outputs=demo_platonic_flip_nav_outputs,
                         show_progress="hidden",
                     ).then(
                         _demo_startup_viewport_only,
@@ -11829,28 +11896,32 @@ def build_app() -> gr.Blocks:
                     )
                 elif letter in _DEFORM_DEMO_LETTERS:
                     btn.click(
-                        lambda l=letter: _demo_tab_latch_immediate(l),
-                        outputs=gravity_demo_nav_outputs,
+                        lambda l=letter: _demo_letter_nav_interrupt(l),
+                        outputs=demo_platonic_flip_nav_outputs,
                         show_progress="hidden",
                     ).then(
-                        _demo_deform_viewport_only,
+                        lambda l=letter: _switch_gravity_demo_viewport_only(l),
                         outputs=gravity_demo_viewport_outputs,
                         show_progress="hidden",
                     )
                 elif letter in _BREATHING_DEMO_LETTERS:
                     btn.click(
-                        lambda l=letter: _demo_tab_latch_immediate(l),
-                        outputs=gravity_demo_nav_outputs,
+                        lambda l=letter: _demo_letter_nav_interrupt(l),
+                        outputs=demo_platonic_flip_nav_outputs,
                         show_progress="hidden",
                     ).then(
-                        _demo_breathing_viewport_only,
+                        lambda l=letter: _switch_gravity_demo_viewport_only(l),
                         outputs=gravity_demo_viewport_outputs,
                         show_progress="hidden",
                     )
                 else:
                     btn.click(
-                        lambda l=letter: _switch_gravity_demo(l),
-                        outputs=gravity_demo_outputs,
+                        lambda l=letter: _demo_letter_nav_interrupt(l),
+                        outputs=demo_platonic_flip_nav_outputs,
+                        show_progress="hidden",
+                    ).then(
+                        lambda l=letter: _switch_gravity_demo_viewport_only(l),
+                        outputs=gravity_demo_viewport_outputs,
                         show_progress="hidden",
                     )
 
@@ -12005,6 +12076,15 @@ def build_app() -> gr.Blocks:
             *demo_nav_outputs,
             *dimension_apply_outputs,
             *platonic_geo_interrupt_outputs,
+            *[gravity_letter_btns[letter] for letter in _GRAVITY_CHILD_NAV_LETTERS],
+            gravity_active_letter,
+        ]
+        demo_platonic_flip_nav_outputs = [
+            active_shape,
+            *[unified_nav[shape_id] for shape_id in _SHAPE_NAV_IDS],
+            *[gravity_letter_btns[letter] for letter in _GRAVITY_CHILD_NAV_LETTERS],
+            gravity_active_letter,
+            viewport_col,
         ]
         readme_nav_outputs = [*nav_outputs, readme_return_page, *demo_nav_outputs]
 
