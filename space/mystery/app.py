@@ -196,8 +196,10 @@ DEFAULT_GAP = "8px"
 default_gap_height = NAV_THEME["default_gap_height"]
 _myst_default_gap_height = f"{default_gap_height}rem"
 _MYST_STATUS_LAYER_ALPHA = 0.2
-# Individual preset panel backgrounds: 30% transparent (30% opaque).
-_MYST_STATUS_PANEL_ALPHA = 0.3
+# Presets tab — 9 grid panels + zoom catalogs: 50% transparent (opacity 0.5).
+_MYST_STATUS_PANEL_ALPHA = 0.5
+# Figures tab preset thumbnails/detail (unchanged).
+_MYST_RENDER_PANEL_ALPHA = 0.3
 _STATUS_ZOOM_PRESET_COUNT = 9
 _VQC_MATRIX_GREEN_BG = "#0a1f12"
 _VQC_LOGO_GOLD = "#c9a227"
@@ -7113,8 +7115,8 @@ footer {{ visibility: hidden; }}
     flex-direction: column !important;
     gap: 0.15rem !important;
     padding: 0.22rem 0.28rem 0.24rem !important;
-    background: rgba(0, 0, 0, {_MYST_STATUS_PANEL_ALPHA}) !important;
-    border: 2px inset rgba(92, 74, 31, {_MYST_STATUS_PANEL_ALPHA}) !important;
+    background: rgba(0, 0, 0, {_MYST_RENDER_PANEL_ALPHA}) !important;
+    border: 2px inset rgba(92, 74, 31, {_MYST_RENDER_PANEL_ALPHA}) !important;
     box-sizing: border-box !important;
 }}
 .gradio-container .myst-render-page .myst-render-detail-title {{
@@ -7185,8 +7187,8 @@ footer {{ visibility: hidden; }}
     flex-direction: column !important;
     gap: 0 !important;
     overflow: hidden !important;
-    background: rgba(0, 0, 0, {_MYST_STATUS_PANEL_ALPHA}) !important;
-    border: 2px inset rgba(92, 74, 31, {_MYST_STATUS_PANEL_ALPHA}) !important;
+    background: rgba(0, 0, 0, {_MYST_RENDER_PANEL_ALPHA}) !important;
+    border: 2px inset rgba(92, 74, 31, {_MYST_RENDER_PANEL_ALPHA}) !important;
     box-sizing: border-box !important;
 }}
 .gradio-container .myst-render-page .myst-render-preset-header {{
