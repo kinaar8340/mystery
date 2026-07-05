@@ -199,8 +199,10 @@ DEMO_A_STARTUP_REPO_FILENAME = "Home_A_startup_page.png"
 DEMO_A_STARTUP_ASSET_FILENAME = "home_a_startup_page.png"
 
 
-def resolve_demo_a_startup_image_path() -> str:
-    """Local path to Demo A landing PNG — bundled asset, repo upload, or GitHub raw on HF."""
+def demo_a_startup_image_serve_url() -> str:
+    """Browser URL for Demo A landing PNG — Gradio static file locally, GitHub raw on HF."""
+    if is_hf_space():
+        return f"{GITHUB_URL}/raw/main/{DEMO_A_STARTUP_REPO_FILENAME}"
     candidates = (
         _SPACE_DIR / "assets" / DEMO_A_STARTUP_ASSET_FILENAME,
         _SPACE_DIR / DEMO_A_STARTUP_ASSET_FILENAME,
@@ -208,24 +210,20 @@ def resolve_demo_a_startup_image_path() -> str:
     )
     for path in candidates:
         if path.is_file():
-            return str(path)
-    if is_hf_space():
-        import tempfile
+            stamp = int(path.stat().st_mtime)
+            return f"/gradio_api/file={path.name}?v={stamp}"
+    return f"{GITHUB_URL}/raw/main/{DEMO_A_STARTUP_REPO_FILENAME}"
 
-        import requests
 
-        cache_path = Path(tempfile.gettempdir()) / "mystery_home_a_startup_page.png"
-        if not cache_path.is_file() or cache_path.stat().st_size == 0:
-            url = f"{GITHUB_URL}/raw/main/{DEMO_A_STARTUP_REPO_FILENAME}"
-            print(f"[startup] fetching Demo A image from GitHub raw: {url}", flush=True)
-            response = requests.get(url, timeout=45)
-            response.raise_for_status()
-            cache_path.write_bytes(response.content)
-        return str(cache_path)
-    raise FileNotFoundError(
-        "Demo A startup image not found — expected bundled asset or "
-        f"{DEMO_A_STARTUP_REPO_FILENAME} at repo root"
-    )
+def startup_image_static_paths() -> list[Path]:
+    """Directories Gradio may serve for the Demo A landing image."""
+    paths: list[Path] = []
+    for name in (DEMO_A_STARTUP_ASSET_FILENAME, DEMO_A_STARTUP_REPO_FILENAME):
+        for base in (_SPACE_DIR / "assets", _SPACE_DIR, _REPO_ROOT):
+            path = base / name
+            if path.is_file():
+                paths.append(path.parent)
+    return list(dict.fromkeys(paths))
 
 
 def resolve_wallpaper_url() -> str:

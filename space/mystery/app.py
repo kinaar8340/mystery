@@ -36,7 +36,8 @@ from demo_core import (
     WALLPAPER_URL,
     get_build_label,
     is_hf_space,
-    resolve_demo_a_startup_image_path,
+    demo_a_startup_image_serve_url,
+    startup_image_static_paths,
     wallpaper_static_paths,
     build_unit_cell_viewport_header_html,
     unit_cell_error_placeholder_html,
@@ -2630,7 +2631,14 @@ footer {{
     margin: 0 !important;
     padding: 0 !important;
     background: #0a0a0f !important;
-    overflow: visible !important;
+    overflow: hidden !important;
+    contain: layout paint !important;
+    isolation: isolate !important;
+}}
+.gradio-container .myst-gravity-page .myst-gravity-single-viewport > .block,
+.gradio-container .myst-gravity-page .myst-gravity-single-viewport > .form {{
+    max-height: 620px !important;
+    overflow: hidden !important;
 }}
 .gradio-container .myst-gravity-page .myst-gravity-video-host,
 .gradio-container .myst-gravity-page .myst-gravity-viewport-anim .html-container,
@@ -2658,18 +2666,30 @@ footer {{
 }}
 .gradio-container .myst-gravity-page #myst-gravity-viewport-plot,
 .gradio-container .myst-gravity-page .myst-gravity-viewport-plot,
-.gradio-container .myst-gravity-page #myst-gravity-viewport-image,
-.gradio-container .myst-gravity-page .myst-gravity-viewport-image {{
+.gradio-container .myst-gravity-page #myst-gravity-viewport-startup,
+.gradio-container .myst-gravity-page .myst-gravity-viewport-startup {{
     flex: 1 1 auto !important;
     width: 100% !important;
     min-height: 580px !important;
+    max-height: 620px !important;
+    overflow: hidden !important;
 }}
-.gradio-container .myst-gravity-page #myst-gravity-viewport-image,
-.gradio-container .myst-gravity-page #myst-gravity-viewport-image .block,
-.gradio-container .myst-gravity-page #myst-gravity-viewport-image .image-container,
-.gradio-container .myst-gravity-page #myst-gravity-viewport-image .wrap,
-.gradio-container .myst-gravity-page #myst-gravity-viewport-image img,
-.gradio-container .myst-gravity-page .myst-gravity-viewport-image img {{
+.gradio-container .myst-gravity-page #myst-gravity-viewport-startup,
+.gradio-container .myst-gravity-page #myst-gravity-viewport-startup .block,
+.gradio-container .myst-gravity-page #myst-gravity-viewport-startup .html-container,
+.gradio-container .myst-gravity-page #myst-gravity-viewport-startup .prose,
+.gradio-container .myst-gravity-page .myst-gravity-viewport-startup .html-container {{
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 580px !important;
+    max-height: 620px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+    background: #0a0a0f !important;
+}}
+.gradio-container .myst-gravity-page .myst-gravity-startup-image,
+.gradio-container .myst-gravity-page .myst-gravity-startup-img {{
     width: 100% !important;
     height: 100% !important;
     min-height: 580px !important;
@@ -2677,6 +2697,7 @@ footer {{
     object-fit: contain !important;
     background: #0a0a0f !important;
     display: block !important;
+    pointer-events: none !important;
 }}
 #myst-gravity-viewport .plotly-graph-div,
 #myst-gravity-viewport-plotly,
@@ -8462,7 +8483,6 @@ def _demo_active_tab_updates(active_letter: str) -> tuple:
 
 _GRAVITY_DEMO_VIDEO_CACHE: dict[str, str] = {}
 _BREATHING_DEMO_VIDEO_CACHE: str | None = None
-_DEMO_A_STARTUP_IMAGE_CACHE: str | None = None
 _APP_DIR = os.path.dirname(os.path.abspath(__file__))
 _BUNDLED_BREATHING_VIDEO = os.path.join(_APP_DIR, "assets", "demo_a_breathing.gif")
 
@@ -8584,14 +8604,15 @@ def _get_breathing_demo_video_path() -> str:
     return _BREATHING_DEMO_VIDEO_CACHE
 
 
-def _get_demo_a_startup_image_path() -> str:
-    """Gradio-served path to the Demo A landing PNG."""
-    global _DEMO_A_STARTUP_IMAGE_CACHE
-    if _DEMO_A_STARTUP_IMAGE_CACHE is None:
-        raw_path = resolve_demo_a_startup_image_path()
-        print(f"[startup] using Demo A landing image: {raw_path}", flush=True)
-        _DEMO_A_STARTUP_IMAGE_CACHE = _cache_media_for_gradio(raw_path)
-    return _DEMO_A_STARTUP_IMAGE_CACHE
+def _demo_a_startup_image_html() -> str:
+    """HTML viewport body for Demo A landing image."""
+    url = demo_a_startup_image_serve_url()
+    print(f"[startup] Demo A landing image URL: {url}", flush=True)
+    return (
+        '<div class="myst-gravity-viewport-inner myst-gravity-demo-a myst-gravity-startup-image">'
+        f'<img src="{url}" alt="Mystery Demo A startup" class="myst-gravity-startup-img" />'
+        "</div>"
+    )
 
 
 def _get_rigid_preset_plotly_figure():
@@ -8624,7 +8645,7 @@ def _demo_viewport_show_plot(fig) -> tuple:
     return (
         gr.update(value=fig, visible=True),
         gr.update(value=None, visible=False),
-        gr.update(value=None, visible=False),
+        gr.update(value="", visible=False),
     )
 
 
@@ -8634,17 +8655,16 @@ def _demo_viewport_show_breathing_video() -> tuple:
     return (
         gr.update(visible=False),
         gr.update(value=video_path, visible=True, autoplay=True, loop=True),
-        gr.update(value=None, visible=False),
+        gr.update(value="", visible=False),
     )
 
 
 def _demo_viewport_show_startup_image() -> tuple:
-    """Show Demo A landing PNG via gr.Image (HF-safe cached path)."""
-    image_path = _get_demo_a_startup_image_path()
+    """Show Demo A landing PNG via gr.HTML (HF-safe GitHub raw URL)."""
     return (
         gr.update(visible=False),
         gr.update(value=None, visible=False),
-        gr.update(value=image_path, visible=True),
+        gr.update(value=_demo_a_startup_image_html(), visible=True),
     )
 
 
@@ -9976,7 +9996,7 @@ def _run_residual_explorer_ui_manual(
 ) -> tuple:
     """Manual dial refresh — only when Manual Edit is latched (avoids preset cascade)."""
     if not edit_params_enabled:
-        return tuple(gr.skip() for _ in range(11))
+        return tuple(gr.skip() for _ in range(12))
     print("[DEBUG] _run_residual_explorer_ui_manual: manual dial release", flush=True)
     return _run_residual_explorer_ui(
         phi_sq_scale,
@@ -10788,7 +10808,7 @@ def _make_gravity_quick_preset_click(
 
 
 def build_app() -> gr.Blocks:
-    for static_dir in wallpaper_static_paths():
+    for static_dir in (*wallpaper_static_paths(), *startup_image_static_paths()):
         gr.set_static_paths(paths=[str(static_dir)])
     with gr.Blocks(
         title="Mystery — φ · e · π Emergent Signature",
@@ -11298,14 +11318,11 @@ def build_app() -> gr.Blocks:
                     elem_classes=["myst-gravity-viewport", "myst-gravity-demo-video"],
                     container=True,
                 )
-                gravity_viewport_image = gr.Image(
-                    label="",
-                    show_label=False,
+                gravity_viewport_startup = gr.HTML(
+                    value="",
                     visible=False,
-                    interactive=False,
-                    height=620,
-                    elem_id="myst-gravity-viewport-image",
-                    elem_classes=["myst-gravity-viewport-image", "myst-gravity-demo-startup"],
+                    elem_id="myst-gravity-viewport-startup",
+                    elem_classes=["myst-gravity-viewport-startup", "myst-gravity-demo-startup"],
                     container=True,
                 )
             with gr.Column(visible=False, elem_classes=["myst-gravity-wired-hidden"]):
@@ -11369,7 +11386,7 @@ def build_app() -> gr.Blocks:
                 unit_cell_header,
                 gravity_viewport_plot,
                 gravity_viewport_video,
-                gravity_viewport_image,
+                gravity_viewport_startup,
                 unit_cell_video,
                 re_control_levels,
                 status_catalog_col,
@@ -11386,7 +11403,7 @@ def build_app() -> gr.Blocks:
             gravity_demo_outputs = [
                 gravity_viewport_plot,
                 gravity_viewport_video,
-                gravity_viewport_image,
+                gravity_viewport_startup,
                 *[gravity_letter_btns[letter] for letter in _GRAVITY_CHILD_NAV_LETTERS],
                 gravity_active_letter,
             ]
@@ -11502,7 +11519,7 @@ def build_app() -> gr.Blocks:
             *dimension_slider_outputs,
             gravity_viewport_plot,
             gravity_viewport_video,
-            gravity_viewport_image,
+            gravity_viewport_startup,
             re_metrics,
             edit_re_metrics,
             unit_cell_header,
