@@ -3961,6 +3961,53 @@ def render_demo_e_d4_deformation_video(
     return _encode_loop_video(rgb_frames, fps=fps)
 
 
+def render_demo_g_d8_deformation_video(
+    *,
+    fps: int = 10,
+    dpi: int = 80,
+    n_per_segment: int = 8,
+) -> str:
+    """MP4 D8 octahedron convex→rigid→concave loop for Demo G (Figures preset sweep)."""
+    config = get_dimension_config("D8")
+    face_count = int(config.get("face_count", 8))
+    subdiv = int(config.get("subdiv", 10))
+    phi = 1.0
+    e = 1.0
+    pi = 1.0
+    kappa = KAPPA_DOC
+    delta_z = 0.1
+    alpha = 1.0
+    beta = 1.0
+    view_elev = 26.0
+    view_azim = 45.0
+    r_val = residual_from_scales(phi, e, pi)
+    d_side = delta_side_contraction(delta_z, r_val, kappa, alpha=alpha, beta=beta)
+    side = abs(d_side) * 0.5
+    pressures = _breathing_deformation_path(n_per_segment=n_per_segment)
+    rgb_frames: list[np.ndarray] = []
+    for pressure_val in pressures:
+        fig = build_unit_cell_figure(
+            delta_z=delta_z,
+            delta_side=side,
+            r_val=r_val,
+            pressure=float(pressure_val),
+            view_elev=view_elev,
+            view_azim=view_azim,
+            show_curvature_grid=False,
+            solid_mesh=True,
+            dpi=dpi,
+            face_count=face_count,
+            subdiv=subdiv,
+        )
+        rgb_frames.append(_figure_to_rgb(fig, dpi=dpi))
+        plt.close(fig)
+    print(
+        f"[demo-g] render_demo_g_d8_deformation_video: {len(rgb_frames)} frames",
+        flush=True,
+    )
+    return _encode_loop_video(rgb_frames, fps=fps)
+
+
 def render_gravity_demo_animation_video(
     phi_sq_scale: float,
     e_sq_scale: float,
