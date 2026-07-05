@@ -1168,8 +1168,15 @@ def _dimension_explorer_side_outputs(
     return metrics, header, control_levels
 
 
-def _demo_viewport_preserve_active_demo(active_demo_letter: str, *, dim_fig) -> tuple:
-    """Keep Demo A startup / Demo F breathing when geodesic tabs change."""
+def _demo_viewport_preserve_active_demo(
+    active_demo_letter: str,
+    *,
+    dim_fig,
+    active_shape: str = _NO_ACTIVE_SHAPE,
+) -> tuple:
+    """Viewport stack — geodesic plot when platonic latched; else Demo A/F specials."""
+    if _is_active_shape(active_shape):
+        return _demo_viewport_show_plot(dim_fig)
     letter = str(active_demo_letter or "A").strip().upper()
     if letter == "A":
         try:
@@ -1187,7 +1194,7 @@ def _demo_viewport_preserve_active_demo(active_demo_letter: str, *, dim_fig) -> 
 
 
 def _set_active_shape_and_apply(new_shape: str, active_demo_letter: str = "A") -> tuple:
-    """Latch geodesic tab, load defaults; preserve Demo A/F viewport when latched."""
+    """Latch geodesic tab, load defaults; show geodesic plot (Demo A startup only when no D* latched)."""
     shape = _normalize_shape_id(new_shape)
     config = get_dimension_config(shape)
     shape_updates = _set_active_shape(shape)
@@ -1196,6 +1203,7 @@ def _set_active_shape_and_apply(new_shape: str, active_demo_letter: str = "A") -
     viewport_updates = _demo_viewport_preserve_active_demo(
         active_demo_letter,
         dim_fig=dim_fig,
+        active_shape=shape,
     )
     metrics, header, control_levels = _dimension_explorer_side_outputs(shape, config)
     return (
@@ -10162,6 +10170,7 @@ def _run_residual_explorer_ui(
     viewport_updates = _demo_viewport_preserve_active_demo(
         active_demo_letter,
         dim_fig=fig,
+        active_shape=_resolve_latched_platonic_shape(active_shape),
     )
     return (
         metrics,
