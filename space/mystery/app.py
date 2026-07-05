@@ -179,6 +179,9 @@ NAV_THEME: dict = {
         "columns": 3,
         "rows": 3,
     },
+    "render_detail": {
+        "chrome_height": "11.5rem",
+    },
     "main_content": {
         "status_viewport_offset": "8.75rem",
     },
@@ -920,8 +923,10 @@ def _nav_theme_gradio_css_vars() -> str:
     active = nb["active"]
     demo_active = NAV_THEME["demo_button"]["active"]
     pg = NAV_THEME["preset_grid"]
+    rd = NAV_THEME["render_detail"]
     mc = NAV_THEME["main_content"]
     chrome = pg["chrome_height"]
+    detail_chrome = rd["chrome_height"]
     return f"""
     --myst-default-gap-height: {gap}rem;
     --myst-half-gap-height: calc({gap}rem * 0.5);
@@ -957,6 +962,8 @@ def _nav_theme_gradio_css_vars() -> str:
     --myst-border-color: #333333;
     --myst-status-chrome-height: {chrome};
     --myst-status-content-max-height: calc(100dvh - {mc["status_viewport_offset"]});
+    --myst-render-detail-chrome-height: {detail_chrome};
+    --myst-render-detail-max-height: calc(100dvh - {detail_chrome});
     --myst-preset-grid-gap: {pg["grid_gap"]};
     --myst-preset-grid-columns: {pg["columns"]};
     --myst-preset-grid-rows: {pg["rows"]};
@@ -1586,18 +1593,31 @@ WALLPAPER_HEAD = f"""
     }}
     function mystResizeRenderDetailPlot() {{
         var split = document.querySelector('.myst-render-split-row');
-        var host = document.querySelector('.myst-render-right-panel')
-            || document.querySelector('.myst-render-detail-plot')
-            || document.querySelector('#myst-render-detail-plot');
+        var rightPanel = document.querySelector('.myst-render-right-panel');
+        var plotHost = document.querySelector('#myst-render-detail-plot')
+            || document.querySelector('.myst-render-detail-plot');
+        if (!split || !rightPanel || !plotHost) return;
+        var rect = split.getBoundingClientRect();
+        var h = Math.max(280, Math.round(rect.height));
+        rightPanel.style.height = h + 'px';
+        rightPanel.style.minHeight = '0';
+        plotHost.style.height = h + 'px';
+        plotHost.style.minHeight = '0';
+        plotHost.style.width = '100%';
         var plotDiv = mystRenderDetailPlotEl();
-        if (!host || !plotDiv || !window.Plotly) return;
-        var rect = (split || host).getBoundingClientRect();
-        var h = Math.max(550, Math.round(rect.height) - 4);
-        plotDiv.style.height = h + 'px';
-        plotDiv.style.width = '100%';
-        try {{
-            window.Plotly.Plots.resize(plotDiv);
-        }} catch (_err) {{}}
+        if (plotDiv && window.Plotly) {{
+            plotDiv.style.height = h + 'px';
+            plotDiv.style.width = '100%';
+            try {{
+                window.Plotly.Plots.resize(plotDiv);
+            }} catch (_err) {{}}
+        }}
+        plotHost.querySelectorAll('img, canvas, svg, .plot-container, figure').forEach(function(el) {{
+            el.style.width = '100%';
+            el.style.height = '100%';
+            el.style.maxHeight = '100%';
+            el.style.minHeight = '0';
+        }});
     }}
     function mystBindRenderGridClicks() {{
         document.querySelectorAll('.myst-render-cell-clickable[data-slot]').forEach(function(cell) {{
@@ -5634,7 +5654,22 @@ footer {{ visibility: hidden; }}
     --myst-render-grid-gap: 0.18rem;
     --myst-render-grid-bottom-frame: 0;
     --myst-render-chrome-height: 8.75rem;
+    --myst-render-detail-chrome-height: 11.5rem;
+    --myst-render-detail-max-height: calc(100dvh - 11.5rem);
     padding: 0 !important;
+}}
+.gradio-container:has(.myst-render-page .myst-render-detail-view:not(.hide):not(.hidden)) .main,
+.gradio-container:has(.myst-render-page .myst-render-detail-view:not(.hide):not(.hidden)) .main > .wrap,
+.gradio-container:has(.myst-render-page .myst-render-detail-view:not(.hide):not(.hidden)) .contain,
+.gradio-container:has(.myst-render-page #myst-render-detail-wrapper:not(.hide):not(.hidden)) .main,
+.gradio-container:has(.myst-render-page #myst-render-detail-wrapper:not(.hide):not(.hidden)) .main > .wrap,
+.gradio-container:has(.myst-render-page #myst-render-detail-wrapper:not(.hide):not(.hidden)) .contain {{
+    overflow: hidden !important;
+    max-height: 100dvh !important;
+}}
+.gradio-container:has(.myst-render-page .myst-render-detail-view:not(.hide):not(.hidden)) .myst-render-page:not(.hide):not(.hidden),
+.gradio-container:has(.myst-render-page #myst-render-detail-wrapper:not(.hide):not(.hidden)) .myst-render-page:not(.hide):not(.hidden) {{
+    overflow: hidden !important;
 }}
 .gradio-container:has(.myst-render-page:not(.hide):not(.hidden)) .main,
 .gradio-container:has(.myst-render-page:not(.hide):not(.hidden)) .main > .wrap,
@@ -6735,26 +6770,55 @@ footer {{ visibility: hidden; }}
     flex: 1 1 auto !important;
     width: 100% !important;
     min-height: 0 !important;
-    overflow: visible !important;
+    height: 100% !important;
+    overflow: hidden !important;
     display: flex !important;
     flex-direction: column !important;
-    gap: 0.28rem !important;
+    gap: 0 !important;
     padding: 0 !important;
     margin: 0 !important;
     align-items: stretch !important;
     box-sizing: border-box !important;
+}}
+.gradio-container .myst-render-page .myst-render-stack > .block:has(#myst-render-detail-wrapper:not(.hide):not(.hidden)),
+.gradio-container .myst-render-page .myst-render-stack > .form:has(#myst-render-detail-wrapper:not(.hide):not(.hidden)),
+.gradio-container .myst-render-page .myst-render-stack > .column#myst-render-detail-wrapper:not(.hide):not(.hidden),
+.gradio-container .myst-render-page .myst-render-stack > .column.myst-render-detail-wrapper:not(.hide):not(.hidden) {{
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    height: 100% !important;
+    width: 100% !important;
+    overflow: hidden !important;
+    align-items: stretch !important;
+    display: flex !important;
+    flex-direction: column !important;
 }}
 .gradio-container .myst-render-page .myst-render-split-row {{
     flex: 1 1 auto !important;
     gap: 0 !important;
     margin: 0 !important;
     padding: 0 !important;
-    min-height: calc(100dvh - 11.5rem) !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
     background: #0a0a0f !important;
     border-radius: 12px !important;
     overflow: hidden !important;
     border: 1px solid #2a2a3a !important;
     align-items: stretch !important;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    box-sizing: border-box !important;
+}}
+.gradio-container .myst-render-page .myst-render-split-row > .block,
+.gradio-container .myst-render-page .myst-render-split-row > .form,
+.gradio-container .myst-render-page .myst-render-split-row > .column {{
+    min-height: 0 !important;
+    height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    box-sizing: border-box !important;
 }}
 .gradio-container .myst-render-page .myst-render-left-panel,
 .gradio-container .myst-render-page .myst-render-right-panel {{
@@ -6773,6 +6837,24 @@ footer {{ visibility: hidden; }}
     overflow-x: hidden !important;
     overflow-y: auto !important;
     border-radius: 12px 0 0 12px !important;
+    display: flex !important;
+    flex-direction: column !important;
+}}
+.gradio-container .myst-render-page .myst-render-left-panel > .block,
+.gradio-container .myst-render-page .myst-render-left-panel > .form,
+.gradio-container .myst-render-page .myst-render-left-panel > .column {{
+    flex: 0 0 auto !important;
+    min-height: 0 !important;
+    width: 100% !important;
+}}
+.gradio-container .myst-render-page .myst-render-left-panel > .block:has(.myst-render-verbose-desc),
+.gradio-container .myst-render-page .myst-render-left-panel > .form:has(.myst-render-verbose-desc),
+.gradio-container .myst-render-page .myst-render-left-panel > .column:has(.myst-render-verbose-desc) {{
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
 }}
 .gradio-container .myst-render-page .myst-render-right-panel {{
     flex: 2 1 66% !important;
@@ -6781,6 +6863,17 @@ footer {{ visibility: hidden; }}
     display: flex !important;
     flex-direction: column !important;
     border-radius: 0 12px 12px 0 !important;
+    overflow: hidden !important;
+}}
+.gradio-container .myst-render-page .myst-render-right-panel > .block,
+.gradio-container .myst-render-page .myst-render-right-panel > .form,
+.gradio-container .myst-render-page .myst-render-right-panel > .column {{
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
 }}
 .gradio-container .myst-render-page .myst-render-panel-header {{
     color: #aaaaaa !important;
@@ -6801,6 +6894,11 @@ footer {{ visibility: hidden; }}
     padding: 0 !important;
     width: 100% !important;
     max-width: 100% !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    height: 100% !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
     box-sizing: border-box !important;
 }}
 .gradio-container .myst-render-page .myst-render-verbose-desc h3,
@@ -6823,9 +6921,9 @@ footer {{ visibility: hidden; }}
     flex: 1 1 auto !important;
     width: 100% !important;
     min-width: 0 !important;
-    min-height: 520px !important;
+    min-height: 0 !important;
     height: 100% !important;
-    max-height: none !important;
+    max-height: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
     background: #0a0a0f !important;
@@ -6833,6 +6931,29 @@ footer {{ visibility: hidden; }}
     border-radius: 0 12px 12px 0 !important;
     box-sizing: border-box !important;
     overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+}}
+.gradio-container .myst-render-page .myst-render-detail-plot > .block,
+.gradio-container .myst-render-page .myst-render-detail-plot > .form,
+.gradio-container .myst-render-page .myst-render-detail-plot > .column,
+.gradio-container .myst-render-page #myst-render-detail-plot > .block,
+.gradio-container .myst-render-page #myst-render-detail-plot > .form,
+.gradio-container .myst-render-page #myst-render-detail-plot > .column,
+.gradio-container .myst-render-page #myst-render-detail-plot .wrap,
+.gradio-container .myst-render-page #myst-render-detail-plot .plot-container {{
+    flex: 1 1 auto !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    margin: 0 !important;
+    padding: 0 !important;
 }}
 .gradio-container .myst-render-page .myst-render-detail-plot .plot-container,
 .gradio-container .myst-render-page .myst-render-detail-plot .js-plotly-plot,
@@ -6841,11 +6962,16 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-render-page .myst-render-detail-plot-host .js-plotly-plot,
 .gradio-container .myst-render-page .myst-render-detail-plot-host .plotly-graph-div,
 .gradio-container .myst-render-page #myst-render-detail-plot .plot-container,
-.gradio-container .myst-render-page #myst-render-detail-plot .plotly-graph-div {{
+.gradio-container .myst-render-page #myst-render-detail-plot .plotly-graph-div,
+.gradio-container .myst-render-page #myst-render-detail-plot figure,
+.gradio-container .myst-render-page #myst-render-detail-plot img,
+.gradio-container .myst-render-page #myst-render-detail-plot canvas,
+.gradio-container .myst-render-page #myst-render-detail-plot svg {{
     width: 100% !important;
     height: 100% !important;
-    min-height: 550px !important;
-    max-height: none !important;
+    min-height: 0 !important;
+    max-height: 100% !important;
+    flex: 1 1 auto !important;
 }}
 .gradio-container .myst-render-page .myst-render-detail-wrap {{
     width: 100% !important;
@@ -6902,8 +7028,8 @@ footer {{ visibility: hidden; }}
     flex: 1 1 auto !important;
     width: 100% !important;
     height: 100% !important;
-    min-height: calc(100dvh - 8.25rem) !important;
-    max-height: none !important;
+    min-height: 0 !important;
+    max-height: 100% !important;
 }}
 .gradio-container .myst-render-page .myst-render-detail-plot-host .modebar {{
     right: 0.35rem !important;
@@ -7050,6 +7176,11 @@ footer {{ visibility: hidden; }}
     width: 100% !important;
     overflow: hidden !important;
     align-items: stretch !important;
+}}
+.gradio-container:has(.myst-render-page .myst-render-detail-view:not(.hide):not(.hidden)) .myst-render-page .myst-render-stack,
+.gradio-container:has(.myst-render-page #myst-render-detail-wrapper:not(.hide):not(.hidden)) .myst-render-page .myst-render-stack {{
+    max-height: calc(100dvh - var(--myst-status-chrome-height, 8.75rem)) !important;
+    overflow: hidden !important;
 }}
 .gradio-container .myst-render-page .myst-render-preset-nav-wrap,
 .gradio-container .myst-render-page .myst-render-preset-nav-wrap.row,
