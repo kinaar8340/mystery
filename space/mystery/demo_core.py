@@ -31,6 +31,8 @@ UNIT_CELL_VIEW_DIST = 14.0
 UNIT_CELL_AXIS_HALF = 2.35
 UNIT_CELL_SHAPE_ONLY_AXIS_HALF = 1.35
 UNIT_CELL_SHAPE_ONLY_VIEW_DIST = 9.0
+UNIT_CELL_DETAIL_AXIS_HALF = 2.75
+UNIT_CELL_DETAIL_VIEW_DIST = 22.0
 
 BOOT_QUOTE_STRING = "TEST EVERYTHING, HOLD FAST WHAT IS GOOD AND KNOW YOUR GOD"
 
@@ -2292,6 +2294,8 @@ def run_residual_explorer(
     deform_pressure: float = 0.35,
     view_elev: float = UNIT_CELL_VIEW_ELEV,
     view_azim: float = UNIT_CELL_VIEW_AZIM,
+    view_dist: float | None = None,
+    axis_half: float | None = None,
     shape_only: bool = False,
 ) -> tuple[str, str, plt.Figure]:
     """Return explorer metrics, viewport header HTML, and unit-cell figure."""
@@ -2307,14 +2311,21 @@ def run_residual_explorer(
         f"Deformation pressure : {p * 100:.1f}%  ({mode})\n"
         f"View                 : elev {view_elev:.0f}° · azim {view_azim:.0f}°"
     )
+    fig_kwargs: dict[str, float | bool] = {
+        "view_elev": view_elev,
+        "view_azim": view_azim,
+        "shape_only": shape_only,
+    }
+    if view_dist is not None:
+        fig_kwargs["view_dist"] = float(view_dist)
+    if axis_half is not None:
+        fig_kwargs["axis_half"] = float(axis_half)
     fig = build_unit_cell_figure(
         delta_z=delta_z,
         delta_side=abs(d_side) * 0.5,
         r_val=r_val,
         pressure=p,
-        view_elev=view_elev,
-        view_azim=view_azim,
-        shape_only=shape_only,
+        **fig_kwargs,
     )
     header = build_unit_cell_viewport_header_html(pressure=p, r_val=r_val)
     return metrics, header, fig
