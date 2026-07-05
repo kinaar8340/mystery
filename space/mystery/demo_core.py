@@ -37,6 +37,11 @@ UNIT_CELL_DETAIL_AXIS_HALF = 3.05
 UNIT_CELL_DETAIL_VIEW_DIST = 30.0
 UNIT_CELL_DETAIL_PLOTLY_RADIUS = 3.0
 UNIT_CELL_DETAIL_PLOTLY_HEIGHT = 680
+# Detail-page typography only (Figures 3×3 grid uses shape_only — unchanged).
+UNIT_CELL_DETAIL_LABEL_FONT_MAIN = 13
+UNIT_CELL_DETAIL_LABEL_FONT_SMALL = 12
+UNIT_CELL_DETAIL_AXIS_TITLE_FONT = 12
+UNIT_CELL_DETAIL_AXIS_TICK_FONT = 11
 
 BOOT_QUOTE_STRING = "TEST EVERYTHING, HOLD FAST WHAT IS GOOD AND KNOW YOUR GOD"
 
@@ -772,6 +777,26 @@ _UNIT_CELL_GREEN = "#22c55e"
 _UNIT_CELL_BLUE = "#2563eb"
 _UNIT_CELL_BOTTOM_CONVEX = "#5a9ef2"
 _UNIT_CELL_LABEL_TEXT = "#ffffff"
+
+# Matplotlib mathtext (detail render only).
+_DETAIL_LABEL_T_PHI_MPL = r"$T_{\phi} \propto \phi^{2}$"
+_DETAIL_LABEL_T_E_MPL = r"$T_{e} \propto e^{2}$"
+_DETAIL_LABEL_T_PI_MPL = r"$T_{\pi} \propto \pi^{2}$"
+_DETAIL_LABEL_DELTA_SIDE_MPL = r"$\delta_{\mathrm{side}}$ (inward)"
+_DETAIL_LABEL_DELTA_Z_MPL = r"$\delta_{z}$ (push)"
+_DETAIL_AXIS_PHI_MPL = r"$\phi$-face"
+_DETAIL_AXIS_E_MPL = r"$e$-face"
+_DETAIL_AXIS_PI_MPL = r"$\pi$-face"
+
+# Plotly Scatter3d text (no LaTeX) — ISO-style Unicode for detail render only.
+_DETAIL_LABEL_T_PHI_PLY = "T_φ ∝ φ²"
+_DETAIL_LABEL_T_E_PLY = "T_e ∝ e²"
+_DETAIL_LABEL_T_PI_PLY = "T_π ∝ π²"
+_DETAIL_LABEL_DELTA_SIDE_PLY = "δ_side (inward)"
+_DETAIL_LABEL_DELTA_Z_PLY = "δ_z (push)"
+_DETAIL_AXIS_PHI_PLY = "φ-face"
+_DETAIL_AXIS_E_PLY = "e-face"
+_DETAIL_AXIS_PI_PLY = "π-face"
 
 
 def _clamp_deform_pressure(pressure: float) -> float:
@@ -1880,10 +1905,16 @@ def build_unit_cell_figure(
     eq_blue = _UNIT_CELL_BLUE
 
     bg = "#000000"
-    font_main = 12
-    font_small = 11
-    font_tick = 10
-    font_axis = 12
+    if shape_only:
+        font_main = 12
+        font_small = 11
+        font_tick = 10
+        font_axis = 12
+    else:
+        font_main = UNIT_CELL_DETAIL_LABEL_FONT_MAIN
+        font_small = UNIT_CELL_DETAIL_LABEL_FONT_SMALL
+        font_tick = UNIT_CELL_DETAIL_AXIS_TICK_FONT
+        font_axis = UNIT_CELL_DETAIL_AXIS_TITLE_FONT
     caption_neutral = _UNIT_CELL_LABEL_TEXT
 
     frame_size = UNIT_CELL_FIGSIZE if figsize is None else figsize
@@ -1969,7 +2000,7 @@ def build_unit_cell_figure(
             ax,
             phi_face,
             (2.35, 0.45, 0.25),
-            r"$T_\phi \propto \phi^2$",
+            _DETAIL_LABEL_T_PHI_MPL,
             eq_red,
             fontsize=font_main,
         )
@@ -1977,7 +2008,7 @@ def build_unit_cell_figure(
             ax,
             e_face,
             (0.45, 2.35, 0.25),
-            r"$T_e \propto e^2$",
+            _DETAIL_LABEL_T_E_MPL,
             eq_green,
             fontsize=font_main,
         )
@@ -1985,7 +2016,7 @@ def build_unit_cell_figure(
             ax,
             pi_face,
             (0.45, 0.25, 2.35),
-            r"$T_\pi \propto \pi^2$",
+            _DETAIL_LABEL_T_PI_MPL,
             eq_blue,
             fontsize=font_main,
         )
@@ -1993,7 +2024,7 @@ def build_unit_cell_figure(
             ax,
             _anchor_point((-s, 0.0, 0.0), s, p, delta_z, side),
             (-2.35, -0.55, 0.35),
-            r"$\delta_\mathrm{side}$ (inward)",
+            _DETAIL_LABEL_DELTA_SIDE_MPL,
             eq_green,
             fontsize=font_small,
         )
@@ -2001,7 +2032,7 @@ def build_unit_cell_figure(
             ax,
             pi_face,
             (-0.55, -2.25, 2.35),
-            r"$\delta_z$ (push)",
+            _DETAIL_LABEL_DELTA_Z_MPL,
             eq_blue,
             fontsize=font_small,
         )
@@ -2018,9 +2049,9 @@ def build_unit_cell_figure(
     if shape_only:
         _hide_unit_cell_scene_axes(ax)
     else:
-        ax.set_xlabel("φ-face", color=caption_neutral, fontsize=font_axis, labelpad=4)
-        ax.set_ylabel("e-face", color=caption_neutral, fontsize=font_axis, labelpad=4)
-        ax.set_zlabel("π-face", color=caption_neutral, fontsize=font_axis, labelpad=4)
+        ax.set_xlabel(_DETAIL_AXIS_PHI_MPL, color=caption_neutral, fontsize=font_axis, labelpad=4)
+        ax.set_ylabel(_DETAIL_AXIS_E_MPL, color=caption_neutral, fontsize=font_axis, labelpad=4)
+        ax.set_zlabel(_DETAIL_AXIS_PI_MPL, color=caption_neutral, fontsize=font_axis, labelpad=4)
         ax.tick_params(colors=caption_neutral, labelsize=font_tick)
         for axis in (ax.xaxis, ax.yaxis, ax.zaxis):
             axis.pane.fill = False
@@ -2048,7 +2079,10 @@ def _rgba_to_plotly_color(rgba: tuple[float, float, float, float]) -> str:
 def _plotly_detail_axis(half: float, *, title: str) -> dict:
     return dict(
         range=[-half, half],
-        title=dict(text=title, font=dict(color="#b0b0b0", size=11)),
+        title=dict(
+            text=title,
+            font=dict(color="#b0b0b0", size=UNIT_CELL_DETAIL_AXIS_TITLE_FONT),
+        ),
         visible=True,
         showgrid=True,
         showline=True,
@@ -2058,7 +2092,7 @@ def _plotly_detail_axis(half: float, *, title: str) -> dict:
         gridcolor="#505050",
         linecolor="#b0b0b0",
         zerolinecolor="#505050",
-        tickfont=dict(color="#b0b0b0", size=10),
+        tickfont=dict(color="#b0b0b0", size=UNIT_CELL_DETAIL_AXIS_TICK_FONT),
         backgroundcolor="rgba(0,0,0,0)",
     )
 
@@ -2069,7 +2103,7 @@ def _plotly_leader_trace(
     text: str,
     line_color: str,
     *,
-    font_size: float = 12,
+    font_size: float = UNIT_CELL_DETAIL_LABEL_FONT_MAIN,
 ):
     import plotly.graph_objects as go
 
@@ -2089,7 +2123,11 @@ def _plotly_leader_trace(
             z=[label_pos[2]],
             mode="text",
             text=[text],
-            textfont=dict(color=_UNIT_CELL_LABEL_TEXT, size=font_size),
+            textfont=dict(
+                color=_UNIT_CELL_LABEL_TEXT,
+                size=int(font_size),
+                family="Arial, Helvetica, sans-serif",
+            ),
             hoverinfo="skip",
             showlegend=False,
         ),
@@ -2111,34 +2149,34 @@ def _append_plotly_detail_overlays(
         _plotly_leader_trace(
             phi_face,
             (2.35, 0.45, 0.25),
-            r"$T_\phi \propto \phi^2$",
+            _DETAIL_LABEL_T_PHI_PLY,
             _UNIT_CELL_RED,
         ),
         _plotly_leader_trace(
             e_face,
             (0.45, 2.35, 0.25),
-            r"$T_e \propto e^2$",
+            _DETAIL_LABEL_T_E_PLY,
             _UNIT_CELL_GREEN,
         ),
         _plotly_leader_trace(
             pi_face,
             (0.45, 0.25, 2.35),
-            r"$T_\pi \propto \pi^2$",
+            _DETAIL_LABEL_T_PI_PLY,
             _UNIT_CELL_BLUE,
         ),
         _plotly_leader_trace(
             _anchor_point((-s, 0.0, 0.0), s, p, delta_z, side),
             (-2.35, -0.55, 0.35),
-            r"$\delta_\mathrm{side}$ (inward)",
+            _DETAIL_LABEL_DELTA_SIDE_PLY,
             _UNIT_CELL_GREEN,
-            font_size=11,
+            font_size=UNIT_CELL_DETAIL_LABEL_FONT_SMALL,
         ),
         _plotly_leader_trace(
             pi_face,
             (-0.55, -2.25, 2.35),
-            r"$\delta_z$ (push)",
+            _DETAIL_LABEL_DELTA_Z_PLY,
             _UNIT_CELL_BLUE,
-            font_size=11,
+            font_size=UNIT_CELL_DETAIL_LABEL_FONT_SMALL,
         ),
     ]
     for line_trace, text_trace in overlays:
@@ -2266,9 +2304,9 @@ def build_unit_cell_plotly_figure(
     )
     if detail_scene:
         scene_axes = dict(
-            xaxis=_plotly_detail_axis(half, title="φ-face"),
-            yaxis=_plotly_detail_axis(half, title="e-face"),
-            zaxis=_plotly_detail_axis(half, title="π-face"),
+            xaxis=_plotly_detail_axis(half, title=_DETAIL_AXIS_PHI_PLY),
+            yaxis=_plotly_detail_axis(half, title=_DETAIL_AXIS_E_PLY),
+            zaxis=_plotly_detail_axis(half, title=_DETAIL_AXIS_PI_PLY),
             bgcolor="#000000",
             aspectmode="cube",
             camera=_plotly_camera_from_view(view_elev, view_azim, radius=cam_radius),

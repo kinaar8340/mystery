@@ -139,7 +139,9 @@ NAV_THEME: dict = {
         "font_size": "14px",
         "font_weight": "500",
         "text_color": "#e0e0e0",
+        "padding_left": "12px",
         "padding_right": "10px",
+        "vertical_align": "center",
         "width": "4.75rem",
     },
     "nav_grid_gap": "4px",
@@ -933,7 +935,9 @@ def _nav_theme_gradio_css_vars() -> str:
     --nav-label-font-size: {nl["font_size"]};
     --nav-label-font-weight: {nl["font_weight"]};
     --nav-label-text-color: {nl["text_color"]};
+    --nav-label-padding-left: {nl["padding_left"]};
     --nav-label-padding-right: {nl["padding_right"]};
+    --nav-label-vertical-align: {nl["vertical_align"]};
     --nav-label-width: {nl["width"]};
     --nav-grid-gap: {NAV_THEME["nav_grid_gap"]};
     --nav-btn-height: {nb["height"]};
@@ -2128,6 +2132,7 @@ footer {{
     flex: 0 0 var(--nav-label-width, 4.75rem) !important;
     width: 100% !important;
     height: 100% !important;
+    padding-left: var(--nav-label-padding-left, 12px) !important;
     padding-right: var(--nav-label-padding-right, 10px) !important;
     margin-right: 0 !important;
     color: var(--nav-label-text-color, #e0e0e0) !important;
@@ -2289,10 +2294,13 @@ footer {{
 }}
 .gradio-container .myst-nav-bar-row > .block:has(.vqc-source-label),
 .gradio-container .myst-nav-bar-row > .form:has(.vqc-source-label) {{
+    display: flex !important;
+    align-items: center !important;
     flex: 0 0 var(--nav-label-width, 4.75rem) !important;
     width: var(--nav-label-width, 4.75rem) !important;
     min-width: var(--nav-label-width, 4.75rem) !important;
     max-width: var(--nav-label-width, 4.75rem) !important;
+    height: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
 }}
@@ -2789,9 +2797,14 @@ footer {{
     max-width: 100% !important;
 }}
 .gradio-container #myst-gravity-child-nav > .block:has(.vqc-source-label),
-.gradio-container #myst-render-sub-nav > .block:has(.vqc-source-label) {{
+.gradio-container #myst-gravity-child-nav > .form:has(.vqc-source-label),
+.gradio-container #myst-render-sub-nav > .block:has(.vqc-source-label),
+.gradio-container #myst-render-sub-nav > .form:has(.vqc-source-label) {{
+    display: flex !important;
+    align-items: center !important;
     min-width: 0 !important;
     width: auto !important;
+    height: 100% !important;
     flex: 0 0 var(--nav-label-width, 4.75rem) !important;
 }}
 .gradio-container .myst-unified-nav-host {{
@@ -3210,7 +3223,8 @@ footer {{
     display: flex !important;
     align-items: center !important;
     justify-content: flex-start !important;
-    padding: 0 var(--nav-label-padding-right, 10px) 0 0 !important;
+    height: 100% !important;
+    padding: 0 var(--nav-label-padding-right, 10px) 0 var(--nav-label-padding-left, 12px) !important;
     font-size: var(--nav-label-font-size, 14px) !important;
     font-weight: var(--nav-label-font-weight, 500) !important;
     color: var(--nav-label-text-color, #e0e0e0) !important;
@@ -3343,9 +3357,13 @@ footer {{
     width: 100% !important;
 }}
 .gradio-container .vqc-nav-row-label {{
+    display: flex !important;
+    align-items: center !important;
     justify-self: start !important;
     align-self: center !important;
     text-align: left !important;
+    height: 100% !important;
+    padding-left: var(--nav-label-padding-left, 12px) !important;
     padding-right: var(--nav-label-padding-right, 10px) !important;
 }}
 .gradio-container .vqc-nav-cell,
