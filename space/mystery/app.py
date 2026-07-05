@@ -11882,6 +11882,13 @@ def build_app() -> gr.Blocks:
                 gravity_active_letter,
                 viewport_col,
             ]
+            demo_platonic_flip_nav_outputs = [
+                active_shape,
+                *[unified_nav[shape_id] for shape_id in _SHAPE_NAV_IDS],
+                *[gravity_letter_btns[letter] for letter in _GRAVITY_CHILD_NAV_LETTERS],
+                gravity_active_letter,
+                viewport_col,
+            ]
             for letter in _GRAVITY_CHILD_NAV_LETTERS:
                 btn = gravity_letter_btns[letter]
                 if letter == "A":
@@ -12078,13 +12085,6 @@ def build_app() -> gr.Blocks:
             *platonic_geo_interrupt_outputs,
             *[gravity_letter_btns[letter] for letter in _GRAVITY_CHILD_NAV_LETTERS],
             gravity_active_letter,
-        ]
-        demo_platonic_flip_nav_outputs = [
-            active_shape,
-            *[unified_nav[shape_id] for shape_id in _SHAPE_NAV_IDS],
-            *[gravity_letter_btns[letter] for letter in _GRAVITY_CHILD_NAV_LETTERS],
-            gravity_active_letter,
-            viewport_col,
         ]
         readme_nav_outputs = [*nav_outputs, readme_return_page, *demo_nav_outputs]
 
