@@ -3915,16 +3915,18 @@ def render_breathing_demo_video(
     return _encode_loop_video(rgb_frames, fps=fps)
 
 
-def render_demo_e_d4_deformation_video(
+def render_platonic_deformation_demo_video(
+    dimension: str,
     *,
     fps: int = 10,
     dpi: int = 80,
     n_per_segment: int = 8,
 ) -> str:
-    """MP4 D4 tetrahedron convex→rigid→concave loop for Demo E (Figures preset sweep)."""
-    config = get_dimension_config("D4")
-    face_count = int(config.get("face_count", 4))
-    subdiv = int(config.get("subdiv", 6))
+    """MP4 platonic convex→rigid→concave loop — shape_only solid mesh (Figures preset sweep)."""
+    dim = str(dimension or _DEFAULT_DIMENSION).strip().upper()
+    config = get_dimension_config(dim)
+    face_count = int(config.get("face_count", geodesic_face_count(dim)))
+    subdiv = int(config.get("subdiv", 8))
     phi = 1.0
     e = 1.0
     pi = 1.0
@@ -3957,10 +3959,22 @@ def render_demo_e_d4_deformation_video(
         rgb_frames.append(_figure_to_rgb(fig, dpi=dpi))
         plt.close(fig)
     print(
-        f"[demo-e] render_demo_e_d4_deformation_video: {len(rgb_frames)} frames",
+        f"[demo-{dim.lower()}] render_platonic_deformation_demo_video: {len(rgb_frames)} frames",
         flush=True,
     )
     return _encode_loop_video(rgb_frames, fps=fps)
+
+
+def render_demo_e_d4_deformation_video(
+    *,
+    fps: int = 10,
+    dpi: int = 80,
+    n_per_segment: int = 8,
+) -> str:
+    """MP4 D4 tetrahedron convex→rigid→concave loop for Demo E."""
+    return render_platonic_deformation_demo_video(
+        "D4", fps=fps, dpi=dpi, n_per_segment=n_per_segment
+    )
 
 
 def render_demo_g_d8_deformation_video(
@@ -3969,46 +3983,34 @@ def render_demo_g_d8_deformation_video(
     dpi: int = 80,
     n_per_segment: int = 8,
 ) -> str:
-    """MP4 D8 octahedron convex→rigid→concave loop for Demo G (Figures preset sweep)."""
-    config = get_dimension_config("D8")
-    face_count = int(config.get("face_count", 8))
-    subdiv = int(config.get("subdiv", 10))
-    phi = 1.0
-    e = 1.0
-    pi = 1.0
-    kappa = KAPPA_DOC
-    delta_z = 0.1
-    alpha = 1.0
-    beta = 1.0
-    view_elev = 26.0
-    view_azim = 45.0
-    r_val = residual_from_scales(phi, e, pi)
-    d_side = delta_side_contraction(delta_z, r_val, kappa, alpha=alpha, beta=beta)
-    side = abs(d_side) * 0.5
-    pressures = _breathing_deformation_path(n_per_segment=n_per_segment)
-    rgb_frames: list[np.ndarray] = []
-    for pressure_val in pressures:
-        fig = build_unit_cell_figure(
-            delta_z=delta_z,
-            delta_side=side,
-            r_val=r_val,
-            pressure=float(pressure_val),
-            view_elev=view_elev,
-            view_azim=view_azim,
-            show_curvature_grid=False,
-            shape_only=True,
-            solid_mesh=True,
-            dpi=dpi,
-            face_count=face_count,
-            subdiv=subdiv,
-        )
-        rgb_frames.append(_figure_to_rgb(fig, dpi=dpi))
-        plt.close(fig)
-    print(
-        f"[demo-g] render_demo_g_d8_deformation_video: {len(rgb_frames)} frames",
-        flush=True,
+    """MP4 D8 octahedron convex→rigid→concave loop for Demo G."""
+    return render_platonic_deformation_demo_video(
+        "D8", fps=fps, dpi=dpi, n_per_segment=n_per_segment
     )
-    return _encode_loop_video(rgb_frames, fps=fps)
+
+
+def render_demo_h_d12_deformation_video(
+    *,
+    fps: int = 10,
+    dpi: int = 80,
+    n_per_segment: int = 8,
+) -> str:
+    """MP4 D12 dodecahedron convex→rigid→concave loop for Demo H."""
+    return render_platonic_deformation_demo_video(
+        "D12", fps=fps, dpi=dpi, n_per_segment=n_per_segment
+    )
+
+
+def render_demo_i_d20_deformation_video(
+    *,
+    fps: int = 10,
+    dpi: int = 80,
+    n_per_segment: int = 8,
+) -> str:
+    """MP4 D20 icosahedron convex→rigid→concave loop for Demo I."""
+    return render_platonic_deformation_demo_video(
+        "D20", fps=fps, dpi=dpi, n_per_segment=n_per_segment
+    )
 
 
 def render_gravity_demo_animation_video(

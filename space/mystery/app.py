@@ -44,8 +44,7 @@ from demo_core import (
     render_unit_cell_deformation_video,
     render_gravity_demo_animation_video,
     render_breathing_demo_video,
-    render_demo_e_d4_deformation_video,
-    render_demo_g_d8_deformation_video,
+    render_platonic_deformation_demo_video,
     build_breathing_animation_figure,
     build_readme_full_page_html,
     create_breathing_animation,
@@ -1239,7 +1238,7 @@ def _demo_viewport_preserve_active_demo(
     dim_fig,
     active_shape: str = _NO_ACTIVE_SHAPE,
 ) -> tuple:
-    """Viewport stack — latched Demo E/G/F video; else D* geodesic; else Demo A startup."""
+    """Viewport stack — latched Demo E/G/H/I/F video; else D* geodesic; else Demo A startup."""
     letter = _normalize_active_demo_letter(active_demo_letter)
     if letter in _DEFORM_DEMO_LETTERS:
         try:
@@ -8077,8 +8076,14 @@ _RENDER_DETAIL_IMAGE_DPI = 120
 # (16 keypad + 1 legacy back skip + 9 child nav + 2 edit btns + 20 sliders + …).
 _GRAVITY_PRESET_IMAGE_OUT_INDEX = 51
 _GRAVITY_CHILD_NAV_LETTERS: tuple[str, ...] = tuple(chr(ord("A") + i) for i in range(9))
-# Demo E — D4 tetrahedron; Demo G — D8 octahedron; Demo F — D6 breathing cube loop.
-_DEFORM_DEMO_LETTERS: frozenset[str] = frozenset({"E", "G"})
+# Demo E/G/H/I — platonic deform loops; Demo F — D6 breathing cube loop.
+_DEFORM_DEMO_LETTERS: frozenset[str] = frozenset({"E", "G", "H", "I"})
+_DEFORM_DEMO_SHAPE_BY_LETTER: dict[str, str] = {
+    "E": "D4",
+    "G": "D8",
+    "H": "D12",
+    "I": "D20",
+}
 _BREATHING_DEMO_LETTERS: frozenset[str] = frozenset({"F"})
 _GRAVITY_HOME_DIALS = {
     "phi": 1.0,
@@ -8846,6 +8851,8 @@ _APP_DIR = os.path.dirname(os.path.abspath(__file__))
 _BUNDLED_DEMO_DEFORM_VIDEOS: dict[str, str] = {
     "E": os.path.join(_APP_DIR, "assets", "demo_e_d4_tetrahedron.mp4"),
     "G": os.path.join(_APP_DIR, "assets", "demo_g_d8_octahedron.mp4"),
+    "H": os.path.join(_APP_DIR, "assets", "demo_h_d12_dodecahedron.mp4"),
+    "I": os.path.join(_APP_DIR, "assets", "demo_i_d20_icosahedron.mp4"),
 }
 _BUNDLED_BREATHING_VIDEO = os.path.join(_APP_DIR, "assets", "demo_a_breathing.gif")
 _DEMO_A_STARTUP_HTML_CACHE: str | None = None
@@ -8965,10 +8972,11 @@ def _get_deform_demo_video_path(letter: str) -> str:
         if bundled and os.path.isfile(bundled):
             raw_path = bundled
             print(f"[demo-{active.lower()}] using bundled asset: {raw_path}", flush=True)
-        elif active == "G":
-            raw_path = render_demo_g_d8_deformation_video(n_per_segment=8, fps=10, dpi=80)
         else:
-            raw_path = render_demo_e_d4_deformation_video(n_per_segment=8, fps=10, dpi=80)
+            dimension = _DEFORM_DEMO_SHAPE_BY_LETTER.get(active, "D4")
+            raw_path = render_platonic_deformation_demo_video(
+                dimension, n_per_segment=8, fps=10, dpi=80
+            )
         _DEMO_DEFORM_VIDEO_CACHE[active] = _cache_media_for_gradio(raw_path)
     return _DEMO_DEFORM_VIDEO_CACHE[active]
 
@@ -9025,14 +9033,11 @@ def _get_rigid_preset_plotly_figure(*, active_shape: str = _NO_ACTIVE_SHAPE):
     return fig
 
 
-def _get_d4_rigid_preset_plotly_figure():
-    """D4 tetrahedron rigid preset — Demo E video encode fallback."""
-    return _get_rigid_preset_plotly_figure(active_shape="D4")
-
-
-def _get_d8_rigid_preset_plotly_figure():
-    """D8 octahedron rigid preset — Demo G video encode fallback."""
-    return _get_rigid_preset_plotly_figure(active_shape="D8")
+def _deform_demo_fallback_figure(letter: str):
+    """Rigid geodesic Plotly fallback while a deform demo MP4 encodes."""
+    active = str(letter or "E").strip().upper()
+    shape = _DEFORM_DEMO_SHAPE_BY_LETTER.get(active, "D4")
+    return _get_rigid_preset_plotly_figure(active_shape=shape)
 
 
 def _demo_viewport_show_plot(fig) -> tuple:
@@ -9122,20 +9127,15 @@ def _switch_gravity_demo_viewport_only(letter: str) -> tuple:
 
 
 def _demo_deform_viewport_only(letter: str) -> tuple:
-    """Demo E/G viewport — platonic deformation MP4 after tab latch."""
+    """Demo E/G/H/I viewport — platonic deformation MP4 after tab latch."""
     active = str(letter or "E").strip().upper()
     if active not in _DEFORM_DEMO_LETTERS:
         active = "E"
-    fallback = (
-        _get_d8_rigid_preset_plotly_figure
-        if active == "G"
-        else _get_d4_rigid_preset_plotly_figure
-    )
     try:
         return _demo_viewport_show_deform_video(active)
     except Exception:
         logger.exception("deform demo video failed for Demo %s", active)
-        return _demo_viewport_show_plot(fallback())
+        return _demo_viewport_show_plot(_deform_demo_fallback_figure(active))
 
 
 def _demo_breathing_viewport_only() -> tuple:
@@ -9157,7 +9157,7 @@ def _demo_startup_viewport_only() -> tuple:
 
 
 def _launch_deform_demo(letter: str) -> tuple:
-    """Demo E/G — latch + platonic deformation loop (single-shot fallback for programmatic calls)."""
+    """Demo E/G/H/I — latch + platonic deformation loop (single-shot fallback for programmatic calls)."""
     active = str(letter or "E").strip().upper()
     if active not in _DEFORM_DEMO_LETTERS:
         active = "E"
@@ -12424,7 +12424,9 @@ def build_app() -> gr.Blocks:
                 f"Mode                 : {d6_config.get('description', '')}\n"
                 f"Demo E               : D4 tetrahedron deformation loop\n"
                 f"Demo F               : breathing unit-cell loop\n"
-                f"Demo G               : D8 octahedron deformation loop"
+                f"Demo G               : D8 octahedron deformation loop\n"
+                f"Demo H               : D12 dodecahedron deformation loop\n"
+                f"Demo I               : D20 icosahedron deformation loop"
             )
             header = build_unit_cell_viewport_header_html(pressure=float(dials["pressure"]))
             control_levels = _format_gravity_control_panel_html(dials, 0)
