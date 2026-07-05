@@ -925,6 +925,7 @@ _MAIN_NAV_TAB_SPECS = (
 # D* = geodesic face count (D4 → 4 faces, D6 → 6, …, D20 → 20).
 _SHAPE_NAV_IDS: tuple[str, ...] = ("D4", "D6", "D8", "D12", "D20")
 _DEFAULT_ACTIVE_SHAPE = "D6"
+_NO_ACTIVE_SHAPE = ""
 
 
 def _nav_theme_gap_rem(*, half: bool = False) -> float:
@@ -1041,21 +1042,39 @@ def _place_back_button(
     return gr.Button(label, **kwargs)
 
 
+def _is_active_shape(shape: str) -> bool:
+    return str(shape or "").strip().upper() in _SHAPE_NAV_IDS
+
+
 def _shape_btn_classes(shape: str, active_shape: str) -> list[str]:
     classes = ["vqc-source-tab", "shape-btn"]
-    if shape == active_shape:
+    active = str(active_shape or "").strip().upper()
+    if active and shape == active:
         classes.append("active")
     return classes
 
 
+def _clear_active_shape() -> tuple:
+    """No platonic tab latched — boot and neutral nav state."""
+    updates: list = [gr.update(value=_NO_ACTIVE_SHAPE)]
+    for shape_id in _SHAPE_NAV_IDS:
+        updates.append(
+            gr.update(
+                elem_classes=_shape_btn_classes(shape_id, _NO_ACTIVE_SHAPE),
+                interactive=True,
+                variant="secondary",
+            )
+        )
+    return tuple(updates)
+
+
 def _set_active_shape(new_shape: str) -> tuple:
     """Latching updates for geodesic face-count tabs (D4–D20)."""
-    shape = str(new_shape or _DEFAULT_ACTIVE_SHAPE).strip().upper()
+    shape = str(new_shape or "").strip().upper()
     if shape not in _SHAPE_NAV_IDS:
-        shape = _DEFAULT_ACTIVE_SHAPE
+        return _clear_active_shape()
     updates: list = [gr.update(value=shape)]
     for shape_id in _SHAPE_NAV_IDS:
-        is_active = shape_id == shape
         updates.append(
             gr.update(
                 elem_classes=_shape_btn_classes(shape_id, shape),
@@ -1067,7 +1086,8 @@ def _set_active_shape(new_shape: str) -> tuple:
 
 
 def _normalize_shape_id(shape: str) -> str:
-    dim = str(shape or _DEFAULT_ACTIVE_SHAPE).strip().upper()
+    """Resolve config/slider shape — falls back to D6 when none latched."""
+    dim = str(shape or "").strip().upper()
     return dim if dim in _SHAPE_NAV_IDS else _DEFAULT_ACTIVE_SHAPE
 
 
@@ -1237,12 +1257,14 @@ def _main_nav_btn_update(page_id: str, *, active: bool) -> gr.Update:
 def _place_unified_main_nav(
     *,
     active_page: str = "home",
-    default_shape: str = _DEFAULT_ACTIVE_SHAPE,
+    default_shape: str = _NO_ACTIVE_SHAPE,
 ) -> dict[str, gr.Button]:
     """Single top bar on all pages: Home/Figures/Presets/Docs + D4–D20."""
     buttons: dict[str, gr.Button] = {}
     active = str(active_page or "home").strip().lower()
-    default_shape = default_shape if default_shape in _SHAPE_NAV_IDS else _DEFAULT_ACTIVE_SHAPE
+    boot_shape = str(default_shape or "").strip().upper()
+    if boot_shape not in _SHAPE_NAV_IDS:
+        boot_shape = _NO_ACTIVE_SHAPE
     with gr.Row(
         elem_id="myst-unified-main-nav",
         elem_classes=[
@@ -1264,7 +1286,7 @@ def _place_unified_main_nav(
             for shape_id in _SHAPE_NAV_IDS:
                 buttons[shape_id] = _nav_theme_button(
                     shape_id,
-                    elem_classes=_shape_btn_classes(shape_id, default_shape),
+                    elem_classes=_shape_btn_classes(shape_id, boot_shape),
                     interactive=True,
                 )
     return buttons
@@ -9066,11 +9088,12 @@ def _format_gravity_status_catalog_rows(
 
 def _gravity_status_panel_title(shape: str, slot: int) -> str:
     """Presets panel title — e.g. D6 · PRESET 01 · menu · parameter catalog."""
-    dim = _normalize_shape_id(shape)
     preset_id = _gravity_preset_id(slot)
     profile = _GRAVITY_PRESET_SLOT_LABELS.get(slot)
     subtitle = f" · {profile}" if profile else ""
-    return f"{dim} · PRESET {preset_id}{subtitle}"
+    if _is_active_shape(shape):
+        return f"{str(shape).strip().upper()} · PRESET {preset_id}{subtitle}"
+    return f"PRESET {preset_id}{subtitle}"
 
 
 def _format_gravity_status_cell_html(
@@ -11010,11 +11033,11 @@ def build_app() -> gr.Blocks:
                 variant="secondary",
             )
 
-        active_shape = gr.State(_DEFAULT_ACTIVE_SHAPE)
+        active_shape = gr.State(_NO_ACTIVE_SHAPE)
         with gr.Column(elem_classes=["myst-unified-nav-host"], scale=0):
             unified_nav = _place_unified_main_nav(
                 active_page="home",
-                default_shape=_DEFAULT_ACTIVE_SHAPE,
+                default_shape=_NO_ACTIVE_SHAPE,
             )
             _add_gap_row(slot="after-main-nav")
             with gr.Column(
@@ -11044,7 +11067,10 @@ def build_app() -> gr.Blocks:
         )
         _init_preset_tui = _format_gravity_menu_tui_html()
         _init_control_levels = _format_gravity_control_panel_html(_GRAVITY_HOME_DIALS, 0)
-        _init_status_panel = _format_gravity_status_grid_html(active_slot=None)
+        _init_status_panel = _format_gravity_status_grid_html(
+            active_slot=None,
+            shape=_NO_ACTIVE_SHAPE,
+        )
         _init_render_panel = _format_render_grid_html()
 
         readme_return_page = gr.State("home")
@@ -11916,7 +11942,7 @@ def build_app() -> gr.Blocks:
             face_count = int(d6_config.get("face_count", geodesic_face_count(_DEFAULT_ACTIVE_SHAPE)))
             metrics = (
                 f"φ²+e²≈π²  ·  Demo A startup\n"
-                f"Geodesic faces       : {face_count}  ({_DEFAULT_ACTIVE_SHAPE})\n"
+                f"Geodesic faces       : {face_count}  (select D4–D20)\n"
                 f"Mode                 : {d6_config.get('description', '')}\n"
                 f"Demo F               : breathing unit-cell loop"
             )
@@ -11926,7 +11952,7 @@ def build_app() -> gr.Blocks:
                 *_nav_to_page_with_demo("home"),
                 *_demo_active_tab_updates("A"),
                 "A",
-                *_set_active_shape(_DEFAULT_ACTIVE_SHAPE),
+                *_clear_active_shape(),
                 *slider_updates,
                 *viewport,
                 metrics,
