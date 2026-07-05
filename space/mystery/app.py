@@ -49,10 +49,6 @@ from demo_core import (
     residual_from_scales,
     run_residual_explorer,
     run_residual_explorer_plotly,
-    UNIT_CELL_DETAIL_AXIS_HALF,
-    UNIT_CELL_DETAIL_DPI,
-    UNIT_CELL_DETAIL_FIGSIZE,
-    UNIT_CELL_DETAIL_VIEW_DIST,
     plotly_figure_to_render_detail_html,
 
 
@@ -1595,6 +1591,27 @@ WALLPAPER_HEAD = f"""
             || document.querySelector('.myst-render-detail-plot-host .plotly-graph-div')
             || document.querySelector('.myst-render-detail-plot-host #myst-render-detail-plotly');
     }}
+    function mystPinRenderDetailModebar() {{
+        var plotHost = document.querySelector('#myst-render-detail-plot')
+            || document.querySelector('.myst-render-detail-plot');
+        if (!plotHost) return;
+        plotHost.querySelectorAll('.modebar').forEach(function(modebar) {{
+            modebar.classList.remove('modebar--hover', 'vertical');
+            modebar.classList.add('modebar--enable', 'horizontal');
+            modebar.style.opacity = '1';
+            modebar.style.visibility = 'visible';
+            modebar.style.display = 'flex';
+            modebar.querySelectorAll('.modebar-group').forEach(function(group) {{
+                group.style.opacity = '1';
+                group.style.visibility = 'visible';
+            }});
+        }});
+        var plotDiv = mystRenderDetailPlotEl();
+        if (plotDiv && plotDiv._context && plotDiv._context.config) {{
+            plotDiv._context.config.displayModeBar = true;
+            plotDiv._context.config.displaylogo = false;
+        }}
+    }}
     function mystResizeRenderDetailPlot() {{
         var split = document.querySelector('.myst-render-split-row');
         var rightPanel = document.querySelector('.myst-render-right-panel');
@@ -1616,12 +1633,20 @@ WALLPAPER_HEAD = f"""
                 window.Plotly.Plots.resize(plotDiv);
             }} catch (_err) {{}}
         }}
-        plotHost.querySelectorAll('img, canvas, svg, .plot-container, figure').forEach(function(el) {{
+        plotHost.querySelectorAll('img, canvas, .plot-container, figure').forEach(function(el) {{
             el.style.width = '100%';
             el.style.height = '100%';
             el.style.maxHeight = '100%';
             el.style.minHeight = '0';
         }});
+        plotHost.querySelectorAll('svg').forEach(function(el) {{
+            if (el.closest('.modebar')) return;
+            el.style.width = '100%';
+            el.style.height = '100%';
+            el.style.maxHeight = '100%';
+            el.style.minHeight = '0';
+        }});
+        mystPinRenderDetailModebar();
     }}
     function mystBindRenderGridClicks() {{
         document.querySelectorAll('.myst-render-cell-clickable[data-slot]').forEach(function(cell) {{
@@ -6838,8 +6863,7 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-render-page .myst-render-left-panel {{
     flex: 1 1 33% !important;
     max-width: 34% !important;
-    overflow-x: hidden !important;
-    overflow-y: auto !important;
+    overflow: hidden !important;
     border-radius: 12px 0 0 12px !important;
     display: flex !important;
     flex-direction: column !important;
@@ -6847,18 +6871,31 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-render-page .myst-render-left-panel > .block,
 .gradio-container .myst-render-page .myst-render-left-panel > .form,
 .gradio-container .myst-render-page .myst-render-left-panel > .column {{
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    height: 100% !important;
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+}}
+.gradio-container .myst-render-page .myst-render-left-panel .myst-render-detail-scroll {{
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    max-height: var(--myst-render-detail-max-height, calc(100dvh - 11.5rem)) !important;
+    width: 100% !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    padding-right: 0.35rem !important;
+    box-sizing: border-box !important;
+}}
+.gradio-container .myst-render-page .myst-render-left-panel .myst-render-detail-scroll > .block,
+.gradio-container .myst-render-page .myst-render-left-panel .myst-render-detail-scroll > .form,
+.gradio-container .myst-render-page .myst-render-left-panel .myst-render-detail-scroll > .column {{
     flex: 0 0 auto !important;
     min-height: 0 !important;
     width: 100% !important;
-}}
-.gradio-container .myst-render-page .myst-render-left-panel > .block:has(.myst-render-verbose-desc),
-.gradio-container .myst-render-page .myst-render-left-panel > .form:has(.myst-render-verbose-desc),
-.gradio-container .myst-render-page .myst-render-left-panel > .column:has(.myst-render-verbose-desc) {{
-    flex: 1 1 auto !important;
-    min-height: 0 !important;
-    overflow: hidden !important;
-    display: flex !important;
-    flex-direction: column !important;
+    overflow: visible !important;
 }}
 .gradio-container .myst-render-page .myst-render-right-panel {{
     flex: 2 1 66% !important;
@@ -6898,11 +6935,7 @@ footer {{ visibility: hidden; }}
     padding: 0 !important;
     width: 100% !important;
     max-width: 100% !important;
-    flex: 1 1 auto !important;
-    min-height: 0 !important;
-    height: 100% !important;
-    overflow-x: hidden !important;
-    overflow-y: auto !important;
+    overflow: visible !important;
     box-sizing: border-box !important;
 }}
 .gradio-container .myst-render-page .myst-render-verbose-desc h3,
@@ -6929,15 +6962,16 @@ footer {{ visibility: hidden; }}
     height: 100% !important;
     max-height: 100% !important;
     margin: 0 !important;
-    padding: 0 !important;
+    padding: 0 0 0.25rem 0 !important;
     background: #0a0a0f !important;
     border: none !important;
     border-radius: 0 12px 12px 0 !important;
     box-sizing: border-box !important;
-    overflow: hidden !important;
+    overflow: visible !important;
     display: flex !important;
     flex-direction: column !important;
     align-items: stretch !important;
+    justify-content: center !important;
 }}
 .gradio-container .myst-render-page .myst-render-detail-plot > .block,
 .gradio-container .myst-render-page .myst-render-detail-plot > .form,
@@ -6971,11 +7005,77 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-render-page #myst-render-detail-plot img,
 .gradio-container .myst-render-page #myst-render-detail-plot canvas,
 .gradio-container .myst-render-page #myst-render-detail-plot svg {{
+    width: auto !important;
+    max-width: 100% !important;
+    height: auto !important;
+    max-height: calc(100% - 2.5rem) !important;
+    min-height: 0 !important;
+    margin: 0 auto !important;
+    object-fit: contain !important;
+    display: block !important;
+}}
+.gradio-container .myst-render-page #myst-render-detail-plot .plotly-graph-div,
+.gradio-container .myst-render-page #myst-render-detail-plot .js-plotly-plot {{
     width: 100% !important;
     height: 100% !important;
     min-height: 0 !important;
     max-height: 100% !important;
     flex: 1 1 auto !important;
+}}
+.gradio-container .myst-render-page #myst-render-detail-plot .plot-container {{
+    position: relative !important;
+    overflow: visible !important;
+}}
+.gradio-container .myst-render-page #myst-render-detail-plot .modebar-container {{
+    position: absolute !important;
+    top: 0.4rem !important;
+    right: 0.45rem !important;
+    left: auto !important;
+    bottom: auto !important;
+    z-index: 48 !important;
+    pointer-events: auto !important;
+}}
+.gradio-container .myst-render-page #myst-render-detail-plot .modebar {{
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    justify-content: flex-end !important;
+    align-items: center !important;
+    gap: 2px !important;
+    width: auto !important;
+    min-width: 0 !important;
+    height: auto !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    padding: 4px 5px !important;
+    border-radius: 6px !important;
+    background: rgba(0, 0, 0, 0.72) !important;
+    border: 1px solid rgba(201, 162, 39, 0.38) !important;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5) !important;
+    right: 0 !important;
+    top: 0 !important;
+}}
+.gradio-container .myst-render-page #myst-render-detail-plot .modebar.modebar--hover .modebar-group,
+.gradio-container .myst-render-page #myst-render-detail-plot .modebar .modebar-group {{
+    opacity: 1 !important;
+    visibility: visible !important;
+}}
+.gradio-container .myst-render-page #myst-render-detail-plot .modebar-btn {{
+    width: 28px !important;
+    height: 28px !important;
+    min-width: 28px !important;
+    min-height: 28px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}}
+.gradio-container .myst-render-page #myst-render-detail-plot .modebar-btn svg {{
+    width: 18px !important;
+    height: 18px !important;
+    max-width: 18px !important;
+    max-height: 18px !important;
 }}
 .gradio-container .myst-render-page .myst-render-detail-wrap {{
     width: 100% !important;
@@ -7035,7 +7135,11 @@ footer {{ visibility: hidden; }}
     min-height: 0 !important;
     max-height: 100% !important;
 }}
-.gradio-container .myst-render-page .myst-render-detail-plot-host .modebar {{
+.gradio-container .myst-render-page .myst-render-detail-plot-host .modebar,
+.gradio-container .myst-render-page .myst-render-detail-plotly-wrap .modebar {{
+    display: flex !important;
+    opacity: 1 !important;
+    visibility: visible !important;
     right: 0.35rem !important;
     top: 0.2rem !important;
 }}
@@ -7867,8 +7971,11 @@ def _build_render_preset_meta() -> dict[int, dict[str, str]]:
                 f"**Shape type:** {shape['shape_type']}  \n"
                 f"**Pressure level:** {shape['pressure_label']} ({shape['deform_display']})  \n\n"
                 f"{shape['summary']}  \n\n"
-                "Drag to orbit 360°, scroll or pinch to zoom; use the Plotly toolbar "
-                "for pan, reset, download, and fullscreen."
+                "**Controls**  \n"
+                "• **Left-click + drag** — rotate (orbit)  \n"
+                "• **Right-click + hold + drag** — pan  \n"
+                "• **Mouse wheel** — zoom in/out  \n"
+                "• **Toolbar** (upper right) — reset camera, download, fullscreen"
             ),
             "params": params,
             "notes": shape["summary"],
@@ -8709,17 +8816,10 @@ def _render_preset_plot_html(slot: int, *, dpi: int = _RENDER_GRID_IMAGE_DPI) ->
 
 
 def _render_preset_detail_plot_html(slot: int) -> str:
-    """Detailed matplotlib unit-cell plot for the Render preset detail view."""
+    """Interactive Plotly unit-cell plot for the Render preset detail view."""
     dials = _render_preset_dials_for_slot(slot)
-    _metrics, _header, fig = run_residual_explorer(
-        *_dials_to_explorer_args(dials),
-        shape_only=False,
-        view_dist=UNIT_CELL_DETAIL_VIEW_DIST,
-        axis_half=UNIT_CELL_DETAIL_AXIS_HALF,
-        figsize=UNIT_CELL_DETAIL_FIGSIZE,
-        dpi=UNIT_CELL_DETAIL_DPI,
-    )
-    return _gravity_fig_to_viewport_file_html(fig, dpi=UNIT_CELL_DETAIL_DPI)
+    fig = run_residual_explorer_plotly(*_dials_to_explorer_args(dials), detail_scene=True)
+    return plotly_figure_to_render_detail_html(fig)
 
 
 def _render_detail_plot_fallback(slot: int, error: Exception):
@@ -8756,17 +8856,26 @@ def _render_detail_plot_fallback(slot: int, error: Exception):
 
 
 def _generate_render_detail_plot(slot: int):
-    """Full annotated matplotlib 3D figure for the Render preset detail view."""
+    """Interactive Plotly 3D figure with grid, labels, and toolbar for preset detail."""
     slot = int(slot)
     try:
         dials = _render_preset_dials_for_slot(slot)
-        _metrics, _header, fig = run_residual_explorer(
-            *_dials_to_explorer_args(dials),
-            shape_only=False,
-            view_dist=UNIT_CELL_DETAIL_VIEW_DIST,
-            axis_half=UNIT_CELL_DETAIL_AXIS_HALF,
-            figsize=UNIT_CELL_DETAIL_FIGSIZE,
-            dpi=UNIT_CELL_DETAIL_DPI,
+        fig = run_residual_explorer_plotly(*_dials_to_explorer_args(dials), detail_scene=True)
+        fig.update_layout(
+            autosize=True,
+            height=680,
+            margin=dict(l=4, r=4, t=4, b=4),
+            paper_bgcolor="#000000",
+            plot_bgcolor="#000000",
+            uirevision="mystery-render-detail",
+        )
+        fig.update_layout(
+            modebar=dict(
+                orientation="h",
+                bgcolor="rgba(0, 0, 0, 0.72)",
+                color="#e8e0f8",
+                activecolor="#c9a227",
+            )
         )
         return fig
     except Exception as exc:
@@ -10600,13 +10709,19 @@ def build_app() -> gr.Blocks:
                             min_width=280,
                             elem_classes=["myst-render-left-panel"],
                         ):
-                            gr.HTML(
-                                "<div class='myst-render-panel-header'>Preset Details</div>"
-                            )
-                            render_detail_description = gr.Markdown(
-                                elem_classes=["myst-render-verbose-desc"],
-                                container=True,
-                            )
+                            with gr.Column(
+                                elem_classes=[
+                                    "myst-render-detail-scroll",
+                                    "myst-scrollable-panel",
+                                ],
+                            ):
+                                gr.HTML(
+                                    "<div class='myst-render-panel-header'>Preset Details</div>"
+                                )
+                                render_detail_description = gr.Markdown(
+                                    elem_classes=["myst-render-verbose-desc"],
+                                    container=True,
+                                )
                         with gr.Column(
                             scale=2,
                             min_width=560,

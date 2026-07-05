@@ -31,10 +31,12 @@ UNIT_CELL_VIEW_DIST = 14.0
 UNIT_CELL_AXIS_HALF = 2.35
 UNIT_CELL_SHAPE_ONLY_AXIS_HALF = 1.35
 UNIT_CELL_SHAPE_ONLY_VIEW_DIST = 9.0
-UNIT_CELL_DETAIL_FIGSIZE = (8.5, 8.5)
+UNIT_CELL_DETAIL_FIGSIZE = (6.5, 6.5)
 UNIT_CELL_DETAIL_DPI = 100
 UNIT_CELL_DETAIL_AXIS_HALF = 3.05
 UNIT_CELL_DETAIL_VIEW_DIST = 30.0
+UNIT_CELL_DETAIL_PLOTLY_RADIUS = 3.0
+UNIT_CELL_DETAIL_PLOTLY_HEIGHT = 680
 
 BOOT_QUOTE_STRING = "TEST EVERYTHING, HOLD FAST WHAT IS GOOD AND KNOW YOUR GOD"
 
@@ -2043,6 +2045,107 @@ def _rgba_to_plotly_color(rgba: tuple[float, float, float, float]) -> str:
     return f"rgba({int(r * 255)},{int(g * 255)},{int(b * 255)},{float(a):.3f})"
 
 
+def _plotly_detail_axis(half: float, *, title: str) -> dict:
+    return dict(
+        range=[-half, half],
+        title=dict(text=title, font=dict(color="#b0b0b0", size=11)),
+        visible=True,
+        showgrid=True,
+        showline=True,
+        zeroline=True,
+        showticklabels=True,
+        showbackground=True,
+        gridcolor="#505050",
+        linecolor="#b0b0b0",
+        zerolinecolor="#505050",
+        tickfont=dict(color="#b0b0b0", size=10),
+        backgroundcolor="rgba(0,0,0,0)",
+    )
+
+
+def _plotly_leader_trace(
+    anchor: tuple[float, float, float],
+    label_pos: tuple[float, float, float],
+    text: str,
+    line_color: str,
+    *,
+    font_size: float = 12,
+):
+    import plotly.graph_objects as go
+
+    return (
+        go.Scatter3d(
+            x=[anchor[0], label_pos[0]],
+            y=[anchor[1], label_pos[1]],
+            z=[anchor[2], label_pos[2]],
+            mode="lines",
+            line=dict(color=line_color, width=4),
+            hoverinfo="skip",
+            showlegend=False,
+        ),
+        go.Scatter3d(
+            x=[label_pos[0]],
+            y=[label_pos[1]],
+            z=[label_pos[2]],
+            mode="text",
+            text=[text],
+            textfont=dict(color=_UNIT_CELL_LABEL_TEXT, size=font_size),
+            hoverinfo="skip",
+            showlegend=False,
+        ),
+    )
+
+
+def _append_plotly_detail_overlays(
+    traces: list,
+    *,
+    s: float,
+    p: float,
+    delta_z: float,
+    side: float,
+) -> None:
+    phi_face = _anchor_point((s, 0.0, 0.0), s, p, delta_z, side)
+    e_face = _anchor_point((0.0, s, 0.0), s, p, delta_z, side)
+    pi_face = _anchor_point((0.0, 0.0, s), s, p, delta_z, side)
+    overlays = [
+        _plotly_leader_trace(
+            phi_face,
+            (2.35, 0.45, 0.25),
+            r"$T_\phi \propto \phi^2$",
+            _UNIT_CELL_RED,
+        ),
+        _plotly_leader_trace(
+            e_face,
+            (0.45, 2.35, 0.25),
+            r"$T_e \propto e^2$",
+            _UNIT_CELL_GREEN,
+        ),
+        _plotly_leader_trace(
+            pi_face,
+            (0.45, 0.25, 2.35),
+            r"$T_\pi \propto \pi^2$",
+            _UNIT_CELL_BLUE,
+        ),
+        _plotly_leader_trace(
+            _anchor_point((-s, 0.0, 0.0), s, p, delta_z, side),
+            (-2.35, -0.55, 0.35),
+            r"$\delta_\mathrm{side}$ (inward)",
+            _UNIT_CELL_GREEN,
+            font_size=11,
+        ),
+        _plotly_leader_trace(
+            pi_face,
+            (-0.55, -2.25, 2.35),
+            r"$\delta_z$ (push)",
+            _UNIT_CELL_BLUE,
+            font_size=11,
+        ),
+    ]
+    for line_trace, text_trace in overlays:
+        traces.append(line_trace)
+        traces.append(text_trace)
+
+
 def _plotly_camera_from_view(
     elev: float,
     azim: float,
@@ -2071,6 +2174,8 @@ def build_unit_cell_plotly_figure(
     view_azim: float = UNIT_CELL_VIEW_AZIM,
     axis_half: float = UNIT_CELL_AXIS_HALF,
     show_curvature_grid: bool = True,
+    detail_scene: bool = False,
+    camera_radius: float | None = None,
 ):
     """Interactive Plotly unit-cell mesh for Render preset detail view."""
     import plotly.graph_objects as go
@@ -2150,14 +2255,29 @@ def build_unit_cell_plotly_figure(
             )
         )
 
+    if detail_scene:
+        _append_plotly_detail_overlays(traces, s=s, p=p, delta_z=delta_z, side=side)
+
     half = float(max(2.0, axis_half))
-    fig = go.Figure(data=traces)
-    fig.update_layout(
-        paper_bgcolor="#000000",
-        plot_bgcolor="#000000",
-        margin=dict(l=0, r=0, t=0, b=0, pad=0),
-        autosize=True,
-        scene=dict(
+    cam_radius = (
+        float(UNIT_CELL_DETAIL_PLOTLY_RADIUS)
+        if camera_radius is None and detail_scene
+        else (2.35 if camera_radius is None else float(camera_radius))
+    )
+    if detail_scene:
+        scene_axes = dict(
+            xaxis=_plotly_detail_axis(half, title="φ-face"),
+            yaxis=_plotly_detail_axis(half, title="e-face"),
+            zaxis=_plotly_detail_axis(half, title="π-face"),
+            bgcolor="#000000",
+            aspectmode="cube",
+            camera=_plotly_camera_from_view(view_elev, view_azim, radius=cam_radius),
+            dragmode="orbit",
+        )
+        layout_margin = dict(l=4, r=4, t=4, b=4, pad=0)
+        layout_height = UNIT_CELL_DETAIL_PLOTLY_HEIGHT
+    else:
+        scene_axes = dict(
             xaxis=dict(
                 range=[-half, half],
                 visible=False,
@@ -2187,12 +2307,25 @@ def build_unit_cell_plotly_figure(
             ),
             bgcolor="#000000",
             aspectmode="cube",
-            camera=_plotly_camera_from_view(view_elev, view_azim),
+            camera=_plotly_camera_from_view(view_elev, view_azim, radius=cam_radius),
             dragmode="orbit",
-        ),
+        )
+        layout_margin = dict(l=0, r=0, t=0, b=0, pad=0)
+        layout_height = None
+
+    fig = go.Figure(data=traces)
+    layout_kw: dict = dict(
+        paper_bgcolor="#000000",
+        plot_bgcolor="#000000",
+        margin=layout_margin,
+        autosize=True,
+        scene=scene_axes,
         showlegend=False,
         uirevision="mystery-unit-cell",
     )
+    if layout_height is not None:
+        layout_kw["height"] = int(layout_height)
+    fig.update_layout(**layout_kw)
     return fig
 
 
@@ -2207,6 +2340,7 @@ def run_residual_explorer_plotly(
     deform_pressure: float = 0.35,
     view_elev: float = UNIT_CELL_VIEW_ELEV,
     view_azim: float = UNIT_CELL_VIEW_AZIM,
+    detail_scene: bool = False,
 ):
     """Return an interactive Plotly unit-cell figure for preset detail view."""
     r_val = residual_from_scales(phi_sq_scale, e_sq_scale, pi_sq_scale)
@@ -2218,6 +2352,9 @@ def run_residual_explorer_plotly(
         pressure=deform_pressure,
         view_elev=view_elev,
         view_azim=view_azim,
+        axis_half=UNIT_CELL_DETAIL_AXIS_HALF if detail_scene else UNIT_CELL_AXIS_HALF,
+        detail_scene=detail_scene,
+        camera_radius=UNIT_CELL_DETAIL_PLOTLY_RADIUS if detail_scene else None,
     )
 
 
