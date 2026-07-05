@@ -39,6 +39,7 @@ from demo_core import (
     resolve_demo_a_startup_image_source_path,
     startup_image_static_paths,
     wallpaper_static_paths,
+    build_platonic_viewport_overlay_html,
     build_unit_cell_viewport_header_html,
     unit_cell_error_placeholder_html,
     render_unit_cell_deformation_video,
@@ -1267,7 +1268,11 @@ def _demo_viewport_preserve_active_demo(
             logger.exception("breathing video preserve failed on dimension switch")
             return _demo_viewport_show_plot(dim_fig)
     if _is_active_shape(active_shape):
-        return _demo_viewport_show_plot(dim_fig)
+        try:
+            return _demo_viewport_show_platonic_shape_video(active_shape)
+        except Exception:
+            logger.exception("platonic shape video preserve failed on dimension switch")
+            return _demo_viewport_show_plot(dim_fig)
     if letter == "A":
         try:
             return _demo_viewport_show_startup_image()
@@ -1298,7 +1303,7 @@ def _set_active_shape_and_apply(new_shape: str, active_demo_letter: str = "A") -
         metrics,
         header,
         control_levels,
-        _gravity_viewport_wrapper_update(active_demo_letter),
+        _gravity_viewport_wrapper_update(active_demo_letter, active_shape=shape),
     )
 
 
@@ -3037,6 +3042,70 @@ footer {{
 }}
 .gradio-container .myst-gravity-page .myst-demo-viewport .plotly .main-svg .bg {{
     fill: rgba(0, 0, 0, {_MYST_DEMO_VIEWPORT_ALPHA}) !important;
+}}
+.gradio-container .myst-gravity-page .myst-viewport-transition #myst-gravity-viewport-plot,
+.gradio-container .myst-gravity-page .myst-viewport-transition #myst-gravity-viewport,
+.gradio-container .myst-gravity-page .myst-viewport-transition #myst-gravity-viewport-startup {{
+    transition: opacity 0.38s ease !important;
+}}
+.gradio-container .myst-gravity-page .myst-viewport-transition #myst-gravity-viewport video,
+.gradio-container .myst-gravity-page .myst-viewport-transition #myst-gravity-viewport-plot .plot-container,
+.gradio-container .myst-gravity-page .myst-viewport-transition #myst-gravity-viewport-startup .html-container {{
+    animation: myst-viewport-fade-in 0.42s ease forwards;
+}}
+@keyframes myst-viewport-fade-in {{
+    from {{
+        opacity: 0;
+        transform: translateY(4px);
+    }}
+    to {{
+        opacity: 1;
+        transform: translateY(0);
+    }}
+}}
+.gradio-container .myst-gravity-page #myst-gravity-viewport-overlay,
+.gradio-container .myst-gravity-page .myst-gravity-viewport-overlay {{
+    position: absolute !important;
+    inset: 0 !important;
+    z-index: 8 !important;
+    pointer-events: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+    overflow: visible !important;
+}}
+.gradio-container .myst-gravity-page #myst-gravity-viewport-overlay .block,
+.gradio-container .myst-gravity-page #myst-gravity-viewport-overlay .html-container,
+.gradio-container .myst-gravity-page #myst-gravity-viewport-overlay .prose {{
+    position: absolute !important;
+    inset: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+    overflow: visible !important;
+}}
+.gradio-container .myst-gravity-page .myst-gravity-viewport-overlay-inner {{
+    position: absolute !important;
+    left: 0.85rem !important;
+    bottom: 0.85rem !important;
+    max-width: min(22rem, 72%) !important;
+    padding: 0.45rem 0.65rem 0.5rem !important;
+    border-radius: 8px !important;
+    background: rgba(8, 8, 14, 0.62) !important;
+    border: 1px solid rgba(90, 90, 120, 0.45) !important;
+    backdrop-filter: blur(4px);
+}}
+.gradio-container .myst-gravity-page .myst-gravity-viewport-overlay-title {{
+    color: #f5e6c8 !important;
+    font-size: 0.86rem !important;
+    font-weight: 600 !important;
+    line-height: 1.25 !important;
+}}
+.gradio-container .myst-gravity-page .myst-gravity-viewport-overlay-sub {{
+    color: #b8b8c8 !important;
+    font-size: 0.74rem !important;
+    line-height: 1.3 !important;
+    margin-top: 0.15rem !important;
 }}
 #myst-gravity-viewport .plotly-graph-div,
 #myst-gravity-viewport-plotly,
@@ -8108,6 +8177,20 @@ _DEFORM_DEMO_SHAPE_BY_LETTER: dict[str, str] = {
     "H": "D12",
     "I": "D20",
 }
+_PLATONIC_SHAPE_TO_DEFORM_LETTER: dict[str, str] = {
+    shape: letter for letter, shape in _DEFORM_DEMO_SHAPE_BY_LETTER.items()
+}
+_DEMO_VIEWPORT_OVERLAY_BY_LETTER: dict[str, tuple[str, str]] = {
+    "A": ("Demo A", "Startup landing · select a demo tab"),
+    "B": ("Demo B", "E→F→G→H→I pipeline stitch loop"),
+    "C": ("Demo C", "D6 · Cube · moderate convex preset"),
+    "D": ("Demo D", "D6 · Cube · mild convex preset"),
+    "E": ("Demo E", "D4 · Tetrahedron · breathing deformation"),
+    "F": ("Demo F", "D6 · Cube · full breathing cycle"),
+    "G": ("Demo G", "D8 · Octahedron · breathing deformation"),
+    "H": ("Demo H", "D12 · Dodecahedron · breathing deformation"),
+    "I": ("Demo I", "D20 · Icosahedron · breathing deformation"),
+}
 _BREATHING_DEMO_LETTERS: frozenset[str] = frozenset({"F"})
 _GRAVITY_HOME_DIALS = {
     "phi": 1.0,
@@ -8856,17 +8939,73 @@ def _demo_active_tab_updates(active_letter: str, *, b_i_enabled: bool = True) ->
     return _gravity_child_nav_btn_updates(slot, b_i_enabled=b_i_enabled)
 
 
-def _gravity_viewport_wrapper_classes(active_letter: str) -> list[str]:
-    """Viewport shell classes — Demo A–I use semi-transparent panel background."""
-    classes = ["myst-gravity-single-viewport"]
+def _gravity_viewport_wrapper_classes(
+    active_letter: str,
+    *,
+    active_shape: str = _NO_ACTIVE_SHAPE,
+) -> list[str]:
+    """Viewport shell classes — Demo A–I and latched D* use semi-transparent panel."""
+    classes = ["myst-gravity-single-viewport", "myst-viewport-transition"]
     letter = str(active_letter or "A").strip().upper()
     if letter in _GRAVITY_CHILD_NAV_LETTERS:
         classes.append("myst-demo-viewport")
+    elif _is_active_shape(active_shape):
+        classes.append("myst-demo-viewport")
+        classes.append("myst-platonic-viewport")
     return classes
 
 
-def _gravity_viewport_wrapper_update(active_letter: str) -> gr.Update:
-    return gr.update(elem_classes=_gravity_viewport_wrapper_classes(active_letter))
+def _gravity_viewport_wrapper_update(
+    active_letter: str,
+    *,
+    active_shape: str = _NO_ACTIVE_SHAPE,
+) -> gr.Update:
+    return gr.update(
+        elem_classes=_gravity_viewport_wrapper_classes(
+            active_letter,
+            active_shape=active_shape,
+        )
+    )
+
+
+def _demo_viewport_overlay_html(*, title: str = "", subtitle: str = "") -> str:
+    if not title:
+        return ""
+    safe_title = html.escape(title)
+    safe_sub = html.escape(subtitle)
+    return (
+        f'<div class="myst-gravity-viewport-overlay-inner myst-viewport-fade-in" role="status">'
+        f'<div class="myst-gravity-viewport-overlay-title">{safe_title}</div>'
+        f'<div class="myst-gravity-viewport-overlay-sub">{safe_sub}</div>'
+        f"</div>"
+    )
+
+
+def _demo_viewport_overlay_update(
+    *,
+    title: str = "",
+    subtitle: str = "",
+    visible: bool = True,
+) -> gr.Update:
+    if not visible or not title:
+        return gr.update(value="", visible=False)
+    return gr.update(value=_demo_viewport_overlay_html(title=title, subtitle=subtitle), visible=True)
+
+
+def _demo_letter_overlay_copy(letter: str) -> tuple[str, str]:
+    active = str(letter or "A").strip().upper()
+    return _DEMO_VIEWPORT_OVERLAY_BY_LETTER.get(active, (f"Demo {active}", ""))
+
+
+def _get_platonic_shape_video_path(shape: str) -> str:
+    """Looping deformation MP4 for a latched platonic D* tab."""
+    dim = str(shape or _DEFAULT_ACTIVE_SHAPE).strip().upper()
+    if dim == "D6":
+        return _get_breathing_demo_video_path()
+    deform_letter = _PLATONIC_SHAPE_TO_DEFORM_LETTER.get(dim)
+    if deform_letter:
+        return _get_deform_demo_video_path(deform_letter)
+    return _get_breathing_demo_video_path()
 
 
 _GRAVITY_DEMO_VIDEO_CACHE: dict[str, str] = {}
@@ -9108,61 +9247,89 @@ def _deform_demo_fallback_figure(letter: str):
     return _get_rigid_preset_plotly_figure(active_shape=shape)
 
 
-def _demo_viewport_show_plot(fig) -> tuple:
+def _demo_viewport_show_plot(fig, *, overlay_title: str = "", overlay_sub: str = "") -> tuple:
     """Show interactive Plotly preset (B–I and dial-driven updates)."""
     return (
         gr.update(value=fig, visible=True),
         gr.update(value=None, visible=False),
         gr.update(value="", visible=False),
+        _demo_viewport_overlay_update(
+            title=overlay_title,
+            subtitle=overlay_sub,
+            visible=bool(overlay_title),
+        ),
     )
 
 
 def _demo_viewport_show_preset_video(letter: str) -> tuple:
     """Show D6 preset convex MP4 via gr.Video (HF-safe cached path)."""
     video_path = _get_preset_demo_video_path(letter)
+    title, subtitle = _demo_letter_overlay_copy(letter)
     return (
         gr.update(value=None, visible=False),
         gr.update(value=video_path, visible=True, autoplay=True, loop=True),
         gr.update(value="", visible=False),
+        _demo_viewport_overlay_update(title=title, subtitle=subtitle),
     )
 
 
 def _demo_viewport_show_pipeline_video() -> tuple:
     """Show stitched E→F→G→H→I pipeline MP4 via gr.Video (HF-safe cached path)."""
     video_path = _get_pipeline_demo_video_path()
+    title, subtitle = _demo_letter_overlay_copy("B")
     return (
         gr.update(value=None, visible=False),
         gr.update(value=video_path, visible=True, autoplay=True, loop=True),
         gr.update(value="", visible=False),
+        _demo_viewport_overlay_update(title=title, subtitle=subtitle),
     )
 
 
 def _demo_viewport_show_deform_video(letter: str) -> tuple:
     """Show looping platonic deformation MP4 via gr.Video (HF-safe cached path)."""
     video_path = _get_deform_demo_video_path(letter)
+    title, subtitle = _demo_letter_overlay_copy(letter)
     return (
         gr.update(value=None, visible=False),
         gr.update(value=video_path, visible=True, autoplay=True, loop=True),
         gr.update(value="", visible=False),
+        _demo_viewport_overlay_update(title=title, subtitle=subtitle),
     )
 
 
 def _demo_viewport_show_breathing_video() -> tuple:
     """Show looping breathing GIF/MP4 via gr.Video (HF-safe cached path)."""
     video_path = _get_breathing_demo_video_path()
+    title, subtitle = _demo_letter_overlay_copy("F")
     return (
         gr.update(value=None, visible=False),
         gr.update(value=video_path, visible=True, autoplay=True, loop=True),
         gr.update(value="", visible=False),
+        _demo_viewport_overlay_update(title=title, subtitle=subtitle),
+    )
+
+
+def _demo_viewport_show_platonic_shape_video(shape: str) -> tuple:
+    """Show clean deformation loop for a latched platonic D* tab."""
+    dim = str(shape or _DEFAULT_ACTIVE_SHAPE).strip().upper()
+    video_path = _get_platonic_shape_video_path(dim)
+    overlay = build_platonic_viewport_overlay_html(dim)
+    return (
+        gr.update(value=None, visible=False),
+        gr.update(value=video_path, visible=True, autoplay=True, loop=True),
+        gr.update(value="", visible=False),
+        gr.update(value=overlay, visible=bool(overlay)),
     )
 
 
 def _demo_viewport_show_startup_image() -> tuple:
     """Show Demo A landing PNG via gr.HTML (Gradio-cached /gradio_api/file=)."""
+    title, subtitle = _demo_letter_overlay_copy("A")
     return (
         gr.update(value=None, visible=False),
         gr.update(value=None, visible=False),
         gr.update(value=_get_demo_a_startup_viewport_html(), visible=True),
+        _demo_viewport_overlay_update(title=title, subtitle=subtitle),
     )
 
 
@@ -12043,6 +12210,13 @@ def build_app() -> gr.Blocks:
                     elem_classes=["myst-gravity-viewport-startup", "myst-gravity-demo-startup"],
                     container=True,
                 )
+                gravity_viewport_overlay = gr.HTML(
+                    value="",
+                    visible=False,
+                    elem_id="myst-gravity-viewport-overlay",
+                    elem_classes=["myst-gravity-viewport-overlay"],
+                    container=False,
+                )
             with gr.Column(visible=False, elem_classes=["myst-gravity-wired-hidden"]):
                 re_active_preset = gr.State(0)
                 re_edit_params = gr.State(False)
@@ -12105,6 +12279,7 @@ def build_app() -> gr.Blocks:
                 gravity_viewport_plot,
                 gravity_viewport_video,
                 gravity_viewport_startup,
+                gravity_viewport_overlay,
                 unit_cell_video,
                 re_control_levels,
                 status_catalog_col,
@@ -12128,6 +12303,7 @@ def build_app() -> gr.Blocks:
                 gravity_viewport_plot,
                 gravity_viewport_video,
                 gravity_viewport_startup,
+                gravity_viewport_overlay,
             ]
             gravity_demo_outputs = [
                 *gravity_demo_viewport_outputs,
@@ -12313,6 +12489,7 @@ def build_app() -> gr.Blocks:
             gravity_viewport_plot,
             gravity_viewport_video,
             gravity_viewport_startup,
+            gravity_viewport_overlay,
             re_metrics,
             edit_re_metrics,
             unit_cell_header,
@@ -12517,6 +12694,7 @@ def build_app() -> gr.Blocks:
             gravity_viewport_plot,
             gravity_viewport_video,
             gravity_viewport_startup,
+            gravity_viewport_overlay,
             viewport_col,
         ]
         unified_nav["home"].click(

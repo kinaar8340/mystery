@@ -89,6 +89,37 @@ def format_platonic_preset_header_prefix(active_shape: str) -> str:
     return f"{label} · " if label else ""
 
 
+_PLATONIC_SOLID_NAMES: dict[str, str] = {
+    "D4": "Tetrahedron",
+    "D6": "Cube",
+    "D8": "Octahedron",
+    "D12": "Dodecahedron",
+    "D20": "Icosahedron",
+}
+
+
+def platonic_solid_name(shape: str) -> str:
+    """Human-readable Platonic solid name for a latched D* tab."""
+    dim = str(shape or "").strip().upper()
+    return _PLATONIC_SOLID_NAMES.get(dim, "Geodesic solid")
+
+
+def build_platonic_viewport_overlay_html(shape: str) -> str:
+    """Bottom-left viewport caption — D* label + solid name + config description."""
+    dim = str(shape or "").strip().upper()
+    if dim not in _PLATONIC_SOLID_NAMES:
+        return ""
+    config = get_dimension_config(dim)
+    title = f"{dim} · {platonic_solid_name(dim)}"
+    desc = str(config.get("description", ""))
+    return (
+        f'<div class="myst-gravity-viewport-overlay-inner myst-viewport-fade-in" role="status">'
+        f'<div class="myst-gravity-viewport-overlay-title">{html.escape(title)}</div>'
+        f'<div class="myst-gravity-viewport-overlay-sub">{html.escape(desc)}</div>'
+        f"</div>"
+    )
+
+
 def get_dimension_config(dimension: str) -> dict[str, object]:
     """Per geodesic-face-count tab (D* = face count): slider defaults and mesh topology."""
     dim = str(dimension or _DEFAULT_DIMENSION).strip().upper()
@@ -1601,6 +1632,36 @@ def _triangle_mode_color(
     return (*rgb, alpha)
 
 
+_SOLID_MESH_LIGHT_DIR = np.array([0.32, 0.58, 0.75], dtype=float)
+_SOLID_MESH_LIGHT_DIR /= float(np.linalg.norm(_SOLID_MESH_LIGHT_DIR))
+
+
+def _triangle_unit_normal(tri: list[tuple[float, float, float]]) -> np.ndarray:
+    a = np.array(tri[0], dtype=float)
+    b = np.array(tri[1], dtype=float)
+    c = np.array(tri[2], dtype=float)
+    n = np.cross(b - a, c - a)
+    norm = float(np.linalg.norm(n))
+    if norm < 1e-9:
+        return _SOLID_MESH_LIGHT_DIR.copy()
+    return n / norm
+
+
+def _shade_solid_mesh_rgba(
+    rgba: tuple[float, float, float, float],
+    normal: np.ndarray,
+    *,
+    min_shade: float = 0.34,
+    max_shade: float = 1.0,
+) -> tuple[float, float, float, float]:
+    """Normal-based shading for shape_only solid mesh — depth without cluttering edges."""
+    ndotl = float(np.clip(np.dot(normal, _SOLID_MESH_LIGHT_DIR), 0.0, 1.0))
+    shade = min_shade + (max_shade - min_shade) * ndotl
+    r, g, b, a = rgba
+    lit_a = min(0.88, 0.42 + 0.46 * abs(a) + 0.12 * ndotl)
+    return (float(r) * shade, float(g) * shade, float(b) * shade, lit_a)
+
+
 def _deformed_platonic_surface(
     s: float,
     pressure: float,
@@ -2723,10 +2784,17 @@ def build_unit_cell_figure(
             face_count=geodesic_faces,
             subdiv=subdiv,
         )
+        if solid_mesh and shape_only:
+            face_rgba = [
+                _shade_solid_mesh_rgba(c, _triangle_unit_normal(tri))
+                for tri, c in zip(triangles, tri_colors, strict=True)
+            ]
+        else:
+            face_rgba = [to_rgba(c) for c in tri_colors]
         ax.add_collection3d(
             Poly3DCollection(
                 triangles,
-                facecolors=[to_rgba(c) for c in tri_colors],
+                facecolors=face_rgba,
                 edgecolors=(0, 0, 0, 0),
                 linewidths=0.0,
             )
@@ -3951,12 +4019,28 @@ def render_breathing_demo_video(
             view_azim=view_azim,
             show_curvature_grid=False,
             shape_only=True,
+            solid_mesh=True,
+            face_count=6,
             dpi=dpi,
         )
         rgb_frames.append(_figure_to_rgb(fig, dpi=dpi))
         plt.close(fig)
     print(f"[breathing] render_breathing_demo_video: {len(rgb_frames)} frames", flush=True)
     return _encode_loop_video(rgb_frames, fps=fps)
+
+
+def _video_render_profile(dimension: str) -> dict[str, int]:
+    """Per-shape encode settings — lighter mesh for dense D12/D20 deformation loops."""
+    dim = str(dimension or _DEFAULT_DIMENSION).strip().upper()
+    config = get_dimension_config(dim)
+    subdiv = int(config.get("subdiv", 8))
+    match dim:
+        case "D20":
+            return {"fps": 9, "dpi": 68, "n_per_segment": 5, "subdiv": min(subdiv, 8)}
+        case "D12":
+            return {"fps": 10, "dpi": 72, "n_per_segment": 6, "subdiv": min(subdiv, 8)}
+        case _:
+            return {"fps": 10, "dpi": 80, "n_per_segment": 8, "subdiv": subdiv}
 
 
 def render_platonic_deformation_demo_video(
@@ -3968,9 +4052,13 @@ def render_platonic_deformation_demo_video(
 ) -> str:
     """MP4 platonic convex→rigid→concave loop — shape_only solid mesh (Figures preset sweep)."""
     dim = str(dimension or _DEFAULT_DIMENSION).strip().upper()
+    profile = _video_render_profile(dim)
+    fps = int(profile.get("fps", fps))
+    dpi = int(profile.get("dpi", dpi))
+    n_per_segment = int(profile.get("n_per_segment", n_per_segment))
     config = get_dimension_config(dim)
     face_count = int(config.get("face_count", geodesic_face_count(dim)))
-    subdiv = int(config.get("subdiv", 8))
+    subdiv = int(profile.get("subdiv", config.get("subdiv", 8)))
     phi = 1.0
     e = 1.0
     pi = 1.0
