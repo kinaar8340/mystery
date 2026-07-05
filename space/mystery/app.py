@@ -8683,33 +8683,49 @@ def _demo_viewport_show_startup_image() -> tuple:
     )
 
 
+def _demo_tab_latch_immediate(letter: str) -> tuple:
+    """Instant Demo tab latch — magenta active styling before viewport work."""
+    active = str(letter or "A").strip().upper()
+    if active not in _GRAVITY_CHILD_NAV_LETTERS:
+        active = "A"
+    return (*_demo_active_tab_updates(active), active)
+
+
+def _demo_breathing_viewport_only() -> tuple:
+    """Demo F viewport — breathing MP4 after tab latch."""
+    try:
+        return _demo_viewport_show_breathing_video()
+    except Exception:
+        logger.exception("breathing demo video failed for Demo F")
+        return _demo_viewport_show_plot(_get_rigid_preset_plotly_figure())
+
+
+def _demo_startup_viewport_only() -> tuple:
+    """Demo A viewport — startup landing image after tab latch."""
+    try:
+        return _demo_viewport_show_startup_image()
+    except Exception:
+        logger.exception("startup image failed for Demo A")
+        return _demo_viewport_show_plot(_get_rigid_preset_plotly_figure())
+
+
 def _launch_breathing_demo(letter: str) -> tuple:
-    """Demo F — breathing MP4; fall back to rigid Plotly if encode fails."""
+    """Demo F — latch + breathing (single-shot fallback for programmatic calls)."""
     active = str(letter or "F").strip().upper()
     if active not in _BREATHING_DEMO_LETTERS:
         active = "F"
-    try:
-        viewport = _demo_viewport_show_breathing_video()
-    except Exception:
-        logger.exception("breathing demo video failed for Demo %s", active)
-        viewport = _demo_viewport_show_plot(_get_rigid_preset_plotly_figure())
     return (
-        *viewport,
-        *_demo_active_tab_updates(active),
+        *_demo_breathing_viewport_only(),
+        *_demo_tab_latch_immediate(active),
         active,
     )
 
 
 def _launch_demo_a() -> tuple:
-    """Demo A — startup landing image."""
-    try:
-        viewport = _demo_viewport_show_startup_image()
-    except Exception:
-        logger.exception("startup image failed for Demo A")
-        viewport = _demo_viewport_show_plot(_get_rigid_preset_plotly_figure())
+    """Demo A — latch + startup (single-shot fallback for programmatic calls)."""
     return (
-        *viewport,
-        *_demo_active_tab_updates("A"),
+        *_demo_startup_viewport_only(),
+        *_demo_tab_latch_immediate("A"),
         "A",
     )
 
@@ -11420,25 +11436,39 @@ def build_app() -> gr.Blocks:
                 status_zoom_slot,
                 active_shape,
             ]
-            gravity_demo_outputs = [
+            gravity_demo_nav_outputs = [
+                *[gravity_letter_btns[letter] for letter in _GRAVITY_CHILD_NAV_LETTERS],
+                gravity_active_letter,
+            ]
+            gravity_demo_viewport_outputs = [
                 gravity_viewport_plot,
                 gravity_viewport_video,
                 gravity_viewport_startup,
-                *[gravity_letter_btns[letter] for letter in _GRAVITY_CHILD_NAV_LETTERS],
-                gravity_active_letter,
+            ]
+            gravity_demo_outputs = [
+                *gravity_demo_viewport_outputs,
+                *gravity_demo_nav_outputs,
             ]
             for letter in _GRAVITY_CHILD_NAV_LETTERS:
                 btn = gravity_letter_btns[letter]
                 if letter == "A":
                     btn.click(
-                        _launch_demo_a,
-                        outputs=gravity_demo_outputs,
+                        lambda: _demo_tab_latch_immediate("A"),
+                        outputs=gravity_demo_nav_outputs,
+                        show_progress="hidden",
+                    ).then(
+                        _demo_startup_viewport_only,
+                        outputs=gravity_demo_viewport_outputs,
                         show_progress="hidden",
                     )
                 elif letter in _BREATHING_DEMO_LETTERS:
                     btn.click(
-                        lambda l=letter: _launch_breathing_demo(l),
-                        outputs=gravity_demo_outputs,
+                        lambda l=letter: _demo_tab_latch_immediate(l),
+                        outputs=gravity_demo_nav_outputs,
+                        show_progress="hidden",
+                    ).then(
+                        _demo_breathing_viewport_only,
+                        outputs=gravity_demo_viewport_outputs,
                         show_progress="hidden",
                     )
                 else:
