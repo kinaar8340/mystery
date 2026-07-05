@@ -165,6 +165,15 @@ NAV_THEME: dict = {
             "body_color": "#1a3d2a",
         },
     },
+    "preset_grid": {
+        "chrome_height": "8.75rem",
+        "grid_gap": "0.45rem",
+        "columns": 3,
+        "rows": 3,
+    },
+    "main_content": {
+        "status_viewport_offset": "8.75rem",
+    },
 }
 
 # Legacy aliases — prefer NAV_THEME for new code.
@@ -901,6 +910,9 @@ def _nav_theme_gradio_css_vars() -> str:
     nb = NAV_THEME["nav_button"]
     nl = NAV_THEME["nav_label"]
     active = nb["active"]
+    pg = NAV_THEME["preset_grid"]
+    mc = NAV_THEME["main_content"]
+    chrome = pg["chrome_height"]
     return f"""
     --myst-default-gap-height: {gap}rem;
     --myst-half-gap-height: calc({gap}rem * 0.5);
@@ -930,6 +942,11 @@ def _nav_theme_gradio_css_vars() -> str:
     --nav-btn-active-body-color: {active["body_color"]};
     --myst-panel-bg: #1a1a1a;
     --myst-border-color: #333333;
+    --myst-status-chrome-height: {chrome};
+    --myst-status-content-max-height: calc(100dvh - {mc["status_viewport_offset"]});
+    --myst-preset-grid-gap: {pg["grid_gap"]};
+    --myst-preset-grid-columns: {pg["columns"]};
+    --myst-preset-grid-rows: {pg["rows"]};
     """
 
 
@@ -5152,6 +5169,23 @@ footer {{ visibility: hidden; }}
     margin: 0 !important;
     background: transparent !important;
 }}
+.gradio-container .myst-status-page .myst-gravity-control-levels-wrap,
+.gradio-container .myst-status-page .myst-gravity-control-levels-wrap .html-container,
+.gradio-container .myst-status-page .myst-status-panel-host,
+.gradio-container .myst-status-page .myst-status-panel-host .html-container,
+.gradio-container .myst-status-page .myst-status-grid-host,
+.gradio-container .myst-status-page .myst-status-grid-host .html-container {{
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    flex: 0 0 auto !important;
+    display: block !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+}}
 .gradio-container .myst-render-page .myst-gravity-control-levels-wrap,
 .gradio-container .myst-render-page .myst-gravity-control-levels-wrap .html-container {{
     width: 100% !important;
@@ -5568,7 +5602,7 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-status-page,
 .gradio-container .myst-render-page {{
     {_nav_theme_gradio_css_vars()}
-    min-height: calc(100dvh - 4.25rem) !important;
+    min-height: 0 !important;
     height: auto !important;
     display: flex !important;
     flex-direction: column !important;
@@ -5578,6 +5612,7 @@ footer {{ visibility: hidden; }}
     row-gap: 0 !important;
     box-sizing: border-box !important;
 }}
+
 .gradio-container .myst-render-page {{
     --myst-render-grid-gap: 0.18rem;
     --myst-render-grid-bottom-frame: 0;
@@ -5600,6 +5635,25 @@ footer {{ visibility: hidden; }}
     min-height: 0 !important;
     height: auto !important;
     max-height: none !important;
+}}
+.gradio-container:has(.myst-status-page:not(.hide):not(.hidden)) .main,
+.gradio-container:has(.myst-status-page:not(.hide):not(.hidden)) .main > .wrap,
+.gradio-container:has(.myst-status-page:not(.hide):not(.hidden)) .contain {{
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: 0 !important;
+    height: auto !important;
+    overflow: visible !important;
+}}
+.gradio-container:has(.myst-status-page:not(.hide):not(.hidden)) .myst-unified-nav-host {{
+    flex: 0 0 auto !important;
+}}
+.gradio-container:has(.myst-status-page:not(.hide):not(.hidden)) .myst-status-page:not(.hide):not(.hidden) {{
+    flex: 0 0 auto !important;
+    min-height: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
 }}
 .gradio-container .myst-status-page .myst-status-gap-row,
 .gradio-container .myst-status-page .myst-default-gap-row,
@@ -5681,7 +5735,21 @@ footer {{ visibility: hidden; }}
 }}
 .gradio-container .myst-status-page > .block:has(.myst-status-stack),
 .gradio-container .myst-status-page > .form:has(.myst-status-stack),
-.gradio-container .myst-status-page > .column.myst-status-stack,
+.gradio-container .myst-status-page > .column.myst-status-stack {{
+    flex: 0 0 auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    justify-content: flex-start !important;
+    align-content: flex-start !important;
+    align-items: stretch !important;
+    overflow: visible !important;
+}}
 .gradio-container .myst-render-page > .block:has(.myst-render-stack),
 .gradio-container .myst-render-page > .form:has(.myst-render-stack),
 .gradio-container .myst-render-page > .column.myst-render-stack {{
@@ -5756,8 +5824,8 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-status-page .myst-status-zoom-view:not(.hide):not(.hidden) {{
     width: 100% !important;
     height: auto !important;
-    min-height: calc(100dvh - 7.5rem) !important;
-    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    flex: 0 0 auto !important;
     background: transparent !important;
     display: flex !important;
     flex-direction: column !important;
@@ -6085,8 +6153,8 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-status-page .myst-status-stack {{
     width: 100% !important;
     height: auto !important;
-    min-height: calc(100dvh - 8rem) !important;
-    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    flex: 0 0 auto !important;
     background: transparent !important;
     display: flex !important;
     flex-direction: column !important;
@@ -6095,6 +6163,7 @@ footer {{ visibility: hidden; }}
     gap: 0 !important;
     margin: 0 !important;
     padding: 0 !important;
+    overflow: visible !important;
 }}
 .gradio-container .myst-status-page .myst-status-stack > .block:has(.myst-status-panels-host),
 .gradio-container .myst-status-page .myst-status-stack > .form:has(.myst-status-panels-host),
@@ -6124,9 +6193,10 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-status-page .myst-status-stack > .form:has(.myst-status-catalog-host):not(.hide):not(.hidden),
 .gradio-container .myst-status-page .myst-status-stack > .column.myst-status-catalog-host:not(.hide):not(.hidden),
 .gradio-container .myst-status-page .myst-status-catalog-host:not(.hide):not(.hidden) {{
-    flex: 1 1 auto !important;
-    min-height: calc(100dvh - 8.5rem) !important;
+    flex: 0 0 auto !important;
+    min-height: 0 !important;
     height: auto !important;
+    overflow: visible !important;
 }}
 .gradio-container .myst-status-page .myst-status-stack:has(.myst-status-edit-active),
 .gradio-container .myst-status-page .myst-status-stack:has(.myst-status-zoom-edit-drawer:not(.hide):not(.hidden)) {{
@@ -6184,9 +6254,9 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-status-page .myst-status-grid-view .myst-status-grid-host,
 .gradio-container .myst-status-page .myst-status-grid-view .myst-status-grid-host .html-container {{
     width: 100% !important;
-    min-height: calc(100dvh - 8.5rem) !important;
+    min-height: 0 !important;
     height: auto !important;
-    flex: 1 1 auto !important;
+    flex: 0 0 auto !important;
     overflow: visible !important;
     position: relative !important;
     z-index: 3 !important;
@@ -6195,8 +6265,7 @@ footer {{ visibility: hidden; }}
     background: transparent !important;
     border: none !important;
     box-shadow: none !important;
-    display: flex !important;
-    flex-direction: column !important;
+    display: block !important;
 }}
 .gradio-container .myst-status-page.hide,
 .gradio-container .myst-status-page.hidden,
@@ -6240,30 +6309,34 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-status-page .myst-status-grid-wrap {{
     width: 100% !important;
     height: auto !important;
-    min-height: calc(100dvh - 8.5rem) !important;
-    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    flex: 0 0 auto !important;
     background: transparent !important;
-    display: flex !important;
-    flex-direction: column !important;
+    display: block !important;
+    overflow: visible !important;
 }}
 .gradio-container .myst-status-page .myst-status-grid {{
     display: grid !important;
-    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-    grid-template-rows: repeat(3, minmax(10rem, 1fr)) !important;
-    gap: 0.45rem !important;
+    grid-template-columns: repeat(var(--myst-preset-grid-columns, 3), minmax(0, 1fr)) !important;
+    grid-template-rows: repeat(var(--myst-preset-grid-rows, 3), auto) !important;
+    gap: var(--myst-preset-grid-gap, 0.45rem) !important;
     width: 100% !important;
     height: auto !important;
-    min-height: calc(100dvh - 7.5rem) !important;
-    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    flex: 0 0 auto !important;
     background: transparent !important;
-    align-content: stretch !important;
+    align-content: start !important;
+    align-items: start !important;
+    justify-items: stretch !important;
     position: relative !important;
     z-index: 3 !important;
+    overflow: visible !important;
 }}
 .gradio-container .myst-status-page .myst-status-grid-cell {{
     min-width: 0 !important;
     min-height: 0 !important;
-    height: 100% !important;
+    height: auto !important;
+    align-self: start !important;
     background: transparent !important;
     display: flex !important;
     flex-direction: column !important;
@@ -6275,16 +6348,18 @@ footer {{ visibility: hidden; }}
 }}
 .gradio-container .myst-status-page .myst-status-preset-panel {{
     padding: 0.42rem 0.46rem 0.52rem !important;
-    flex: 1 1 0 !important;
-    height: 100% !important;
+    flex: 0 0 auto !important;
+    height: auto !important;
     min-height: 0 !important;
     max-height: none !important;
     overflow-x: hidden !important;
-    overflow-y: auto !important;
+    overflow-y: visible !important;
     background: rgba(0, 0, 0, {_MYST_STATUS_PANEL_ALPHA}) !important;
     border: 2px inset rgba(92, 74, 31, {_MYST_STATUS_PANEL_ALPHA}) !important;
     box-shadow: none !important;
     box-sizing: border-box !important;
+    display: flex !important;
+    flex-direction: column !important;
 }}
 .gradio-container .myst-status-page .myst-status-preset-panel {{
     font-weight: 700 !important;
@@ -6993,11 +7068,14 @@ footer {{ visibility: hidden; }}
     .gradio-container .myst-status-page .myst-status-grid {{
         grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
         grid-template-rows: auto !important;
+        grid-auto-rows: auto !important;
     }}
 }}
 @media (max-width: 720px) {{
     .gradio-container .myst-status-page .myst-status-grid {{
         grid-template-columns: minmax(0, 1fr) !important;
+        grid-template-rows: auto !important;
+        grid-auto-rows: auto !important;
     }}
 }}
 /* === UNIT CELL VIEWPORT header — hidden (plot only) === */
