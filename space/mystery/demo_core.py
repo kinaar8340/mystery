@@ -2555,42 +2555,84 @@ def _figure_to_rgb(fig: plt.Figure, *, dpi: int = 96) -> np.ndarray:
     return _ensure_even_frame(np.asarray(Image.open(buf).convert("RGB")))
 
 
+def _ffmpeg_normalize_clip_to_mp4(
+    src_path: str | os.PathLike[str],
+    dst_path: str | os.PathLike[str],
+    *,
+    fps: int = 10,
+) -> None:
+    """Re-encode any clip (GIF/MP4) to browser-safe H.264 mp4."""
+    subprocess.run(
+        [
+            "ffmpeg",
+            "-y",
+            "-i",
+            str(src_path),
+            "-vf",
+            "scale=trunc(iw/2)*2:trunc(ih/2)*2",
+            "-r",
+            str(int(fps)),
+            "-pix_fmt",
+            "yuv420p",
+            "-c:v",
+            "libx264",
+            "-movflags",
+            "+faststart",
+            str(dst_path),
+        ],
+        check=True,
+        capture_output=True,
+    )
+
+
 def _encode_loop_video(rgb_frames: list[np.ndarray], *, fps: int = 12) -> str:
     """Write frames to H.264 mp4 (browser-playable); fall back to looping GIF."""
     if not rgb_frames:
         raise ValueError("no frames to encode")
 
-    with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as tmp:
-        mp4_path = tmp.name
-
-    try:
-        import imageio.v2 as imageio
-
-        writer = imageio.get_writer(
-            mp4_path,
-            fps=fps,
-            codec="libx264",
-            quality=8,
-            pixelformat="yuv420p",
-            macro_block_size=1,
-        )
-        try:
-            for frame in rgb_frames:
-                writer.append_data(_ensure_even_frame(frame))
-        finally:
-            writer.close()
-        return mp4_path
-    except Exception:
-        try:
-            os.unlink(mp4_path)
-        except OSError:
-            pass
-
     from PIL import Image
+
+    with tempfile.TemporaryDirectory(prefix="mystery-encode-") as tmp_dir:
+        tmp = Path(tmp_dir)
+        for idx, frame in enumerate(rgb_frames):
+            Image.fromarray(_ensure_even_frame(frame)).save(
+                tmp / f"frame_{idx:05d}.png",
+                format="PNG",
+            )
+        with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as out_tmp:
+            mp4_path = out_tmp.name
+        try:
+            subprocess.run(
+                [
+                    "ffmpeg",
+                    "-y",
+                    "-framerate",
+                    str(int(fps)),
+                    "-i",
+                    str(tmp / "frame_%05d.png"),
+                    "-vf",
+                    "scale=trunc(iw/2)*2:trunc(ih/2)*2",
+                    "-pix_fmt",
+                    "yuv420p",
+                    "-c:v",
+                    "libx264",
+                    "-movflags",
+                    "+faststart",
+                    mp4_path,
+                ],
+                check=True,
+                capture_output=True,
+            )
+            return mp4_path
+        except subprocess.CalledProcessError:
+            try:
+                os.unlink(mp4_path)
+            except OSError:
+                pass
 
     with tempfile.NamedTemporaryFile(suffix=".gif", delete=False) as tmp:
         gif_path = tmp.name
-    pil_frames = [Image.fromarray(frame) for frame in rgb_frames]
+    pil_frames = [Image.fromarray(_ensure_even_frame(frame)) for frame in rgb_frames]
     pil_frames[0].save(
         gif_path,
         save_all=True,
@@ -4003,6 +4045,103 @@ def render_demo_h_d12_deformation_video(
     )
 
 
+def _convex_preset_pressure_path(
+    target: float,
+    *,
+    n_per_segment: int = 8,
+) -> list[float]:
+    """Rigid → preset convex → rigid loop for Demo C/D."""
+
+    def _segment(start: float, end: float, n: int, *, skip_first: bool = False) -> list[float]:
+        vals = np.linspace(float(start), float(end), max(2, int(n)), endpoint=True)
+        if skip_first and len(vals) > 1:
+            vals = vals[1:]
+        return [_clamp_deform_pressure(float(v)) for v in vals]
+
+    target = _clamp_deform_pressure(float(target))
+    path: list[float] = []
+    path += _segment(0.0, target, n_per_segment)
+    path += _segment(target, 0.0, n_per_segment, skip_first=True)
+    return path
+
+
+def render_d6_convex_preset_demo_video(
+    target_pressure: float,
+    *,
+    fps: int = 10,
+    dpi: int = 80,
+    n_per_segment: int = 8,
+) -> str:
+    """D6 cube rigid↔preset convex loop — shape_only solid mesh for Demo C/D."""
+    config = get_dimension_config("D6")
+    face_count = int(config.get("face_count", 6))
+    subdiv = int(config.get("subdiv", 8))
+    phi = 1.0
+    e = 1.0
+    pi = 1.0
+    kappa = KAPPA_DOC
+    delta_z = 0.1
+    alpha = 1.0
+    beta = 1.0
+    view_elev = 26.0
+    view_azim = 45.0
+    r_val = residual_from_scales(phi, e, pi)
+    d_side = delta_side_contraction(delta_z, r_val, kappa, alpha=alpha, beta=beta)
+    side = abs(d_side) * 0.5
+    pressures = _convex_preset_pressure_path(
+        target_pressure,
+        n_per_segment=n_per_segment,
+    )
+    rgb_frames: list[np.ndarray] = []
+    for pressure_val in pressures:
+        fig = build_unit_cell_figure(
+            delta_z=delta_z,
+            delta_side=side,
+            r_val=r_val,
+            pressure=float(pressure_val),
+            view_elev=view_elev,
+            view_azim=view_azim,
+            show_curvature_grid=False,
+            shape_only=True,
+            solid_mesh=True,
+            dpi=dpi,
+            face_count=face_count,
+            subdiv=subdiv,
+        )
+        rgb_frames.append(_figure_to_rgb(fig, dpi=dpi))
+        plt.close(fig)
+    print(
+        f"[demo-preset] render_d6_convex_preset_demo_video({target_pressure:.2f}): "
+        f"{len(rgb_frames)} frames",
+        flush=True,
+    )
+    return _encode_loop_video(rgb_frames, fps=fps)
+
+
+def render_demo_c_d6_moderate_convex_video(
+    *,
+    fps: int = 10,
+    dpi: int = 80,
+    n_per_segment: int = 8,
+) -> str:
+    """MP4 Preset 03 moderate convex loop for Demo C."""
+    return render_d6_convex_preset_demo_video(
+        0.50, fps=fps, dpi=dpi, n_per_segment=n_per_segment
+    )
+
+
+def render_demo_d_d6_mild_convex_video(
+    *,
+    fps: int = 10,
+    dpi: int = 80,
+    n_per_segment: int = 8,
+) -> str:
+    """MP4 Preset 04 mild convex loop for Demo D."""
+    return render_d6_convex_preset_demo_video(
+        0.25, fps=fps, dpi=dpi, n_per_segment=n_per_segment
+    )
+
+
 def render_demo_i_d20_deformation_video(
     *,
     fps: int = 10,
@@ -4015,12 +4154,12 @@ def render_demo_i_d20_deformation_video(
     )
 
 
-_PIPELINE_DEMO_CLIP_NAMES: tuple[str, ...] = (
-    "demo_e_d4_tetrahedron.mp4",
-    "demo_a_breathing.gif",
-    "demo_g_d8_octahedron.mp4",
-    "demo_h_d12_dodecahedron.mp4",
-    "demo_i_d20_icosahedron.mp4",
+_PIPELINE_DEMO_CLIP_CANDIDATES: tuple[tuple[str, ...], ...] = (
+    ("demo_e_d4_tetrahedron.mp4",),
+    ("demo_f_d6_breathing.mp4", "demo_a_breathing.gif"),
+    ("demo_g_d8_octahedron.mp4",),
+    ("demo_h_d12_dodecahedron.mp4",),
+    ("demo_i_d20_icosahedron.mp4",),
 )
 
 
@@ -4032,6 +4171,9 @@ def _resolve_pipeline_demo_clip_paths(
     base = Path(assets_dir or Path(__file__).resolve().parent / "assets")
     clip_renderers: dict[str, object] = {
         "demo_e_d4_tetrahedron.mp4": lambda: render_demo_e_d4_deformation_video(
+            n_per_segment=8, fps=10, dpi=80
+        ),
+        "demo_f_d6_breathing.mp4": lambda: render_breathing_demo_video(
             n_per_segment=8, fps=10, dpi=80
         ),
         "demo_a_breathing.gif": lambda: render_breathing_demo_video(
@@ -4048,15 +4190,22 @@ def _resolve_pipeline_demo_clip_paths(
         ),
     }
     paths: list[str] = []
-    for name in _PIPELINE_DEMO_CLIP_NAMES:
-        bundled = base / name
-        if bundled.is_file():
-            paths.append(str(bundled.resolve()))
+    for candidates in _PIPELINE_DEMO_CLIP_CANDIDATES:
+        chosen: Path | None = None
+        for name in candidates:
+            bundled = base / name
+            if bundled.is_file():
+                chosen = bundled
+                break
+        if chosen is None:
+            renderer = clip_renderers.get(candidates[0])
+            if renderer is None:
+                raise FileNotFoundError(
+                    f"no pipeline renderer for clip candidates: {candidates}"
+                )
+            paths.append(str(renderer()))
             continue
-        renderer = clip_renderers.get(name)
-        if renderer is None:
-            raise FileNotFoundError(f"no pipeline renderer for clip: {name}")
-        paths.append(str(renderer()))
+        paths.append(str(chosen.resolve()))
     return paths
 
 
@@ -4076,12 +4225,16 @@ def render_demo_b_pipeline_video(
 
     with tempfile.TemporaryDirectory(prefix="mystery-pipeline-") as tmp_dir:
         tmp = Path(tmp_dir)
+        normalized: list[Path] = []
+        for idx, src in enumerate(sources):
+            seg_path = tmp / f"seg_{idx:02d}.mp4"
+            _ffmpeg_normalize_clip_to_mp4(src, seg_path, fps=10)
+            normalized.append(seg_path)
         list_path = tmp / "concat.txt"
         list_path.write_text(
-            "".join(f"file '{path}'\n" for path in sources),
+            "".join(f"file '{path}'\n" for path in normalized),
             encoding="utf-8",
         )
-        gif_path = tmp / "pipeline.gif"
         mp4_path = tmp / "pipeline.mp4"
         subprocess.run(
             [
@@ -4095,25 +4248,6 @@ def render_demo_b_pipeline_video(
                 str(list_path),
                 "-c",
                 "copy",
-                str(gif_path),
-            ],
-            check=True,
-            capture_output=True,
-        )
-        subprocess.run(
-            [
-                "ffmpeg",
-                "-y",
-                "-i",
-                str(gif_path),
-                "-vf",
-                "scale=trunc(iw/2)*2:trunc(ih/2)*2",
-                "-pix_fmt",
-                "yuv420p",
-                "-c:v",
-                "libx264",
-                "-movflags",
-                "+faststart",
                 str(mp4_path),
             ],
             check=True,

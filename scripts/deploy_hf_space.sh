@@ -52,6 +52,9 @@ rsync -av --delete \
   --exclude='assets/demo_h_d12_dodecahedron.mp4' \
   --exclude='assets/demo_i_d20_icosahedron.mp4' \
   --exclude='assets/demo_b_pipeline_efghi.mp4' \
+  --exclude='assets/demo_c_d6_moderate_convex.mp4' \
+  --exclude='assets/demo_d_d6_mild_convex.mp4' \
+  --exclude='assets/demo_f_d6_breathing.mp4' \
   --exclude='assets/home_a_startup_page.png' \
   "$ROOT/space/mystery/" "$HF_DIR/"
 rm -rf "$HF_DIR/.gradio"
