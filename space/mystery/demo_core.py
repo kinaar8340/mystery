@@ -7,6 +7,8 @@ import colorsys
 import html
 import io
 import os
+import shutil
+import subprocess
 import tempfile
 import traceback
 from pathlib import Path
@@ -4011,6 +4013,82 @@ def render_demo_i_d20_deformation_video(
     return render_platonic_deformation_demo_video(
         "D20", fps=fps, dpi=dpi, n_per_segment=n_per_segment
     )
+
+
+_PIPELINE_DEMO_CLIP_NAMES: tuple[str, ...] = (
+    "demo_e_d4_tetrahedron.mp4",
+    "demo_a_breathing.gif",
+    "demo_g_d8_octahedron.mp4",
+    "demo_h_d12_dodecahedron.mp4",
+    "demo_i_d20_icosahedron.mp4",
+)
+
+
+def render_demo_b_pipeline_video(
+    *,
+    assets_dir: str | os.PathLike[str] | None = None,
+) -> str:
+    """Stitch Demo E→F→G→H→I clips into one browser-playable MP4 for Demo B."""
+    base = Path(assets_dir or Path(__file__).resolve().parent / "assets")
+    sources = [base / name for name in _PIPELINE_DEMO_CLIP_NAMES]
+    missing = [str(path) for path in sources if not path.is_file()]
+    if missing:
+        raise FileNotFoundError(f"pipeline stitch sources missing: {missing}")
+
+    with tempfile.TemporaryDirectory(prefix="mystery-pipeline-") as tmp_dir:
+        tmp = Path(tmp_dir)
+        list_path = tmp / "concat.txt"
+        list_path.write_text(
+            "".join(f"file '{path.resolve()}'\n" for path in sources),
+            encoding="utf-8",
+        )
+        gif_path = tmp / "pipeline.gif"
+        mp4_path = tmp / "pipeline.mp4"
+        subprocess.run(
+            [
+                "ffmpeg",
+                "-y",
+                "-f",
+                "concat",
+                "-safe",
+                "0",
+                "-i",
+                str(list_path),
+                "-c",
+                "copy",
+                str(gif_path),
+            ],
+            check=True,
+            capture_output=True,
+        )
+        subprocess.run(
+            [
+                "ffmpeg",
+                "-y",
+                "-i",
+                str(gif_path),
+                "-vf",
+                "scale=trunc(iw/2)*2:trunc(ih/2)*2",
+                "-pix_fmt",
+                "yuv420p",
+                "-c:v",
+                "libx264",
+                "-movflags",
+                "+faststart",
+                str(mp4_path),
+            ],
+            check=True,
+            capture_output=True,
+        )
+        with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as out_tmp:
+            out_path = out_tmp.name
+        shutil.copy2(mp4_path, out_path)
+
+    print(
+        f"[demo-b] render_demo_b_pipeline_video: stitched {len(sources)} clips -> {out_path}",
+        flush=True,
+    )
+    return out_path
 
 
 def render_gravity_demo_animation_video(

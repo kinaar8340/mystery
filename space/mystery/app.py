@@ -45,6 +45,7 @@ from demo_core import (
     render_gravity_demo_animation_video,
     render_breathing_demo_video,
     render_platonic_deformation_demo_video,
+    render_demo_b_pipeline_video,
     build_breathing_animation_figure,
     build_readme_full_page_html,
     create_breathing_animation,
@@ -1238,8 +1239,14 @@ def _demo_viewport_preserve_active_demo(
     dim_fig,
     active_shape: str = _NO_ACTIVE_SHAPE,
 ) -> tuple:
-    """Viewport stack — latched Demo E/G/H/I/F video; else D* geodesic; else Demo A startup."""
+    """Viewport stack — latched Demo B/E/G/H/I/F video; else D* geodesic; else Demo A startup."""
     letter = _normalize_active_demo_letter(active_demo_letter)
+    if letter in _PIPELINE_DEMO_LETTERS:
+        try:
+            return _demo_viewport_show_pipeline_video()
+        except Exception:
+            logger.exception("pipeline video preserve failed on dimension switch")
+            return _demo_viewport_show_plot(dim_fig)
     if letter in _DEFORM_DEMO_LETTERS:
         try:
             return _demo_viewport_show_deform_video(letter)
@@ -8076,7 +8083,8 @@ _RENDER_DETAIL_IMAGE_DPI = 120
 # (16 keypad + 1 legacy back skip + 9 child nav + 2 edit btns + 20 sliders + …).
 _GRAVITY_PRESET_IMAGE_OUT_INDEX = 51
 _GRAVITY_CHILD_NAV_LETTERS: tuple[str, ...] = tuple(chr(ord("A") + i) for i in range(9))
-# Demo E/G/H/I — platonic deform loops; Demo F — D6 breathing cube loop.
+# Demo B — E→F→G→H→I pipeline; E/G/H/I — platonic deform; F — D6 breathing loop.
+_PIPELINE_DEMO_LETTERS: frozenset[str] = frozenset({"B"})
 _DEFORM_DEMO_LETTERS: frozenset[str] = frozenset({"E", "G", "H", "I"})
 _DEFORM_DEMO_SHAPE_BY_LETTER: dict[str, str] = {
     "E": "D4",
@@ -8846,8 +8854,10 @@ def _gravity_viewport_wrapper_update(active_letter: str) -> gr.Update:
 
 _GRAVITY_DEMO_VIDEO_CACHE: dict[str, str] = {}
 _DEMO_DEFORM_VIDEO_CACHE: dict[str, str] = {}
+_DEMO_PIPELINE_VIDEO_CACHE: str | None = None
 _BREATHING_DEMO_VIDEO_CACHE: str | None = None
 _APP_DIR = os.path.dirname(os.path.abspath(__file__))
+_BUNDLED_PIPELINE_VIDEO = os.path.join(_APP_DIR, "assets", "demo_b_pipeline_efghi.mp4")
 _BUNDLED_DEMO_DEFORM_VIDEOS: dict[str, str] = {
     "E": os.path.join(_APP_DIR, "assets", "demo_e_d4_tetrahedron.mp4"),
     "G": os.path.join(_APP_DIR, "assets", "demo_g_d8_octahedron.mp4"),
@@ -8981,6 +8991,19 @@ def _get_deform_demo_video_path(letter: str) -> str:
     return _DEMO_DEFORM_VIDEO_CACHE[active]
 
 
+def _get_pipeline_demo_video_path() -> str:
+    """Gradio-served path to stitched E→F→G→H→I pipeline MP4 (bundled asset preferred)."""
+    global _DEMO_PIPELINE_VIDEO_CACHE
+    if _DEMO_PIPELINE_VIDEO_CACHE is None:
+        if os.path.isfile(_BUNDLED_PIPELINE_VIDEO):
+            raw_path = _BUNDLED_PIPELINE_VIDEO
+            print(f"[demo-b] using bundled asset: {raw_path}", flush=True)
+        else:
+            raw_path = render_demo_b_pipeline_video()
+        _DEMO_PIPELINE_VIDEO_CACHE = _cache_media_for_gradio(raw_path)
+    return _DEMO_PIPELINE_VIDEO_CACHE
+
+
 def _get_breathing_demo_video_path() -> str:
     """Gradio-served path to looping breathing GIF/MP4 (bundled asset preferred)."""
     global _BREATHING_DEMO_VIDEO_CACHE
@@ -9045,6 +9068,16 @@ def _demo_viewport_show_plot(fig) -> tuple:
     return (
         gr.update(value=fig, visible=True),
         gr.update(value=None, visible=False),
+        gr.update(value="", visible=False),
+    )
+
+
+def _demo_viewport_show_pipeline_video() -> tuple:
+    """Show stitched E→F→G→H→I pipeline MP4 via gr.Video (HF-safe cached path)."""
+    video_path = _get_pipeline_demo_video_path()
+    return (
+        gr.update(value=None, visible=False),
+        gr.update(value=video_path, visible=True, autoplay=True, loop=True),
         gr.update(value="", visible=False),
     )
 
@@ -9118,12 +9151,23 @@ def _switch_gravity_demo_viewport_only(letter: str) -> tuple:
     letter = str(letter or "A").strip().upper()
     if letter == "A":
         return _demo_startup_viewport_only()
+    if letter in _PIPELINE_DEMO_LETTERS:
+        return _demo_pipeline_viewport_only()
     if letter in _DEFORM_DEMO_LETTERS:
         return _demo_deform_viewport_only(letter)
     if letter in _BREATHING_DEMO_LETTERS:
         return _demo_breathing_viewport_only()
     fig = _get_gravity_demo_plotly_figure(letter)
     return _demo_viewport_show_plot(fig)
+
+
+def _demo_pipeline_viewport_only() -> tuple:
+    """Demo B viewport — stitched E→F→G→H→I pipeline MP4 after tab latch."""
+    try:
+        return _demo_viewport_show_pipeline_video()
+    except Exception:
+        logger.exception("pipeline demo video failed for Demo B")
+        return _demo_viewport_show_plot(_get_rigid_preset_plotly_figure())
 
 
 def _demo_deform_viewport_only(letter: str) -> tuple:
@@ -9154,6 +9198,14 @@ def _demo_startup_viewport_only() -> tuple:
     except Exception:
         logger.exception("startup image failed for Demo A")
         return _demo_viewport_show_plot(_get_rigid_preset_plotly_figure())
+
+
+def _launch_pipeline_demo(letter: str) -> tuple:
+    """Demo B — latch + E→F→G→H→I pipeline loop (single-shot fallback for programmatic calls)."""
+    active = str(letter or "B").strip().upper()
+    if active not in _PIPELINE_DEMO_LETTERS:
+        active = "B"
+    return (*_demo_pipeline_viewport_only(), *_demo_tab_latch_immediate(active))
 
 
 def _launch_deform_demo(letter: str) -> tuple:
@@ -9208,6 +9260,8 @@ def _switch_gravity_demo(letter: str) -> tuple:
     letter = str(letter).strip().upper()
     if letter == "A":
         return _launch_demo_a()
+    if letter in _PIPELINE_DEMO_LETTERS:
+        return _launch_pipeline_demo(letter)
     if letter in _DEFORM_DEMO_LETTERS:
         return _launch_deform_demo(letter)
     if letter in _BREATHING_DEMO_LETTERS:
@@ -12024,6 +12078,16 @@ def build_app() -> gr.Blocks:
                         outputs=gravity_demo_viewport_outputs,
                         show_progress="hidden",
                     )
+                elif letter in _PIPELINE_DEMO_LETTERS:
+                    btn.click(
+                        lambda l=letter: _demo_letter_nav_interrupt(l),
+                        outputs=demo_platonic_flip_nav_outputs,
+                        show_progress="hidden",
+                    ).then(
+                        lambda l=letter: _switch_gravity_demo_viewport_only(l),
+                        outputs=gravity_demo_viewport_outputs,
+                        show_progress="hidden",
+                    )
                 elif letter in _DEFORM_DEMO_LETTERS:
                     btn.click(
                         lambda l=letter: _demo_letter_nav_interrupt(l),
@@ -12422,6 +12486,7 @@ def build_app() -> gr.Blocks:
                 f"φ²+e²≈π²  ·  Demo A startup\n"
                 f"Geodesic faces       : {face_count}  ({platonic_hint})\n"
                 f"Mode                 : {d6_config.get('description', '')}\n"
+                f"Demo B               : E→F→G→H→I pipeline stitch loop\n"
                 f"Demo E               : D4 tetrahedron deformation loop\n"
                 f"Demo F               : breathing unit-cell loop\n"
                 f"Demo G               : D8 octahedron deformation loop\n"
