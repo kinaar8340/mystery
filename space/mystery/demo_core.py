@@ -40,7 +40,7 @@ UNIT_CELL_DETAIL_PLOTLY_HEIGHT = 680
 # Detail-page typography only (Figures 3×3 grid uses shape_only — unchanged).
 UNIT_CELL_DETAIL_LABEL_FONT_MAIN = 15
 UNIT_CELL_DETAIL_LABEL_FONT_SMALL = 14
-UNIT_CELL_DETAIL_LABEL_EDGE_PAD = 0.42
+UNIT_CELL_DETAIL_LABEL_EDGE_INSET = 0.12
 UNIT_CELL_DETAIL_AXIS_TITLE_FONT = 12
 UNIT_CELL_DETAIL_AXIS_TICK_FONT = 11
 
@@ -804,8 +804,12 @@ _DETAIL_AXIS_PI_PLY = "π-face"
 def _detail_exterior_label_positions(
     half: float = UNIT_CELL_DETAIL_AXIS_HALF,
 ) -> dict[str, tuple[float, float, float]]:
-    """Place detail equation labels just outside the ±half axis grid cube."""
-    edge = float(half) + float(UNIT_CELL_DETAIL_LABEL_EDGE_PAD)
+    """Place detail equation labels on the ±half grid faces, inset inside the axis cube.
+
+    Plotly clips 3D text outside axis range, so labels must stay within [-half, half]
+    even when sitting on the grid perimeter.
+    """
+    edge = float(half) - float(UNIT_CELL_DETAIL_LABEL_EDGE_INSET)
     return {
         "t_phi": (edge, 0.52, 0.28),
         "t_e": (0.52, edge, 0.28),
