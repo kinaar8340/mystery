@@ -1239,12 +1239,12 @@ def _platonic_geo_presets_interrupt_reset(active_shape: str) -> tuple:
 
 
 def _platonic_geo_interrupt_home(new_shape: str, active_demo_letter: str = "A") -> tuple:
-    """Platonic D4–D20 interrupt — always Home, latch shape, preserve demo, reset Presets."""
+    """Platonic D4–D20 interrupt — Home viewport, latch D*, unlatch Home tab (flip-flop)."""
     shape = str(new_shape or "").strip().upper()
     if shape not in _SHAPE_NAV_IDS:
         shape = _DEFAULT_ACTIVE_SHAPE
     return (
-        *_nav_to_page_with_demo("home"),
+        *_nav_to_platonic_home_with_demo(),
         *_set_active_shape_and_apply(shape, active_demo_letter),
         *_platonic_geo_presets_interrupt_reset(shape),
     )
@@ -1256,7 +1256,7 @@ def _set_active_shape_and_apply_home(new_shape: str, active_demo_letter: str = "
 
 
 def _home_nav_interrupt() -> tuple:
-    """Home interrupt — clear platonic latch, restore Demo A startup (app-launch state)."""
+    """Home interrupt — latch Home tab, clear platonic D* (flip-flop), restore Demo A startup."""
     return (
         *_nav_to_page_with_demo("home"),
         *_clear_active_shape(),
@@ -1606,6 +1606,29 @@ def _sync_demo_nav_sections(page: str) -> tuple[gr.Update, gr.Update, gr.Update]
 def _nav_to_page_with_demo(page: str) -> tuple:
     """Switch pages and sync unified-host demo nav sections in one update."""
     return (*_nav_to_page(page), *_sync_demo_nav_sections(page))
+
+
+def _nav_to_platonic_home_viewport() -> tuple:
+    """Home page content with platonic tab latched — Home main-nav button OFF (flip-flop)."""
+    closed = _close_links_panels()
+    return (
+        gr.update(visible=True),
+        gr.update(visible=False),
+        gr.update(visible=False),
+        gr.update(visible=False),
+        gr.update(visible=False),
+        _main_nav_btn_update("home", active=False),
+        _main_nav_btn_update("render", active=False),
+        _main_nav_btn_update("readme", active=False),
+        _main_nav_btn_update("status", active=False),
+        *closed,
+        "home",
+    )
+
+
+def _nav_to_platonic_home_with_demo() -> tuple:
+    """Platonic interrupt nav — Home viewport visible, demo row synced, Home tab unlatched."""
+    return (*_nav_to_platonic_home_viewport(), *_sync_demo_nav_sections("home"))
 
 
 def _nav_to_page(page: str) -> tuple:
