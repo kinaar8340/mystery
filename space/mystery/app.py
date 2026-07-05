@@ -3075,6 +3075,8 @@ footer {{
     -webkit-font-smoothing: antialiased !important;
     background: #0a0a0f !important;
 }}
+.gradio-container .myst-gravity-page #myst-gravity-viewport-startup .prose .myst-demo-viewport-loading,
+.gradio-container .myst-gravity-page #myst-gravity-viewport-startup .html-container .myst-demo-viewport-loading,
 .gradio-container .myst-gravity-page .myst-demo-viewport-loading {{
     width: 100% !important;
     height: 100% !important;
@@ -3083,38 +3085,73 @@ footer {{
     flex-direction: column !important;
     align-items: center !important;
     justify-content: center !important;
-    gap: 0.65rem !important;
     padding: 1.5rem !important;
     box-sizing: border-box !important;
-    background: #0a0a0f !important;
-    color: #f5e6c8 !important;
+    background: #12121a !important;
+    opacity: 1 !important;
+    filter: none !important;
     text-align: center !important;
 }}
+.gradio-container .myst-gravity-page .myst-demo-viewport-loading-card {{
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.75rem !important;
+    max-width: 34rem !important;
+    width: min(92%, 34rem) !important;
+    padding: 1.65rem 1.85rem 1.5rem !important;
+    border-radius: 14px !important;
+    background: linear-gradient(165deg, #2a2a3d 0%, #1c1c2a 100%) !important;
+    border: 1px solid rgba(224, 64, 160, 0.55) !important;
+    box-shadow:
+        0 0 0 1px rgba(245, 230, 200, 0.12),
+        0 0 28px rgba(224, 64, 160, 0.22),
+        0 12px 36px rgba(0, 0, 0, 0.45) !important;
+    opacity: 1 !important;
+    filter: none !important;
+}}
 .gradio-container .myst-gravity-page .myst-demo-viewport-loading-spinner {{
-    width: 2.4rem !important;
-    height: 2.4rem !important;
-    border: 3px solid rgba(245, 230, 200, 0.18) !important;
-    border-top-color: #e040a0 !important;
+    width: 3rem !important;
+    height: 3rem !important;
+    border: 4px solid rgba(245, 230, 200, 0.35) !important;
+    border-top-color: #ff5ec4 !important;
+    border-right-color: #f5e6c8 !important;
     border-radius: 50% !important;
-    animation: myst-demo-spinner 0.9s linear infinite !important;
+    animation: myst-demo-spinner 0.85s linear infinite !important;
+    opacity: 1 !important;
+    filter: none !important;
 }}
 @keyframes myst-demo-spinner {{
     to {{ transform: rotate(360deg); }}
 }}
-.gradio-container .myst-gravity-page .myst-demo-viewport-loading-title {{
-    font-size: 1rem !important;
-    font-weight: 600 !important;
-    color: #f5e6c8 !important;
+.gradio-container .myst-gravity-page .myst-demo-viewport-loading-title,
+.gradio-container .myst-gravity-page .prose .myst-demo-viewport-loading-title {{
+    font-size: 1.18rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.03em !important;
+    color: #fff8ec !important;
+    -webkit-text-fill-color: #fff8ec !important;
+    opacity: 1 !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45) !important;
 }}
-.gradio-container .myst-gravity-page .myst-demo-viewport-loading-sub {{
-    font-size: 0.82rem !important;
-    color: #b8b8c8 !important;
+.gradio-container .myst-gravity-page .myst-demo-viewport-loading-sub,
+.gradio-container .myst-gravity-page .prose .myst-demo-viewport-loading-sub {{
+    font-size: 0.92rem !important;
+    color: #ececf4 !important;
+    -webkit-text-fill-color: #ececf4 !important;
     max-width: 28rem !important;
+    opacity: 1 !important;
+    line-height: 1.4 !important;
 }}
-.gradio-container .myst-gravity-page .myst-demo-viewport-loading-hint {{
-    font-size: 0.74rem !important;
-    color: #8a8a9a !important;
-    max-width: 24rem !important;
+.gradio-container .myst-gravity-page .myst-demo-viewport-loading-hint,
+.gradio-container .myst-gravity-page .prose .myst-demo-viewport-loading-hint {{
+    font-size: 0.8rem !important;
+    color: #d4d4e4 !important;
+    -webkit-text-fill-color: #d4d4e4 !important;
+    max-width: 26rem !important;
+    opacity: 1 !important;
+    line-height: 1.45 !important;
 }}
 .gradio-container button.demo-btn.active.myst-demo-loading,
 .gradio-container button.demo-btn.active.myst-demo-loading span {{
@@ -3180,20 +3217,26 @@ footer {{
     max-width: min(22rem, 72%) !important;
     padding: 0.45rem 0.65rem 0.5rem !important;
     border-radius: 8px !important;
-    background: rgba(8, 8, 14, 0.78) !important;
-    border: 1px solid rgba(90, 90, 120, 0.45) !important;
+    background: rgba(34, 34, 50, 0.94) !important;
+    border: 1px solid rgba(224, 64, 160, 0.42) !important;
+    box-shadow: 0 0 16px rgba(224, 64, 160, 0.15) !important;
+    opacity: 1 !important;
 }}
 .gradio-container .myst-gravity-page .myst-gravity-viewport-overlay-title {{
-    color: #f5e6c8 !important;
+    color: #fff8ec !important;
+    -webkit-text-fill-color: #fff8ec !important;
     font-size: 0.86rem !important;
     font-weight: 600 !important;
     line-height: 1.25 !important;
+    opacity: 1 !important;
 }}
 .gradio-container .myst-gravity-page .myst-gravity-viewport-overlay-sub {{
-    color: #b8b8c8 !important;
+    color: #e0e0ee !important;
+    -webkit-text-fill-color: #e0e0ee !important;
     font-size: 0.74rem !important;
     line-height: 1.3 !important;
     margin-top: 0.15rem !important;
+    opacity: 1 !important;
 }}
 #myst-gravity-viewport .plotly-graph-div,
 #myst-gravity-viewport-plotly,
@@ -9444,12 +9487,13 @@ def _demo_viewport_loading_html(letter: str) -> str:
     safe_sub = html.escape(subtitle)
     return (
         '<div class="myst-demo-viewport-loading" role="status" aria-live="polite">'
+        '<div class="myst-demo-viewport-loading-card">'
         '<div class="myst-demo-viewport-loading-spinner" aria-hidden="true"></div>'
         f'<div class="myst-demo-viewport-loading-title">Rendering {safe_title}</div>'
         f'<div class="myst-demo-viewport-loading-sub">{safe_sub}</div>'
         '<div class="myst-demo-viewport-loading-hint">'
         "Encoding deformation loop — this may take up to two minutes on first load."
-        "</div></div>"
+        "</div></div></div>"
     )
 
 
