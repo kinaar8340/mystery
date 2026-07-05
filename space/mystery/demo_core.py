@@ -2251,6 +2251,20 @@ def _viewport_file_url_html(file_path: str, *, error: bool = False) -> str:
     return _viewport_img_wrap_html(f"/gradio_api/file={file_path}", error=error)
 
 
+def startup_viewport_file_html(served_path: str) -> str:
+    """Demo A landing PNG — full-width crisp img on opaque black panel."""
+    src = str(served_path or "").strip()
+    if not src.startswith("/gradio_api/file="):
+        src = f"/gradio_api/file={src}"
+    return (
+        '<div class="myst-gravity-viewport-inner myst-gravity-startup-wrap">'
+        f'<img src="{src}" alt="Mystery startup README" '
+        'class="myst-gravity-startup-img myst-gravity-startup-image" '
+        'loading="eager" decoding="sync" />'
+        "</div>"
+    )
+
+
 def numpy_viewport_to_html(arr: np.ndarray) -> str:
     """RGB numpy → inline base64 <img> for gr.HTML (local dev)."""
     from PIL import Image as PILImage

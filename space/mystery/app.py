@@ -218,8 +218,8 @@ _MYST_STATUS_PANEL_ALPHA = 0.7
 _MYST_README_PANEL_ALPHA = 0.7
 # Figures tab preset thumbnails/detail (unchanged).
 _MYST_RENDER_PANEL_ALPHA = 0.3
-# Demo A–I viewport panel background — 50% transparent (wallpaper shows through).
-_MYST_DEMO_VIEWPORT_ALPHA = 0.5
+# Demo A–I viewport — opaque content for readable text/video (wallpaper stays outside panel).
+_MYST_DEMO_VIEWPORT_ALPHA = 1.0
 _STATUS_ZOOM_PRESET_COUNT = 9
 _VQC_MATRIX_GREEN_BG = "#0a1f12"
 _VQC_LOGO_GOLD = "#c9a227"
@@ -3004,6 +3004,13 @@ footer {{
     margin: 0 !important;
     overflow: hidden !important;
     background: #0a0a0f !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}}
+.gradio-container .myst-gravity-page .myst-gravity-single-viewport .block,
+.gradio-container .myst-gravity-page .myst-gravity-single-viewport .html-container {{
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
 }}
 .gradio-container .myst-gravity-page .myst-gravity-startup-image,
 .gradio-container .myst-gravity-page .myst-gravity-startup-img {{
@@ -3016,10 +3023,10 @@ footer {{
     display: block !important;
     pointer-events: none !important;
 }}
-/* Demo A–I — 50% transparent viewport background (wallpaper shows through). */
+/* Demo A–I — opaque viewport panel (readable text/video; wallpaper stays outside). */
 .gradio-container .myst-gravity-page .myst-gravity-single-viewport.myst-demo-viewport,
 .gradio-container .myst-gravity-page .myst-demo-viewport#myst-gravity-viewport-wrapper {{
-    background: rgba(10, 10, 15, {_MYST_DEMO_VIEWPORT_ALPHA}) !important;
+    background: #0a0a0f !important;
 }}
 .gradio-container .myst-gravity-page .myst-demo-viewport #myst-gravity-viewport,
 .gradio-container .myst-gravity-page .myst-demo-viewport #myst-gravity-viewport .block,
@@ -3037,11 +3044,85 @@ footer {{
 .gradio-container .myst-gravity-page .myst-demo-viewport .plotly-graph-div,
 .gradio-container .myst-gravity-page .myst-demo-viewport .js-plotly-plot,
 .gradio-container .myst-gravity-page .myst-demo-viewport .myst-gravity-startup-image,
-.gradio-container .myst-gravity-page .myst-demo-viewport .myst-gravity-startup-img {{
-    background: rgba(10, 10, 15, {_MYST_DEMO_VIEWPORT_ALPHA}) !important;
+.gradio-container .myst-gravity-page .myst-demo-viewport .myst-gravity-startup-img,
+.gradio-container .myst-gravity-page .myst-demo-viewport .myst-gravity-startup-wrap {{
+    background: #0a0a0f !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
 }}
 .gradio-container .myst-gravity-page .myst-demo-viewport .plotly .main-svg .bg {{
-    fill: rgba(0, 0, 0, {_MYST_DEMO_VIEWPORT_ALPHA}) !important;
+    fill: #000000 !important;
+}}
+.gradio-container .myst-gravity-page .myst-gravity-startup-wrap {{
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 580px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+    background: #0a0a0f !important;
+}}
+.gradio-container .myst-gravity-page .myst-gravity-startup-img,
+.gradio-container .myst-gravity-page .myst-gravity-startup-image {{
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100% !important;
+    max-height: 620px !important;
+    object-fit: contain !important;
+    object-position: center center !important;
+    image-rendering: auto !important;
+    -webkit-font-smoothing: antialiased !important;
+    background: #0a0a0f !important;
+}}
+.gradio-container .myst-gravity-page .myst-demo-viewport-loading {{
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 580px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.65rem !important;
+    padding: 1.5rem !important;
+    box-sizing: border-box !important;
+    background: #0a0a0f !important;
+    color: #f5e6c8 !important;
+    text-align: center !important;
+}}
+.gradio-container .myst-gravity-page .myst-demo-viewport-loading-spinner {{
+    width: 2.4rem !important;
+    height: 2.4rem !important;
+    border: 3px solid rgba(245, 230, 200, 0.18) !important;
+    border-top-color: #e040a0 !important;
+    border-radius: 50% !important;
+    animation: myst-demo-spinner 0.9s linear infinite !important;
+}}
+@keyframes myst-demo-spinner {{
+    to {{ transform: rotate(360deg); }}
+}}
+.gradio-container .myst-gravity-page .myst-demo-viewport-loading-title {{
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+    color: #f5e6c8 !important;
+}}
+.gradio-container .myst-gravity-page .myst-demo-viewport-loading-sub {{
+    font-size: 0.82rem !important;
+    color: #b8b8c8 !important;
+    max-width: 28rem !important;
+}}
+.gradio-container .myst-gravity-page .myst-demo-viewport-loading-hint {{
+    font-size: 0.74rem !important;
+    color: #8a8a9a !important;
+    max-width: 24rem !important;
+}}
+.gradio-container button.demo-btn.active.myst-demo-loading,
+.gradio-container button.demo-btn.active.myst-demo-loading span {{
+    animation: myst-demo-btn-loading-blink 1s step-end infinite !important;
+}}
+@keyframes myst-demo-btn-loading-blink {{
+    0%, 49% {{ opacity: 1; }}
+    50%, 100% {{ opacity: 0.28; }}
 }}
 /* Opacity-only fade on demo video swaps — no transform (transform blurs text). */
 .gradio-container .myst-gravity-page .myst-viewport-transition #myst-gravity-viewport video {{
@@ -8908,15 +8989,27 @@ def _gravity_keypad_btn_updates(
     )
 
 
-def _gravity_child_nav_btn_classes(letter: str, active_slot: int) -> list[str]:
+def _gravity_child_nav_btn_classes(
+    letter: str,
+    active_slot: int,
+    *,
+    loading: bool = False,
+) -> list[str]:
     classes = ["vqc-source-tab", "demo-btn", "myst-status-preset-btn", "myst-gravity-preset-btn"]
     slot = ord(letter) - ord("A")
     if 0 <= int(active_slot) < len(_GRAVITY_CHILD_NAV_LETTERS) and slot == int(active_slot):
         classes.append("active")
+        if loading:
+            classes.append("myst-demo-loading")
     return classes
 
 
-def _gravity_child_nav_btn_updates(active_slot: int = -1, *, b_i_enabled: bool = True) -> tuple:
+def _gravity_child_nav_btn_updates(
+    active_slot: int = -1,
+    *,
+    b_i_enabled: bool = True,
+    loading: bool = False,
+) -> tuple:
     active = int(active_slot)
     return tuple(
         gr.update(
@@ -8924,6 +9017,7 @@ def _gravity_child_nav_btn_updates(active_slot: int = -1, *, b_i_enabled: bool =
             elem_classes=_gravity_child_nav_btn_classes(
                 letter,
                 active if (letter == "A" or b_i_enabled) else -1,
+                loading=loading,
             ),
             interactive=(letter == "A" or b_i_enabled),
             variant="secondary",
@@ -9212,9 +9306,11 @@ def _get_demo_a_startup_viewport_html() -> str:
     """HF-safe startup viewport — Gradio upload cache + /gradio_api/file= img."""
     global _DEMO_A_STARTUP_HTML_CACHE
     if _DEMO_A_STARTUP_HTML_CACHE is None:
+        from demo_core import startup_viewport_file_html
+
         raw_path = resolve_demo_a_startup_image_source_path()
         served_path = _cache_media_for_gradio(raw_path)
-        _DEMO_A_STARTUP_HTML_CACHE = figure_to_viewport_file_html(served_path)
+        _DEMO_A_STARTUP_HTML_CACHE = startup_viewport_file_html(served_path)
         print(f"[startup] cached Demo A viewport HTML from {raw_path}", flush=True)
     return _DEMO_A_STARTUP_HTML_CACHE
 
@@ -9337,6 +9433,68 @@ def _demo_viewport_show_startup_image() -> tuple:
         gr.update(value=None, visible=False),
         gr.update(value=_get_demo_a_startup_viewport_html(), visible=True),
         _demo_viewport_overlay_update(title=title, subtitle=subtitle),
+    )
+
+
+def _demo_viewport_loading_html(letter: str) -> str:
+    """Full-panel rendering status while a demo MP4 encodes."""
+    active = str(letter or "A").strip().upper()
+    title, subtitle = _demo_letter_overlay_copy(active)
+    safe_title = html.escape(title)
+    safe_sub = html.escape(subtitle)
+    return (
+        '<div class="myst-demo-viewport-loading" role="status" aria-live="polite">'
+        '<div class="myst-demo-viewport-loading-spinner" aria-hidden="true"></div>'
+        f'<div class="myst-demo-viewport-loading-title">Rendering {safe_title}</div>'
+        f'<div class="myst-demo-viewport-loading-sub">{safe_sub}</div>'
+        '<div class="myst-demo-viewport-loading-hint">'
+        "Encoding deformation loop — this may take up to two minutes on first load."
+        "</div></div>"
+    )
+
+
+def _demo_viewport_show_loading(letter: str) -> tuple:
+    """Swap viewport to a loading panel while demo media encodes."""
+    active = str(letter or "A").strip().upper()
+    title, subtitle = _demo_letter_overlay_copy(active)
+    return (
+        gr.update(value=None, visible=False),
+        gr.update(value=None, visible=False),
+        gr.update(value=_demo_viewport_loading_html(active), visible=True),
+        _demo_viewport_overlay_update(
+            title=f"Rendering {title}…",
+            subtitle=subtitle,
+        ),
+    )
+
+
+def _demo_letter_click_begin(letter: str) -> tuple:
+    """Latch demo tab, blink active button, show loading panel immediately."""
+    active = str(letter or "A").strip().upper()
+    if active not in _GRAVITY_CHILD_NAV_LETTERS:
+        active = "A"
+    latch = active if _is_demo_platonic_flip_letter(active) else "A"
+    active_slot = ord(latch) - ord("A") if latch else -1
+    return (
+        *_demo_platonic_flip_clear_shape(),
+        *_gravity_child_nav_btn_updates(active_slot, b_i_enabled=True, loading=True),
+        latch,
+        _gravity_viewport_wrapper_update(latch),
+        *_demo_home_main_nav_unlock_updates(),
+        *_demo_viewport_show_loading(latch),
+    )
+
+
+def _demo_letter_click_finish(letter: str) -> tuple:
+    """Load demo viewport media and clear the loading blink state."""
+    active = str(letter or "A").strip().upper()
+    if active not in _GRAVITY_CHILD_NAV_LETTERS:
+        active = "A"
+    latch = active if _is_demo_platonic_flip_letter(active) else "A"
+    active_slot = ord(latch) - ord("A") if latch else -1
+    return (
+        *_switch_gravity_demo_viewport_only(latch),
+        *_gravity_child_nav_btn_updates(active_slot, b_i_enabled=True, loading=False),
     )
 
 
@@ -12328,68 +12486,38 @@ def build_app() -> gr.Blocks:
                 unified_nav["render"],
                 unified_nav["status"],
             ]
+            demo_letter_click_begin_outputs = [
+                *demo_platonic_flip_nav_outputs,
+                *gravity_demo_viewport_outputs,
+            ]
+            demo_letter_click_finish_outputs = [
+                *gravity_demo_viewport_outputs,
+                *[gravity_letter_btns[letter] for letter in _GRAVITY_CHILD_NAV_LETTERS],
+            ]
+
+            def _make_demo_letter_click_begin(letter: str):
+                def handler() -> tuple:
+                    return _demo_letter_click_begin(letter)
+
+                return handler
+
+            def _make_demo_letter_click_finish(letter: str):
+                def handler() -> tuple:
+                    return _demo_letter_click_finish(letter)
+
+                return handler
+
             for letter in _GRAVITY_CHILD_NAV_LETTERS:
                 btn = gravity_letter_btns[letter]
-                if letter == "A":
-                    btn.click(
-                        lambda: _demo_letter_nav_interrupt("A"),
-                        outputs=demo_platonic_flip_nav_outputs,
-                        show_progress="hidden",
-                    ).then(
-                        _demo_startup_viewport_only,
-                        outputs=gravity_demo_viewport_outputs,
-                        show_progress="hidden",
-                    )
-                elif letter in _PIPELINE_DEMO_LETTERS:
-                    btn.click(
-                        lambda l=letter: _demo_letter_nav_interrupt(l),
-                        outputs=demo_platonic_flip_nav_outputs,
-                        show_progress="hidden",
-                    ).then(
-                        lambda l=letter: _switch_gravity_demo_viewport_only(l),
-                        outputs=gravity_demo_viewport_outputs,
-                        show_progress="hidden",
-                    )
-                elif letter in _PRESET_DEMO_LETTERS:
-                    btn.click(
-                        lambda l=letter: _demo_letter_nav_interrupt(l),
-                        outputs=demo_platonic_flip_nav_outputs,
-                        show_progress="hidden",
-                    ).then(
-                        lambda l=letter: _switch_gravity_demo_viewport_only(l),
-                        outputs=gravity_demo_viewport_outputs,
-                        show_progress="hidden",
-                    )
-                elif letter in _DEFORM_DEMO_LETTERS:
-                    btn.click(
-                        lambda l=letter: _demo_letter_nav_interrupt(l),
-                        outputs=demo_platonic_flip_nav_outputs,
-                        show_progress="hidden",
-                    ).then(
-                        lambda l=letter: _switch_gravity_demo_viewport_only(l),
-                        outputs=gravity_demo_viewport_outputs,
-                        show_progress="hidden",
-                    )
-                elif letter in _BREATHING_DEMO_LETTERS:
-                    btn.click(
-                        lambda l=letter: _demo_letter_nav_interrupt(l),
-                        outputs=demo_platonic_flip_nav_outputs,
-                        show_progress="hidden",
-                    ).then(
-                        lambda l=letter: _switch_gravity_demo_viewport_only(l),
-                        outputs=gravity_demo_viewport_outputs,
-                        show_progress="hidden",
-                    )
-                else:
-                    btn.click(
-                        lambda l=letter: _demo_letter_nav_interrupt(l),
-                        outputs=demo_platonic_flip_nav_outputs,
-                        show_progress="hidden",
-                    ).then(
-                        lambda l=letter: _switch_gravity_demo_viewport_only(l),
-                        outputs=gravity_demo_viewport_outputs,
-                        show_progress="hidden",
-                    )
+                btn.click(
+                    _make_demo_letter_click_begin(letter),
+                    outputs=demo_letter_click_begin_outputs,
+                    show_progress="hidden",
+                ).then(
+                    _make_demo_letter_click_finish(letter),
+                    outputs=demo_letter_click_finish_outputs,
+                    show_progress="hidden",
+                )
 
             sz_inputs = [
                 sz_phi_scale,
