@@ -44,6 +44,7 @@ rsync -av --delete \
   --exclude='__pycache__' \
   --exclude='*.pyc' \
   --exclude='mystery_image.png' \
+  --exclude='backup_mystery_image.png' \
   --exclude='assets/demo_a_breathing.gif' \
   "$ROOT/space/mystery/" "$HF_DIR/"
 rm -rf "$HF_DIR/.gradio"

@@ -38,8 +38,9 @@ UNIT_CELL_DETAIL_VIEW_DIST = 30.0
 UNIT_CELL_DETAIL_PLOTLY_RADIUS = 3.0
 UNIT_CELL_DETAIL_PLOTLY_HEIGHT = 680
 # Detail-page typography only (Figures 3×3 grid uses shape_only — unchanged).
-UNIT_CELL_DETAIL_LABEL_FONT_MAIN = 13
-UNIT_CELL_DETAIL_LABEL_FONT_SMALL = 12
+UNIT_CELL_DETAIL_LABEL_FONT_MAIN = 15
+UNIT_CELL_DETAIL_LABEL_FONT_SMALL = 14
+UNIT_CELL_DETAIL_LABEL_EDGE_PAD = 0.42
 UNIT_CELL_DETAIL_AXIS_TITLE_FONT = 12
 UNIT_CELL_DETAIL_AXIS_TICK_FONT = 11
 
@@ -50,22 +51,23 @@ GITHUB_URL = "https://github.com/kinaar8340/mystery"
 TOE_URL = "https://github.com/kinaar8340/toe"
 _SPACE_DIR = Path(__file__).resolve().parent
 _REPO_ROOT = _SPACE_DIR.parent.parent
+WALLPAPER_FILENAME = "bg1_mystery.png"
 
 
 def resolve_wallpaper_url() -> str:
-    """Prefer bundled/local mystery_image.png; fall back to GitHub raw after push."""
-    for path in (_SPACE_DIR / "mystery_image.png", _REPO_ROOT / "mystery_image.png"):
+    """Prefer bundled/local bg1_mystery.png; fall back to GitHub raw after push."""
+    for path in (_SPACE_DIR / WALLPAPER_FILENAME, _REPO_ROOT / WALLPAPER_FILENAME):
         if path.is_file():
             stamp = int(path.stat().st_mtime)
             # Gradio serves set_static_paths() assets via /gradio_api/file= (not /file=<abs path>).
             return f"/gradio_api/file={path.name}?v={stamp}"
-    return f"{GITHUB_URL}/raw/main/mystery_image.png"
+    return f"{GITHUB_URL}/raw/main/{WALLPAPER_FILENAME}"
 
 
 def wallpaper_static_paths() -> list[Path]:
     """Directories Gradio may serve for the wallpaper background image."""
     paths: list[Path] = []
-    for path in (_SPACE_DIR / "mystery_image.png", _REPO_ROOT / "mystery_image.png"):
+    for path in (_SPACE_DIR / WALLPAPER_FILENAME, _REPO_ROOT / WALLPAPER_FILENAME):
         if path.is_file():
             paths.append(path.parent)
     return list(dict.fromkeys(paths))
@@ -797,6 +799,20 @@ _DETAIL_LABEL_DELTA_Z_PLY = "δ_z (push)"
 _DETAIL_AXIS_PHI_PLY = "φ-face"
 _DETAIL_AXIS_E_PLY = "e-face"
 _DETAIL_AXIS_PI_PLY = "π-face"
+
+
+def _detail_exterior_label_positions(
+    half: float = UNIT_CELL_DETAIL_AXIS_HALF,
+) -> dict[str, tuple[float, float, float]]:
+    """Place detail equation labels just outside the ±half axis grid cube."""
+    edge = float(half) + float(UNIT_CELL_DETAIL_LABEL_EDGE_PAD)
+    return {
+        "t_phi": (edge, 0.52, 0.28),
+        "t_e": (0.52, edge, 0.28),
+        "t_pi": (0.52, 0.28, edge),
+        "delta_side": (-edge, -0.62, 0.38),
+        "delta_z": (0.48, -2.72, edge),
+    }
 
 
 def _clamp_deform_pressure(pressure: float) -> float:
@@ -1996,10 +2012,11 @@ def build_unit_cell_figure(
         phi_face = _anchor_point((s, 0.0, 0.0), s, p, delta_z, side)
         e_face = _anchor_point((0.0, s, 0.0), s, p, delta_z, side)
         pi_face = _anchor_point((0.0, 0.0, s), s, p, delta_z, side)
+        label_pos = _detail_exterior_label_positions(float(max(2.0, axis_half)))
         _draw_leader_label(
             ax,
             phi_face,
-            (2.35, 0.45, 0.25),
+            label_pos["t_phi"],
             _DETAIL_LABEL_T_PHI_MPL,
             eq_red,
             fontsize=font_main,
@@ -2007,7 +2024,7 @@ def build_unit_cell_figure(
         _draw_leader_label(
             ax,
             e_face,
-            (0.45, 2.35, 0.25),
+            label_pos["t_e"],
             _DETAIL_LABEL_T_E_MPL,
             eq_green,
             fontsize=font_main,
@@ -2015,7 +2032,7 @@ def build_unit_cell_figure(
         _draw_leader_label(
             ax,
             pi_face,
-            (0.45, 0.25, 2.35),
+            label_pos["t_pi"],
             _DETAIL_LABEL_T_PI_MPL,
             eq_blue,
             fontsize=font_main,
@@ -2023,7 +2040,7 @@ def build_unit_cell_figure(
         _draw_leader_label(
             ax,
             _anchor_point((-s, 0.0, 0.0), s, p, delta_z, side),
-            (-2.35, -0.55, 0.35),
+            label_pos["delta_side"],
             _DETAIL_LABEL_DELTA_SIDE_MPL,
             eq_green,
             fontsize=font_small,
@@ -2031,7 +2048,7 @@ def build_unit_cell_figure(
         _draw_leader_label(
             ax,
             pi_face,
-            (-0.55, -2.25, 2.35),
+            label_pos["delta_z"],
             _DETAIL_LABEL_DELTA_Z_MPL,
             eq_blue,
             fontsize=font_small,
@@ -2145,35 +2162,36 @@ def _append_plotly_detail_overlays(
     phi_face = _anchor_point((s, 0.0, 0.0), s, p, delta_z, side)
     e_face = _anchor_point((0.0, s, 0.0), s, p, delta_z, side)
     pi_face = _anchor_point((0.0, 0.0, s), s, p, delta_z, side)
+    label_pos = _detail_exterior_label_positions()
     overlays = [
         _plotly_leader_trace(
             phi_face,
-            (2.35, 0.45, 0.25),
+            label_pos["t_phi"],
             _DETAIL_LABEL_T_PHI_PLY,
             _UNIT_CELL_RED,
         ),
         _plotly_leader_trace(
             e_face,
-            (0.45, 2.35, 0.25),
+            label_pos["t_e"],
             _DETAIL_LABEL_T_E_PLY,
             _UNIT_CELL_GREEN,
         ),
         _plotly_leader_trace(
             pi_face,
-            (0.45, 0.25, 2.35),
+            label_pos["t_pi"],
             _DETAIL_LABEL_T_PI_PLY,
             _UNIT_CELL_BLUE,
         ),
         _plotly_leader_trace(
             _anchor_point((-s, 0.0, 0.0), s, p, delta_z, side),
-            (-2.35, -0.55, 0.35),
+            label_pos["delta_side"],
             _DETAIL_LABEL_DELTA_SIDE_PLY,
             _UNIT_CELL_GREEN,
             font_size=UNIT_CELL_DETAIL_LABEL_FONT_SMALL,
         ),
         _plotly_leader_trace(
             pi_face,
-            (-0.55, -2.25, 2.35),
+            label_pos["delta_z"],
             _DETAIL_LABEL_DELTA_Z_PLY,
             _UNIT_CELL_BLUE,
             font_size=UNIT_CELL_DETAIL_LABEL_FONT_SMALL,

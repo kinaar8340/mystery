@@ -134,7 +134,7 @@ _VQC_MATRIX_GREEN = "#33ff66"
 
 # ====================== GLOBAL STYLING THEME ======================
 NAV_THEME: dict = {
-    "default_gap_height": 0.20,
+    "default_gap_height": 0.25,
     "nav_label": {
         "font_size": "14px",
         "font_weight": "500",
@@ -1110,7 +1110,7 @@ def _place_status_sub_nav_row(
     *,
     visible: bool = False,
 ) -> tuple[dict[str, gr.Button], gr.Row]:
-    """Presets sub-nav — Demo: label and nine presets (01 … 09), unified nav layer."""
+    """Presets sub-nav — Preset: label and nine presets (01 … 09), unified nav layer."""
     buttons: dict[str, gr.Button] = {}
     active = int(active_slot)
     with gr.Row(
@@ -1129,7 +1129,7 @@ def _place_status_sub_nav_row(
     ) as row:
         gr.HTML(
             '<span class="vqc-source-label vqc-nav-row-label myst-gravity-child-nav-label">'
-            "Demo:</span>"
+            f"{_PRESET_SUBNAV_LABEL}</span>"
         )
         with gr.Row(elem_classes=["nav-button-grid"]):
             for slot in range(_STATUS_ZOOM_PRESET_COUNT):
@@ -1329,6 +1329,8 @@ def _readme_back_to_app(return_page: str) -> tuple:
 
 _HOME_DEMO_PAGES = frozenset({"home", "gravity"})
 _RENDER_DEMO_PAGES = frozenset({"render", "figures"})
+_PRESET_SUBNAV_LABEL = "Preset:"
+_DEMO_SUBNAV_LABEL = "Demo:"
 
 
 def _sync_demo_nav_sections(page: str) -> tuple[gr.Update, gr.Update, gr.Update]:
@@ -9097,7 +9099,7 @@ def _place_gravity_child_nav_row(*, visible: bool = True) -> tuple[dict[str, gr.
     ) as row:
         gr.HTML(
             '<span class="vqc-source-label vqc-nav-row-label myst-gravity-child-nav-label">'
-            "Demo:</span>"
+            f"{_DEMO_SUBNAV_LABEL}</span>"
         )
         with gr.Row(elem_classes=["nav-button-grid"]):
             for letter in _GRAVITY_CHILD_NAV_LETTERS:
@@ -9122,7 +9124,7 @@ def _place_render_sub_nav_row(
     zoom_slot: int = -1,
     visible: bool = False,
 ) -> tuple[dict[str, gr.Button], gr.Row]:
-    """Figures sub-nav — Demo: label and nine presets (01 … 09), same layer as Mystery nav."""
+    """Figures sub-nav — Preset: label and nine presets (01 … 09), same layer as Mystery nav."""
     _ = zoom_slot
     buttons: dict[str, gr.Button] = {}
     active = int(active_slot)
@@ -9142,7 +9144,7 @@ def _place_render_sub_nav_row(
     ) as row:
         gr.HTML(
             '<span class="vqc-source-label vqc-nav-row-label myst-gravity-child-nav-label">'
-            "Demo:</span>"
+            f"{_PRESET_SUBNAV_LABEL}</span>"
         )
         with gr.Row(elem_classes=["nav-button-grid"]):
             for slot in range(_STATUS_ZOOM_PRESET_COUNT):

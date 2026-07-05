@@ -17,11 +17,12 @@ BUILD_UPDATED_UTC = "$UPDATED"
 EOF
 
 # Bundle readable wallpaper for local HF + /file= serving (GitHub raw remains README fallback).
-if [[ -f "$ROOT/mystery_image.png" ]]; then
-  cp -f "$ROOT/mystery_image.png" "$DST/mystery_image.png"
+if [[ -f "$ROOT/bg1_mystery.png" ]]; then
+  cp -f "$ROOT/bg1_mystery.png" "$DST/bg1_mystery.png"
 else
-  rm -f "$DST/mystery_image.png"
+  rm -f "$DST/bg1_mystery.png"
 fi
+rm -f "$DST/mystery_image.png"
 
 cat > "$DST/requirements.txt" <<'EOF'
 numpy>=1.24.0,<3.0.0
@@ -54,7 +55,7 @@ short_description: φ²+e²≈π² — Gravity unit-cell presets & figures
 # Mystery — φ, e, π Emergent Signature
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/kinaar8340/mystery/main/mystery_image.png" alt="Mystery cover" width="100%" style="max-width: 720px; border-radius: 12px;" />
+  <img src="https://raw.githubusercontent.com/kinaar8340/mystery/main/bg1_mystery.png" alt="Mystery cover" width="100%" style="max-width: 720px; border-radius: 12px;" />
 </p>
 
 **Browser demo** of the Mystery research notebook: near-Pythagorean triangle φ²+e²≈π², holonomy-gap scaling B(κ), unit-cell deformation, and 30-60-90 / 3-6-9 comparisons.
