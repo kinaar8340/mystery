@@ -1339,6 +1339,7 @@ def _home_nav_interrupt() -> tuple:
         *_nav_to_page_with_demo("home", active_shape=_NO_ACTIVE_SHAPE),
         *_clear_active_shape(),
         *_home_demo_nav_updates("A", current_page="home", active_shape=_NO_ACTIVE_SHAPE),
+        *_demo_startup_viewport_only(),
         _gravity_viewport_wrapper_update("A"),
     )
 
@@ -8799,6 +8800,7 @@ def _gravity_child_nav_btn_updates(active_slot: int = -1, *, b_i_enabled: bool =
     active = int(active_slot)
     return tuple(
         gr.update(
+            value=letter,
             elem_classes=_gravity_child_nav_btn_classes(
                 letter,
                 active if (letter == "A" or b_i_enabled) else -1,
@@ -12337,6 +12339,9 @@ def build_app() -> gr.Blocks:
             *[unified_nav[shape_id] for shape_id in _SHAPE_NAV_IDS],
             *[gravity_letter_btns[letter] for letter in _GRAVITY_CHILD_NAV_LETTERS],
             gravity_active_letter,
+            gravity_viewport_plot,
+            gravity_viewport_video,
+            gravity_viewport_startup,
             viewport_col,
         ]
         unified_nav["home"].click(
@@ -12347,11 +12352,6 @@ def build_app() -> gr.Blocks:
             _run_residual_explorer_ui,
             inputs=gravity_dial_inputs,
             outputs=re_outputs,
-            show_progress="hidden",
-        ).then(
-            _platonic_geo_presets_interrupt_reset,
-            inputs=[active_shape],
-            outputs=platonic_geo_interrupt_outputs,
             show_progress="hidden",
         )
         figures_nav_outputs = [
