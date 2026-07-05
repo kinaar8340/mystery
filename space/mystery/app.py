@@ -211,6 +211,8 @@ _MYST_STATUS_PANEL_ALPHA = 0.7
 _MYST_README_PANEL_ALPHA = 0.7
 # Figures tab preset thumbnails/detail (unchanged).
 _MYST_RENDER_PANEL_ALPHA = 0.3
+# Demo F viewport panel background — 50% transparent.
+_MYST_DEMO_F_VIEWPORT_ALPHA = 0.5
 _STATUS_ZOOM_PRESET_COUNT = 9
 _VQC_MATRIX_GREEN_BG = "#0a1f12"
 _VQC_LOGO_GOLD = "#c9a227"
@@ -2712,6 +2714,26 @@ footer {{
     background: #0a0a0f !important;
     display: block !important;
     pointer-events: none !important;
+}}
+/* Demo F — 50% transparent viewport background (wallpaper shows through). */
+.gradio-container .myst-gravity-page .myst-gravity-single-viewport.myst-demo-f-viewport,
+.gradio-container .myst-gravity-page .myst-demo-f-viewport#myst-gravity-viewport-wrapper {{
+    background: rgba(10, 10, 15, {_MYST_DEMO_F_VIEWPORT_ALPHA}) !important;
+}}
+.gradio-container .myst-gravity-page .myst-demo-f-viewport #myst-gravity-viewport,
+.gradio-container .myst-gravity-page .myst-demo-f-viewport #myst-gravity-viewport .block,
+.gradio-container .myst-gravity-page .myst-demo-f-viewport #myst-gravity-viewport .video-container,
+.gradio-container .myst-gravity-page .myst-demo-f-viewport #myst-gravity-viewport .wrap,
+.gradio-container .myst-gravity-page .myst-demo-f-viewport #myst-gravity-viewport video,
+.gradio-container .myst-gravity-page .myst-demo-f-viewport #myst-gravity-viewport-plot,
+.gradio-container .myst-gravity-page .myst-demo-f-viewport #myst-gravity-viewport-plot .block,
+.gradio-container .myst-gravity-page .myst-demo-f-viewport #myst-gravity-viewport-plot .plot-container,
+.gradio-container .myst-gravity-page .myst-demo-f-viewport .plotly-graph-div,
+.gradio-container .myst-gravity-page .myst-demo-f-viewport .js-plotly-plot {{
+    background: rgba(10, 10, 15, {_MYST_DEMO_F_VIEWPORT_ALPHA}) !important;
+}}
+.gradio-container .myst-gravity-page .myst-demo-f-viewport .plotly .main-svg .bg {{
+    fill: rgba(0, 0, 0, {_MYST_DEMO_F_VIEWPORT_ALPHA}) !important;
 }}
 #myst-gravity-viewport .plotly-graph-div,
 #myst-gravity-viewport-plotly,
@@ -8495,6 +8517,18 @@ def _demo_active_tab_updates(active_letter: str) -> tuple:
     return _gravity_child_nav_btn_updates(slot)
 
 
+def _gravity_viewport_wrapper_classes(active_letter: str) -> list[str]:
+    """Viewport shell classes — Demo F adds semi-transparent panel background."""
+    classes = ["myst-gravity-single-viewport"]
+    if str(active_letter).strip().upper() == "F":
+        classes.append("myst-demo-f-viewport")
+    return classes
+
+
+def _gravity_viewport_wrapper_update(active_letter: str) -> gr.Update:
+    return gr.update(elem_classes=_gravity_viewport_wrapper_classes(active_letter))
+
+
 _GRAVITY_DEMO_VIDEO_CACHE: dict[str, str] = {}
 _BREATHING_DEMO_VIDEO_CACHE: str | None = None
 _APP_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -8688,7 +8722,11 @@ def _demo_tab_latch_immediate(letter: str) -> tuple:
     active = str(letter or "A").strip().upper()
     if active not in _GRAVITY_CHILD_NAV_LETTERS:
         active = "A"
-    return (*_demo_active_tab_updates(active), active)
+    return (
+        *_demo_active_tab_updates(active),
+        active,
+        _gravity_viewport_wrapper_update(active),
+    )
 
 
 def _demo_breathing_viewport_only() -> tuple:
@@ -8714,20 +8752,12 @@ def _launch_breathing_demo(letter: str) -> tuple:
     active = str(letter or "F").strip().upper()
     if active not in _BREATHING_DEMO_LETTERS:
         active = "F"
-    return (
-        *_demo_breathing_viewport_only(),
-        *_demo_tab_latch_immediate(active),
-        active,
-    )
+    return (*_demo_breathing_viewport_only(), *_demo_tab_latch_immediate(active))
 
 
 def _launch_demo_a() -> tuple:
     """Demo A — latch + startup (single-shot fallback for programmatic calls)."""
-    return (
-        *_demo_startup_viewport_only(),
-        *_demo_tab_latch_immediate("A"),
-        "A",
-    )
+    return (*_demo_startup_viewport_only(), *_demo_tab_latch_immediate("A"))
 
 
 def _get_gravity_demo_plotly_figure(letter: str):
@@ -8769,6 +8799,7 @@ def _switch_gravity_demo(letter: str) -> tuple:
         *_demo_viewport_show_plot(fig),
         *_demo_active_tab_updates(letter),
         letter,
+        _gravity_viewport_wrapper_update(letter),
     )
 
 
@@ -11439,6 +11470,7 @@ def build_app() -> gr.Blocks:
             gravity_demo_nav_outputs = [
                 *[gravity_letter_btns[letter] for letter in _GRAVITY_CHILD_NAV_LETTERS],
                 gravity_active_letter,
+                viewport_col,
             ]
             gravity_demo_viewport_outputs = [
                 gravity_viewport_plot,
@@ -11447,7 +11479,9 @@ def build_app() -> gr.Blocks:
             ]
             gravity_demo_outputs = [
                 *gravity_demo_viewport_outputs,
-                *gravity_demo_nav_outputs,
+                *[gravity_letter_btns[letter] for letter in _GRAVITY_CHILD_NAV_LETTERS],
+                gravity_active_letter,
+                viewport_col,
             ]
             for letter in _GRAVITY_CHILD_NAV_LETTERS:
                 btn = gravity_letter_btns[letter]
