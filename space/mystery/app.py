@@ -1114,47 +1114,6 @@ def _place_status_zoom_nav_row(
     return buttons
 
 
-def _place_status_save_edit_row(
-    *,
-    visible: bool = True,
-) -> tuple[gr.Button, gr.Button, gr.Row]:
-    """Presets page — full-width Save + Edit row aligned with Demo nav."""
-    with gr.Row(
-        visible=visible,
-        elem_classes=[
-            "myst-save-edit-row",
-            "myst-nav-bar-row",
-            "myst-status-save-edit-row",
-        ],
-    ) as row:
-        gr.HTML(
-            '<span class="vqc-source-label vqc-nav-row-label vqc-nav-label-spacer" '
-            'aria-hidden="true">&nbsp;</span>'
-        )
-        with gr.Row(elem_classes=["nav-button-grid", "nav-button-grid-pair"]):
-            save_btn = _nav_theme_button(
-                "Save",
-                elem_classes=[
-                    *_STATUS_ZOOM_SAVE_BTN_CLASSES,
-                    "save-btn",
-                    "placeholder-btn",
-                ],
-                interactive=False,
-                scale=1,
-            )
-            edit_btn = _nav_theme_button(
-                "Edit",
-                elem_id="myst-status-nav-edit-btn",
-                elem_classes=[
-                    "vqc-source-tab",
-                    "myst-status-preset-btn",
-                    "myst-status-nav-edit-btn",
-                    "edit-btn",
-                ],
-            )
-    return save_btn, edit_btn, row
-
-
 def _add_gap_row(*, slot: str | None = None, half_height: bool = False) -> None:
     """Inserts a consistent gap row using rem units from NAV_THEME."""
     slot_key = str(slot or "default").strip() or "default"
@@ -1199,6 +1158,36 @@ def _status_zoom_nav_edit_btn_update(*, in_zoom: bool, edit_open: bool) -> gr.Up
     return gr.update(interactive=True, elem_classes=classes, variant="secondary")
 
 
+def _status_preset_action_label(slot: int) -> str:
+    preset_slot = int(slot)
+    if preset_slot < 0:
+        return "PRESET"
+    return f"PRESET {_gravity_preset_id(preset_slot)}"
+
+
+def _status_action_row_update(*, on_detail: bool) -> gr.Update:
+    return gr.update(visible=on_detail)
+
+
+def _status_back_btn_update(*, on_detail: bool) -> gr.Update:
+    return gr.update(visible=on_detail)
+
+
+def _status_action_header_btn_update(slot: int) -> gr.Update:
+    on_detail = int(slot) >= 0
+    return gr.update(
+        value=_status_preset_action_label(slot),
+        visible=on_detail,
+        interactive=False,
+        elem_classes=[
+            "demo-btn",
+            "myst-status-action-header-btn",
+            "full-width-btn",
+        ],
+        variant="secondary",
+    )
+
+
 def _status_zoom_back_to_grid() -> tuple:
     """Return from preset zoom to the 3×3 grid overview."""
     dials = dict(_GRAVITY_HOME_DIALS)
@@ -1211,8 +1200,9 @@ def _status_zoom_back_to_grid() -> tuple:
         gr.update(visible=False),
         _status_zoom_nav_edit_btn_update(in_zoom=False, edit_open=False),
         *slider_updates,
-        _status_zoom_save_btn_placeholder_update(),
-        False,
+        _status_action_row_update(on_detail=False),
+        _status_back_btn_update(on_detail=False),
+        _status_action_header_btn_update(-1),
     )
 
 
@@ -1311,13 +1301,12 @@ _HOME_DEMO_PAGES = frozenset({"home", "gravity"})
 _RENDER_DEMO_PAGES = frozenset({"render", "figures"})
 
 
-def _sync_demo_nav_sections(page: str) -> tuple[gr.Update, gr.Update, gr.Update, gr.Update]:
-    """Toggle Home / Figures / Presets demo rows and Save+Edit in the unified nav host."""
+def _sync_demo_nav_sections(page: str) -> tuple[gr.Update, gr.Update, gr.Update]:
+    """Toggle Home / Figures / Presets demo rows in the unified nav host."""
     active = str(page or "home").strip().lower()
     if active in _HOME_DEMO_PAGES:
         return (
             gr.update(visible=True),
-            gr.update(visible=False),
             gr.update(visible=False),
             gr.update(visible=False),
         )
@@ -1326,17 +1315,14 @@ def _sync_demo_nav_sections(page: str) -> tuple[gr.Update, gr.Update, gr.Update,
             gr.update(visible=False),
             gr.update(visible=True),
             gr.update(visible=False),
-            gr.update(visible=False),
         )
     if active == "status":
         return (
             gr.update(visible=False),
             gr.update(visible=False),
             gr.update(visible=True),
-            gr.update(visible=True),
         )
     return (
-        gr.update(visible=False),
         gr.update(visible=False),
         gr.update(visible=False),
         gr.update(visible=False),
@@ -2299,6 +2285,59 @@ footer {{
 .gradio-container button.myst-render-nav-render-btn.full-width-btn:not(.active):hover {{
     background: linear-gradient(180deg, #4a4a4a 0%, #3a3a3a 100%) !important;
     border-color: #8b6914 !important;
+}}
+.gradio-container .myst-status-action-row {{
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    align-items: stretch !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    gap: var(--nav-grid-gap, 4px) !important;
+}}
+.gradio-container .myst-status-page:not(.hide):not(.hidden) .myst-status-stack > .block:has(.myst-status-action-row),
+.gradio-container .myst-status-page:not(.hide):not(.hidden) .myst-status-stack > .form:has(.myst-status-action-row),
+.gradio-container .myst-status-page:not(.hide):not(.hidden) .myst-status-action-row {{
+    margin-top: 0 !important;
+}}
+.gradio-container .myst-status-action-row > .block,
+.gradio-container .myst-status-action-row > .form {{
+    margin: 0 !important;
+    padding: 0 !important;
+    min-width: 0 !important;
+    width: auto !important;
+}}
+.gradio-container .myst-status-action-row > .block:has(button.myst-standard-back-btn),
+.gradio-container .myst-status-action-row > .form:has(button.myst-standard-back-btn) {{
+    flex: 0 0 auto !important;
+    width: auto !important;
+}}
+.gradio-container .myst-status-action-row > .block:has(button.myst-status-action-header-btn),
+.gradio-container .myst-status-action-row > .form:has(button.myst-status-action-header-btn) {{
+    flex: 1 1 0% !important;
+    width: auto !important;
+}}
+.gradio-container .myst-status-action-row > .block:has(button.myst-status-nav-edit-btn),
+.gradio-container .myst-status-action-row > .form:has(button.myst-status-nav-edit-btn) {{
+    flex: 0 0 auto !important;
+    width: auto !important;
+}}
+.gradio-container button.myst-status-action-header-btn,
+.gradio-container button.myst-status-action-header-btn.full-width-btn {{
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
+    pointer-events: none !important;
+    cursor: default !important;
+}}
+.gradio-container .myst-status-page .myst-status-stack > .block:has(.myst-status-action-row),
+.gradio-container .myst-status-page .myst-status-stack > .form:has(.myst-status-action-row) {{
+    flex: 0 0 auto !important;
+}}
+.gradio-container .myst-status-action-row button.myst-status-nav-edit-btn {{
+    min-width: 5.25rem !important;
+    width: 5.25rem !important;
+    max-width: 5.25rem !important;
 }}
 .gradio-container .nav-button-grid,
 .gradio-container .row.nav-button-grid,
@@ -8904,71 +8943,10 @@ def _status_zoom_select(slot: int) -> tuple:
         gr.update(visible=False),
         _status_zoom_nav_edit_btn_update(in_zoom=True, edit_open=False),
         *slider_updates,
-        _status_zoom_save_btn_active_update(saved=False),
-        False,
+        _status_action_row_update(on_detail=True),
+        _status_back_btn_update(on_detail=True),
+        _status_action_header_btn_update(slot),
     )
-
-
-_STATUS_ZOOM_SAVE_BTN_CLASSES = [
-    "vqc-source-tab",
-    "myst-status-preset-btn",
-    "myst-status-zoom-save-btn",
-]
-
-
-def _status_zoom_save_btn_placeholder_update() -> gr.Update:
-    """Grid view — visible Save placeholder (non-interactive)."""
-    return gr.update(
-        value="Save",
-        interactive=False,
-        variant="secondary",
-        elem_classes=[
-            "save-btn",
-            "placeholder-btn",
-            *_STATUS_ZOOM_SAVE_BTN_CLASSES,
-        ],
-    )
-
-
-def _latch_save_button() -> tuple:
-    """Save clicked — red latched styling (detail/edit view only)."""
-    return (
-        gr.update(
-            value="Save",
-            interactive=True,
-            variant="secondary",
-            elem_classes=["save-btn", "saved", *_STATUS_ZOOM_SAVE_BTN_CLASSES],
-        ),
-        True,
-    )
-
-
-def _unlatch_save_button() -> tuple:
-    """Reset Save — white text, global default border (detail/edit view)."""
-    return (
-        gr.update(
-            value="Save",
-            interactive=True,
-            variant="secondary",
-            elem_classes=["save-btn", *_STATUS_ZOOM_SAVE_BTN_CLASSES],
-        ),
-        False,
-    )
-
-
-def _status_zoom_save_btn_active_update(*, saved: bool = False) -> gr.Update:
-    btn_update, _ = _latch_save_button() if saved else _unlatch_save_button()
-    return btn_update
-
-
-def _status_zoom_save_btn_update(
-    *,
-    saved: bool = False,
-    on_grid: bool = False,
-) -> gr.Update:
-    if on_grid:
-        return _status_zoom_save_btn_placeholder_update()
-    return _status_zoom_save_btn_active_update(saved=saved)
 
 
 def _status_zoom_edit_toggle(
@@ -8987,58 +8965,8 @@ def _status_zoom_edit_toggle(
 ) -> tuple:
     """Toggle Status zoom Edit drawer (drop-up) and latch the Edit button."""
     show = not bool(is_open)
-    if show:
-        dials = _gravity_dial_bundle(
-            phi_sq_scale,
-            e_sq_scale,
-            pi_sq_scale,
-            kappa,
-            delta_z,
-            alpha,
-            beta,
-            deform_pressure,
-            view_elev,
-            view_azim,
-        )
-    else:
-        dials = _gravity_preset_dials_for_slot(int(zoom_slot))
-    slider_updates = _gravity_slider_control_updates(dials, edit_enabled=show)
-    edit_btn = _status_zoom_nav_edit_btn_update(in_zoom=True, edit_open=show)
     slot = int(zoom_slot)
-    save_btn = (
-        _status_zoom_save_btn_active_update(saved=False)
-        if slot >= 0
-        else _status_zoom_save_btn_placeholder_update()
-    )
-    return (
-        show,
-        gr.update(visible=show),
-        edit_btn,
-        *slider_updates,
-        *_status_panel_levels_update(slot, dials=dials, visible=not show),
-        save_btn,
-        False,
-    )
-
-
-def _status_zoom_save_preset(
-    zoom_slot: int,
-    phi_sq_scale: float,
-    e_sq_scale: float,
-    pi_sq_scale: float,
-    kappa: float,
-    delta_z: float,
-    alpha: float,
-    beta: float,
-    deform_pressure: float,
-    view_elev: float,
-    view_azim: float,
-) -> tuple:
-    """Persist edited dial values, then collapse the edit drawer back into the Edit tab."""
-    slot = int(zoom_slot)
-    if slot < 0:
-        return tuple(gr.skip() for _ in range(18))
-    dials = _gravity_dial_bundle(
+    live_dials = _gravity_dial_bundle(
         phi_sq_scale,
         e_sq_scale,
         pi_sq_scale,
@@ -9050,17 +8978,21 @@ def _status_zoom_save_preset(
         view_elev,
         view_azim,
     )
-    _GRAVITY_PRESET_PROFILES[slot] = dict(dials)
-    slider_updates = _gravity_slider_control_updates(dials, edit_enabled=False)
-    saved_btn = _status_zoom_save_btn_active_update(saved=True)
+    if show:
+        dials = live_dials
+    elif slot >= 0:
+        _GRAVITY_PRESET_PROFILES[slot] = dict(live_dials)
+        dials = dict(live_dials)
+    else:
+        dials = _gravity_preset_dials_for_slot(slot)
+    slider_updates = _gravity_slider_control_updates(dials, edit_enabled=show)
+    edit_btn = _status_zoom_nav_edit_btn_update(in_zoom=True, edit_open=show)
     return (
-        *_status_panel_levels_update(slot, dials=dials, visible=True),
-        saved_btn,
-        False,
-        gr.update(visible=False),
-        _status_zoom_nav_edit_btn_update(in_zoom=True, edit_open=False),
+        show,
+        gr.update(visible=show),
+        edit_btn,
         *slider_updates,
-        True,
+        *_status_panel_levels_update(slot, dials=dials, visible=not show),
     )
 
 
@@ -9079,7 +9011,7 @@ def _status_zoom_manual_refresh(
     edit_open: bool,
 ) -> tuple:
     if not edit_open:
-        return gr.skip(), gr.skip(), gr.skip(), *_unlatch_save_button()
+        return gr.skip(), gr.skip(), gr.skip()
     dials = _gravity_dial_bundle(
         phi_sq_scale,
         e_sq_scale,
@@ -9092,10 +9024,7 @@ def _status_zoom_manual_refresh(
         view_elev,
         view_azim,
     )
-    return (
-        *_status_panel_levels_update(int(zoom_slot), dials=dials, visible=False),
-        *_unlatch_save_button(),
-    )
+    return _status_panel_levels_update(int(zoom_slot), dials=dials, visible=False)
 
 
 def _format_gravity_preset_tui_html(
@@ -10262,9 +10191,6 @@ def build_app() -> gr.Blocks:
                     active_slot=-1,
                     visible=False,
                 )
-            status_zoom_save_btn, status_zoom_edit_btn, status_save_edit_row = (
-                _place_status_save_edit_row(visible=False)
-            )
             _add_gap_row(slot="after-demo-nav")
 
         _init_re_metrics, _init_unit_cell_header, _init_unit_cell_fig = run_residual_explorer(
@@ -10384,8 +10310,33 @@ def build_app() -> gr.Blocks:
         with gr.Column(visible=False, elem_classes=["myst-status-page"]) as page_status:
             status_zoom_slot = gr.State(-1)
             status_zoom_edit_open = gr.State(False)
-            save_button_state = gr.State(False)
             with gr.Column(visible=True, elem_classes=["myst-status-stack"]) as status_content_col:
+                with gr.Row(visible=False, elem_classes=["myst-status-action-row"]) as status_action_row:
+                    status_back_btn = _place_back_button(
+                        "← Back",
+                        elem_id="myst-status-back-btn",
+                        visible=False,
+                    )
+                    status_action_header_btn = _nav_theme_button(
+                        "PRESET 01",
+                        elem_id="myst-status-action-header-btn",
+                        elem_classes=[
+                            "demo-btn",
+                            "myst-status-action-header-btn",
+                            "full-width-btn",
+                        ],
+                        interactive=False,
+                    )
+                    status_zoom_edit_btn = _nav_theme_button(
+                        "Edit",
+                        elem_id="myst-status-nav-edit-btn",
+                        elem_classes=[
+                            "vqc-source-tab",
+                            "myst-status-preset-btn",
+                            "myst-status-nav-edit-btn",
+                            "edit-btn",
+                        ],
+                    )
                 status_zoom_btns = [
                     _status_sub_nav[str(i)] for i in range(_STATUS_ZOOM_PRESET_COUNT)
                 ]
@@ -10785,16 +10736,10 @@ def build_app() -> gr.Blocks:
                 sz_view_elev,
                 sz_view_azim,
             ]
-            status_zoom_save_outputs = [
-                status_catalog_col,
-                status_panel_levels,
-                status_panels_host,
-                status_zoom_save_btn,
-                status_zoom_edit_open,
-                status_zoom_edit_drawer,
-                status_zoom_edit_btn,
-                *sz_inputs,
-                save_button_state,
+            status_action_outputs = [
+                status_action_row,
+                status_back_btn,
+                status_action_header_btn,
             ]
             status_zoom_select_outputs = [
                 status_catalog_col,
@@ -10806,10 +10751,8 @@ def build_app() -> gr.Blocks:
                 status_zoom_edit_drawer,
                 status_zoom_edit_btn,
                 *sz_inputs,
-                status_zoom_save_btn,
-                save_button_state,
+                *status_action_outputs,
             ]
-            save_unlatch_outputs = [status_zoom_save_btn, save_button_state]
             for slot, zoom_btn in enumerate(status_zoom_btns):
                 zoom_btn.click(
                     lambda s=slot: _status_zoom_select(s),
@@ -10824,8 +10767,6 @@ def build_app() -> gr.Blocks:
                 status_catalog_col,
                 status_panel_levels,
                 status_panels_host,
-                status_zoom_save_btn,
-                save_button_state,
             ]
             status_zoom_edit_inputs = [
                 status_zoom_edit_open,
@@ -10840,11 +10781,6 @@ def build_app() -> gr.Blocks:
             )
             sz_manual_inputs = [*sz_inputs, status_zoom_slot, status_zoom_edit_open]
             for slider in sz_inputs:
-                slider.change(
-                    _unlatch_save_button,
-                    outputs=save_unlatch_outputs,
-                    show_progress="hidden",
-                )
                 slider.release(
                     _status_zoom_manual_refresh,
                     inputs=sz_manual_inputs,
@@ -10852,17 +10788,9 @@ def build_app() -> gr.Blocks:
                         status_catalog_col,
                         status_panel_levels,
                         status_panels_host,
-                        *save_unlatch_outputs,
                     ],
                     show_progress="hidden",
                 )
-            status_zoom_save_inputs = [status_zoom_slot, *sz_inputs]
-            status_zoom_save_btn.click(
-                _status_zoom_save_preset,
-                inputs=status_zoom_save_inputs,
-                outputs=status_zoom_save_outputs,
-                show_progress="hidden",
-            )
             status_zoom_back_outputs = [
                 status_catalog_col,
                 status_panel_levels,
@@ -10873,9 +10801,13 @@ def build_app() -> gr.Blocks:
                 status_zoom_edit_drawer,
                 status_zoom_edit_btn,
                 *sz_inputs,
-                status_zoom_save_btn,
-                save_button_state,
+                *status_action_outputs,
             ]
+            status_back_btn.click(
+                _status_zoom_back_to_grid,
+                outputs=status_zoom_back_outputs,
+                show_progress="hidden",
+            )
 
         newhere_outputs = [panel_newhere, tab_newhere_btn, newhere_open, panel_claims, tab_claims_btn, claims_open]
         claims_outputs = [panel_claims, tab_claims_btn, claims_open, panel_newhere, tab_newhere_btn, newhere_open]
@@ -10905,7 +10837,6 @@ def build_app() -> gr.Blocks:
             home_demo_nav_row,
             render_demo_nav_row,
             status_demo_nav_row,
-            status_save_edit_row,
         ]
         readme_nav_outputs = [*nav_outputs, readme_return_page, *demo_nav_outputs]
 
@@ -10923,7 +10854,6 @@ def build_app() -> gr.Blocks:
             *,
             sync_demo_nav: bool = True,
             refresh_gravity: bool = False,
-            reset_save: bool = False,
         ) -> None:
             if sync_demo_nav:
                 chain = btn.click(
@@ -10932,8 +10862,6 @@ def build_app() -> gr.Blocks:
                 )
             else:
                 chain = btn.click(lambda p=page: _nav_to_page(p), outputs=nav_outputs)
-            if reset_save:
-                chain = chain.then(_unlatch_save_button, outputs=save_unlatch_outputs)
             if refresh_gravity:
                 chain = chain.then(
                     _run_residual_explorer_ui,
@@ -10942,10 +10870,7 @@ def build_app() -> gr.Blocks:
                 )
 
         def _bind_readme_nav(btn: gr.Button) -> None:
-            btn.click(_open_readme_page, inputs=[current_page], outputs=readme_nav_outputs).then(
-                _unlatch_save_button,
-                outputs=save_unlatch_outputs,
-            )
+            btn.click(_open_readme_page, inputs=[current_page], outputs=readme_nav_outputs)
 
         def _bind_status_nav(btn: gr.Button) -> None:
             btn.click(
@@ -11025,24 +10950,20 @@ def build_app() -> gr.Blocks:
                 lambda s=shape_id: _set_active_shape(s),
                 outputs=shape_outputs,
                 show_progress="hidden",
-            ).then(_unlatch_save_button, outputs=save_unlatch_outputs)
+            )
 
         _bind_nav(
             unified_nav["home"],
             "home",
             refresh_gravity=True,
-            reset_save=True,
         )
-        _bind_nav(unified_nav["render"], "render", reset_save=True)
+        _bind_nav(unified_nav["render"], "render")
         _bind_readme_nav(unified_nav["readme"])
         _bind_status_nav(unified_nav["status"])
         readme_back_btn.click(
             _readme_back_to_app,
             inputs=[readme_return_page],
             outputs=[*nav_outputs, *demo_nav_outputs],
-        ).then(
-            _unlatch_save_button,
-            outputs=save_unlatch_outputs,
         ).then(
             _run_residual_explorer_ui,
             inputs=gravity_dial_inputs,
