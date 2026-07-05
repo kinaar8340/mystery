@@ -165,6 +165,14 @@ NAV_THEME: dict = {
             "body_color": "#1a3d2a",
         },
     },
+    "demo_button": {
+        "active": {
+            "text_color": "#ffaa00",
+            "border_color": "orange",
+            "glow_inner": "rgba(255, 165, 0, 0.8)",
+            "glow_outer": "rgba(255, 165, 0, 0.5)",
+        },
+    },
     "preset_grid": {
         "chrome_height": "8.75rem",
         "grid_gap": "0.45rem",
@@ -910,6 +918,7 @@ def _nav_theme_gradio_css_vars() -> str:
     nb = NAV_THEME["nav_button"]
     nl = NAV_THEME["nav_label"]
     active = nb["active"]
+    demo_active = NAV_THEME["demo_button"]["active"]
     pg = NAV_THEME["preset_grid"]
     mc = NAV_THEME["main_content"]
     chrome = pg["chrome_height"]
@@ -940,6 +949,10 @@ def _nav_theme_gradio_css_vars() -> str:
     --nav-btn-active-text-color: {active["text_color"]};
     --nav-btn-active-border-color: {active["border_color"]};
     --nav-btn-active-body-color: {active["body_color"]};
+    --nav-demo-active-text-color: {demo_active["text_color"]};
+    --nav-demo-active-border-color: {demo_active["border_color"]};
+    --nav-demo-active-glow-inner: {demo_active["glow_inner"]};
+    --nav-demo-active-glow-outer: {demo_active["glow_outer"]};
     --myst-panel-bg: #1a1a1a;
     --myst-border-color: #333333;
     --myst-status-chrome-height: {chrome};
@@ -1163,23 +1176,28 @@ def _place_status_gap_row(*, slot: str, half_height: bool = False) -> None:
 
 
 def _status_zoom_nav_edit_btn_update(*, in_zoom: bool, edit_open: bool) -> gr.Update:
+    if not in_zoom:
+        return gr.update(visible=False)
     classes = [
-        "vqc-source-tab",
+        "demo-btn",
         "myst-status-preset-btn",
         "myst-status-nav-edit-btn",
-        "edit-btn",
+        "myst-status-action-edit-btn",
+        "full-width-btn",
     ]
     if edit_open:
-        classes.append("active")
-    _ = in_zoom
-    return gr.update(interactive=True, elem_classes=classes, variant="secondary")
-
-
-def _status_preset_action_label(slot: int) -> str:
-    preset_slot = int(slot)
-    if preset_slot < 0:
-        return "PRESET"
-    return f"PRESET {_gravity_preset_id(preset_slot)}"
+        classes.extend(["save-btn", "active"])
+        label = "Save"
+    else:
+        classes.append("edit-btn")
+        label = "EDIT"
+    return gr.update(
+        value=label,
+        visible=True,
+        interactive=True,
+        elem_classes=classes,
+        variant="secondary",
+    )
 
 
 def _status_action_row_update(*, on_detail: bool) -> gr.Update:
@@ -1188,21 +1206,6 @@ def _status_action_row_update(*, on_detail: bool) -> gr.Update:
 
 def _status_back_btn_update(*, on_detail: bool) -> gr.Update:
     return gr.update(visible=on_detail)
-
-
-def _status_action_header_btn_update(slot: int) -> gr.Update:
-    on_detail = int(slot) >= 0
-    return gr.update(
-        value=_status_preset_action_label(slot),
-        visible=on_detail,
-        interactive=False,
-        elem_classes=[
-            "demo-btn",
-            "myst-status-action-header-btn",
-            "full-width-btn",
-        ],
-        variant="secondary",
-    )
 
 
 def _status_zoom_back_to_grid() -> tuple:
@@ -1219,7 +1222,6 @@ def _status_zoom_back_to_grid() -> tuple:
         *slider_updates,
         _status_action_row_update(on_detail=False),
         _status_back_btn_update(on_detail=False),
-        _status_action_header_btn_update(-1),
     )
 
 
@@ -1247,7 +1249,7 @@ def _close_links_panels() -> tuple:
 
 
 def _status_zoom_btn_classes(slot: int, active_slot: int) -> list[str]:
-    classes = ["vqc-source-tab", "myst-status-preset-btn"]
+    classes = ["vqc-source-tab", "demo-btn", "myst-status-preset-btn"]
     if int(slot) == int(active_slot):
         classes.append("active")
     return classes
@@ -2303,7 +2305,7 @@ footer {{
     background: linear-gradient(180deg, #4a4a4a 0%, #3a3a3a 100%) !important;
     border-color: #8b6914 !important;
 }}
-.gradio-container .myst-status-action-row {{
+.gradio-container .myst-status-action-row:not(.hide):not(.hidden) {{
     display: flex !important;
     flex-wrap: nowrap !important;
     align-items: stretch !important;
@@ -2312,9 +2314,26 @@ footer {{
     padding: 0 !important;
     gap: var(--nav-grid-gap, 4px) !important;
 }}
-.gradio-container .myst-status-page:not(.hide):not(.hidden) .myst-status-stack > .block:has(.myst-status-action-row),
-.gradio-container .myst-status-page:not(.hide):not(.hidden) .myst-status-stack > .form:has(.myst-status-action-row),
-.gradio-container .myst-status-page:not(.hide):not(.hidden) .myst-status-action-row {{
+.gradio-container .myst-status-action-row.hide,
+.gradio-container .myst-status-action-row.hidden,
+.gradio-container .myst-status-page .myst-status-stack > .block:has(.myst-status-action-row.hide),
+.gradio-container .myst-status-page .myst-status-stack > .block:has(.myst-status-action-row.hidden),
+.gradio-container .myst-status-page .myst-status-stack > .form:has(.myst-status-action-row.hide),
+.gradio-container .myst-status-page .myst-status-stack > .form:has(.myst-status-action-row.hidden) {{
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    max-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    pointer-events: none !important;
+    flex: 0 0 0 !important;
+}}
+.gradio-container .myst-status-page:not(.hide):not(.hidden) .myst-status-stack > .block:has(.myst-status-action-row:not(.hide):not(.hidden)),
+.gradio-container .myst-status-page:not(.hide):not(.hidden) .myst-status-stack > .form:has(.myst-status-action-row:not(.hide):not(.hidden)),
+.gradio-container .myst-status-page:not(.hide):not(.hidden) .myst-status-action-row:not(.hide):not(.hidden) {{
     margin-top: 0 !important;
 }}
 .gradio-container .myst-status-action-row > .block,
@@ -2329,32 +2348,20 @@ footer {{
     flex: 0 0 auto !important;
     width: auto !important;
 }}
-.gradio-container .myst-status-action-row > .block:has(button.myst-status-action-header-btn),
-.gradio-container .myst-status-action-row > .form:has(button.myst-status-action-header-btn) {{
+.gradio-container .myst-status-action-row > .block:has(button.myst-status-nav-edit-btn),
+.gradio-container .myst-status-action-row > .form:has(button.myst-status-nav-edit-btn) {{
     flex: 1 1 0% !important;
     width: auto !important;
 }}
-.gradio-container .myst-status-action-row > .block:has(button.myst-status-nav-edit-btn),
-.gradio-container .myst-status-action-row > .form:has(button.myst-status-nav-edit-btn) {{
+.gradio-container .myst-status-page .myst-status-stack > .block:has(.myst-status-action-row:not(.hide):not(.hidden)),
+.gradio-container .myst-status-page .myst-status-stack > .form:has(.myst-status-action-row:not(.hide):not(.hidden)) {{
     flex: 0 0 auto !important;
-    width: auto !important;
 }}
-.gradio-container button.myst-status-action-header-btn,
-.gradio-container button.myst-status-action-header-btn.full-width-btn {{
+.gradio-container button.myst-status-nav-edit-btn.full-width-btn,
+.gradio-container button.myst-status-action-edit-btn.full-width-btn {{
     width: 100% !important;
     min-width: 100% !important;
     max-width: 100% !important;
-    pointer-events: none !important;
-    cursor: default !important;
-}}
-.gradio-container .myst-status-page .myst-status-stack > .block:has(.myst-status-action-row),
-.gradio-container .myst-status-page .myst-status-stack > .form:has(.myst-status-action-row) {{
-    flex: 0 0 auto !important;
-}}
-.gradio-container .myst-status-action-row button.myst-status-nav-edit-btn {{
-    min-width: 5.25rem !important;
-    width: 5.25rem !important;
-    max-width: 5.25rem !important;
 }}
 .gradio-container .nav-button-grid,
 .gradio-container .row.nav-button-grid,
@@ -3123,11 +3130,21 @@ footer {{
 #myst-render-sub-nav button.vqc-source-tab.demo-btn.active span,
 #myst-render-sub-nav button.vqc-source-tab.demo-btn.active:disabled span,
 #myst-render-sub-nav button.vqc-source-tab.demo-btn.active[disabled] span,
-#myst-render-sub-nav button.myst-render-preset-btn.demo-btn.active {{
-    color: #ffaa00 !important;
-    -webkit-text-fill-color: #ffaa00 !important;
-    border-color: orange !important;
-    box-shadow: 0 0 12px rgba(255, 165, 0, 0.8), 0 0 22px rgba(255, 165, 0, 0.5), 0 0 0 1px orange !important;
+#myst-render-sub-nav button.myst-render-preset-btn.demo-btn.active,
+#myst-status-zoom-nav button.vqc-source-tab.demo-btn.active,
+#myst-status-zoom-nav button.vqc-source-tab.demo-btn.active:disabled,
+#myst-status-zoom-nav button.vqc-source-tab.demo-btn.active[disabled],
+#myst-status-zoom-nav button.vqc-source-tab.demo-btn.active span,
+#myst-status-zoom-nav button.vqc-source-tab.demo-btn.active:disabled span,
+#myst-status-zoom-nav button.vqc-source-tab.demo-btn.active[disabled] span,
+#myst-status-zoom-nav button.myst-status-preset-btn.demo-btn.active {{
+    color: var(--nav-demo-active-text-color, #ffaa00) !important;
+    -webkit-text-fill-color: var(--nav-demo-active-text-color, #ffaa00) !important;
+    border-color: var(--nav-demo-active-border-color, orange) !important;
+    box-shadow:
+        0 0 12px var(--nav-demo-active-glow-inner, rgba(255, 165, 0, 0.8)),
+        0 0 22px var(--nav-demo-active-glow-outer, rgba(255, 165, 0, 0.5)),
+        0 0 0 1px var(--nav-demo-active-border-color, orange) !important;
     font-weight: 600 !important;
 }}
 .gradio-container .vqc-nav-spreadsheet-row.vqc-nav-spreadsheet-row-8 {{
@@ -9023,11 +9040,78 @@ def _status_zoom_select(slot: int) -> tuple:
         *slider_updates,
         _status_action_row_update(on_detail=True),
         _status_back_btn_update(on_detail=True),
-        _status_action_header_btn_update(slot),
     )
 
 
-def _status_zoom_edit_toggle(
+def _status_zoom_edit_open(
+    zoom_slot: int,
+    phi_sq_scale: float,
+    e_sq_scale: float,
+    pi_sq_scale: float,
+    kappa: float,
+    delta_z: float,
+    alpha: float,
+    beta: float,
+    deform_pressure: float,
+    view_elev: float,
+    view_azim: float,
+) -> tuple:
+    """Open Status zoom edit drawer from the read-only detail view."""
+    slot = int(zoom_slot)
+    dials = _gravity_dial_bundle(
+        phi_sq_scale,
+        e_sq_scale,
+        pi_sq_scale,
+        kappa,
+        delta_z,
+        alpha,
+        beta,
+        deform_pressure,
+        view_elev,
+        view_azim,
+    )
+    slider_updates = _gravity_slider_control_updates(dials, edit_enabled=True)
+    return (
+        True,
+        gr.update(visible=True),
+        _status_zoom_nav_edit_btn_update(in_zoom=True, edit_open=True),
+        *slider_updates,
+        *_status_panel_levels_update(slot, dials=dials, visible=False),
+    )
+
+
+def _status_zoom_save_and_back_to_grid(
+    zoom_slot: int,
+    phi_sq_scale: float,
+    e_sq_scale: float,
+    pi_sq_scale: float,
+    kappa: float,
+    delta_z: float,
+    alpha: float,
+    beta: float,
+    deform_pressure: float,
+    view_elev: float,
+    view_azim: float,
+) -> tuple:
+    """Persist slider values for the active preset, then return to the 3×3 grid."""
+    slot = int(zoom_slot)
+    if slot >= 0:
+        _GRAVITY_PRESET_PROFILES[slot] = _gravity_dial_bundle(
+            phi_sq_scale,
+            e_sq_scale,
+            pi_sq_scale,
+            kappa,
+            delta_z,
+            alpha,
+            beta,
+            deform_pressure,
+            view_elev,
+            view_azim,
+        )
+    return _status_zoom_back_to_grid()
+
+
+def _status_zoom_header_action(
     is_open: bool,
     zoom_slot: int,
     phi_sq_scale: float,
@@ -9041,10 +9125,23 @@ def _status_zoom_edit_toggle(
     view_elev: float,
     view_azim: float,
 ) -> tuple:
-    """Toggle Status zoom Edit drawer (drop-up) and latch the Edit button."""
-    show = not bool(is_open)
-    slot = int(zoom_slot)
-    live_dials = _gravity_dial_bundle(
+    """EDIT opens sliders; Save persists values and returns to the Presets grid."""
+    if bool(is_open):
+        return _status_zoom_save_and_back_to_grid(
+            zoom_slot,
+            phi_sq_scale,
+            e_sq_scale,
+            pi_sq_scale,
+            kappa,
+            delta_z,
+            alpha,
+            beta,
+            deform_pressure,
+            view_elev,
+            view_azim,
+        )
+    opened = _status_zoom_edit_open(
+        zoom_slot,
         phi_sq_scale,
         e_sq_scale,
         pi_sq_scale,
@@ -9056,21 +9153,18 @@ def _status_zoom_edit_toggle(
         view_elev,
         view_azim,
     )
-    if show:
-        dials = live_dials
-    elif slot >= 0:
-        _GRAVITY_PRESET_PROFILES[slot] = dict(live_dials)
-        dials = dict(live_dials)
-    else:
-        dials = _gravity_preset_dials_for_slot(slot)
-    slider_updates = _gravity_slider_control_updates(dials, edit_enabled=show)
-    edit_btn = _status_zoom_nav_edit_btn_update(in_zoom=True, edit_open=show)
     return (
-        show,
-        gr.update(visible=show),
-        edit_btn,
-        *slider_updates,
-        *_status_panel_levels_update(slot, dials=dials, visible=not show),
+        opened[13],
+        opened[14],
+        opened[15],
+        *(gr.skip() for _ in range(_STATUS_ZOOM_PRESET_COUNT)),
+        gr.skip(),
+        opened[0],
+        opened[1],
+        opened[2],
+        *opened[3:13],
+        gr.skip(),
+        gr.skip(),
     )
 
 
@@ -10395,25 +10489,18 @@ def build_app() -> gr.Blocks:
                         elem_id="myst-status-back-btn",
                         visible=False,
                     )
-                    status_action_header_btn = _nav_theme_button(
-                        "PRESET 01",
-                        elem_id="myst-status-action-header-btn",
-                        elem_classes=[
-                            "demo-btn",
-                            "myst-status-action-header-btn",
-                            "full-width-btn",
-                        ],
-                        interactive=False,
-                    )
                     status_zoom_edit_btn = _nav_theme_button(
-                        "Edit",
+                        "EDIT",
                         elem_id="myst-status-nav-edit-btn",
                         elem_classes=[
-                            "vqc-source-tab",
+                            "demo-btn",
                             "myst-status-preset-btn",
                             "myst-status-nav-edit-btn",
+                            "myst-status-action-edit-btn",
+                            "full-width-btn",
                             "edit-btn",
                         ],
+                        visible=False,
                     )
                 status_zoom_btns = [
                     _status_sub_nav[str(i)] for i in range(_STATUS_ZOOM_PRESET_COUNT)
@@ -10817,7 +10904,6 @@ def build_app() -> gr.Blocks:
             status_action_outputs = [
                 status_action_row,
                 status_back_btn,
-                status_action_header_btn,
             ]
             status_zoom_select_outputs = [
                 status_catalog_col,
@@ -10837,14 +10923,17 @@ def build_app() -> gr.Blocks:
                     outputs=status_zoom_select_outputs,
                     show_progress="hidden",
                 )
-            status_zoom_edit_outputs = [
+            status_zoom_back_outputs = [
+                status_catalog_col,
+                status_panel_levels,
+                status_panels_host,
+                *status_zoom_btns,
+                status_zoom_slot,
                 status_zoom_edit_open,
                 status_zoom_edit_drawer,
                 status_zoom_edit_btn,
                 *sz_inputs,
-                status_catalog_col,
-                status_panel_levels,
-                status_panels_host,
+                *status_action_outputs,
             ]
             status_zoom_edit_inputs = [
                 status_zoom_edit_open,
@@ -10852,9 +10941,9 @@ def build_app() -> gr.Blocks:
                 *sz_inputs,
             ]
             status_zoom_edit_btn.click(
-                _status_zoom_edit_toggle,
+                _status_zoom_header_action,
                 inputs=status_zoom_edit_inputs,
-                outputs=status_zoom_edit_outputs,
+                outputs=status_zoom_back_outputs,
                 show_progress="hidden",
             )
             sz_manual_inputs = [*sz_inputs, status_zoom_slot, status_zoom_edit_open]
@@ -10869,18 +10958,6 @@ def build_app() -> gr.Blocks:
                     ],
                     show_progress="hidden",
                 )
-            status_zoom_back_outputs = [
-                status_catalog_col,
-                status_panel_levels,
-                status_panels_host,
-                *status_zoom_btns,
-                status_zoom_slot,
-                status_zoom_edit_open,
-                status_zoom_edit_drawer,
-                status_zoom_edit_btn,
-                *sz_inputs,
-                *status_action_outputs,
-            ]
             status_back_btn.click(
                 _status_zoom_back_to_grid,
                 outputs=status_zoom_back_outputs,
