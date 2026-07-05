@@ -4024,13 +4024,52 @@ _PIPELINE_DEMO_CLIP_NAMES: tuple[str, ...] = (
 )
 
 
+def _resolve_pipeline_demo_clip_paths(
+    *,
+    assets_dir: str | os.PathLike[str] | None = None,
+) -> list[str]:
+    """Filesystem paths for E→F→G→H→I clips — bundled assets or fresh renders."""
+    base = Path(assets_dir or Path(__file__).resolve().parent / "assets")
+    clip_renderers: dict[str, object] = {
+        "demo_e_d4_tetrahedron.mp4": lambda: render_demo_e_d4_deformation_video(
+            n_per_segment=8, fps=10, dpi=80
+        ),
+        "demo_a_breathing.gif": lambda: render_breathing_demo_video(
+            n_per_segment=8, fps=10, dpi=80
+        ),
+        "demo_g_d8_octahedron.mp4": lambda: render_demo_g_d8_deformation_video(
+            n_per_segment=8, fps=10, dpi=80
+        ),
+        "demo_h_d12_dodecahedron.mp4": lambda: render_demo_h_d12_deformation_video(
+            n_per_segment=8, fps=10, dpi=80
+        ),
+        "demo_i_d20_icosahedron.mp4": lambda: render_demo_i_d20_deformation_video(
+            n_per_segment=8, fps=10, dpi=80
+        ),
+    }
+    paths: list[str] = []
+    for name in _PIPELINE_DEMO_CLIP_NAMES:
+        bundled = base / name
+        if bundled.is_file():
+            paths.append(str(bundled.resolve()))
+            continue
+        renderer = clip_renderers.get(name)
+        if renderer is None:
+            raise FileNotFoundError(f"no pipeline renderer for clip: {name}")
+        paths.append(str(renderer()))
+    return paths
+
+
 def render_demo_b_pipeline_video(
     *,
     assets_dir: str | os.PathLike[str] | None = None,
+    source_paths: list[str] | None = None,
 ) -> str:
     """Stitch Demo E→F→G→H→I clips into one browser-playable MP4 for Demo B."""
-    base = Path(assets_dir or Path(__file__).resolve().parent / "assets")
-    sources = [base / name for name in _PIPELINE_DEMO_CLIP_NAMES]
+    sources = [
+        Path(path)
+        for path in (source_paths or _resolve_pipeline_demo_clip_paths(assets_dir=assets_dir))
+    ]
     missing = [str(path) for path in sources if not path.is_file()]
     if missing:
         raise FileNotFoundError(f"pipeline stitch sources missing: {missing}")
@@ -4039,7 +4078,7 @@ def render_demo_b_pipeline_video(
         tmp = Path(tmp_dir)
         list_path = tmp / "concat.txt"
         list_path.write_text(
-            "".join(f"file '{path.resolve()}'\n" for path in sources),
+            "".join(f"file '{path}'\n" for path in sources),
             encoding="utf-8",
         )
         gif_path = tmp / "pipeline.gif"
