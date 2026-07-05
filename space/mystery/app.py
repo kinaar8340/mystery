@@ -8574,10 +8574,13 @@ def _render_preset_plot_html(slot: int, *, dpi: int = _RENDER_GRID_IMAGE_DPI) ->
 
 
 def _render_preset_detail_plot_html(slot: int) -> str:
-    """Interactive Plotly plot for the Render preset detail view."""
+    """Detailed matplotlib unit-cell plot for the Render preset detail view."""
     dials = _render_preset_dials_for_slot(slot)
-    fig = run_residual_explorer_plotly(*_dials_to_explorer_args(dials))
-    return plotly_figure_to_render_detail_html(fig)
+    _metrics, _header, fig = run_residual_explorer(
+        *_dials_to_explorer_args(dials),
+        shape_only=False,
+    )
+    return _gravity_fig_to_viewport_file_html(fig, dpi=_UNIT_CELL_IMAGE_DPI)
 
 
 def _render_detail_plot_fallback(slot: int, error: Exception):
@@ -8614,20 +8617,13 @@ def _render_detail_plot_fallback(slot: int, error: Exception):
 
 
 def _generate_render_detail_plot(slot: int):
-    """Large interactive Plotly 3D figure for the Render preset detail view."""
+    """Full annotated matplotlib 3D figure for the Render preset detail view."""
     slot = int(slot)
     try:
         dials = _render_preset_dials_for_slot(slot)
-        fig = run_residual_explorer_plotly(*_dials_to_explorer_args(dials))
-        fig.update_layout(
-            height=620,
-            margin=dict(l=0, r=0, t=8, b=0),
-            paper_bgcolor="#000000",
-            plot_bgcolor="#000000",
-            uirevision="constant",
-        )
-        fig.update_layout(
-            modebar=dict(orientation="v", bgcolor="rgba(0, 0, 0, 0.55)"),
+        _metrics, _header, fig = run_residual_explorer(
+            *_dials_to_explorer_args(dials),
+            shape_only=False,
         )
         return fig
     except Exception as exc:

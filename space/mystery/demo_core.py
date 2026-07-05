@@ -2017,7 +2017,7 @@ def build_unit_cell_figure(
         for axis in (ax.xaxis, ax.yaxis, ax.zaxis):
             axis.pane.fill = False
             axis.pane.set_edgecolor("#333333")
-        ax.grid(False)
+        ax.grid(True, color="#505050")
     elev = float(np.clip(view_elev, 5.0, 85.0))
     azim = float(view_azim) % 360.0
     ax.view_init(elev=elev, azim=azim)
