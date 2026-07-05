@@ -47,6 +47,7 @@ rsync -av --delete \
   --exclude='bg1_mystery.png' \
   --exclude='backup_mystery_image.png' \
   --exclude='assets/demo_a_breathing.gif' \
+  --exclude='assets/home_a_startup_page.png' \
   "$ROOT/space/mystery/" "$HF_DIR/"
 rm -rf "$HF_DIR/.gradio"
 cd "$HF_DIR"

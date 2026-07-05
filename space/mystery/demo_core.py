@@ -195,6 +195,37 @@ TOE_URL = "https://github.com/kinaar8340/toe"
 _SPACE_DIR = Path(__file__).resolve().parent
 _REPO_ROOT = _SPACE_DIR.parent.parent
 WALLPAPER_FILENAME = "bg1_mystery.png"
+DEMO_A_STARTUP_REPO_FILENAME = "Home_A_startup_page.png"
+DEMO_A_STARTUP_ASSET_FILENAME = "home_a_startup_page.png"
+
+
+def resolve_demo_a_startup_image_path() -> str:
+    """Local path to Demo A landing PNG — bundled asset, repo upload, or GitHub raw on HF."""
+    candidates = (
+        _SPACE_DIR / "assets" / DEMO_A_STARTUP_ASSET_FILENAME,
+        _SPACE_DIR / DEMO_A_STARTUP_ASSET_FILENAME,
+        _REPO_ROOT / DEMO_A_STARTUP_REPO_FILENAME,
+    )
+    for path in candidates:
+        if path.is_file():
+            return str(path)
+    if is_hf_space():
+        import tempfile
+
+        import requests
+
+        cache_path = Path(tempfile.gettempdir()) / "mystery_home_a_startup_page.png"
+        if not cache_path.is_file() or cache_path.stat().st_size == 0:
+            url = f"{GITHUB_URL}/raw/main/{DEMO_A_STARTUP_REPO_FILENAME}"
+            print(f"[startup] fetching Demo A image from GitHub raw: {url}", flush=True)
+            response = requests.get(url, timeout=45)
+            response.raise_for_status()
+            cache_path.write_bytes(response.content)
+        return str(cache_path)
+    raise FileNotFoundError(
+        "Demo A startup image not found — expected bundled asset or "
+        f"{DEMO_A_STARTUP_REPO_FILENAME} at repo root"
+    )
 
 
 def resolve_wallpaper_url() -> str:

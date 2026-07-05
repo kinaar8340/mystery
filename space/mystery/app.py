@@ -36,6 +36,7 @@ from demo_core import (
     WALLPAPER_URL,
     get_build_label,
     is_hf_space,
+    resolve_demo_a_startup_image_path,
     wallpaper_static_paths,
     build_unit_cell_viewport_header_html,
     unit_cell_error_placeholder_html,
@@ -8463,10 +8464,7 @@ _GRAVITY_DEMO_VIDEO_CACHE: dict[str, str] = {}
 _BREATHING_DEMO_VIDEO_CACHE: str | None = None
 _DEMO_A_STARTUP_IMAGE_CACHE: str | None = None
 _APP_DIR = os.path.dirname(os.path.abspath(__file__))
-_REPO_ROOT = os.path.abspath(os.path.join(_APP_DIR, "..", ".."))
 _BUNDLED_BREATHING_VIDEO = os.path.join(_APP_DIR, "assets", "demo_a_breathing.gif")
-_BUNDLED_STARTUP_IMAGE = os.path.join(_APP_DIR, "assets", "home_a_startup_page.png")
-_REPO_STARTUP_IMAGE = os.path.join(_REPO_ROOT, "Home_A_startup_page.png")
 
 
 def _gravity_demo_letter_slot(letter: str) -> int:
@@ -8586,22 +8584,11 @@ def _get_breathing_demo_video_path() -> str:
     return _BREATHING_DEMO_VIDEO_CACHE
 
 
-def _resolve_demo_a_startup_image_path() -> str:
-    """Bundled HF asset first, then repo-root upload fallback."""
-    for path in (_BUNDLED_STARTUP_IMAGE, _REPO_STARTUP_IMAGE):
-        if os.path.isfile(path):
-            return path
-    raise FileNotFoundError(
-        "Demo A startup image not found — expected "
-        f"{_BUNDLED_STARTUP_IMAGE} or {_REPO_STARTUP_IMAGE}"
-    )
-
-
 def _get_demo_a_startup_image_path() -> str:
     """Gradio-served path to the Demo A landing PNG."""
     global _DEMO_A_STARTUP_IMAGE_CACHE
     if _DEMO_A_STARTUP_IMAGE_CACHE is None:
-        raw_path = _resolve_demo_a_startup_image_path()
+        raw_path = resolve_demo_a_startup_image_path()
         print(f"[startup] using Demo A landing image: {raw_path}", flush=True)
         _DEMO_A_STARTUP_IMAGE_CACHE = _cache_media_for_gradio(raw_path)
     return _DEMO_A_STARTUP_IMAGE_CACHE
