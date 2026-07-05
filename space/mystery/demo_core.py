@@ -1978,7 +1978,7 @@ def build_unit_cell_figure(
     for axis in (ax.xaxis, ax.yaxis, ax.zaxis):
         axis.pane.fill = False
         axis.pane.set_edgecolor("#333333")
-    ax.grid(True, color="#505050")
+    ax.grid(False)
     elev = float(np.clip(view_elev, 5.0, 85.0))
     azim = float(view_azim) % 360.0
     ax.view_init(elev=elev, azim=azim)
@@ -2113,9 +2113,34 @@ def build_unit_cell_plotly_figure(
         margin=dict(l=0, r=0, t=0, b=0, pad=0),
         autosize=True,
         scene=dict(
-            xaxis=dict(range=[-half, half], visible=False, showbackground=False),
-            yaxis=dict(range=[-half, half], visible=False, showbackground=False),
-            zaxis=dict(range=[-half, half], visible=False, showbackground=False),
+            xaxis=dict(
+                range=[-half, half],
+                visible=False,
+                showgrid=False,
+                showline=True,
+                zeroline=False,
+                showticklabels=True,
+                showbackground=False,
+            ),
+            yaxis=dict(
+                range=[-half, half],
+                visible=False,
+                showgrid=False,
+                showline=True,
+                zeroline=False,
+                showticklabels=True,
+                showbackground=False,
+            ),
+            zaxis=dict(
+                range=[-half, half],
+                visible=False,
+                showgrid=False,
+                showline=True,
+                zeroline=False,
+                showticklabels=True,
+                showbackground=False,
+            ),
+            bgcolor="#000000",
             aspectmode="cube",
             camera=_plotly_camera_from_view(view_elev, view_azim),
             dragmode="orbit",
@@ -2564,9 +2589,34 @@ def build_breathing_animation_figure(
         height=650,
         autosize=True,
         scene=dict(
-            xaxis=dict(range=[-half, half], visible=False, showbackground=False),
-            yaxis=dict(range=[-half, half], visible=False, showbackground=False),
-            zaxis=dict(range=[-half, half], visible=False, showbackground=False),
+            xaxis=dict(
+                range=[-half, half],
+                visible=False,
+                showgrid=False,
+                showline=True,
+                zeroline=False,
+                showticklabels=True,
+                showbackground=False,
+            ),
+            yaxis=dict(
+                range=[-half, half],
+                visible=False,
+                showgrid=False,
+                showline=True,
+                zeroline=False,
+                showticklabels=True,
+                showbackground=False,
+            ),
+            zaxis=dict(
+                range=[-half, half],
+                visible=False,
+                showgrid=False,
+                showline=True,
+                zeroline=False,
+                showticklabels=True,
+                showbackground=False,
+            ),
+            bgcolor="#000000",
             aspectmode="cube",
             camera=_plotly_camera_from_view(view_elev, view_azim),
             dragmode="orbit",
@@ -2674,9 +2724,33 @@ def create_simple_breathing_test_animation():
         scene=dict(
             aspectmode="cube",
             bgcolor="#0a0a0f",
-            xaxis=dict(visible=False, range=[-half, half]),
-            yaxis=dict(visible=False, range=[-half, half]),
-            zaxis=dict(visible=False, range=[-half, half]),
+            xaxis=dict(
+                visible=False,
+                range=[-half, half],
+                showgrid=False,
+                showline=True,
+                zeroline=False,
+                showticklabels=True,
+                showbackground=False,
+            ),
+            yaxis=dict(
+                visible=False,
+                range=[-half, half],
+                showgrid=False,
+                showline=True,
+                zeroline=False,
+                showticklabels=True,
+                showbackground=False,
+            ),
+            zaxis=dict(
+                visible=False,
+                range=[-half, half],
+                showgrid=False,
+                showline=True,
+                zeroline=False,
+                showticklabels=True,
+                showbackground=False,
+            ),
             camera=_plotly_camera_from_view(UNIT_CELL_VIEW_ELEV, UNIT_CELL_VIEW_AZIM),
             dragmode="orbit",
         ),
