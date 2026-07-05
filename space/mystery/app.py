@@ -1255,6 +1255,17 @@ def _set_active_shape_and_apply_home(new_shape: str, active_demo_letter: str = "
     return _platonic_geo_interrupt_home(new_shape, active_demo_letter)
 
 
+def _home_nav_interrupt() -> tuple:
+    """Home interrupt — clear platonic latch, restore Demo A startup (app-launch state)."""
+    return (
+        *_nav_to_page_with_demo("home"),
+        *_clear_active_shape(),
+        *_demo_active_tab_updates("A"),
+        "A",
+        _gravity_viewport_wrapper_update("A"),
+    )
+
+
 def _main_nav_btn_classes(page_id: str, active_page: str) -> list[str]:
     classes = ["vqc-source-tab", "main-nav-btn"]
     if page_id == active_page:
@@ -11939,10 +11950,29 @@ def build_app() -> gr.Blocks:
                 show_progress="hidden",
             )
 
-        _bind_nav(
-            unified_nav["home"],
-            "home",
-            refresh_gravity=True,
+        home_interrupt_outputs = [
+            *nav_outputs,
+            *demo_nav_outputs,
+            active_shape,
+            *[unified_nav[shape_id] for shape_id in _SHAPE_NAV_IDS],
+            *[gravity_letter_btns[letter] for letter in _GRAVITY_CHILD_NAV_LETTERS],
+            gravity_active_letter,
+            viewport_col,
+        ]
+        unified_nav["home"].click(
+            _home_nav_interrupt,
+            outputs=home_interrupt_outputs,
+            show_progress="hidden",
+        ).then(
+            _run_residual_explorer_ui,
+            inputs=gravity_dial_inputs,
+            outputs=re_outputs,
+            show_progress="hidden",
+        ).then(
+            _platonic_geo_presets_interrupt_reset,
+            inputs=[active_shape],
+            outputs=platonic_geo_interrupt_outputs,
+            show_progress="hidden",
         )
         _bind_nav(unified_nav["render"], "render")
         _bind_readme_nav(unified_nav["readme"])
