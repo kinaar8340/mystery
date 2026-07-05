@@ -1065,7 +1065,7 @@ def _shape_btn_classes(shape: str, active_shape: str) -> list[str]:
 
 def _clear_active_shape() -> tuple:
     """No platonic tab latched — boot and neutral nav state."""
-    updates: list = [gr.update(value=_NO_ACTIVE_SHAPE)]
+    updates: list = [_NO_ACTIVE_SHAPE]
     for shape_id in _SHAPE_NAV_IDS:
         updates.append(
             gr.update(
@@ -1082,7 +1082,7 @@ def _set_active_shape(new_shape: str) -> tuple:
     shape = str(new_shape or "").strip().upper()
     if shape not in _SHAPE_NAV_IDS:
         return _clear_active_shape()
-    updates: list = [gr.update(value=shape)]
+    updates: list = [shape]
     for shape_id in _SHAPE_NAV_IDS:
         updates.append(
             gr.update(
@@ -9113,8 +9113,10 @@ def _gravity_status_panel_title(active_shape: str, slot: int) -> str:
     preset_id = _gravity_preset_id(slot)
     profile = _GRAVITY_PRESET_SLOT_LABELS.get(slot)
     subtitle = f" · {profile}" if profile else ""
-    prefix = format_platonic_preset_header_prefix(active_shape)
-    return f"{prefix}PRESET {preset_id}{subtitle}"
+    shape_metric = resolve_platonic_shape_metric(active_shape)
+    if shape_metric is not None:
+        return f"D{shape_metric} · PRESET {preset_id}{subtitle}"
+    return f"PRESET {preset_id}{subtitle}"
 
 
 def _format_gravity_status_cell_html(
@@ -10168,9 +10170,9 @@ def _run_residual_explorer_ui(
         *viewport_updates,
         _gravity_clear_video_update(),
         control_levels,
-        gr.skip(),
+        gr.update(visible=True),
         gr.update(value=status_panel),
-        gr.skip(),
+        _status_panels_host_update(edit_active=False),
         tui,
     )
 
