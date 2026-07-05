@@ -1549,64 +1549,6 @@ WALLPAPER_HEAD = f"""
             window.Plotly.Plots.resize(plotDiv);
         }} catch (_err) {{}}
     }}
-    function mystRenderDetailZoom(factor) {{
-        var plotDiv = mystRenderDetailPlotEl();
-        if (!plotDiv || !window.Plotly) return;
-        var cam = plotDiv.layout && plotDiv.layout.scene && plotDiv.layout.scene.camera;
-        if (!cam || !cam.eye) return;
-        var ex = cam.eye.x, ey = cam.eye.y, ez = cam.eye.z;
-        try {{
-            window.Plotly.relayout(plotDiv, {{
-                'scene.camera.eye': {{ x: ex * factor, y: ey * factor, z: ez * factor }}
-            }});
-        }} catch (_err) {{}}
-    }}
-    function mystRenderDetailResetView() {{
-        var plotDiv = mystRenderDetailPlotEl();
-        if (!plotDiv || !window.Plotly) return;
-        try {{
-            window.Plotly.relayout(plotDiv, {{ 'scene.camera': null }});
-        }} catch (_err) {{}}
-    }}
-    function mystRenderDetailDownloadPng() {{
-        var plotDiv = mystRenderDetailPlotEl();
-        if (!plotDiv || !window.Plotly) return;
-        try {{
-            window.Plotly.downloadImage(plotDiv, {{
-                format: 'png',
-                width: plotDiv.offsetWidth || 1200,
-                height: plotDiv.offsetHeight || 800,
-                filename: 'mystery-render-preset'
-            }});
-        }} catch (_err) {{}}
-    }}
-    function mystRenderDetailFullscreen() {{
-        var host = document.querySelector('.myst-render-right-panel')
-            || document.querySelector('.myst-render-detail-plot')
-            || document.querySelector('#myst-render-detail-plot');
-        if (!host) return;
-        var req = host.requestFullscreen || host.webkitRequestFullscreen;
-        if (req) req.call(host);
-    }}
-    function mystBindRenderDetailActions() {{
-        var map = [
-            ['myst-render-detail-zoom-in', function() {{ mystRenderDetailZoom(0.82); }}],
-            ['myst-render-detail-zoom-out', function() {{ mystRenderDetailZoom(1.22); }}],
-            ['myst-render-detail-reset', mystRenderDetailResetView],
-            ['myst-render-detail-download', mystRenderDetailDownloadPng],
-            ['myst-render-detail-fullscreen', mystRenderDetailFullscreen],
-        ];
-        map.forEach(function(entry) {{
-            var btn = document.getElementById(entry[0]);
-            if (!btn || btn.dataset.mystBound === '1') return;
-            btn.dataset.mystBound = '1';
-            btn.addEventListener('click', function(e) {{
-                e.preventDefault();
-                e.stopPropagation();
-                entry[1]();
-            }}, true);
-        }});
-    }}
     function mystBindRenderGridClicks() {{
         document.querySelectorAll('.myst-render-cell-clickable[data-slot]').forEach(function(cell) {{
             if (cell.dataset.mystBound === '1') return;
@@ -1624,19 +1566,16 @@ WALLPAPER_HEAD = f"""
         if (document.querySelector('#myst-render-detail-wrapper:not(.hide), .myst-render-detail-view:not(.hide)')) {{
             requestAnimationFrame(function() {{
                 mystResizeRenderDetailPlot();
-                mystBindRenderDetailActions();
                 requestAnimationFrame(mystResizeRenderDetailPlot);
             }});
         }}
     }}
     function bootRenderGridClicks() {{
         mystBindRenderGridClicks();
-        mystBindRenderDetailActions();
         if (window.__mystRenderGridObs) return;
         window.__mystRenderGridObs = new MutationObserver(function() {{
             requestAnimationFrame(function() {{
                 mystBindRenderGridClicks();
-                mystBindRenderDetailActions();
                 mystResizeRenderDetailPlot();
             }});
         }});
@@ -2732,7 +2671,7 @@ footer {{
     border: none !important;
     box-shadow: none !important;
 }}
-.gradio-container .myst-unified-nav-host + .gap {{
+.gradio-container .myst-unified-nav-host + .gap:not(.myst-readme-page):not(.myst-render-page):not(.myst-status-page):not(.myst-edit-page):not(.myst-gravity-page) {{
     display: none !important;
     height: 0 !important;
     min-height: 0 !important;
@@ -2741,12 +2680,15 @@ footer {{
     padding: 0 !important;
     overflow: hidden !important;
 }}
+.gradio-container .myst-unified-nav-host + .column.myst-readme-page,
+.gradio-container .myst-unified-nav-host + .myst-readme-page,
 .gradio-container .myst-unified-nav-host + .column.myst-gravity-page,
 .gradio-container .myst-unified-nav-host + .myst-gravity-page,
 .gradio-container .myst-unified-nav-host + .column.myst-render-page,
 .gradio-container .myst-unified-nav-host + .myst-render-page,
 .gradio-container .myst-unified-nav-host + .column.myst-status-page,
 .gradio-container .myst-unified-nav-host + .myst-status-page,
+.gradio-container .myst-readme-page:not(.hide):not(.hidden),
 .gradio-container .myst-render-page:not(.hide):not(.hidden),
 .gradio-container .myst-status-page:not(.hide):not(.hidden) {{
     margin-top: 0 !important;
@@ -6579,6 +6521,32 @@ footer {{ visibility: hidden; }}
     pointer-events: none !important;
     flex: 0 0 0 !important;
 }}
+.gradio-container .myst-render-page .myst-render-catalog-host.hide,
+.gradio-container .myst-render-page .myst-render-catalog-host.hidden,
+.gradio-container .myst-render-page .myst-render-catalog-host > .block.hide,
+.gradio-container .myst-render-page .myst-render-catalog-host > .block.hidden,
+.gradio-container .myst-render-page .myst-render-catalog-host > .form.hide,
+.gradio-container .myst-render-page .myst-render-catalog-host > .form.hidden,
+.gradio-container .myst-render-page .myst-render-catalog-host > .column.hide,
+.gradio-container .myst-render-page .myst-render-catalog-host > .column.hidden,
+.gradio-container .myst-render-page .myst-render-stack > .block:has(.myst-render-catalog-host.hide),
+.gradio-container .myst-render-page .myst-render-stack > .form:has(.myst-render-catalog-host.hide),
+.gradio-container .myst-render-page .myst-render-stack > .column.myst-render-catalog-host.hide,
+.gradio-container .myst-render-page .myst-render-stack > .column.myst-render-catalog-host.hidden,
+.gradio-container .myst-render-page #myst-render-grid-host.hide,
+.gradio-container .myst-render-page #myst-render-grid-host.hidden {{
+    display: none !important;
+    visibility: hidden !important;
+    min-height: 0 !important;
+    height: 0 !important;
+    max-height: 0 !important;
+    flex: 0 0 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}}
 .gradio-container .myst-render-page #myst-render-detail-wrapper:not(.hide):not(.hidden),
 .gradio-container .myst-render-page .myst-render-detail-wrapper:not(.hide):not(.hidden),
 .gradio-container .myst-render-page .myst-render-detail-view:not(.hide):not(.hidden) {{
@@ -6593,12 +6561,6 @@ footer {{ visibility: hidden; }}
     margin: 0 !important;
     align-items: stretch !important;
     box-sizing: border-box !important;
-}}
-.gradio-container .myst-render-page .myst-render-detail-toolbar {{
-    flex: 0 0 auto !important;
-    margin: 0 !important;
-    padding: 0 0 0.12rem 0 !important;
-    gap: 0.35rem !important;
 }}
 .gradio-container .myst-render-page .myst-render-split-row {{
     flex: 1 1 auto !important;
@@ -6702,13 +6664,6 @@ footer {{ visibility: hidden; }}
     height: 100% !important;
     min-height: 550px !important;
     max-height: none !important;
-}}
-.gradio-container .myst-render-page .myst-render-detail-actions {{
-    flex: 0 0 auto !important;
-    gap: 0.28rem !important;
-    margin: 0 !important;
-    padding: 0.08rem 0 0.2rem 0 !important;
-    flex-wrap: wrap !important;
 }}
 .gradio-container .myst-render-page .myst-render-detail-wrap {{
     width: 100% !important;
@@ -10273,7 +10228,11 @@ def build_app() -> gr.Blocks:
         _init_render_panel = _format_render_grid_html()
 
         readme_return_page = gr.State("home")
-        with gr.Column(visible=False, elem_classes=["myst-readme-page"]) as page_readme:
+        with gr.Column(
+            visible=False,
+            elem_id="myst-readme-page",
+            elem_classes=["myst-readme-page"],
+        ) as page_readme:
             _add_gap_row(slot="before-docs-content")
             with gr.Row(elem_classes=["myst-readme-back-row"]):
                 readme_back_btn = _place_back_button("← Back to App", min_width=110)
@@ -10368,32 +10327,6 @@ def build_app() -> gr.Blocks:
                                 elem_id="myst-render-detail-plot",
                                 elem_classes=["myst-render-detail-plot"],
                             )
-                    with gr.Row(elem_classes=["myst-render-detail-actions"]):
-                        render_detail_zoom_in_btn = gr.Button(
-                            "Zoom +",
-                            scale=0,
-                            elem_id="myst-render-detail-zoom-in",
-                        )
-                        render_detail_zoom_out_btn = gr.Button(
-                            "Zoom −",
-                            scale=0,
-                            elem_id="myst-render-detail-zoom-out",
-                        )
-                        render_detail_reset_btn = gr.Button(
-                            "Reset View",
-                            scale=0,
-                            elem_id="myst-render-detail-reset",
-                        )
-                        render_detail_download_btn = gr.Button(
-                            "Download PNG",
-                            scale=0,
-                            elem_id="myst-render-detail-download",
-                        )
-                        render_detail_fullscreen_btn = gr.Button(
-                            "Fullscreen",
-                            scale=0,
-                            elem_id="myst-render-detail-fullscreen",
-                        )
 
         status_content_open = gr.State(True)
         with gr.Column(visible=False, elem_classes=["myst-status-page"]) as page_status:
