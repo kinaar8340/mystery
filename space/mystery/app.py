@@ -49,8 +49,11 @@ from demo_core import (
     create_breathing_animation,
     dimension_config_to_dials,
     figure_to_viewport_cached_html,
+    format_platonic_geo_label,
+    format_platonic_preset_header_prefix,
     geodesic_face_count,
     get_dimension_config,
+    resolve_platonic_shape_metric,
     residual_from_scales,
     run_residual_explorer,
     run_residual_explorer_plotly,
@@ -1043,7 +1046,13 @@ def _place_back_button(
 
 
 def _is_active_shape(shape: str) -> bool:
-    return str(shape or "").strip().upper() in _SHAPE_NAV_IDS
+    return resolve_platonic_shape_metric(shape) is not None
+
+
+def _resolve_latched_platonic_shape(active_shape: str) -> str:
+    """UI state only — latched D* id or empty when no platonic tab selected."""
+    dim = str(active_shape or "").strip().upper()
+    return dim if dim in _SHAPE_NAV_IDS else _NO_ACTIVE_SHAPE
 
 
 def _shape_btn_classes(shape: str, active_shape: str) -> list[str]:
@@ -1203,13 +1212,13 @@ def _set_active_shape_and_apply(new_shape: str, active_demo_letter: str = "A") -
 
 def _platonic_geo_presets_interrupt_reset(active_shape: str) -> tuple:
     """Collapse Presets zoom/edit and refresh 3×3 headers for the latched platonic tab."""
-    shape = _normalize_shape_id(active_shape)
+    latched = _resolve_latched_platonic_shape(active_shape)
     return (
         *_status_panel_levels_update(
             -1,
             grid_active_slot=None,
             visible=True,
-            active_shape=shape,
+            active_shape=latched,
         ),
         *_status_zoom_btn_updates(-1),
         -1,
@@ -1223,7 +1232,9 @@ def _platonic_geo_presets_interrupt_reset(active_shape: str) -> tuple:
 
 def _platonic_geo_interrupt_home(new_shape: str, active_demo_letter: str = "A") -> tuple:
     """Platonic D4–D20 interrupt — always Home, latch shape, preserve demo, reset Presets."""
-    shape = _normalize_shape_id(new_shape)
+    shape = str(new_shape or "").strip().upper()
+    if shape not in _SHAPE_NAV_IDS:
+        shape = _DEFAULT_ACTIVE_SHAPE
     return (
         *_nav_to_page_with_demo("home"),
         *_set_active_shape_and_apply(shape, active_demo_letter),
@@ -1406,7 +1417,7 @@ def _status_back_btn_update(*, on_detail: bool) -> gr.Update:
     return gr.update(visible=on_detail)
 
 
-def _status_zoom_back_to_grid(active_shape: str = _DEFAULT_ACTIVE_SHAPE) -> tuple:
+def _status_zoom_back_to_grid(active_shape: str = _NO_ACTIVE_SHAPE) -> tuple:
     """Return from preset zoom to the 3×3 grid overview."""
     dials = dict(_GRAVITY_HOME_DIALS)
     slider_updates = _gravity_slider_control_updates(dials, edit_enabled=False)
@@ -1415,7 +1426,7 @@ def _status_zoom_back_to_grid(active_shape: str = _DEFAULT_ACTIVE_SHAPE) -> tupl
             -1,
             grid_active_slot=None,
             visible=True,
-            active_shape=active_shape,
+            active_shape=_resolve_latched_platonic_shape(active_shape),
         ),
         *_status_zoom_btn_updates(-1),
         -1,
@@ -1470,9 +1481,13 @@ def _status_zoom_btn_updates(active_slot: int) -> tuple:
     )
 
 
-def _nav_to_status_page(current_page: str, content_open: bool) -> tuple:
+def _nav_to_status_page(
+    current_page: str,
+    content_open: bool,
+    active_shape: str = _NO_ACTIVE_SHAPE,
+) -> tuple:
     """Open Status page, or toggle its grid closed under the Status tab when already there."""
-    grid_reset = _status_zoom_back_to_grid()
+    grid_reset = _status_zoom_back_to_grid(_resolve_latched_platonic_shape(active_shape))
     skip_reset = tuple(gr.skip() for _ in grid_reset)
     if current_page == "status":
         new_open = not bool(content_open)
@@ -1491,9 +1506,16 @@ def _nav_to_status_page(current_page: str, content_open: bool) -> tuple:
     )
 
 
-def _nav_to_status_page_with_demo(current_page: str, content_open: bool) -> tuple:
+def _nav_to_status_page_with_demo(
+    current_page: str,
+    content_open: bool,
+    active_shape: str = _NO_ACTIVE_SHAPE,
+) -> tuple:
     """Status navigation plus unified-host demo bar sync."""
-    return (*_nav_to_status_page(current_page, content_open), *_sync_demo_nav_sections("status"))
+    return (
+        *_nav_to_status_page(current_page, content_open, active_shape),
+        *_sync_demo_nav_sections("status"),
+    )
 
 
 _README_RETURN_PAGES = frozenset({"home", "render", "status"})
@@ -9086,21 +9108,20 @@ def _format_gravity_status_catalog_rows(
     return "".join(rows)
 
 
-def _gravity_status_panel_title(shape: str, slot: int) -> str:
+def _gravity_status_panel_title(active_shape: str, slot: int) -> str:
     """Presets panel title — e.g. D6 · PRESET 01 · menu · parameter catalog."""
     preset_id = _gravity_preset_id(slot)
     profile = _GRAVITY_PRESET_SLOT_LABELS.get(slot)
     subtitle = f" · {profile}" if profile else ""
-    if _is_active_shape(shape):
-        return f"{str(shape).strip().upper()} · PRESET {preset_id}{subtitle}"
-    return f"PRESET {preset_id}{subtitle}"
+    prefix = format_platonic_preset_header_prefix(active_shape)
+    return f"{prefix}PRESET {preset_id}{subtitle}"
 
 
 def _format_gravity_status_cell_html(
     slot: int,
     *,
     active: bool = False,
-    shape: str = _DEFAULT_ACTIVE_SHAPE,
+    shape: str = _NO_ACTIVE_SHAPE,
 ) -> str:
     """Compact parameter levels for one programmed preset (status grid cell)."""
     dials = _gravity_preset_dials_for_slot(slot)
@@ -9122,7 +9143,7 @@ def _status_panel_html(
     *,
     grid_active_slot: int | None = None,
     dials: dict[str, float] | None = None,
-    active_shape: str = _DEFAULT_ACTIVE_SHAPE,
+    active_shape: str = _NO_ACTIVE_SHAPE,
 ) -> str:
     """Single Status content host — 3×3 grid when zoom_slot < 0, else full-page preset."""
     zs = int(zoom_slot)
@@ -9144,7 +9165,7 @@ def _status_catalog_updates(
     grid_active_slot: int | None = None,
     dials: dict[str, float] | None = None,
     visible: bool = True,
-    active_shape: str = _DEFAULT_ACTIVE_SHAPE,
+    active_shape: str = _NO_ACTIVE_SHAPE,
 ) -> tuple[gr.Update, gr.Update]:
     """Refresh catalog HTML and show/hide the catalog column during manual edit."""
     html = _status_panel_html(
@@ -9166,7 +9187,7 @@ def _status_panel_levels_update(
     grid_active_slot: int | None = None,
     dials: dict[str, float] | None = None,
     visible: bool = True,
-    active_shape: str = _DEFAULT_ACTIVE_SHAPE,
+    active_shape: str = _NO_ACTIVE_SHAPE,
 ) -> tuple[gr.Update, gr.Update, gr.Update]:
     """Refresh Status panels — catalog column, HTML value, and panels-host edit class."""
     catalog_col, panel_html = _status_catalog_updates(
@@ -9186,7 +9207,7 @@ def _status_panel_levels_update(
 def _format_gravity_status_grid_html(
     active_slot: int | None = None,
     *,
-    shape: str = _DEFAULT_ACTIVE_SHAPE,
+    shape: str = _NO_ACTIVE_SHAPE,
 ) -> str:
     """3×3 status page grid — status_panel_1 … status_panel_9 programmed preset readouts."""
     active = int(active_slot) if active_slot is not None else None
@@ -9671,7 +9692,7 @@ def _format_gravity_status_zoom_html(
     slot: int,
     dials: dict[str, float] | None = None,
     *,
-    shape: str = _DEFAULT_ACTIVE_SHAPE,
+    shape: str = _NO_ACTIVE_SHAPE,
 ) -> str:
     """Full-page preset readout for Status/01 … Status/09 zoom view."""
     slot = int(slot)
@@ -9689,7 +9710,7 @@ def _format_gravity_status_zoom_html(
     )
 
 
-def _status_zoom_select(slot: int, active_shape: str = _DEFAULT_ACTIVE_SHAPE) -> tuple:
+def _status_zoom_select(slot: int, active_shape: str = _NO_ACTIVE_SHAPE) -> tuple:
     """Latch a Status/ preset zoom button and show the full-page preset readout."""
     slot = int(slot)
     dials = _gravity_preset_dials_for_slot(slot)
@@ -9699,7 +9720,7 @@ def _status_zoom_select(slot: int, active_shape: str = _DEFAULT_ACTIVE_SHAPE) ->
             slot,
             dials=dials,
             visible=True,
-            active_shape=active_shape,
+            active_shape=_resolve_latched_platonic_shape(active_shape),
         ),
         *_status_zoom_btn_updates(slot),
         slot,
@@ -9850,7 +9871,7 @@ def _status_zoom_manual_refresh(
     view_azim: float,
     zoom_slot: int,
     edit_open: bool,
-    active_shape: str = _DEFAULT_ACTIVE_SHAPE,
+    active_shape: str = _NO_ACTIVE_SHAPE,
 ) -> tuple:
     if not edit_open:
         return gr.skip(), gr.skip(), gr.skip()
@@ -9870,7 +9891,7 @@ def _status_zoom_manual_refresh(
         int(zoom_slot),
         dials=dials,
         visible=False,
-        active_shape=active_shape,
+        active_shape=_resolve_latched_platonic_shape(active_shape),
     )
 
 
@@ -10095,9 +10116,10 @@ def _run_residual_explorer_ui(
     active_shape: str,
     active_demo_letter: str = "A",
 ) -> tuple:
-    dim_config = get_dimension_config(active_shape)
+    config_shape = _normalize_shape_id(active_shape)
+    dim_config = get_dimension_config(config_shape)
     subdiv = int(dim_config.get("subdiv", 8))
-    face_count = int(dim_config.get("face_count", geodesic_face_count(active_shape)))
+    face_count = int(dim_config.get("face_count", geodesic_face_count(config_shape)))
     metrics, header, fig = run_residual_explorer(
         phi_sq_scale,
         e_sq_scale,
@@ -10132,7 +10154,7 @@ def _run_residual_explorer_ui(
         zoom_slot,
         grid_active_slot=slot,
         dials=_gravity_preset_dials_for_slot(zoom_slot) if zoom_slot >= 0 else None,
-        active_shape=active_shape,
+        active_shape=_resolve_latched_platonic_shape(active_shape),
     )
     print(f"[DEBUG] _run_residual_explorer_ui: preset={slot}", flush=True)
     viewport_updates = _demo_viewport_preserve_active_demo(
@@ -10275,7 +10297,7 @@ def _gravity_explorer_outputs(
     *,
     edit_params_enabled: bool = False,
     update_image: bool = True,
-    active_shape: str = _DEFAULT_ACTIVE_SHAPE,
+    active_shape: str = _NO_ACTIVE_SHAPE,
 ) -> tuple:
     image_out = _gravity_static_image_update(fig) if update_image else gr.skip()
     edit_btn = _gravity_edit_params_btn_update(edit_params_enabled)
@@ -10288,7 +10310,7 @@ def _gravity_explorer_outputs(
         zoom_slot,
         grid_active_slot=active_slot,
         dials=_gravity_preset_dials_for_slot(zoom_slot) if zoom_slot >= 0 else None,
-        active_shape=active_shape,
+        active_shape=_resolve_latched_platonic_shape(active_shape),
     )
     child_active = int(active_slot) if 0 <= int(active_slot) < len(_GRAVITY_CHILD_NAV_LETTERS) else -1
     return (
@@ -11822,7 +11844,7 @@ def build_app() -> gr.Blocks:
         def _bind_status_nav(btn: gr.Button) -> None:
             btn.click(
                 _nav_to_status_page_with_demo,
-                inputs=[current_page, status_content_open],
+                inputs=[current_page, status_content_open, active_shape],
                 outputs=status_nav_outputs,
             ).then(
                 _run_residual_explorer_ui,
@@ -11940,9 +11962,10 @@ def build_app() -> gr.Blocks:
             slider_updates = _apply_dimension_slider_updates(d6_config)
             dials = dimension_config_to_dials(d6_config)
             face_count = int(d6_config.get("face_count", geodesic_face_count(_DEFAULT_ACTIVE_SHAPE)))
+            platonic_hint = format_platonic_geo_label(_NO_ACTIVE_SHAPE) or "select D4–D20"
             metrics = (
                 f"φ²+e²≈π²  ·  Demo A startup\n"
-                f"Geodesic faces       : {face_count}  (select D4–D20)\n"
+                f"Geodesic faces       : {face_count}  ({platonic_hint})\n"
                 f"Mode                 : {d6_config.get('description', '')}\n"
                 f"Demo F               : breathing unit-cell loop"
             )

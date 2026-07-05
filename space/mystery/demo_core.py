@@ -57,6 +57,36 @@ def geodesic_face_count(dimension: str) -> int:
     return geodesic_face_count(_DEFAULT_DIMENSION)
 
 
+def resolve_platonic_shape_metric(active_shape: str) -> int | None:
+    """Face-count metric for the latched platonic tab: 4, 6, 8, 12, or 20; else None."""
+    dim = str(active_shape or "").strip().upper()
+    match dim:
+        case "D4":
+            return 4
+        case "D6":
+            return 6
+        case "D8":
+            return 8
+        case "D12":
+            return 12
+        case "D20":
+            return 20
+        case _:
+            return None
+
+
+def format_platonic_geo_label(active_shape: str) -> str:
+    """Nav label from latched shape — ``D4``, ``D6``, …, or empty when none latched."""
+    metric = resolve_platonic_shape_metric(active_shape)
+    return f"D{metric}" if metric is not None else ""
+
+
+def format_platonic_preset_header_prefix(active_shape: str) -> str:
+    """Presets 3×3 header prefix — ``D4 · `` or empty when no platonic tab latched."""
+    label = format_platonic_geo_label(active_shape)
+    return f"{label} · " if label else ""
+
+
 def get_dimension_config(dimension: str) -> dict[str, object]:
     """Per geodesic-face-count tab (D* = face count): slider defaults and mesh topology."""
     dim = str(dimension or _DEFAULT_DIMENSION).strip().upper()
