@@ -1139,14 +1139,35 @@ def _dimension_explorer_side_outputs(
     return metrics, header, control_levels
 
 
-def _set_active_shape_and_apply(new_shape: str) -> tuple:
-    """Latch tab, load defaults, refresh the Home (gravity) viewport."""
+def _demo_viewport_preserve_active_demo(active_demo_letter: str, *, dim_fig) -> tuple:
+    """Keep Demo A startup / Demo F breathing when geodesic tabs change."""
+    letter = str(active_demo_letter or "A").strip().upper()
+    if letter == "A":
+        try:
+            return _demo_viewport_show_startup_image()
+        except Exception:
+            logger.exception("startup image preserve failed on dimension switch")
+            return _demo_viewport_show_plot(dim_fig)
+    if letter in _BREATHING_DEMO_LETTERS:
+        try:
+            return _demo_viewport_show_breathing_video()
+        except Exception:
+            logger.exception("breathing video preserve failed on dimension switch")
+            return _demo_viewport_show_plot(dim_fig)
+    return _demo_viewport_show_plot(dim_fig)
+
+
+def _set_active_shape_and_apply(new_shape: str, active_demo_letter: str = "A") -> tuple:
+    """Latch geodesic tab, load defaults; preserve Demo A/F viewport when latched."""
     shape = _normalize_shape_id(new_shape)
     config = get_dimension_config(shape)
     shape_updates = _set_active_shape(shape)
     slider_updates = _apply_dimension_slider_updates(config)
-    fig = _build_dimension_viewport_figure(shape, config)
-    viewport_updates = _demo_viewport_show_plot(fig)
+    dim_fig = _build_dimension_viewport_figure(shape, config)
+    viewport_updates = _demo_viewport_preserve_active_demo(
+        active_demo_letter,
+        dim_fig=dim_fig,
+    )
     metrics, header, control_levels = _dimension_explorer_side_outputs(shape, config)
     return (
         *shape_updates,
@@ -1156,14 +1177,15 @@ def _set_active_shape_and_apply(new_shape: str) -> tuple:
         metrics,
         header,
         control_levels,
+        _gravity_viewport_wrapper_update(active_demo_letter),
     )
 
 
-def _set_active_shape_and_apply_home(new_shape: str) -> tuple:
-    """Dimension tab click — always land on Home, then apply mode defaults."""
+def _set_active_shape_and_apply_home(new_shape: str, active_demo_letter: str = "A") -> tuple:
+    """Dimension tab click — land on Home, apply mode defaults, preserve active demo."""
     return (
         *_nav_to_page_with_demo("home"),
-        *_set_active_shape_and_apply(new_shape),
+        *_set_active_shape_and_apply(new_shape, active_demo_letter),
     )
 
 
@@ -11608,6 +11630,7 @@ def build_app() -> gr.Blocks:
             edit_re_metrics,
             unit_cell_header,
             re_control_levels,
+            viewport_col,
         ]
         nav_outputs = [
             page_gravity,
@@ -11744,9 +11767,16 @@ def build_app() -> gr.Blocks:
                 show_progress="hidden",
             )
 
+        def _make_dimension_tab_click(shape: str):
+            def handler(active_demo_letter: str) -> tuple:
+                return _set_active_shape_and_apply_home(shape, active_demo_letter)
+
+            return handler
+
         for shape_id in _SHAPE_NAV_IDS:
             unified_nav[shape_id].click(
-                lambda s=shape_id: _set_active_shape_and_apply_home(s),
+                _make_dimension_tab_click(shape_id),
+                inputs=[gravity_active_letter],
                 outputs=dimension_shape_outputs,
                 show_progress="hidden",
             )
@@ -11804,6 +11834,7 @@ def build_app() -> gr.Blocks:
                 metrics,
                 header,
                 control_levels,
+                _gravity_viewport_wrapper_update("A"),
             )
 
         demo.load(
