@@ -31,8 +31,10 @@ UNIT_CELL_VIEW_DIST = 14.0
 UNIT_CELL_AXIS_HALF = 2.35
 UNIT_CELL_SHAPE_ONLY_AXIS_HALF = 1.35
 UNIT_CELL_SHAPE_ONLY_VIEW_DIST = 9.0
-UNIT_CELL_DETAIL_AXIS_HALF = 2.75
-UNIT_CELL_DETAIL_VIEW_DIST = 22.0
+UNIT_CELL_DETAIL_FIGSIZE = (8.5, 8.5)
+UNIT_CELL_DETAIL_DPI = 100
+UNIT_CELL_DETAIL_AXIS_HALF = 3.05
+UNIT_CELL_DETAIL_VIEW_DIST = 30.0
 
 BOOT_QUOTE_STRING = "TEST EVERYTHING, HOLD FAST WHAT IS GOOD AND KNOW YOUR GOD"
 
@@ -1859,6 +1861,7 @@ def build_unit_cell_figure(
     axis_half: float = UNIT_CELL_AXIS_HALF,
     show_curvature_grid: bool = True,
     shape_only: bool = False,
+    figsize: tuple[float, float] | None = None,
     dpi: int = 150,
 ) -> plt.Figure:
     """Server-rendered deformable unit cell — bowing π-face, concave φ/e sides."""
@@ -1881,7 +1884,8 @@ def build_unit_cell_figure(
     font_axis = 12
     caption_neutral = _UNIT_CELL_LABEL_TEXT
 
-    fig = plt.figure(figsize=UNIT_CELL_FIGSIZE, dpi=dpi, facecolor=bg)
+    frame_size = UNIT_CELL_FIGSIZE if figsize is None else figsize
+    fig = plt.figure(figsize=frame_size, dpi=dpi, facecolor=bg)
     ax = fig.add_subplot(111, projection="3d", facecolor=bg)
 
     triangles, tri_colors = _deformed_cube_surface(s, p, delta_z, side)
@@ -2296,6 +2300,8 @@ def run_residual_explorer(
     view_azim: float = UNIT_CELL_VIEW_AZIM,
     view_dist: float | None = None,
     axis_half: float | None = None,
+    figsize: tuple[float, float] | None = None,
+    dpi: int | None = None,
     shape_only: bool = False,
 ) -> tuple[str, str, plt.Figure]:
     """Return explorer metrics, viewport header HTML, and unit-cell figure."""
@@ -2320,6 +2326,10 @@ def run_residual_explorer(
         fig_kwargs["view_dist"] = float(view_dist)
     if axis_half is not None:
         fig_kwargs["axis_half"] = float(axis_half)
+    if figsize is not None:
+        fig_kwargs["figsize"] = figsize
+    if dpi is not None:
+        fig_kwargs["dpi"] = int(dpi)
     fig = build_unit_cell_figure(
         delta_z=delta_z,
         delta_side=abs(d_side) * 0.5,

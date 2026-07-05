@@ -50,6 +50,8 @@ from demo_core import (
     run_residual_explorer,
     run_residual_explorer_plotly,
     UNIT_CELL_DETAIL_AXIS_HALF,
+    UNIT_CELL_DETAIL_DPI,
+    UNIT_CELL_DETAIL_FIGSIZE,
     UNIT_CELL_DETAIL_VIEW_DIST,
     plotly_figure_to_render_detail_html,
 
@@ -8714,8 +8716,10 @@ def _render_preset_detail_plot_html(slot: int) -> str:
         shape_only=False,
         view_dist=UNIT_CELL_DETAIL_VIEW_DIST,
         axis_half=UNIT_CELL_DETAIL_AXIS_HALF,
+        figsize=UNIT_CELL_DETAIL_FIGSIZE,
+        dpi=UNIT_CELL_DETAIL_DPI,
     )
-    return _gravity_fig_to_viewport_file_html(fig, dpi=_UNIT_CELL_IMAGE_DPI)
+    return _gravity_fig_to_viewport_file_html(fig, dpi=UNIT_CELL_DETAIL_DPI)
 
 
 def _render_detail_plot_fallback(slot: int, error: Exception):
@@ -8761,6 +8765,8 @@ def _generate_render_detail_plot(slot: int):
             shape_only=False,
             view_dist=UNIT_CELL_DETAIL_VIEW_DIST,
             axis_half=UNIT_CELL_DETAIL_AXIS_HALF,
+            figsize=UNIT_CELL_DETAIL_FIGSIZE,
+            dpi=UNIT_CELL_DETAIL_DPI,
         )
         return fig
     except Exception as exc:
