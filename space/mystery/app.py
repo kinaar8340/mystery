@@ -2656,10 +2656,26 @@ footer {{
     display: block !important;
 }}
 .gradio-container .myst-gravity-page #myst-gravity-viewport-plot,
-.gradio-container .myst-gravity-page .myst-gravity-viewport-plot {{
+.gradio-container .myst-gravity-page .myst-gravity-viewport-plot,
+.gradio-container .myst-gravity-page #myst-gravity-viewport-image,
+.gradio-container .myst-gravity-page .myst-gravity-viewport-image {{
     flex: 1 1 auto !important;
     width: 100% !important;
     min-height: 580px !important;
+}}
+.gradio-container .myst-gravity-page #myst-gravity-viewport-image,
+.gradio-container .myst-gravity-page #myst-gravity-viewport-image .block,
+.gradio-container .myst-gravity-page #myst-gravity-viewport-image .image-container,
+.gradio-container .myst-gravity-page #myst-gravity-viewport-image .wrap,
+.gradio-container .myst-gravity-page #myst-gravity-viewport-image img,
+.gradio-container .myst-gravity-page .myst-gravity-viewport-image img {{
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 580px !important;
+    max-height: 620px !important;
+    object-fit: contain !important;
+    background: #0a0a0f !important;
+    display: block !important;
 }}
 #myst-gravity-viewport .plotly-graph-div,
 #myst-gravity-viewport-plotly,
@@ -7720,8 +7736,8 @@ _RENDER_DETAIL_IMAGE_DPI = 120
 # (16 keypad + 1 legacy back skip + 9 child nav + 2 edit btns + 20 sliders + …).
 _GRAVITY_PRESET_IMAGE_OUT_INDEX = 51
 _GRAVITY_CHILD_NAV_LETTERS: tuple[str, ...] = tuple(chr(ord("A") + i) for i in range(9))
-# Demo tabs that play the shared breathing cube loop (same asset as Demo A).
-_BREATHING_DEMO_LETTERS: frozenset[str] = frozenset({"A", "F"})
+# Demo F — sole tab for the breathing cube loop.
+_BREATHING_DEMO_LETTERS: frozenset[str] = frozenset({"F"})
 _GRAVITY_HOME_DIALS = {
     "phi": 1.0,
     "e": 1.0,
@@ -8421,7 +8437,7 @@ def _gravity_child_nav_btn_updates(active_slot: int = -1) -> tuple:
     return tuple(
         gr.update(
             elem_classes=_gravity_child_nav_btn_classes(letter, active),
-            # Demo tabs stay clickable — A/F relaunch breathing when re-selected.
+            # Demo tabs stay clickable — A relaunches startup image, F relaunches breathing.
             interactive=True,
             variant="secondary",
         )
@@ -8445,11 +8461,12 @@ def _demo_active_tab_updates(active_letter: str) -> tuple:
 
 _GRAVITY_DEMO_VIDEO_CACHE: dict[str, str] = {}
 _BREATHING_DEMO_VIDEO_CACHE: str | None = None
-_BUNDLED_BREATHING_VIDEO = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)),
-    "assets",
-    "demo_a_breathing.gif",
-)
+_DEMO_A_STARTUP_IMAGE_CACHE: str | None = None
+_APP_DIR = os.path.dirname(os.path.abspath(__file__))
+_REPO_ROOT = os.path.abspath(os.path.join(_APP_DIR, "..", ".."))
+_BUNDLED_BREATHING_VIDEO = os.path.join(_APP_DIR, "assets", "demo_a_breathing.gif")
+_BUNDLED_STARTUP_IMAGE = os.path.join(_APP_DIR, "assets", "home_a_startup_page.png")
+_REPO_STARTUP_IMAGE = os.path.join(_REPO_ROOT, "Home_A_startup_page.png")
 
 
 def _gravity_demo_letter_slot(letter: str) -> int:
@@ -8542,7 +8559,7 @@ def _get_gravity_animation_html(letter: str) -> str:
 
 
 def _create_breathing_animation(*, fresh: bool = False):
-    """Looping breathing Plotly figure for Demo A/F — ready to animate on load."""
+    """Looping breathing Plotly figure for Demo F — ready to animate on load."""
     return create_breathing_animation(fresh=fresh)
 
 
@@ -8567,6 +8584,27 @@ def _get_breathing_demo_video_path() -> str:
             raw_path = render_breathing_demo_video(n_per_segment=8, fps=10, dpi=80)
         _BREATHING_DEMO_VIDEO_CACHE = _cache_media_for_gradio(raw_path)
     return _BREATHING_DEMO_VIDEO_CACHE
+
+
+def _resolve_demo_a_startup_image_path() -> str:
+    """Bundled HF asset first, then repo-root upload fallback."""
+    for path in (_BUNDLED_STARTUP_IMAGE, _REPO_STARTUP_IMAGE):
+        if os.path.isfile(path):
+            return path
+    raise FileNotFoundError(
+        "Demo A startup image not found — expected "
+        f"{_BUNDLED_STARTUP_IMAGE} or {_REPO_STARTUP_IMAGE}"
+    )
+
+
+def _get_demo_a_startup_image_path() -> str:
+    """Gradio-served path to the Demo A landing PNG."""
+    global _DEMO_A_STARTUP_IMAGE_CACHE
+    if _DEMO_A_STARTUP_IMAGE_CACHE is None:
+        raw_path = _resolve_demo_a_startup_image_path()
+        print(f"[startup] using Demo A landing image: {raw_path}", flush=True)
+        _DEMO_A_STARTUP_IMAGE_CACHE = _cache_media_for_gradio(raw_path)
+    return _DEMO_A_STARTUP_IMAGE_CACHE
 
 
 def _get_rigid_preset_plotly_figure():
@@ -8595,9 +8633,10 @@ def _get_rigid_preset_plotly_figure():
 
 
 def _demo_viewport_show_plot(fig) -> tuple:
-    """Show interactive Plotly preset (B–I)."""
+    """Show interactive Plotly preset (B–I and dial-driven updates)."""
     return (
         gr.update(value=fig, visible=True),
+        gr.update(value=None, visible=False),
         gr.update(value=None, visible=False),
     )
 
@@ -8608,17 +8647,28 @@ def _demo_viewport_show_breathing_video() -> tuple:
     return (
         gr.update(visible=False),
         gr.update(value=video_path, visible=True, autoplay=True, loop=True),
+        gr.update(value=None, visible=False),
+    )
+
+
+def _demo_viewport_show_startup_image() -> tuple:
+    """Show Demo A landing PNG via gr.Image (HF-safe cached path)."""
+    image_path = _get_demo_a_startup_image_path()
+    return (
+        gr.update(visible=False),
+        gr.update(value=None, visible=False),
+        gr.update(value=image_path, visible=True),
     )
 
 
 def _launch_breathing_demo(letter: str) -> tuple:
-    """Demo A/F — shared breathing MP4; fall back to rigid Plotly if encode fails."""
-    active = str(letter or "A").strip().upper()
+    """Demo F — breathing MP4; fall back to rigid Plotly if encode fails."""
+    active = str(letter or "F").strip().upper()
     if active not in _BREATHING_DEMO_LETTERS:
-        active = "A"
+        active = "F"
     try:
         viewport = _demo_viewport_show_breathing_video()
-    except Exception as exc:
+    except Exception:
         logger.exception("breathing demo video failed for Demo %s", active)
         viewport = _demo_viewport_show_plot(_get_rigid_preset_plotly_figure())
     return (
@@ -8629,8 +8679,17 @@ def _launch_breathing_demo(letter: str) -> tuple:
 
 
 def _launch_demo_a() -> tuple:
-    """Backward-compatible entry — Demo A breathing."""
-    return _launch_breathing_demo("A")
+    """Demo A — startup landing image."""
+    try:
+        viewport = _demo_viewport_show_startup_image()
+    except Exception:
+        logger.exception("startup image failed for Demo A")
+        viewport = _demo_viewport_show_plot(_get_rigid_preset_plotly_figure())
+    return (
+        *viewport,
+        *_demo_active_tab_updates("A"),
+        "A",
+    )
 
 
 def _get_gravity_demo_plotly_figure(letter: str):
@@ -8660,8 +8719,10 @@ def _get_gravity_demo_plotly_figure(letter: str):
 
 
 def _switch_gravity_demo(letter: str) -> tuple:
-    """Switch the Home viewport to the demo for the selected letter (B–I)."""
+    """Switch the Home viewport to the demo for the selected letter (A, B–E, G–I)."""
     letter = str(letter).strip().upper()
+    if letter == "A":
+        return _launch_demo_a()
     if letter in _BREATHING_DEMO_LETTERS:
         return _launch_breathing_demo(letter)
     slot = _gravity_demo_letter_slot(letter)
@@ -9900,7 +9961,7 @@ def _run_residual_explorer_ui(
         metrics,
         metrics,
         header,
-        *_demo_viewport_show_breathing_video(),
+        *_demo_viewport_show_plot(fig),
         _gravity_clear_video_update(),
         control_levels,
         gr.skip(),
@@ -11250,6 +11311,16 @@ def build_app() -> gr.Blocks:
                     elem_classes=["myst-gravity-viewport", "myst-gravity-demo-video"],
                     container=True,
                 )
+                gravity_viewport_image = gr.Image(
+                    label="",
+                    show_label=False,
+                    visible=False,
+                    interactive=False,
+                    height=620,
+                    elem_id="myst-gravity-viewport-image",
+                    elem_classes=["myst-gravity-viewport-image", "myst-gravity-demo-startup"],
+                    container=True,
+                )
             with gr.Column(visible=False, elem_classes=["myst-gravity-wired-hidden"]):
                 re_active_preset = gr.State(0)
                 re_edit_params = gr.State(False)
@@ -11311,6 +11382,7 @@ def build_app() -> gr.Blocks:
                 unit_cell_header,
                 gravity_viewport_plot,
                 gravity_viewport_video,
+                gravity_viewport_image,
                 unit_cell_video,
                 re_control_levels,
                 status_catalog_col,
@@ -11327,12 +11399,19 @@ def build_app() -> gr.Blocks:
             gravity_demo_outputs = [
                 gravity_viewport_plot,
                 gravity_viewport_video,
+                gravity_viewport_image,
                 *[gravity_letter_btns[letter] for letter in _GRAVITY_CHILD_NAV_LETTERS],
                 gravity_active_letter,
             ]
             for letter in _GRAVITY_CHILD_NAV_LETTERS:
                 btn = gravity_letter_btns[letter]
-                if letter in _BREATHING_DEMO_LETTERS:
+                if letter == "A":
+                    btn.click(
+                        _launch_demo_a,
+                        outputs=gravity_demo_outputs,
+                        show_progress="hidden",
+                    )
+                elif letter in _BREATHING_DEMO_LETTERS:
                     btn.click(
                         lambda l=letter: _launch_breathing_demo(l),
                         outputs=gravity_demo_outputs,
@@ -11436,6 +11515,7 @@ def build_app() -> gr.Blocks:
             *dimension_slider_outputs,
             gravity_viewport_plot,
             gravity_viewport_video,
+            gravity_viewport_image,
             re_metrics,
             edit_re_metrics,
             unit_cell_header,
@@ -11607,8 +11687,12 @@ def build_app() -> gr.Blocks:
         newhere_minimize_btn.click(_minimize_newhere, outputs=newhere_outputs[:3])
         claims_minimize_btn.click(_minimize_claims, outputs=claims_outputs[:3])
         def _app_boot() -> tuple:
-            """Fast boot — rigid plot first so HF health checks pass quickly."""
-            viewport = _demo_viewport_show_plot(_get_rigid_preset_plotly_figure())
+            """Boot on Demo A — startup landing image with Home defaults."""
+            try:
+                viewport = _demo_viewport_show_startup_image()
+            except Exception:
+                logger.exception("app boot startup image failed")
+                viewport = _demo_viewport_show_plot(_get_rigid_preset_plotly_figure())
             d6_config = get_dimension_config(_DEFAULT_ACTIVE_SHAPE)
             slider_updates = _apply_dimension_slider_updates(d6_config)
             metrics, header, control_levels = _dimension_explorer_side_outputs(
@@ -11628,14 +11712,6 @@ def build_app() -> gr.Blocks:
                 control_levels,
             )
 
-        def _app_boot_deferred_video() -> tuple:
-            """Load Demo A breathing video after the UI is live (HF encodes on first boot)."""
-            try:
-                return _demo_viewport_show_breathing_video()
-            except Exception:
-                logger.exception("app boot breathing video failed")
-                return _demo_viewport_show_plot(_get_rigid_preset_plotly_figure())
-
         demo.load(
             _app_boot,
             outputs=[
@@ -11645,10 +11721,6 @@ def build_app() -> gr.Blocks:
                 gravity_active_letter,
                 *dimension_apply_outputs,
             ],
-            show_progress="hidden",
-        ).then(
-            _app_boot_deferred_video,
-            outputs=[gravity_viewport_plot, gravity_viewport_video],
             show_progress="hidden",
         )
 

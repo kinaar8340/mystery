@@ -415,7 +415,7 @@ precession made visible.</li>
 <table class="myst-readme-table">
 <thead><tr><th>Goal</th><th>κ</th><th>Pressure</th><th>Preset / Demo</th></tr></thead>
 <tbody>
-<tr><td>See the breathing loop</td><td>0.85</td><td>0.35</td><td>Home &rarr; Demo&nbsp;A</td></tr>
+<tr><td>See the breathing loop</td><td>0.85</td><td>0.35</td><td>Home &rarr; Demo&nbsp;F</td></tr>
 <tr><td>Max outward curvature</td><td>0.85</td><td>+0.65</td><td>Demo&nbsp;B (MAX CONVEX)</td></tr>
 <tr><td>Stable rigid rest state</td><td>0.85</td><td>0.00</td><td>Demo&nbsp;C (RIGID CUBE)</td></tr>
 <tr><td>Deep inward pinch</td><td>0.85</td><td>&minus;0.55</td><td>Demo&nbsp;I (MAX CONCAVE)</td></tr>
@@ -3756,7 +3756,7 @@ def create_simple_breathing_test_animation():
 
 
 def create_breathing_animation(*, fresh: bool = False):
-    """Viewport-ready Plotly breathing figure for Demo A."""
+    """Viewport-ready Plotly breathing figure for Demo F."""
     import plotly.graph_objects as go
 
     if BREATHING_ANIMATION_MODE == "test_cube":
