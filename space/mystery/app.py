@@ -1064,22 +1064,28 @@ def _place_unified_main_nav(
     return buttons
 
 
-def _place_status_zoom_nav_row(
+def _place_status_sub_nav_row(
     active_slot: int = -1,
-) -> dict[str, gr.Button]:
-    """Status sub-nav — Demo: label and nine presets (01 … 09)."""
+    *,
+    visible: bool = False,
+) -> tuple[dict[str, gr.Button], gr.Row]:
+    """Presets sub-nav — Demo: label and nine presets (01 … 09), unified nav layer."""
     buttons: dict[str, gr.Button] = {}
     active = int(active_slot)
     with gr.Row(
         elem_id="myst-status-zoom-nav",
+        visible=visible,
         elem_classes=[
             "myst-secondary-nav",
             "myst-nav-bar-row",
             "myst-status-preset-nav-wrap",
-            "myst-gravity-child-nav-row",
-            "myst-gravity-demo-nav-wrap",
+            "myst-demo-preset-nav-row",
+            "vqc-status-preset-nav-row",
+            "demo-nav-clean",
+            "vqc-source-tabs-row",
+            "myst-status-demo-nav",
         ],
-    ):
+    ) as row:
         gr.HTML(
             '<span class="vqc-source-label vqc-nav-row-label myst-gravity-child-nav-label">'
             "Demo:</span>"
@@ -1097,20 +1103,37 @@ def _place_status_zoom_nav_row(
                     elem_classes=classes,
                     interactive=not is_active,
                 )
+    return buttons, row
+
+
+def _place_status_zoom_nav_row(
+    active_slot: int = -1,
+) -> dict[str, gr.Button]:
+    """Backward-compatible alias — returns buttons only (no row handle)."""
+    buttons, _row = _place_status_sub_nav_row(active_slot, visible=True)
     return buttons
 
 
-def _place_status_save_edit_row() -> tuple[gr.Button, gr.Button]:
-    """Presets page — Save + Edit on one row below the Demo: numeric bar."""
-    with gr.Row(elem_classes=["myst-save-edit-row", "myst-nav-bar-row"]):
+def _place_status_save_edit_row(
+    *,
+    visible: bool = True,
+) -> tuple[gr.Button, gr.Button, gr.Row]:
+    """Presets page — full-width Save + Edit row aligned with Demo nav."""
+    with gr.Row(
+        visible=visible,
+        elem_classes=[
+            "myst-save-edit-row",
+            "myst-nav-bar-row",
+            "myst-status-save-edit-row",
+        ],
+    ) as row:
         gr.HTML(
             '<span class="vqc-source-label vqc-nav-row-label vqc-nav-label-spacer" '
             'aria-hidden="true">&nbsp;</span>'
         )
         with gr.Row(elem_classes=["nav-button-grid", "nav-button-grid-pair"]):
-            save_btn = gr.Button(
+            save_btn = _nav_theme_button(
                 "Save",
-                variant="secondary",
                 elem_classes=[
                     *_STATUS_ZOOM_SAVE_BTN_CLASSES,
                     "save-btn",
@@ -1129,7 +1152,7 @@ def _place_status_save_edit_row() -> tuple[gr.Button, gr.Button]:
                     "edit-btn",
                 ],
             )
-    return save_btn, edit_btn
+    return save_btn, edit_btn, row
 
 
 def _add_gap_row(*, slot: str | None = None, half_height: bool = False) -> None:
@@ -1288,14 +1311,36 @@ _HOME_DEMO_PAGES = frozenset({"home", "gravity"})
 _RENDER_DEMO_PAGES = frozenset({"render", "figures"})
 
 
-def _sync_demo_nav_sections(page: str) -> tuple[gr.Update, gr.Update]:
-    """Toggle Home Demo A–I vs Figures Demo 01–09 rows in the unified nav host."""
+def _sync_demo_nav_sections(page: str) -> tuple[gr.Update, gr.Update, gr.Update, gr.Update]:
+    """Toggle Home / Figures / Presets demo rows and Save+Edit in the unified nav host."""
     active = str(page or "home").strip().lower()
     if active in _HOME_DEMO_PAGES:
-        return (gr.update(visible=True), gr.update(visible=False))
+        return (
+            gr.update(visible=True),
+            gr.update(visible=False),
+            gr.update(visible=False),
+            gr.update(visible=False),
+        )
     if active in _RENDER_DEMO_PAGES:
-        return (gr.update(visible=False), gr.update(visible=True))
-    return (gr.update(visible=False), gr.update(visible=False))
+        return (
+            gr.update(visible=False),
+            gr.update(visible=True),
+            gr.update(visible=False),
+            gr.update(visible=False),
+        )
+    if active == "status":
+        return (
+            gr.update(visible=False),
+            gr.update(visible=False),
+            gr.update(visible=True),
+            gr.update(visible=True),
+        )
+    return (
+        gr.update(visible=False),
+        gr.update(visible=False),
+        gr.update(visible=False),
+        gr.update(visible=False),
+    )
 
 
 def _nav_to_page_with_demo(page: str) -> tuple:
@@ -2815,10 +2860,16 @@ footer {{
 .gradio-container .myst-home-demo-nav.hidden,
 .gradio-container .myst-render-demo-nav.hide,
 .gradio-container .myst-render-demo-nav.hidden,
+.gradio-container .myst-status-demo-nav.hide,
+.gradio-container .myst-status-demo-nav.hidden,
+.gradio-container .myst-status-save-edit-row.hide,
+.gradio-container .myst-status-save-edit-row.hidden,
 .gradio-container #myst-gravity-child-nav.hide,
 .gradio-container #myst-gravity-child-nav.hidden,
 .gradio-container #myst-render-sub-nav.hide,
-.gradio-container #myst-render-sub-nav.hidden {{
+.gradio-container #myst-render-sub-nav.hidden,
+.gradio-container #myst-status-zoom-nav.hide,
+.gradio-container #myst-status-zoom-nav.hidden {{
     display: none !important;
     visibility: hidden !important;
     height: 0 !important;
@@ -2832,8 +2883,10 @@ footer {{
 }}
 .gradio-container #myst-gravity-child-nav:not(.hide):not(.hidden),
 .gradio-container #myst-render-sub-nav:not(.hide):not(.hidden),
+.gradio-container #myst-status-zoom-nav:not(.hide):not(.hidden),
 .gradio-container .myst-unified-nav-host #myst-gravity-child-nav:not(.hide):not(.hidden),
-.gradio-container .myst-unified-nav-host #myst-render-sub-nav:not(.hide):not(.hidden) {{
+.gradio-container .myst-unified-nav-host #myst-render-sub-nav:not(.hide):not(.hidden),
+.gradio-container .myst-unified-nav-host #myst-status-zoom-nav:not(.hide):not(.hidden) {{
     display: flex !important;
     flex-direction: row !important;
     align-items: center !important;
@@ -2846,15 +2899,13 @@ footer {{
     padding: 0 !important;
     overflow: hidden !important;
 }}
-.gradio-container .myst-status-nav-panel {{
-    background: var(--myst-panel-bg, #1a1a1a) !important;
-    border: 1px solid var(--myst-border-color, #333333) !important;
-    border-radius: 10px !important;
-    padding: 6px 12px !important;
-    margin: 0 !important;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3) !important;
+.gradio-container .myst-unified-nav-host .myst-status-save-edit-row:not(.hide):not(.hidden) {{
     width: 100% !important;
-    box-sizing: border-box !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
 }}
 /* Render / Presets secondary nav — same theme grid as Home */
 .gradio-container .myst-render-page .myst-nav-bar-row,
@@ -2889,13 +2940,13 @@ footer {{
     margin-top: 0 !important;
     gap: var(--nav-grid-gap, 4px) !important;
 }}
-/* Presets Demo row — no extra top margin (unified after-main-nav gap only) */
-.gradio-container .myst-status-page .myst-secondary-nav-panel,
-.gradio-container .myst-status-page #myst-status-zoom-nav.myst-secondary-nav {{
+/* Presets Demo + Save/Edit — inline in unified nav host (no panel box) */
+.gradio-container .myst-unified-nav-host #myst-status-zoom-nav.myst-secondary-nav,
+.gradio-container .myst-unified-nav-host .myst-status-save-edit-row {{
     margin-top: 0 !important;
     margin-bottom: 0 !important;
 }}
-.gradio-container .myst-status-page #myst-status-zoom-nav {{
+.gradio-container .myst-unified-nav-host #myst-status-zoom-nav {{
     display: flex !important;
     align-items: center !important;
     gap: var(--nav-grid-gap, 4px) !important;
@@ -6898,13 +6949,7 @@ footer {{ visibility: hidden; }}
     margin-right: 0 !important;
     align-items: stretch !important;
 }}
-.gradio-container .myst-status-page .myst-secondary-nav-panel:not(.hide):not(.hidden),
-.gradio-container .myst-status-page .myst-status-nav-panel:not(.hide):not(.hidden) {{
-    background: var(--myst-panel-bg, #1a1a1a) !important;
-    border: 1px solid var(--myst-border-color, #333333) !important;
-    border-radius: 10px !important;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3) !important;
-}}
+
 @media (max-width: 1100px) {{
     .gradio-container .myst-status-page .myst-status-grid {{
         grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
@@ -10213,6 +10258,13 @@ def build_app() -> gr.Blocks:
                     zoom_slot=-1,
                     visible=False,
                 )
+                _status_sub_nav, status_demo_nav_row = _place_status_sub_nav_row(
+                    active_slot=-1,
+                    visible=False,
+                )
+            status_zoom_save_btn, status_zoom_edit_btn, status_save_edit_row = (
+                _place_status_save_edit_row(visible=False)
+            )
             _add_gap_row(slot="after-demo-nav")
 
         _init_re_metrics, _init_unit_cell_header, _init_unit_cell_fig = run_residual_explorer(
@@ -10334,15 +10386,8 @@ def build_app() -> gr.Blocks:
             status_zoom_edit_open = gr.State(False)
             save_button_state = gr.State(False)
             with gr.Column(visible=True, elem_classes=["myst-status-stack"]) as status_content_col:
-                with gr.Column(
-                    elem_classes=["myst-status-nav-panel", "myst-secondary-nav-panel"],
-                ):
-                    _status_zoom_nav = _place_status_zoom_nav_row(active_slot=-1)
-                    _add_gap_row(slot="after-demo-nav")
-                status_zoom_save_btn, status_zoom_edit_btn = _place_status_save_edit_row()
-                _add_gap_row(slot="after-save-edit")
                 status_zoom_btns = [
-                    _status_zoom_nav[str(i)] for i in range(_STATUS_ZOOM_PRESET_COUNT)
+                    _status_sub_nav[str(i)] for i in range(_STATUS_ZOOM_PRESET_COUNT)
                 ]
                 with gr.Column(elem_classes=["myst-status-panels-host"]) as status_panels_host:
                     with gr.Column(
@@ -10856,7 +10901,12 @@ def build_app() -> gr.Blocks:
             claims_open,
             current_page,
         ]
-        demo_nav_outputs = [home_demo_nav_row, render_demo_nav_row]
+        demo_nav_outputs = [
+            home_demo_nav_row,
+            render_demo_nav_row,
+            status_demo_nav_row,
+            status_save_edit_row,
+        ]
         readme_nav_outputs = [*nav_outputs, readme_return_page, *demo_nav_outputs]
 
         status_nav_outputs = [
