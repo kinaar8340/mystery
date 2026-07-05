@@ -3906,6 +3906,7 @@ def render_breathing_demo_video(
             view_elev=view_elev,
             view_azim=view_azim,
             show_curvature_grid=False,
+            shape_only=True,
             dpi=dpi,
         )
         rgb_frames.append(_figure_to_rgb(fig, dpi=dpi))
@@ -3947,6 +3948,7 @@ def render_demo_e_d4_deformation_video(
             view_elev=view_elev,
             view_azim=view_azim,
             show_curvature_grid=False,
+            shape_only=True,
             solid_mesh=True,
             dpi=dpi,
             face_count=face_count,
@@ -3994,6 +3996,7 @@ def render_demo_g_d8_deformation_video(
             view_elev=view_elev,
             view_azim=view_azim,
             show_curvature_grid=False,
+            shape_only=True,
             solid_mesh=True,
             dpi=dpi,
             face_count=face_count,

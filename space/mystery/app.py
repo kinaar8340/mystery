@@ -9048,7 +9048,7 @@ def _demo_viewport_show_deform_video(letter: str) -> tuple:
     """Show looping platonic deformation MP4 via gr.Video (HF-safe cached path)."""
     video_path = _get_deform_demo_video_path(letter)
     return (
-        gr.update(visible=False),
+        gr.update(value=None, visible=False),
         gr.update(value=video_path, visible=True, autoplay=True, loop=True),
         gr.update(value="", visible=False),
     )
@@ -9058,7 +9058,7 @@ def _demo_viewport_show_breathing_video() -> tuple:
     """Show looping breathing GIF/MP4 via gr.Video (HF-safe cached path)."""
     video_path = _get_breathing_demo_video_path()
     return (
-        gr.update(visible=False),
+        gr.update(value=None, visible=False),
         gr.update(value=video_path, visible=True, autoplay=True, loop=True),
         gr.update(value="", visible=False),
     )
