@@ -1059,7 +1059,7 @@ def _set_active_shape(new_shape: str) -> tuple:
         updates.append(
             gr.update(
                 elem_classes=_shape_btn_classes(shape_id, shape),
-                interactive=not is_active,
+                interactive=True,
                 variant="secondary",
             )
         )
@@ -1181,12 +1181,39 @@ def _set_active_shape_and_apply(new_shape: str, active_demo_letter: str = "A") -
     )
 
 
-def _set_active_shape_and_apply_home(new_shape: str, active_demo_letter: str = "A") -> tuple:
-    """Dimension tab click — land on Home, apply mode defaults, preserve active demo."""
+def _platonic_geo_presets_interrupt_reset(active_shape: str) -> tuple:
+    """Collapse Presets zoom/edit and refresh 3×3 headers for the latched platonic tab."""
+    shape = _normalize_shape_id(active_shape)
+    return (
+        *_status_panel_levels_update(
+            -1,
+            grid_active_slot=None,
+            visible=True,
+            active_shape=shape,
+        ),
+        *_status_zoom_btn_updates(-1),
+        -1,
+        False,
+        gr.update(visible=False),
+        _status_zoom_nav_edit_btn_update(in_zoom=False, edit_open=False),
+        _status_action_row_update(on_detail=False),
+        _status_back_btn_update(on_detail=False),
+    )
+
+
+def _platonic_geo_interrupt_home(new_shape: str, active_demo_letter: str = "A") -> tuple:
+    """Platonic D4–D20 interrupt — always Home, latch shape, preserve demo, reset Presets."""
+    shape = _normalize_shape_id(new_shape)
     return (
         *_nav_to_page_with_demo("home"),
-        *_set_active_shape_and_apply(new_shape, active_demo_letter),
+        *_set_active_shape_and_apply(shape, active_demo_letter),
+        *_platonic_geo_presets_interrupt_reset(shape),
     )
+
+
+def _set_active_shape_and_apply_home(new_shape: str, active_demo_letter: str = "A") -> tuple:
+    """Backward-compatible alias for platonic geo Home interrupt."""
+    return _platonic_geo_interrupt_home(new_shape, active_demo_letter)
 
 
 def _main_nav_btn_classes(page_id: str, active_page: str) -> list[str]:
@@ -1235,11 +1262,10 @@ def _place_unified_main_nav(
                     interactive=not is_active,
                 )
             for shape_id in _SHAPE_NAV_IDS:
-                is_active = shape_id == default_shape
                 buttons[shape_id] = _nav_theme_button(
                     shape_id,
                     elem_classes=_shape_btn_classes(shape_id, default_shape),
-                    interactive=not is_active,
+                    interactive=True,
                 )
     return buttons
 
@@ -11715,10 +11741,23 @@ def build_app() -> gr.Blocks:
             render_demo_nav_row,
             status_demo_nav_row,
         ]
+        platonic_geo_interrupt_outputs = [
+            status_catalog_col,
+            status_panel_levels,
+            status_panels_host,
+            *status_zoom_btns,
+            status_zoom_slot,
+            status_zoom_edit_open,
+            status_zoom_edit_drawer,
+            status_zoom_edit_btn,
+            status_action_row,
+            status_back_btn,
+        ]
         dimension_shape_outputs = [
             *nav_outputs,
             *demo_nav_outputs,
             *dimension_apply_outputs,
+            *platonic_geo_interrupt_outputs,
         ]
         readme_nav_outputs = [*nav_outputs, readme_return_page, *demo_nav_outputs]
 
@@ -11827,15 +11866,15 @@ def build_app() -> gr.Blocks:
                 show_progress="hidden",
             )
 
-        def _make_dimension_tab_click(shape: str):
+        def _make_platonic_geo_interrupt_click(shape: str):
             def handler(active_demo_letter: str) -> tuple:
-                return _set_active_shape_and_apply_home(shape, active_demo_letter)
+                return _platonic_geo_interrupt_home(shape, active_demo_letter)
 
             return handler
 
         for shape_id in _SHAPE_NAV_IDS:
             unified_nav[shape_id].click(
-                _make_dimension_tab_click(shape_id),
+                _make_platonic_geo_interrupt_click(shape_id),
                 inputs=[gravity_active_letter],
                 outputs=dimension_shape_outputs,
                 show_progress="hidden",
