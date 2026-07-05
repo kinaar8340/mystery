@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import base64
+import colorsys
 import html
 import io
 import os
@@ -43,6 +44,148 @@ UNIT_CELL_DETAIL_LABEL_FONT_SMALL = 14
 UNIT_CELL_DETAIL_LABEL_EDGE_INSET = 0.12
 UNIT_CELL_DETAIL_AXIS_TITLE_FONT = 12
 UNIT_CELL_DETAIL_AXIS_TICK_FONT = 11
+
+_DEFAULT_DIMENSION = "D6"
+_DIMENSION_IDS: tuple[str, ...] = ("D4", "D6", "D8", "D12", "D20")
+
+
+def geodesic_face_count(dimension: str) -> int:
+    """Face count encoded in Mystery nav ids — D4 → 4 faces, D20 → 20, etc."""
+    dim = str(dimension or _DEFAULT_DIMENSION).strip().upper()
+    if dim.startswith("D") and dim[1:].isdigit():
+        return int(dim[1:])
+    return geodesic_face_count(_DEFAULT_DIMENSION)
+
+
+def get_dimension_config(dimension: str) -> dict[str, object]:
+    """Per geodesic-face-count tab (D* = face count): slider defaults and mesh topology."""
+    dim = str(dimension or _DEFAULT_DIMENSION).strip().upper()
+    match dim:
+        case "D4":
+            return {
+                "face_count": 4,
+                "default_pressure": 0.35,
+                "default_phi_scale": 0.98,
+                "default_e_scale": 1.02,
+                "default_pi_scale": 1.00,
+                "default_kappa": KAPPA_DOC,
+                "default_delta_z": 0.14,
+                "default_alpha": 1.10,
+                "default_beta": 1.0,
+                "default_view_elev": 28.0,
+                "default_view_azim": 38.0,
+                "subdiv": 6,
+                "deform_bias": "tetra_like",
+                "description": "4-face geodesic · tetrahedral emphasis",
+            }
+        case "D8":
+            return {
+                "face_count": 8,
+                "default_pressure": 0.28,
+                "default_phi_scale": 1.01,
+                "default_e_scale": 0.99,
+                "default_pi_scale": 1.01,
+                "default_kappa": KAPPA_DOC,
+                "default_delta_z": 0.12,
+                "default_alpha": 1.0,
+                "default_beta": 1.10,
+                "default_view_elev": 24.0,
+                "default_view_azim": 52.0,
+                "subdiv": 10,
+                "deform_bias": "octa_like",
+                "description": "8-face geodesic · octahedral emphasis",
+            }
+        case "D12":
+            return {
+                "face_count": 12,
+                "default_pressure": 0.22,
+                "default_phi_scale": 1.00,
+                "default_e_scale": 1.01,
+                "default_pi_scale": 0.99,
+                "default_kappa": KAPPA_DOC,
+                "default_delta_z": 0.11,
+                "default_alpha": 0.95,
+                "default_beta": 1.0,
+                "default_view_elev": 26.0,
+                "default_view_azim": 45.0,
+                "subdiv": 10,
+                "deform_bias": "dodeca_like",
+                "description": "12-face geodesic · dodecahedral emphasis",
+            }
+        case "D20":
+            return {
+                "face_count": 20,
+                "default_pressure": 0.18,
+                "default_phi_scale": 0.99,
+                "default_e_scale": 1.00,
+                "default_pi_scale": 1.01,
+                "default_kappa": KAPPA_DOC,
+                "default_delta_z": 0.09,
+                "default_alpha": 1.0,
+                "default_beta": 0.92,
+                "default_view_elev": 22.0,
+                "default_view_azim": 58.0,
+                "subdiv": 12,
+                "deform_bias": "icosa_like",
+                "description": "20-face geodesic · icosahedral emphasis · smooth mesh",
+            }
+        case "D6" | _:
+            return {
+                "face_count": 6,
+                "default_pressure": 0.0,
+                "default_phi_scale": 1.0,
+                "default_e_scale": 1.0,
+                "default_pi_scale": 1.0,
+                "default_kappa": KAPPA_DOC,
+                "default_delta_z": 0.1,
+                "default_alpha": 1.0,
+                "default_beta": 1.0,
+                "default_view_elev": UNIT_CELL_VIEW_ELEV,
+                "default_view_azim": UNIT_CELL_VIEW_AZIM,
+                "subdiv": 8,
+                "deform_bias": "cubic",
+                "description": "6-face geodesic · cubic (default)",
+            }
+
+
+_PLATONIC_FACE_COUNTS: frozenset[int] = frozenset({4, 6, 8, 12, 20})
+_DEFORM_BIAS_FACE_COUNT: dict[str, int] = {
+    "tetra_like": 4,
+    "cubic": 6,
+    "octa_like": 8,
+    "dodeca_like": 12,
+    "icosa_like": 20,
+}
+
+
+def resolve_face_count(
+    *,
+    face_count: int | None = None,
+    deform_bias: str | None = None,
+) -> int:
+    """Resolve geodesic face count from explicit count or deform_bias hint."""
+    if face_count is not None and int(face_count) in _PLATONIC_FACE_COUNTS:
+        return int(face_count)
+    if deform_bias:
+        return int(_DEFORM_BIAS_FACE_COUNT.get(str(deform_bias), 6))
+    return 6
+
+
+def dimension_config_to_dials(config: dict[str, object]) -> dict[str, float]:
+    """Map dimension config keys to the gravity dial bundle."""
+    return {
+        "phi": float(config["default_phi_scale"]),
+        "e": float(config["default_e_scale"]),
+        "pi": float(config["default_pi_scale"]),
+        "kappa": float(config.get("default_kappa", KAPPA_DOC)),
+        "dz": float(config.get("default_delta_z", 0.1)),
+        "alpha": float(config.get("default_alpha", 1.0)),
+        "beta": float(config.get("default_beta", 1.0)),
+        "pressure": float(config["default_pressure"]),
+        "elev": float(config.get("default_view_elev", UNIT_CELL_VIEW_ELEV)),
+        "azim": float(config.get("default_view_azim", UNIT_CELL_VIEW_AZIM)),
+    }
+
 
 BOOT_QUOTE_STRING = "TEST EVERYTHING, HOLD FAST WHAT IS GOOD AND KNOW YOUR GOD"
 
@@ -247,7 +390,8 @@ not decoration.</p>
 <li><strong>Start on Home</strong> &mdash; watch Demo&nbsp;A breathe; explore presets B&ndash;I.</li>
 <li><strong>Presets</strong> &mdash; nine locked unit-cell shapes (max convex &rarr; rigid &rarr; max concave).</li>
 <li><strong>Render</strong> &mdash; 3&times;3 grid of all presets at once.</li>
-<li><strong>Shape</strong> &mdash; D4/D6/D8/D12/D20 Platonic solid selector (D6 cube active by default).</li>
+<li><strong>Shape</strong> &mdash; D4/D6/D8/D12/D20 geodesic face-count selector
+(the <em>D</em> is the number of faces: 4, 6, 8, 12, or 20; D6 cube active by default).</li>
 <li><strong>Depth</strong> &mdash; full derivations and scripts on
 <a href="{html.escape(GITHUB_URL)}">github.com/kinaar8340/mystery</a>.</li>
 </ul>
@@ -264,7 +408,8 @@ precession made visible.</li>
 <em>RIGID CUBE</em> (phase-locked, mass-like rest state).</li>
 <li><strong>Open Presets</strong> &mdash; tap any slot in the 3&times;3 grid; use <em>Edit</em> to tune
 κ, deformation pressure, and view angles live.</li>
-<li><strong>Shape D6</strong> &mdash; default cube; try D4/D8/D12/D20 as other Platonic presets come online.</li>
+<li><strong>Shape D6</strong> &mdash; default 6-face cube geodesic; try D4 (tetrahedron), D8
+(octahedron), D12 (dodecahedron), or D20 (icosahedron).</li>
 </ol>
 <h3>Example Parameter Settings</h3>
 <table class="myst-readme-table">
@@ -1027,18 +1172,300 @@ def _displace_vertex(
     return float(x + dx), float(y + dy), float(z + dz)
 
 
+def _scale_platonic_vertices(
+    vertices: list[tuple[float, float, float]],
+    s: float,
+) -> list[tuple[float, float, float]]:
+    max_abs = max(abs(c) for vtx in vertices for c in vtx)
+    if max_abs < 1e-12:
+        return list(vertices)
+    scale = float(s) / max_abs
+    return [(vtx[0] * scale, vtx[1] * scale, vtx[2] * scale) for vtx in vertices]
+
+
+def _polyhedron_dual(
+    vertices: list[tuple[float, float, float]],
+    faces: list[tuple[int, ...]],
+) -> tuple[list[tuple[float, float, float]], list[tuple[int, ...]]]:
+    """Build the dual polyhedron (face centroids become vertices)."""
+    vert_array = np.asarray(vertices, dtype=float)
+    dual_vertices = [
+        tuple(vert_array[list(face)].mean(axis=0)) for face in faces
+    ]
+    vert_faces: list[list[int]] = [[] for _ in range(len(vertices))]
+    for fi, face in enumerate(faces):
+        for vi in face:
+            vert_faces[vi].append(fi)
+
+    dual_faces: list[tuple[int, ...]] = []
+    for vi, adjacent in enumerate(vert_faces):
+        if len(adjacent) < 3:
+            continue
+        center = vert_array[vi]
+        normal = center / max(np.linalg.norm(center), 1e-12)
+        ref = np.array([1.0, 0.0, 0.0])
+        if abs(float(np.dot(normal, ref))) > 0.9:
+            ref = np.array([0.0, 1.0, 0.0])
+        tangent_a = np.cross(normal, ref)
+        tangent_a /= max(np.linalg.norm(tangent_a), 1e-12)
+        tangent_b = np.cross(normal, tangent_a)
+        angles: list[tuple[float, int]] = []
+        for fi in adjacent:
+            delta = np.asarray(dual_vertices[fi]) - center
+            angle = float(
+                np.arctan2(np.dot(delta, tangent_b), np.dot(delta, tangent_a))
+            )
+            angles.append((angle, fi))
+        angles.sort(key=lambda item: item[0])
+        dual_faces.append(tuple(fi for _, fi in angles))
+    return dual_vertices, dual_faces
+
+
+def _icosahedron_topology() -> tuple[list[tuple[float, float, float]], list[tuple[int, ...]]]:
+    tau = (1.0 + np.sqrt(5.0)) / 2.0
+    vertices = [
+        (-1.0, tau, 0.0),
+        (1.0, tau, 0.0),
+        (-1.0, -tau, 0.0),
+        (1.0, -tau, 0.0),
+        (0.0, -1.0, tau),
+        (0.0, 1.0, tau),
+        (0.0, -1.0, -tau),
+        (0.0, 1.0, -tau),
+        (tau, 0.0, -1.0),
+        (tau, 0.0, 1.0),
+        (-tau, 0.0, -1.0),
+        (-tau, 0.0, 1.0),
+    ]
+    faces = [
+        (0, 11, 5),
+        (0, 5, 1),
+        (0, 1, 7),
+        (0, 7, 10),
+        (0, 10, 11),
+        (1, 5, 9),
+        (5, 11, 4),
+        (11, 10, 2),
+        (10, 7, 6),
+        (7, 1, 8),
+        (3, 9, 4),
+        (3, 4, 2),
+        (3, 2, 6),
+        (3, 6, 8),
+        (3, 8, 9),
+        (4, 9, 5),
+        (2, 4, 11),
+        (6, 2, 10),
+        (8, 6, 7),
+        (9, 8, 1),
+    ]
+    return vertices, faces
+
+
+def _platonic_topology(
+    face_count: int,
+) -> tuple[list[tuple[float, float, float]], list[tuple[int, ...]]]:
+    """Unit-scale vertex list and face index loops for each geodesic face count."""
+    count = resolve_face_count(face_count=face_count)
+    if count == 4:
+        vertices = [
+            (1.0, 1.0, 1.0),
+            (1.0, -1.0, -1.0),
+            (-1.0, 1.0, -1.0),
+            (-1.0, -1.0, 1.0),
+        ]
+        faces = ((0, 1, 2), (0, 2, 3), (0, 3, 1), (1, 3, 2))
+        return vertices, list(faces)
+    if count == 8:
+        vertices = [
+            (1.0, 0.0, 0.0),
+            (-1.0, 0.0, 0.0),
+            (0.0, 1.0, 0.0),
+            (0.0, -1.0, 0.0),
+            (0.0, 0.0, 1.0),
+            (0.0, 0.0, -1.0),
+        ]
+        faces = (
+            (4, 2, 0),
+            (4, 0, 3),
+            (4, 3, 1),
+            (4, 1, 2),
+            (5, 0, 2),
+            (5, 3, 0),
+            (5, 1, 3),
+            (5, 2, 1),
+        )
+        return vertices, list(faces)
+    if count == 12:
+        return _polyhedron_dual(*_icosahedron_topology())
+    if count == 20:
+        return _icosahedron_topology()
+    # D6 cube — π top (+z), φ left (−x), e right (+x)
+    vertices = [
+        (-1.0, -1.0, -1.0),
+        (1.0, -1.0, -1.0),
+        (1.0, 1.0, -1.0),
+        (-1.0, 1.0, -1.0),
+        (-1.0, -1.0, 1.0),
+        (1.0, -1.0, 1.0),
+        (1.0, 1.0, 1.0),
+        (-1.0, 1.0, 1.0),
+    ]
+    faces = (
+        (4, 5, 6, 7),
+        (0, 3, 2, 1),
+        (0, 1, 5, 4),
+        (2, 3, 7, 6),
+        (0, 4, 7, 3),
+        (1, 2, 6, 5),
+    )
+    return vertices, list(faces)
+
+
+def _platonic_face_corners(
+    face_count: int,
+    s: float,
+) -> list[tuple[tuple[float, float, float], ...]]:
+    raw_vertices, faces = _platonic_topology(face_count)
+    vertices = _scale_platonic_vertices(raw_vertices, s)
+    return [tuple(vertices[idx] for idx in face) for face in faces]
+
+
 def _cube_face_quads(s: float) -> tuple[tuple[tuple[float, float, float], ...], ...]:
-    return (
-        ((-s, -s, s), (s, -s, s), (s, s, s), (-s, s, s)),  # π top
-        ((-s, -s, -s), (s, -s, -s), (s, s, -s), (-s, s, -s)),  # bottom
-        ((-s, -s, -s), (s, -s, -s), (s, -s, s), (-s, -s, s)),  # front −y
-        ((-s, s, -s), (s, s, -s), (s, s, s), (-s, s, s)),  # back +y
-        ((-s, -s, -s), (-s, s, -s), (-s, s, s), (-s, -s, s)),  # left −x φ
-        ((s, -s, -s), (s, s, -s), (s, s, s), (s, -s, s)),  # right +x e
+    """Cube-only quad corners (compat helper)."""
+    return tuple(
+        face for face in _platonic_face_corners(6, s) if len(face) == 4
     )
 
 
-_MESH_TOPOLOGY_CACHE: dict[int, list[tuple[tuple[float, float, float], ...]]] = {}
+def _barycentric_point(
+    p0: tuple[float, float, float],
+    p1: tuple[float, float, float],
+    p2: tuple[float, float, float],
+    i: int,
+    j: int,
+    n: int,
+) -> tuple[float, float, float]:
+    k = n - i - j
+    u, v, w = i / n, j / n, k / n
+    return (
+        u * p0[0] + v * p1[0] + w * p2[0],
+        u * p0[1] + v * p1[1] + w * p2[1],
+        u * p0[2] + v * p1[2] + w * p2[2],
+    )
+
+
+def _subdivide_triangle(
+    p0: tuple[float, float, float],
+    p1: tuple[float, float, float],
+    p2: tuple[float, float, float],
+    subdiv: int,
+) -> list[tuple[tuple[float, float, float], tuple[float, float, float], tuple[float, float, float]]]:
+    n = max(1, int(subdiv))
+    if n == 1:
+        return [(p0, p1, p2)]
+    tris: list[
+        tuple[tuple[float, float, float], tuple[float, float, float], tuple[float, float, float]]
+    ] = []
+    for i in range(n):
+        for j in range(n - i):
+            if n - i - j <= 0:
+                continue
+            a = _barycentric_point(p0, p1, p2, i, j, n)
+            b = _barycentric_point(p0, p1, p2, i + 1, j, n)
+            c = _barycentric_point(p0, p1, p2, i, j + 1, n)
+            tris.append((a, b, c))
+            if j < n - i - 1:
+                d = _barycentric_point(p0, p1, p2, i + 1, j + 1, n)
+                tris.append((b, d, c))
+    return tris
+
+
+def _subdivide_quad(
+    p00: tuple[float, float, float],
+    p10: tuple[float, float, float],
+    p11: tuple[float, float, float],
+    p01: tuple[float, float, float],
+    subdiv: int,
+) -> list[tuple[tuple[float, float, float], tuple[float, float, float], tuple[float, float, float]]]:
+    n = max(1, int(subdiv))
+    tris: list[
+        tuple[tuple[float, float, float], tuple[float, float, float], tuple[float, float, float]]
+    ] = []
+    for i in range(n):
+        u0, u1 = i / n, (i + 1) / n
+        for j in range(n):
+            v0, v1 = j / n, (j + 1) / n
+            a = _bilinear_face(p00, p10, p11, p01, u0, v0)
+            b = _bilinear_face(p00, p10, p11, p01, u1, v0)
+            c = _bilinear_face(p00, p10, p11, p01, u1, v1)
+            d = _bilinear_face(p00, p10, p11, p01, u0, v1)
+            tris.append((a, b, c))
+            tris.append((a, c, d))
+    return tris
+
+
+def _pentagon_fan_triangles(
+    corners: tuple[tuple[float, float, float], ...],
+) -> list[tuple[tuple[float, float, float], tuple[float, float, float], tuple[float, float, float]]]:
+    cx = sum(pt[0] for pt in corners) / len(corners)
+    cy = sum(pt[1] for pt in corners) / len(corners)
+    cz = sum(pt[2] for pt in corners) / len(corners)
+    center = (cx, cy, cz)
+    return [
+        (center, corners[i], corners[(i + 1) % len(corners)])
+        for i in range(len(corners))
+    ]
+
+
+def _subdivide_face_corners(
+    corners: tuple[tuple[float, float, float], ...],
+    subdiv: int,
+) -> list[tuple[tuple[float, float, float], tuple[float, float, float], tuple[float, float, float]]]:
+    if len(corners) == 3:
+        return _subdivide_triangle(corners[0], corners[1], corners[2], subdiv)
+    if len(corners) == 4:
+        return _subdivide_quad(corners[0], corners[1], corners[2], corners[3], subdiv)
+    tris: list[
+        tuple[tuple[float, float, float], tuple[float, float, float], tuple[float, float, float]]
+    ] = []
+    for fan_tri in _pentagon_fan_triangles(corners):
+        tris.extend(_subdivide_triangle(*fan_tri, subdiv))
+    return tris
+
+
+_PLATONIC_MESH_CACHE: dict[tuple[int, int], list[
+    tuple[tuple[float, float, float], tuple[float, float, float], tuple[float, float, float]]
+]] = {}
+
+
+def _platonic_mesh_triangles(
+    face_count: int,
+    s: float,
+    *,
+    subdiv: int = 8,
+) -> list[tuple[tuple[float, float, float], tuple[float, float, float], tuple[float, float, float]]]:
+    """Cached subdivided surface triangles for a geodesic Platonic solid."""
+    count = resolve_face_count(face_count=face_count)
+    subdiv = max(1, int(subdiv))
+    key = (count, subdiv)
+    if key not in _PLATONIC_MESH_CACHE:
+        unit_tris: list[
+            tuple[tuple[float, float, float], tuple[float, float, float], tuple[float, float, float]]
+        ] = []
+        for corners in _platonic_face_corners(count, 1.0):
+            unit_tris.extend(_subdivide_face_corners(corners, subdiv))
+        _PLATONIC_MESH_CACHE[key] = unit_tris
+    if abs(s - 1.0) < 1e-12:
+        return _PLATONIC_MESH_CACHE[key]
+    return [
+        (
+            (a[0] * s, a[1] * s, a[2] * s),
+            (b[0] * s, b[1] * s, b[2] * s),
+            (c[0] * s, c[1] * s, c[2] * s),
+        )
+        for a, b, c in _PLATONIC_MESH_CACHE[key]
+    ]
 
 
 def _cube_mesh_topology(
@@ -1046,24 +1473,22 @@ def _cube_mesh_topology(
     *,
     subdiv: int = 8,
 ) -> list[tuple[tuple[float, float, float], ...]]:
-    """Fixed quad corners per surface patch (cached by subdiv)."""
-    if subdiv not in _MESH_TOPOLOGY_CACHE:
-        patches: list[tuple[tuple[float, float, float], ...]] = []
-        for p00, p10, p11, p01 in _cube_face_quads(s):
-            for i in range(subdiv):
-                u0, u1 = i / subdiv, (i + 1) / subdiv
-                for j in range(subdiv):
-                    v0, v1 = j / subdiv, (j + 1) / subdiv
-                    patches.append(
-                        (
-                            _bilinear_face(p00, p10, p11, p01, u0, v0),
-                            _bilinear_face(p00, p10, p11, p01, u1, v0),
-                            _bilinear_face(p00, p10, p11, p01, u1, v1),
-                            _bilinear_face(p00, p10, p11, p01, u0, v1),
-                        )
+    """Legacy quad-patch topology for the D6 cube."""
+    patches: list[tuple[tuple[float, float, float], ...]] = []
+    for p00, p10, p11, p01 in _cube_face_quads(s):
+        for i in range(subdiv):
+            u0, u1 = i / subdiv, (i + 1) / subdiv
+            for j in range(subdiv):
+                v0, v1 = j / subdiv, (j + 1) / subdiv
+                patches.append(
+                    (
+                        _bilinear_face(p00, p10, p11, p01, u0, v0),
+                        _bilinear_face(p00, p10, p11, p01, u1, v0),
+                        _bilinear_face(p00, p10, p11, p01, u1, v1),
+                        _bilinear_face(p00, p10, p11, p01, u0, v1),
                     )
-        _MESH_TOPOLOGY_CACHE[subdiv] = patches
-    return _MESH_TOPOLOGY_CACHE[subdiv]
+                )
+    return patches
 
 
 def _triangle_mode_color(
@@ -1099,35 +1524,51 @@ def _triangle_mode_color(
     return (*rgb, alpha)
 
 
+def _deformed_platonic_surface(
+    s: float,
+    pressure: float,
+    delta_z: float,
+    delta_side: float,
+    *,
+    face_count: int = 6,
+    subdiv: int = 8,
+) -> tuple[list[list[tuple[float, float, float]]], list[tuple[float, float, float, float]]]:
+    """Subdivided Platonic surface triangles and per-triangle RGBA colors."""
+    triangles: list[list[tuple[float, float, float]]] = []
+    colors: list[tuple[float, float, float, float]] = []
+    for tri in _platonic_mesh_triangles(face_count, s, subdiv=subdiv):
+        displaced: list[tuple[float, float, float]] = []
+        mode_triplet: list[dict[str, float]] = []
+        for x, y, z in tri:
+            dx, dy, dz, modes = _displacement_components(
+                x, y, z, s, pressure, delta_z, delta_side
+            )
+            displaced.append((x + dx, y + dy, z + dz))
+            mode_triplet.append(modes)
+        ma, mb, mc = mode_triplet
+        triangles.append(list(displaced))
+        colors.append(_triangle_mode_color((ma, mb, mc), pressure=pressure))
+    return triangles, colors
+
+
 def _deformed_cube_surface(
     s: float,
     pressure: float,
     delta_z: float,
     delta_side: float,
     *,
+    face_count: int = 6,
     subdiv: int = 8,
 ) -> tuple[list[list[tuple[float, float, float]]], list[tuple[float, float, float, float]]]:
-    """Subdivided surface triangles and per-triangle RGBA colors."""
-    triangles: list[list[tuple[float, float, float]]] = []
-    colors: list[tuple[float, float, float, float]] = []
-    for corners in _cube_mesh_topology(s, subdiv=subdiv):
-        displaced = []
-        mode_triplet = []
-        for corner in corners:
-            x, y, z = corner
-            dx, dy, dz, modes = _displacement_components(
-                x, y, z, s, pressure, delta_z, delta_side
-            )
-            displaced.append((x + dx, y + dy, z + dz))
-            mode_triplet.append(modes)
-        a, b, c, d = displaced
-        ma, mb, mc = mode_triplet[0], mode_triplet[1], mode_triplet[2]
-        md = mode_triplet[3]
-        triangles.append([a, b, c])
-        colors.append(_triangle_mode_color((ma, mb, mc), pressure=pressure))
-        triangles.append([a, c, d])
-        colors.append(_triangle_mode_color((ma, mc, md), pressure=pressure))
-    return triangles, colors
+    """Compat alias — cube was the original D6 mesh."""
+    return _deformed_platonic_surface(
+        s,
+        pressure,
+        delta_z,
+        delta_side,
+        face_count=face_count,
+        subdiv=subdiv,
+    )
 
 
 def _deformed_cube_triangles(
@@ -1136,13 +1577,61 @@ def _deformed_cube_triangles(
     delta_z: float,
     delta_side: float,
     *,
+    face_count: int = 6,
     subdiv: int = 8,
 ) -> list[list[tuple[float, float, float]]]:
-    """Subdivided surface triangles for a pressure-deformed unit cell."""
-    triangles, _colors = _deformed_cube_surface(
-        s, pressure, delta_z, delta_side, subdiv=subdiv
+    """Subdivided surface triangles for a pressure-deformed geodesic."""
+    triangles, _colors = _deformed_platonic_surface(
+        s,
+        pressure,
+        delta_z,
+        delta_side,
+        face_count=face_count,
+        subdiv=subdiv,
     )
     return triangles
+
+
+def _triangle_curvature_grid(
+    p0: tuple[float, float, float],
+    p1: tuple[float, float, float],
+    p2: tuple[float, float, float],
+    s: float,
+    pressure: float,
+    delta_z: float,
+    delta_side: float,
+    *,
+    subdiv: int,
+    grid_step: int,
+) -> list[list[tuple[float, float, float]]]:
+    n = max(1, int(subdiv))
+    step = max(1, int(grid_step))
+    polylines: list[list[tuple[float, float, float]]] = []
+    for i in range(0, n + 1, step):
+        line = [
+            _displace_vertex(
+                *_barycentric_point(p0, p1, p2, i, j, n),
+                s,
+                pressure,
+                delta_z,
+                delta_side,
+            )
+            for j in range(n - i + 1)
+        ]
+        polylines.append(line)
+    for j in range(0, n + 1, step):
+        line = [
+            _displace_vertex(
+                *_barycentric_point(p0, p1, p2, i, j, n),
+                s,
+                pressure,
+                delta_z,
+                delta_side,
+            )
+            for i in range(n - j + 1)
+        ]
+        polylines.append(line)
+    return polylines
 
 
 def _deformed_face_curvature_grid(
@@ -1151,39 +1640,103 @@ def _deformed_face_curvature_grid(
     delta_z: float,
     delta_side: float,
     *,
+    face_count: int = 6,
     subdiv: int = 8,
     grid_step: int = 2,
 ) -> list[list[tuple[float, float, float]]]:
-    """Iso-u / iso-v lines on each face — bend visibly under pressure."""
+    """Iso-parameter lines on each geodesic face — bend visibly under pressure."""
     polylines: list[list[tuple[float, float, float]]] = []
-    for p00, p10, p11, p01 in _cube_face_quads(s):
-        n = subdiv
-        for i in range(0, n + 1, grid_step):
-            u = i / n
-            line = [
-                _displace_vertex(
-                    *_bilinear_face(p00, p10, p11, p01, u, v / n),
+    for corners in _platonic_face_corners(face_count, s):
+        if len(corners) == 4:
+            p00, p10, p11, p01 = corners
+            n = subdiv
+            for i in range(0, n + 1, grid_step):
+                u = i / n
+                line = [
+                    _displace_vertex(
+                        *_bilinear_face(p00, p10, p11, p01, u, v / n),
+                        s,
+                        pressure,
+                        delta_z,
+                        delta_side,
+                    )
+                    for v in range(n + 1)
+                ]
+                polylines.append(line)
+            for j in range(0, n + 1, grid_step):
+                v = j / n
+                line = [
+                    _displace_vertex(
+                        *_bilinear_face(p00, p10, p11, p01, u / n, v),
+                        s,
+                        pressure,
+                        delta_z,
+                        delta_side,
+                    )
+                    for u in range(n + 1)
+                ]
+                polylines.append(line)
+        elif len(corners) == 3:
+            polylines.extend(
+                _triangle_curvature_grid(
+                    corners[0],
+                    corners[1],
+                    corners[2],
                     s,
                     pressure,
                     delta_z,
                     delta_side,
+                    subdiv=subdiv,
+                    grid_step=grid_step,
                 )
-                for v in range(n + 1)
-            ]
-            polylines.append(line)
-        for j in range(0, n + 1, grid_step):
-            v = j / n
-            line = [
-                _displace_vertex(
-                    *_bilinear_face(p00, p10, p11, p01, u / n, v),
-                    s,
-                    pressure,
-                    delta_z,
-                    delta_side,
+            )
+        else:
+            for fan_tri in _pentagon_fan_triangles(corners):
+                polylines.extend(
+                    _triangle_curvature_grid(
+                        fan_tri[0],
+                        fan_tri[1],
+                        fan_tri[2],
+                        s,
+                        pressure,
+                        delta_z,
+                        delta_side,
+                        subdiv=subdiv,
+                        grid_step=grid_step,
+                    )
                 )
-                for u in range(n + 1)
-            ]
-            polylines.append(line)
+    return polylines
+
+
+def _platonic_edge_index_pairs(face_count: int) -> list[tuple[int, int]]:
+    _vertices, faces = _platonic_topology(face_count)
+    edges: set[tuple[int, int]] = set()
+    for face in faces:
+        for i in range(len(face)):
+            a, b = face[i], face[(i + 1) % len(face)]
+            edges.add(tuple(sorted((a, b))))
+    return list(edges)
+
+
+def _deformed_platonic_edge_polylines(
+    s: float,
+    pressure: float,
+    delta_z: float,
+    delta_side: float,
+    *,
+    face_count: int = 6,
+    samples: int = 18,
+) -> list[list[tuple[float, float, float]]]:
+    raw_vertices, _faces = _platonic_topology(face_count)
+    vertices = _scale_platonic_vertices(raw_vertices, s)
+    polylines: list[list[tuple[float, float, float]]] = []
+    for i0, i1 in _platonic_edge_index_pairs(face_count):
+        p0, p1 = vertices[i0], vertices[i1]
+        pts = []
+        for t in np.linspace(0.0, 1.0, samples):
+            raw = _lerp3(p0, p1, float(t))
+            pts.append(_displace_vertex(*raw, s, pressure, delta_z, delta_side))
+        polylines.append(pts)
     return polylines
 
 
@@ -1193,30 +1746,105 @@ def _deformed_cube_edge_polylines(
     delta_z: float,
     delta_side: float,
     *,
+    face_count: int = 6,
     samples: int = 18,
 ) -> list[list[tuple[float, float, float]]]:
-    edges = (
-        ((-s, -s, -s), (s, -s, -s)),
-        ((s, -s, -s), (s, s, -s)),
-        ((s, s, -s), (-s, s, -s)),
-        ((-s, s, -s), (-s, -s, -s)),
-        ((-s, -s, s), (s, -s, s)),
-        ((s, -s, s), (s, s, s)),
-        ((s, s, s), (-s, s, s)),
-        ((-s, s, s), (-s, -s, s)),
-        ((-s, -s, -s), (-s, -s, s)),
-        ((s, -s, -s), (s, -s, s)),
-        ((s, s, -s), (s, s, s)),
-        ((-s, s, -s), (-s, s, s)),
+    return _deformed_platonic_edge_polylines(
+        s,
+        pressure,
+        delta_z,
+        delta_side,
+        face_count=face_count,
+        samples=samples,
     )
-    polylines: list[list[tuple[float, float, float]]] = []
-    for p0, p1 in edges:
-        pts = []
-        for t in np.linspace(0.0, 1.0, samples):
-            raw = _lerp3(p0, p1, float(t))
-            pts.append(_displace_vertex(*raw, s, pressure, delta_z, delta_side))
-        polylines.append(pts)
-    return polylines
+
+
+_CUBE_GEODESIC_FACE_COUNT = 6
+
+
+def _wireframe_edge_samples(pressure: float) -> int:
+    """Vertex-to-vertex edges need few samples when rigid; more when bowed."""
+    if abs(_clamp_deform_pressure(pressure)) < 0.04:
+        return 2
+    return 12
+
+
+def _wireframe_edge_color_hex(
+    edge_index: int,
+    total_edges: int,
+    *,
+    t_along: float = 0.5,
+) -> str:
+    """Gold → rainbow gradient keyed to polyhedron edge index."""
+    span = (edge_index + float(t_along) * 0.35) / max(1.0, float(total_edges))
+    hue = 0.11 + span * 0.78
+    red, green, blue = colorsys.hsv_to_rgb(hue % 1.0, 0.92, 1.0)
+    return f"#{int(red * 255):02x}{int(green * 255):02x}{int(blue * 255):02x}"
+
+
+def _platonic_wireframe_edge_polylines(
+    s: float,
+    pressure: float,
+    delta_z: float,
+    delta_side: float,
+    *,
+    face_count: int,
+) -> list[list[tuple[float, float, float]]]:
+    """True polyhedron edges only — no face diagonals or mesh triangulation."""
+    return _deformed_platonic_edge_polylines(
+        s,
+        pressure,
+        delta_z,
+        delta_side,
+        face_count=face_count,
+        samples=_wireframe_edge_samples(pressure),
+    )
+
+
+def _append_platonic_wireframe_plotly_traces(
+    traces: list,
+    *,
+    s: float,
+    pressure: float,
+    delta_z: float,
+    delta_side: float,
+    face_count: int,
+) -> None:
+    """Rainbow gradient edge traces — true polyhedron edges for every geodesic."""
+    import plotly.graph_objects as go
+
+    polylines = _platonic_wireframe_edge_polylines(
+        s,
+        pressure,
+        delta_z,
+        delta_side,
+        face_count=face_count,
+    )
+    total = len(polylines)
+    for edge_idx, edge_pts in enumerate(polylines):
+        if len(edge_pts) < 2:
+            continue
+        ex, ey, ez = zip(*edge_pts, strict=True)
+        n_pts = len(edge_pts)
+        point_colors = [
+            _wireframe_edge_color_hex(
+                edge_idx,
+                total,
+                t_along=(pt / max(1, n_pts - 1)),
+            )
+            for pt in range(n_pts)
+        ]
+        traces.append(
+            go.Scatter3d(
+                x=list(ex),
+                y=list(ey),
+                z=list(ez),
+                mode="lines",
+                line=dict(color=point_colors, width=5),
+                hoverinfo="skip",
+                showlegend=False,
+            )
+        )
 
 
 def _anchor_point(
@@ -1910,8 +2538,10 @@ def build_unit_cell_figure(
     shape_only: bool = False,
     figsize: tuple[float, float] | None = None,
     dpi: int = 150,
+    subdiv: int = 8,
+    face_count: int = 6,
 ) -> plt.Figure:
-    """Server-rendered deformable unit cell — bowing π-face, concave φ/e sides."""
+    """Server-rendered deformable geodesic — bowing π-face, concave φ/e sides."""
     from matplotlib.colors import to_rgba
     from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
@@ -1941,40 +2571,86 @@ def build_unit_cell_figure(
     fig = plt.figure(figsize=frame_size, dpi=dpi, facecolor=bg)
     ax = fig.add_subplot(111, projection="3d", facecolor=bg)
 
-    triangles, tri_colors = _deformed_cube_surface(s, p, delta_z, side)
-    ax.add_collection3d(
-        Poly3DCollection(
-            triangles,
-            facecolors=[to_rgba(c) for c in tri_colors],
-            edgecolors=(0, 0, 0, 0),
-            linewidths=0.0,
+    geodesic_faces = resolve_face_count(face_count=face_count)
+    wireframe_only = geodesic_faces != _CUBE_GEODESIC_FACE_COUNT
+    if wireframe_only:
+        edge_polylines = _platonic_wireframe_edge_polylines(
+            s,
+            p,
+            delta_z,
+            side,
+            face_count=geodesic_faces,
         )
-    )
-    if show_curvature_grid and p_abs > 0.02:
-        grid_alpha = 0.25 + 0.55 * p_abs
-        for grid_line in _deformed_face_curvature_grid(s, p, delta_z, side):
-            gx, gy, gz = zip(*grid_line)
+        total_edges = len(edge_polylines)
+        for edge_idx, edge_pts in enumerate(edge_polylines):
+            xs, ys, zs = zip(*edge_pts, strict=True)
             ax.plot(
-                gx,
-                gy,
-                gz,
-                color=edge_gold,
-                linewidth=0.85,
-                alpha=grid_alpha,
-                zorder=4,
+                xs,
+                ys,
+                zs,
+                color=_wireframe_edge_color_hex(edge_idx, total_edges),
+                linewidth=2.4,
+                solid_capstyle="round",
+                alpha=1.0,
+                zorder=5,
             )
-    for edge_pts in _deformed_cube_edge_polylines(s, p, delta_z, side):
-        xs, ys, zs = zip(*edge_pts)
-        ax.plot(
-            xs,
-            ys,
-            zs,
-            color=edge_gold,
-            linewidth=2.2,
-            solid_capstyle="round",
-            alpha=1.0,
-            zorder=5,
+    else:
+        triangles, tri_colors = _deformed_platonic_surface(
+            s,
+            p,
+            delta_z,
+            side,
+            face_count=geodesic_faces,
+            subdiv=subdiv,
         )
+        ax.add_collection3d(
+            Poly3DCollection(
+                triangles,
+                facecolors=[to_rgba(c) for c in tri_colors],
+                edgecolors=(0, 0, 0, 0),
+                linewidths=0.0,
+            )
+        )
+        if show_curvature_grid and p_abs > 0.02:
+            grid_alpha = 0.25 + 0.55 * p_abs
+            for grid_line in _deformed_face_curvature_grid(
+                s,
+                p,
+                delta_z,
+                side,
+                face_count=geodesic_faces,
+                subdiv=subdiv,
+            ):
+                gx, gy, gz = zip(*grid_line)
+                ax.plot(
+                    gx,
+                    gy,
+                    gz,
+                    color=edge_gold,
+                    linewidth=0.85,
+                    alpha=grid_alpha,
+                    zorder=4,
+                )
+        edge_polylines = _platonic_wireframe_edge_polylines(
+            s,
+            p,
+            delta_z,
+            side,
+            face_count=geodesic_faces,
+        )
+        total_edges = len(edge_polylines)
+        for edge_idx, edge_pts in enumerate(edge_polylines):
+            xs, ys, zs = zip(*edge_pts, strict=True)
+            ax.plot(
+                xs,
+                ys,
+                zs,
+                color=_wireframe_edge_color_hex(edge_idx, total_edges),
+                linewidth=2.4,
+                solid_capstyle="round",
+                alpha=1.0,
+                zorder=5,
+            )
 
     if not shape_only:
         arrow_scale = max(0.15, p_abs)
@@ -2236,8 +2912,10 @@ def build_unit_cell_plotly_figure(
     show_curvature_grid: bool = True,
     detail_scene: bool = False,
     camera_radius: float | None = None,
+    subdiv: int = 8,
+    face_count: int = 6,
 ):
-    """Interactive Plotly unit-cell mesh for Render preset detail view."""
+    """Interactive Plotly geodesic mesh for Render preset detail view."""
     import plotly.graph_objects as go
 
     _ = r_val
@@ -2245,74 +2923,97 @@ def build_unit_cell_plotly_figure(
     side = abs(delta_side)
     p = _clamp_deform_pressure(pressure)
     p_abs = abs(p)
-    triangles, tri_colors = _deformed_cube_surface(s, p, delta_z, side)
+    geodesic_faces = resolve_face_count(face_count=face_count)
+    traces: list[go.Mesh3d | go.Scatter3d] = []
+    wireframe_only = geodesic_faces != _CUBE_GEODESIC_FACE_COUNT
 
-    xs: list[float] = []
-    ys: list[float] = []
-    zs: list[float] = []
-    i_idx: list[int] = []
-    j_idx: list[int] = []
-    k_idx: list[int] = []
-    face_colors: list[str] = []
-    for tri, rgba in zip(triangles, tri_colors, strict=True):
-        base = len(xs)
-        for vtx in tri:
-            xs.append(float(vtx[0]))
-            ys.append(float(vtx[1]))
-            zs.append(float(vtx[2]))
-        i_idx.append(base)
-        j_idx.append(base + 1)
-        k_idx.append(base + 2)
-        face_colors.append(_rgba_to_plotly_color(rgba))
-
-    traces: list[go.Mesh3d | go.Scatter3d] = [
-        go.Mesh3d(
-            x=xs,
-            y=ys,
-            z=zs,
-            i=i_idx,
-            j=j_idx,
-            k=k_idx,
-            facecolor=face_colors,
-            flatshading=True,
-            lighting=dict(ambient=0.55, diffuse=0.85, specular=0.25, roughness=0.5),
-            lightposition=dict(x=2, y=4, z=3),
-            hoverinfo="skip",
-            showscale=False,
+    if wireframe_only:
+        _append_platonic_wireframe_plotly_traces(
+            traces,
+            s=s,
+            pressure=p,
+            delta_z=delta_z,
+            delta_side=side,
+            face_count=geodesic_faces,
         )
-    ]
+    else:
+        triangles, tri_colors = _deformed_platonic_surface(
+            s,
+            p,
+            delta_z,
+            side,
+            face_count=geodesic_faces,
+            subdiv=subdiv,
+        )
 
-    if show_curvature_grid and p_abs > 0.02:
-        grid_alpha = 0.25 + 0.55 * p_abs
-        for grid_line in _deformed_face_curvature_grid(s, p, delta_z, side):
-            gx, gy, gz = zip(*grid_line, strict=True)
-            traces.append(
-                go.Scatter3d(
-                    x=list(gx),
-                    y=list(gy),
-                    z=list(gz),
-                    mode="lines",
-                    line=dict(
-                        color=f"rgba(201,162,39,{grid_alpha:.3f})",
-                        width=2,
-                    ),
-                    hoverinfo="skip",
-                    showlegend=False,
-                )
-            )
+        xs: list[float] = []
+        ys: list[float] = []
+        zs: list[float] = []
+        i_idx: list[int] = []
+        j_idx: list[int] = []
+        k_idx: list[int] = []
+        face_colors: list[str] = []
+        for tri, rgba in zip(triangles, tri_colors, strict=True):
+            base = len(xs)
+            for vtx in tri:
+                xs.append(float(vtx[0]))
+                ys.append(float(vtx[1]))
+                zs.append(float(vtx[2]))
+            i_idx.append(base)
+            j_idx.append(base + 1)
+            k_idx.append(base + 2)
+            face_colors.append(_rgba_to_plotly_color(rgba))
 
-    for edge_pts in _deformed_cube_edge_polylines(s, p, delta_z, side):
-        ex, ey, ez = zip(*edge_pts, strict=True)
         traces.append(
-            go.Scatter3d(
-                x=list(ex),
-                y=list(ey),
-                z=list(ez),
-                mode="lines",
-                line=dict(color=_UNIT_CELL_GOLD, width=5),
+            go.Mesh3d(
+                x=xs,
+                y=ys,
+                z=zs,
+                i=i_idx,
+                j=j_idx,
+                k=k_idx,
+                facecolor=face_colors,
+                flatshading=True,
+                lighting=dict(ambient=0.55, diffuse=0.85, specular=0.25, roughness=0.5),
+                lightposition=dict(x=2, y=4, z=3),
                 hoverinfo="skip",
-                showlegend=False,
+                showscale=False,
             )
+        )
+
+        if show_curvature_grid and p_abs > 0.02:
+            grid_alpha = 0.25 + 0.55 * p_abs
+            for grid_line in _deformed_face_curvature_grid(
+                s,
+                p,
+                delta_z,
+                side,
+                face_count=geodesic_faces,
+                subdiv=subdiv,
+            ):
+                gx, gy, gz = zip(*grid_line, strict=True)
+                traces.append(
+                    go.Scatter3d(
+                        x=list(gx),
+                        y=list(gy),
+                        z=list(gz),
+                        mode="lines",
+                        line=dict(
+                            color=f"rgba(201,162,39,{grid_alpha:.3f})",
+                            width=2,
+                        ),
+                        hoverinfo="skip",
+                        showlegend=False,
+                    )
+                )
+
+        _append_platonic_wireframe_plotly_traces(
+            traces,
+            s=s,
+            pressure=p,
+            delta_z=delta_z,
+            delta_side=side,
+            face_count=geodesic_faces,
         )
 
     if detail_scene:
@@ -2401,6 +3102,8 @@ def run_residual_explorer_plotly(
     view_elev: float = UNIT_CELL_VIEW_ELEV,
     view_azim: float = UNIT_CELL_VIEW_AZIM,
     detail_scene: bool = False,
+    subdiv: int = 8,
+    face_count: int = 6,
 ):
     """Return an interactive Plotly unit-cell figure for preset detail view."""
     r_val = residual_from_scales(phi_sq_scale, e_sq_scale, pi_sq_scale)
@@ -2415,6 +3118,8 @@ def run_residual_explorer_plotly(
         axis_half=UNIT_CELL_DETAIL_AXIS_HALF if detail_scene else UNIT_CELL_AXIS_HALF,
         detail_scene=detail_scene,
         camera_radius=UNIT_CELL_DETAIL_PLOTLY_RADIUS if detail_scene else None,
+        subdiv=subdiv,
+        face_count=face_count,
     )
 
 
@@ -2500,6 +3205,8 @@ def run_residual_explorer(
     figsize: tuple[float, float] | None = None,
     dpi: int | None = None,
     shape_only: bool = False,
+    subdiv: int = 8,
+    face_count: int = 6,
 ) -> tuple[str, str, plt.Figure]:
     """Return explorer metrics, viewport header HTML, and unit-cell figure."""
     r_val = residual_from_scales(phi_sq_scale, e_sq_scale, pi_sq_scale)
@@ -2512,7 +3219,9 @@ def run_residual_explorer(
     metrics = (
         f"{metrics}\n\n"
         f"Deformation pressure : {p * 100:.1f}%  ({mode})\n"
-        f"View                 : elev {view_elev:.0f}° · azim {view_azim:.0f}°"
+        f"View                 : elev {view_elev:.0f}° · azim {view_azim:.0f}°\n"
+        f"Geodesic faces       : {resolve_face_count(face_count=face_count)}\n"
+        f"Mesh subdiv          : {int(subdiv)}"
     )
     fig_kwargs: dict[str, float | bool] = {
         "view_elev": view_elev,
@@ -2532,6 +3241,8 @@ def run_residual_explorer(
         delta_side=abs(d_side) * 0.5,
         r_val=r_val,
         pressure=p,
+        subdiv=subdiv,
+        face_count=face_count,
         **fig_kwargs,
     )
     header = build_unit_cell_viewport_header_html(pressure=p, r_val=r_val)

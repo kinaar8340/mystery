@@ -45,7 +45,10 @@ from demo_core import (
     build_breathing_animation_figure,
     build_readme_full_page_html,
     create_breathing_animation,
+    dimension_config_to_dials,
     figure_to_viewport_cached_html,
+    geodesic_face_count,
+    get_dimension_config,
     residual_from_scales,
     run_residual_explorer,
     run_residual_explorer_plotly,
@@ -131,6 +134,10 @@ _VQC_TAB_ORANGE_BG = "#3d2a5c"
 _VQC_TAB_ORANGE_BORDER = "#6a4c93"
 _VQC_TAB_ORANGE_TEXT = "#d4b8ff"
 _VQC_MATRIX_GREEN = "#33ff66"
+_NAV_DEMO_ACTIVE_TEXT = "#E702FF"
+_NAV_DEMO_ACTIVE_BORDER = "#E702FF"
+_NAV_DEMO_ACTIVE_GLOW_INNER = "rgba(231, 2, 255, 0.8)"
+_NAV_DEMO_ACTIVE_GLOW_OUTER = "rgba(231, 2, 255, 0.5)"
 
 # ====================== GLOBAL STYLING THEME ======================
 NAV_THEME: dict = {
@@ -169,10 +176,10 @@ NAV_THEME: dict = {
     },
     "demo_button": {
         "active": {
-            "text_color": "#ffaa00",
-            "border_color": "orange",
-            "glow_inner": "rgba(255, 165, 0, 0.8)",
-            "glow_outer": "rgba(255, 165, 0, 0.5)",
+            "text_color": _NAV_DEMO_ACTIVE_TEXT,
+            "border_color": _NAV_DEMO_ACTIVE_BORDER,
+            "glow_inner": _NAV_DEMO_ACTIVE_GLOW_INNER,
+            "glow_outer": _NAV_DEMO_ACTIVE_GLOW_OUTER,
         },
     },
     "preset_grid": {
@@ -909,6 +916,7 @@ _MAIN_NAV_TAB_SPECS = (
     ("readme", "Docs"),
 )
 
+# D* = geodesic face count (D4 → 4 faces, D6 → 6, …, D20 → 20).
 _SHAPE_NAV_IDS: tuple[str, ...] = ("D4", "D6", "D8", "D12", "D20")
 _DEFAULT_ACTIVE_SHAPE = "D6"
 
@@ -1035,7 +1043,7 @@ def _shape_btn_classes(shape: str, active_shape: str) -> list[str]:
 
 
 def _set_active_shape(new_shape: str) -> tuple:
-    """Latching updates for D4–D20; active button gets cyan text + strong cyan glow."""
+    """Latching updates for geodesic face-count tabs (D4–D20)."""
     shape = str(new_shape or _DEFAULT_ACTIVE_SHAPE).strip().upper()
     if shape not in _SHAPE_NAV_IDS:
         shape = _DEFAULT_ACTIVE_SHAPE
@@ -1050,6 +1058,107 @@ def _set_active_shape(new_shape: str) -> tuple:
             )
         )
     return tuple(updates)
+
+
+def _normalize_shape_id(shape: str) -> str:
+    dim = str(shape or _DEFAULT_ACTIVE_SHAPE).strip().upper()
+    return dim if dim in _SHAPE_NAV_IDS else _DEFAULT_ACTIVE_SHAPE
+
+
+def _apply_dimension_slider_updates(config: dict[str, object]) -> tuple:
+    """Push dimension defaults into all wired gravity slider groups."""
+    dials = dimension_config_to_dials(config)
+    group = _gravity_slider_control_updates(dials, edit_enabled=False)
+    return (*group, *group, *group)
+
+
+def _build_dimension_viewport_figure(shape: str, config: dict[str, object]):
+    """Plotly unit cell for the active Mystery dimension tab."""
+    dials = dimension_config_to_dials(config)
+    subdiv = int(config.get("subdiv", 8))
+    face_count = int(config.get("face_count", geodesic_face_count(shape)))
+    fig = run_residual_explorer_plotly(
+        dials["phi"],
+        dials["e"],
+        dials["pi"],
+        dials["kappa"],
+        dials["dz"],
+        dials["alpha"],
+        dials["beta"],
+        dials["pressure"],
+        dials["elev"],
+        dials["azim"],
+        subdiv=subdiv,
+        face_count=face_count,
+    )
+    fig.update_layout(
+        height=620,
+        margin=dict(l=0, r=0, t=40, b=0),
+        paper_bgcolor="#000000",
+        plot_bgcolor="#000000",
+        uirevision=f"mystery-dim-{shape}",
+    )
+    return fig
+
+
+def _dimension_explorer_side_outputs(
+    shape: str,
+    config: dict[str, object],
+) -> tuple[str, str, str]:
+    """Metrics, viewport header, and control-panel HTML for a dimension switch."""
+    dials = dimension_config_to_dials(config)
+    subdiv = int(config.get("subdiv", 8))
+    face_count = int(config.get("face_count", geodesic_face_count(shape)))
+    metrics, header, _fig = run_residual_explorer(
+        dials["phi"],
+        dials["e"],
+        dials["pi"],
+        dials["kappa"],
+        dials["dz"],
+        dials["alpha"],
+        dials["beta"],
+        dials["pressure"],
+        dials["elev"],
+        dials["azim"],
+        subdiv=subdiv,
+        face_count=face_count,
+    )
+    desc = str(config.get("description", ""))
+    metrics = (
+        f"{metrics}\n\n"
+        f"Geodesic faces       : {face_count}  ({shape})\n"
+        f"Mode                 : {desc}"
+    )
+    control_levels = _format_gravity_control_panel_html(dials, 0)
+    return metrics, header, control_levels
+
+
+def _set_active_shape_and_apply(new_shape: str) -> tuple:
+    """Latch tab, load defaults, refresh the Home (gravity) viewport."""
+    shape = _normalize_shape_id(new_shape)
+    config = get_dimension_config(shape)
+    shape_updates = _set_active_shape(shape)
+    slider_updates = _apply_dimension_slider_updates(config)
+    fig = _build_dimension_viewport_figure(shape, config)
+    viewport_updates = _demo_viewport_show_plot(fig)
+    metrics, header, control_levels = _dimension_explorer_side_outputs(shape, config)
+    return (
+        *shape_updates,
+        *slider_updates,
+        *viewport_updates,
+        metrics,
+        metrics,
+        header,
+        control_levels,
+    )
+
+
+def _set_active_shape_and_apply_home(new_shape: str) -> tuple:
+    """Dimension tab click — always land on Home, then apply mode defaults."""
+    return (
+        *_nav_to_page_with_demo("home"),
+        *_set_active_shape_and_apply(new_shape),
+    )
 
 
 def _main_nav_btn_classes(page_id: str, active_page: str) -> list[str]:
@@ -1329,16 +1438,25 @@ def _readme_back_to_app(return_page: str) -> tuple:
     return _nav_to_page_with_demo(page)
 
 
+# "gravity" is a legacy alias for the Home tab (page_gravity / myst-gravity-page).
 _HOME_DEMO_PAGES = frozenset({"home", "gravity"})
 _RENDER_DEMO_PAGES = frozenset({"render", "figures"})
 _PRESET_SUBNAV_LABEL = "Preset:"
 _DEMO_SUBNAV_LABEL = "Demo:"
 
 
-def _sync_demo_nav_sections(page: str) -> tuple[gr.Update, gr.Update, gr.Update]:
-    """Toggle Home / Figures / Presets demo rows in the unified nav host."""
+def _normalize_page_id(page: str) -> str:
+    """Canonical nav page id — gravity maps to Home."""
     active = str(page or "home").strip().lower()
     if active in _HOME_DEMO_PAGES:
+        return "home"
+    return active
+
+
+def _sync_demo_nav_sections(page: str) -> tuple[gr.Update, gr.Update, gr.Update]:
+    """Toggle Home / Figures / Presets demo rows in the unified nav host."""
+    active = _normalize_page_id(page)
+    if active == "home":
         return (
             gr.update(visible=True),
             gr.update(visible=False),
@@ -1370,10 +1488,11 @@ def _nav_to_page_with_demo(page: str) -> tuple:
 
 def _nav_to_page(page: str) -> tuple:
     """Switch between home, render, documentation, status, and edit; refresh unified nav."""
-    on_render = page == "render"
-    on_home = page == "home"
-    on_readme = page == "readme"
-    on_status = page == "status"
+    active = _normalize_page_id(page)
+    on_render = active == "render"
+    on_home = active == "home"
+    on_readme = active == "readme"
+    on_status = active == "status"
     closed = _close_links_panels()
     return (
         gr.update(visible=on_home),
@@ -1386,7 +1505,7 @@ def _nav_to_page(page: str) -> tuple:
         _main_nav_btn_update("readme", active=on_readme),
         _main_nav_btn_update("status", active=on_status),
         *closed,
-        page,
+        active,
     )
 
 
@@ -3163,7 +3282,7 @@ footer {{
     box-shadow: 0 0 12px rgba(0, 255, 0, 0.75), 0 0 22px rgba(0, 255, 0, 0.45), 0 0 0 1px var(--nav-btn-active-border-color, #00FF00) !important;
     font-weight: 600 !important;
 }}
-/* ========== SHAPE TABS (D4, D6, D8, D12, D20) ========== */
+/* ========== GEODESIC FACE-COUNT TABS (D4…D20 — D = number of faces) ========== */
 .gradio-container button.shape-btn {{
     font-weight: var(--nav-btn-font-weight, 500) !important;
     min-width: 0 !important;
@@ -3181,13 +3300,19 @@ footer {{
     box-shadow: 0 0 14px rgba(0, 255, 255, 0.85), 0 0 26px rgba(0, 255, 255, 0.5), 0 0 0 1px cyan !important;
     font-weight: 600 !important;
 }}
-/* ========== DEMO: BAR (A–I) + Figures/Presets 01–09 ========== */
+/* ========== DEMO: BAR (A–I) + Figures/Presets 01–09 + Edit/Save ========== */
 .gradio-container button.vqc-source-tab.demo-btn.active,
 .gradio-container button.vqc-source-tab.demo-btn.active:disabled,
 .gradio-container button.vqc-source-tab.demo-btn.active[disabled],
 .gradio-container button.vqc-source-tab.demo-btn.active span,
 .gradio-container button.vqc-source-tab.demo-btn.active:disabled span,
 .gradio-container button.vqc-source-tab.demo-btn.active[disabled] span,
+.gradio-container button.demo-btn.active:not(.main-nav-btn):not(.shape-btn),
+.gradio-container button.demo-btn.active:not(.main-nav-btn):not(.shape-btn) span,
+.gradio-container button.demo-btn.active:not(.main-nav-btn):not(.shape-btn):disabled,
+.gradio-container button.demo-btn.active:not(.main-nav-btn):not(.shape-btn)[disabled],
+.gradio-container button.demo-btn.active:not(.main-nav-btn):not(.shape-btn):disabled span,
+.gradio-container button.demo-btn.active:not(.main-nav-btn):not(.shape-btn)[disabled] span,
 #myst-gravity-child-nav button.vqc-source-tab.demo-btn.active,
 #myst-gravity-child-nav button.vqc-source-tab.demo-btn.active span,
 #myst-render-sub-nav button.vqc-source-tab.demo-btn.active,
@@ -3197,20 +3322,28 @@ footer {{
 #myst-render-sub-nav button.vqc-source-tab.demo-btn.active:disabled span,
 #myst-render-sub-nav button.vqc-source-tab.demo-btn.active[disabled] span,
 #myst-render-sub-nav button.myst-render-preset-btn.demo-btn.active,
+#myst-render-sub-nav button.myst-render-nav-render-btn.demo-btn.active,
+#myst-render-sub-nav button.myst-render-nav-render-btn.demo-btn.active span,
 #myst-status-zoom-nav button.vqc-source-tab.demo-btn.active,
 #myst-status-zoom-nav button.vqc-source-tab.demo-btn.active:disabled,
 #myst-status-zoom-nav button.vqc-source-tab.demo-btn.active[disabled],
 #myst-status-zoom-nav button.vqc-source-tab.demo-btn.active span,
 #myst-status-zoom-nav button.vqc-source-tab.demo-btn.active:disabled span,
 #myst-status-zoom-nav button.vqc-source-tab.demo-btn.active[disabled] span,
-#myst-status-zoom-nav button.myst-status-preset-btn.demo-btn.active {{
-    color: var(--nav-demo-active-text-color, #ffaa00) !important;
-    -webkit-text-fill-color: var(--nav-demo-active-text-color, #ffaa00) !important;
-    border-color: var(--nav-demo-active-border-color, orange) !important;
+#myst-status-zoom-nav button.myst-status-preset-btn.demo-btn.active,
+.gradio-container button.myst-status-nav-edit-btn.demo-btn.active,
+.gradio-container button.myst-status-nav-edit-btn.demo-btn.active span,
+.gradio-container button.myst-status-nav-edit-btn.demo-btn.active:disabled,
+.gradio-container button.myst-status-nav-edit-btn.demo-btn.active[disabled],
+.gradio-container button.myst-status-nav-edit-btn.demo-btn.active:disabled span,
+.gradio-container button.myst-status-nav-edit-btn.demo-btn.active[disabled] span {{
+    color: var(--nav-demo-active-text-color, {_NAV_DEMO_ACTIVE_TEXT}) !important;
+    -webkit-text-fill-color: var(--nav-demo-active-text-color, {_NAV_DEMO_ACTIVE_TEXT}) !important;
+    border-color: var(--nav-demo-active-border-color, {_NAV_DEMO_ACTIVE_BORDER}) !important;
     box-shadow:
-        0 0 12px var(--nav-demo-active-glow-inner, rgba(255, 165, 0, 0.8)),
-        0 0 22px var(--nav-demo-active-glow-outer, rgba(255, 165, 0, 0.5)),
-        0 0 0 1px var(--nav-demo-active-border-color, orange) !important;
+        0 0 12px var(--nav-demo-active-glow-inner, {_NAV_DEMO_ACTIVE_GLOW_INNER}),
+        0 0 22px var(--nav-demo-active-glow-outer, {_NAV_DEMO_ACTIVE_GLOW_OUTER}),
+        0 0 0 1px var(--nav-demo-active-border-color, {_NAV_DEMO_ACTIVE_BORDER}) !important;
     font-weight: 600 !important;
 }}
 .gradio-container .vqc-nav-spreadsheet-row.vqc-nav-spreadsheet-row-8 {{
@@ -7567,6 +7700,8 @@ _RENDER_DETAIL_IMAGE_DPI = 120
 # (16 keypad + 1 legacy back skip + 9 child nav + 2 edit btns + 20 sliders + …).
 _GRAVITY_PRESET_IMAGE_OUT_INDEX = 51
 _GRAVITY_CHILD_NAV_LETTERS: tuple[str, ...] = tuple(chr(ord("A") + i) for i in range(9))
+# Demo tabs that play the shared breathing cube loop (same asset as Demo A).
+_BREATHING_DEMO_LETTERS: frozenset[str] = frozenset({"A", "F"})
 _GRAVITY_HOME_DIALS = {
     "phi": 1.0,
     "e": 1.0,
@@ -8266,7 +8401,7 @@ def _gravity_child_nav_btn_updates(active_slot: int = -1) -> tuple:
     return tuple(
         gr.update(
             elem_classes=_gravity_child_nav_btn_classes(letter, active),
-            # Demo tabs stay clickable — A must relaunch breathing when re-selected.
+            # Demo tabs stay clickable — A/F relaunch breathing when re-selected.
             interactive=True,
             variant="secondary",
         )
@@ -8280,7 +8415,7 @@ def _gravity_child_nav_output_updates(active_slot: int = -1) -> tuple:
 
 
 def _demo_active_tab_updates(active_letter: str) -> tuple:
-    """Orange active styling for Demo A–I — no back button in demo outputs."""
+    """Magenta active styling for Demo A–I — no back button in demo outputs."""
     letter = str(active_letter).strip().upper()
     if letter not in _GRAVITY_CHILD_NAV_LETTERS:
         letter = "A"
@@ -8387,7 +8522,7 @@ def _get_gravity_animation_html(letter: str) -> str:
 
 
 def _create_breathing_animation(*, fresh: bool = False):
-    """Looping breathing Plotly figure for Demo A — ready to animate on load."""
+    """Looping breathing Plotly figure for Demo A/F — ready to animate on load."""
     return create_breathing_animation(fresh=fresh)
 
 
@@ -8456,18 +8591,26 @@ def _demo_viewport_show_breathing_video() -> tuple:
     )
 
 
-def _launch_demo_a() -> tuple:
-    """Demo A — breathing MP4; fall back to rigid Plotly if encode fails."""
+def _launch_breathing_demo(letter: str) -> tuple:
+    """Demo A/F — shared breathing MP4; fall back to rigid Plotly if encode fails."""
+    active = str(letter or "A").strip().upper()
+    if active not in _BREATHING_DEMO_LETTERS:
+        active = "A"
     try:
         viewport = _demo_viewport_show_breathing_video()
     except Exception as exc:
-        logger.exception("breathing demo video failed")
+        logger.exception("breathing demo video failed for Demo %s", active)
         viewport = _demo_viewport_show_plot(_get_rigid_preset_plotly_figure())
     return (
         *viewport,
-        *_demo_active_tab_updates("A"),
-        "A",
+        *_demo_active_tab_updates(active),
+        active,
     )
+
+
+def _launch_demo_a() -> tuple:
+    """Backward-compatible entry — Demo A breathing."""
+    return _launch_breathing_demo("A")
 
 
 def _get_gravity_demo_plotly_figure(letter: str):
@@ -8499,6 +8642,8 @@ def _get_gravity_demo_plotly_figure(letter: str):
 def _switch_gravity_demo(letter: str) -> tuple:
     """Switch the Home viewport to the demo for the selected letter (B–I)."""
     letter = str(letter).strip().upper()
+    if letter in _BREATHING_DEMO_LETTERS:
+        return _launch_breathing_demo(letter)
     slot = _gravity_demo_letter_slot(letter)
     fig = _get_gravity_demo_plotly_figure(letter)
     return (
@@ -9690,7 +9835,11 @@ def _run_residual_explorer_ui(
     view_azim: float,
     active_preset: int,
     status_zoom_slot: int,
+    active_shape: str,
 ) -> tuple:
+    dim_config = get_dimension_config(active_shape)
+    subdiv = int(dim_config.get("subdiv", 8))
+    face_count = int(dim_config.get("face_count", geodesic_face_count(active_shape)))
     metrics, header, fig = run_residual_explorer(
         phi_sq_scale,
         e_sq_scale,
@@ -9702,6 +9851,8 @@ def _run_residual_explorer_ui(
         deform_pressure,
         view_elev,
         view_azim,
+        subdiv=subdiv,
+        face_count=face_count,
     )
     dials = _gravity_dial_bundle(
         phi_sq_scale,
@@ -9752,6 +9903,7 @@ def _run_residual_explorer_ui_manual(
     view_azim: float,
     active_preset: int,
     status_zoom_slot: int,
+    active_shape: str,
     edit_params_enabled: bool,
 ) -> tuple:
     """Manual dial refresh — only when Manual Edit is latched (avoids preset cascade)."""
@@ -9771,6 +9923,7 @@ def _run_residual_explorer_ui_manual(
         view_azim,
         active_preset,
         status_zoom_slot,
+        active_shape,
     )
 
 
@@ -11146,7 +11299,12 @@ def build_app() -> gr.Blocks:
                 status_panels_host,
                 re_preset_tui,
             ]
-            gravity_dial_inputs = [*re_inputs, re_active_preset, status_zoom_slot]
+            gravity_dial_inputs = [
+                *re_inputs,
+                re_active_preset,
+                status_zoom_slot,
+                active_shape,
+            ]
             gravity_demo_outputs = [
                 gravity_viewport_plot,
                 gravity_viewport_video,
@@ -11155,9 +11313,9 @@ def build_app() -> gr.Blocks:
             ]
             for letter in _GRAVITY_CHILD_NAV_LETTERS:
                 btn = gravity_letter_btns[letter]
-                if letter == "A":
+                if letter in _BREATHING_DEMO_LETTERS:
                     btn.click(
-                        _launch_demo_a,
+                        lambda l=letter: _launch_breathing_demo(l),
                         outputs=gravity_demo_outputs,
                         show_progress="hidden",
                     )
@@ -11249,6 +11407,21 @@ def build_app() -> gr.Blocks:
             active_shape,
             *[unified_nav[shape_id] for shape_id in _SHAPE_NAV_IDS],
         ]
+        dimension_slider_outputs = [
+            *re_inputs,
+            *edit_re_inputs,
+            *sz_inputs,
+        ]
+        dimension_apply_outputs = [
+            *shape_outputs,
+            *dimension_slider_outputs,
+            gravity_viewport_plot,
+            gravity_viewport_video,
+            re_metrics,
+            edit_re_metrics,
+            unit_cell_header,
+            re_control_levels,
+        ]
         nav_outputs = [
             page_gravity,
             page_render,
@@ -11271,6 +11444,11 @@ def build_app() -> gr.Blocks:
             home_demo_nav_row,
             render_demo_nav_row,
             status_demo_nav_row,
+        ]
+        dimension_shape_outputs = [
+            *nav_outputs,
+            *demo_nav_outputs,
+            *dimension_apply_outputs,
         ]
         readme_nav_outputs = [*nav_outputs, readme_return_page, *demo_nav_outputs]
 
@@ -11381,8 +11559,8 @@ def build_app() -> gr.Blocks:
 
         for shape_id in _SHAPE_NAV_IDS:
             unified_nav[shape_id].click(
-                lambda s=shape_id: _set_active_shape(s),
-                outputs=shape_outputs,
+                lambda s=shape_id: _set_active_shape_and_apply_home(s),
+                outputs=dimension_shape_outputs,
                 show_progress="hidden",
             )
 
@@ -11412,12 +11590,23 @@ def build_app() -> gr.Blocks:
         def _app_boot() -> tuple:
             """Fast boot — rigid plot first so HF health checks pass quickly."""
             viewport = _demo_viewport_show_plot(_get_rigid_preset_plotly_figure())
+            d6_config = get_dimension_config(_DEFAULT_ACTIVE_SHAPE)
+            slider_updates = _apply_dimension_slider_updates(d6_config)
+            metrics, header, control_levels = _dimension_explorer_side_outputs(
+                _DEFAULT_ACTIVE_SHAPE,
+                d6_config,
+            )
             return (
                 *_nav_to_page_with_demo("home"),
-                *viewport,
                 *_demo_active_tab_updates("A"),
                 "A",
                 *_set_active_shape(_DEFAULT_ACTIVE_SHAPE),
+                *slider_updates,
+                *viewport,
+                metrics,
+                metrics,
+                header,
+                control_levels,
             )
 
         def _app_boot_deferred_video() -> tuple:
@@ -11433,11 +11622,9 @@ def build_app() -> gr.Blocks:
             outputs=[
                 *nav_outputs,
                 *demo_nav_outputs,
-                gravity_viewport_plot,
-                gravity_viewport_video,
                 *[gravity_letter_btns[letter] for letter in _GRAVITY_CHILD_NAV_LETTERS],
                 gravity_active_letter,
-                *shape_outputs,
+                *dimension_apply_outputs,
             ],
             show_progress="hidden",
         ).then(
