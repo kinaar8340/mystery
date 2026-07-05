@@ -10008,6 +10008,7 @@ def _run_residual_explorer_ui(
     active_preset: int,
     status_zoom_slot: int,
     active_shape: str,
+    active_demo_letter: str = "A",
 ) -> tuple:
     dim_config = get_dimension_config(active_shape)
     subdiv = int(dim_config.get("subdiv", 8))
@@ -10048,11 +10049,15 @@ def _run_residual_explorer_ui(
         dials=_gravity_preset_dials_for_slot(zoom_slot) if zoom_slot >= 0 else None,
     )
     print(f"[DEBUG] _run_residual_explorer_ui: preset={slot}", flush=True)
+    viewport_updates = _demo_viewport_preserve_active_demo(
+        active_demo_letter,
+        dim_fig=fig,
+    )
     return (
         metrics,
         metrics,
         header,
-        *_demo_viewport_show_plot(fig),
+        *viewport_updates,
         _gravity_clear_video_update(),
         control_levels,
         gr.skip(),
@@ -10076,6 +10081,7 @@ def _run_residual_explorer_ui_manual(
     active_preset: int,
     status_zoom_slot: int,
     active_shape: str,
+    active_demo_letter: str,
     edit_params_enabled: bool,
 ) -> tuple:
     """Manual dial refresh — only when Manual Edit is latched (avoids preset cascade)."""
@@ -10096,6 +10102,7 @@ def _run_residual_explorer_ui_manual(
         active_preset,
         status_zoom_slot,
         active_shape,
+        active_demo_letter,
     )
 
 
@@ -11488,6 +11495,7 @@ def build_app() -> gr.Blocks:
                 re_active_preset,
                 status_zoom_slot,
                 active_shape,
+                gravity_active_letter,
             ]
             gravity_demo_nav_outputs = [
                 *[gravity_letter_btns[letter] for letter in _GRAVITY_CHILD_NAV_LETTERS],
