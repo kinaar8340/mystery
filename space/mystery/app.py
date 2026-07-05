@@ -1688,7 +1688,9 @@ def _readme_back_to_app(
     """Return from README to the tab the user came from."""
     page = _readme_return_page(return_page)
     return (
-        *_nav_to_page_with_demo(page, active_shape=active_shape),
+        *_nav_to_page(page, active_shape=active_shape),
+        gr.skip(),
+        *_sync_demo_nav_sections(page),
         *_home_demo_nav_updates(
             active_demo_letter,
             current_page=page,
