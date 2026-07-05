@@ -36,7 +36,7 @@ from demo_core import (
     WALLPAPER_URL,
     get_build_label,
     is_hf_space,
-    demo_a_startup_image_serve_url,
+    resolve_demo_a_startup_image_source_path,
     startup_image_static_paths,
     wallpaper_static_paths,
     build_unit_cell_viewport_header_html,
@@ -2637,8 +2637,22 @@ footer {{
 }}
 .gradio-container .myst-gravity-page .myst-gravity-single-viewport > .block,
 .gradio-container .myst-gravity-page .myst-gravity-single-viewport > .form {{
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
     max-height: 620px !important;
+    margin: 0 !important;
+    padding: 0 !important;
     overflow: hidden !important;
+}}
+.gradio-container .myst-gravity-page .myst-gravity-single-viewport > .block.hide,
+.gradio-container .myst-gravity-page .myst-gravity-single-viewport > .block.hidden,
+.gradio-container .myst-gravity-page .myst-gravity-single-viewport > .form.hide,
+.gradio-container .myst-gravity-page .myst-gravity-single-viewport > .form.hidden {{
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
 }}
 .gradio-container .myst-gravity-page .myst-gravity-video-host,
 .gradio-container .myst-gravity-page .myst-gravity-viewport-anim .html-container,
@@ -8485,6 +8499,7 @@ _GRAVITY_DEMO_VIDEO_CACHE: dict[str, str] = {}
 _BREATHING_DEMO_VIDEO_CACHE: str | None = None
 _APP_DIR = os.path.dirname(os.path.abspath(__file__))
 _BUNDLED_BREATHING_VIDEO = os.path.join(_APP_DIR, "assets", "demo_a_breathing.gif")
+_DEMO_A_STARTUP_HTML_CACHE: str | None = None
 
 
 def _gravity_demo_letter_slot(letter: str) -> int:
@@ -8604,15 +8619,15 @@ def _get_breathing_demo_video_path() -> str:
     return _BREATHING_DEMO_VIDEO_CACHE
 
 
-def _demo_a_startup_image_html() -> str:
-    """HTML viewport body for Demo A landing image."""
-    url = demo_a_startup_image_serve_url()
-    print(f"[startup] Demo A landing image URL: {url}", flush=True)
-    return (
-        '<div class="myst-gravity-viewport-inner myst-gravity-demo-a myst-gravity-startup-image">'
-        f'<img src="{url}" alt="Mystery Demo A startup" class="myst-gravity-startup-img" />'
-        "</div>"
-    )
+def _get_demo_a_startup_viewport_html() -> str:
+    """HF-safe startup viewport — Gradio upload cache + /gradio_api/file= img."""
+    global _DEMO_A_STARTUP_HTML_CACHE
+    if _DEMO_A_STARTUP_HTML_CACHE is None:
+        raw_path = resolve_demo_a_startup_image_source_path()
+        served_path = _cache_media_for_gradio(raw_path)
+        _DEMO_A_STARTUP_HTML_CACHE = figure_to_viewport_file_html(served_path)
+        print(f"[startup] cached Demo A viewport HTML from {raw_path}", flush=True)
+    return _DEMO_A_STARTUP_HTML_CACHE
 
 
 def _get_rigid_preset_plotly_figure():
@@ -8660,11 +8675,11 @@ def _demo_viewport_show_breathing_video() -> tuple:
 
 
 def _demo_viewport_show_startup_image() -> tuple:
-    """Show Demo A landing PNG via gr.HTML (HF-safe GitHub raw URL)."""
+    """Show Demo A landing PNG via gr.HTML (Gradio-cached /gradio_api/file=)."""
     return (
-        gr.update(visible=False),
         gr.update(value=None, visible=False),
-        gr.update(value=_demo_a_startup_image_html(), visible=True),
+        gr.update(value=None, visible=False),
+        gr.update(value=_get_demo_a_startup_viewport_html(), visible=True),
     )
 
 
@@ -11293,16 +11308,21 @@ def build_app() -> gr.Blocks:
                 letter: gravity_child_nav[letter] for letter in _GRAVITY_CHILD_NAV_LETTERS
             }
             gravity_active_letter = gr.State("A")
+            _startup_viewport_html = ""
+            try:
+                _startup_viewport_html = _get_demo_a_startup_viewport_html()
+            except Exception:
+                logger.exception("Demo A startup viewport init failed")
             with gr.Column(
                 elem_classes=["myst-gravity-single-viewport"],
                 elem_id="myst-gravity-viewport-wrapper",
             ) as viewport_col:
                 gravity_viewport_plot = gr.Plot(
-                    value=_get_rigid_preset_plotly_figure(),
+                    value=None,
                     label="",
                     show_label=False,
                     container=True,
-                    visible=True,
+                    visible=not bool(_startup_viewport_html),
                     elem_id="myst-gravity-viewport-plot",
                     elem_classes=["myst-gravity-viewport-plot"],
                     scale=1,
@@ -11319,8 +11339,8 @@ def build_app() -> gr.Blocks:
                     container=True,
                 )
                 gravity_viewport_startup = gr.HTML(
-                    value="",
-                    visible=False,
+                    value=_startup_viewport_html,
+                    visible=bool(_startup_viewport_html),
                     elem_id="myst-gravity-viewport-startup",
                     elem_classes=["myst-gravity-viewport-startup", "myst-gravity-demo-startup"],
                     container=True,
@@ -11691,7 +11711,7 @@ def build_app() -> gr.Blocks:
         newhere_minimize_btn.click(_minimize_newhere, outputs=newhere_outputs[:3])
         claims_minimize_btn.click(_minimize_claims, outputs=claims_outputs[:3])
         def _app_boot() -> tuple:
-            """Boot on Demo A — startup landing image with Home defaults."""
+            """Boot on Demo A — startup landing image with Home defaults (no heavy 3D render)."""
             try:
                 viewport = _demo_viewport_show_startup_image()
             except Exception:
@@ -11699,10 +11719,16 @@ def build_app() -> gr.Blocks:
                 viewport = _demo_viewport_show_plot(_get_rigid_preset_plotly_figure())
             d6_config = get_dimension_config(_DEFAULT_ACTIVE_SHAPE)
             slider_updates = _apply_dimension_slider_updates(d6_config)
-            metrics, header, control_levels = _dimension_explorer_side_outputs(
-                _DEFAULT_ACTIVE_SHAPE,
-                d6_config,
+            dials = dimension_config_to_dials(d6_config)
+            face_count = int(d6_config.get("face_count", geodesic_face_count(_DEFAULT_ACTIVE_SHAPE)))
+            metrics = (
+                f"φ²+e²≈π²  ·  Demo A startup\n"
+                f"Geodesic faces       : {face_count}  ({_DEFAULT_ACTIVE_SHAPE})\n"
+                f"Mode                 : {d6_config.get('description', '')}\n"
+                f"Demo F               : breathing unit-cell loop"
             )
+            header = build_unit_cell_viewport_header_html(pressure=float(dials["pressure"]))
+            control_levels = _format_gravity_control_panel_html(dials, 0)
             return (
                 *_nav_to_page_with_demo("home"),
                 *_demo_active_tab_updates("A"),

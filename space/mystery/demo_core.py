@@ -199,10 +199,8 @@ DEMO_A_STARTUP_REPO_FILENAME = "Home_A_startup_page.png"
 DEMO_A_STARTUP_ASSET_FILENAME = "home_a_startup_page.png"
 
 
-def demo_a_startup_image_serve_url() -> str:
-    """Browser URL for Demo A landing PNG — Gradio static file locally, GitHub raw on HF."""
-    if is_hf_space():
-        return f"{GITHUB_URL}/raw/main/{DEMO_A_STARTUP_REPO_FILENAME}"
+def resolve_demo_a_startup_image_source_path() -> str:
+    """Filesystem path to Demo A landing PNG — bundled, repo root, or HF download."""
     candidates = (
         _SPACE_DIR / "assets" / DEMO_A_STARTUP_ASSET_FILENAME,
         _SPACE_DIR / DEMO_A_STARTUP_ASSET_FILENAME,
@@ -210,9 +208,27 @@ def demo_a_startup_image_serve_url() -> str:
     )
     for path in candidates:
         if path.is_file():
-            stamp = int(path.stat().st_mtime)
-            return f"/gradio_api/file={path.name}?v={stamp}"
-    return f"{GITHUB_URL}/raw/main/{DEMO_A_STARTUP_REPO_FILENAME}"
+            return str(path)
+    if is_hf_space():
+        import tempfile
+
+        import requests
+
+        cache_path = Path(tempfile.gettempdir()) / "mystery_home_a_startup_page.png"
+        if not cache_path.is_file() or cache_path.stat().st_size == 0:
+            url = (
+                "https://raw.githubusercontent.com/kinaar8340/mystery/main/"
+                f"{DEMO_A_STARTUP_REPO_FILENAME}"
+            )
+            print(f"[startup] fetching Demo A image: {url}", flush=True)
+            response = requests.get(url, timeout=60)
+            response.raise_for_status()
+            cache_path.write_bytes(response.content)
+        return str(cache_path)
+    raise FileNotFoundError(
+        "Demo A startup image not found — expected bundled asset or "
+        f"{DEMO_A_STARTUP_REPO_FILENAME} at repo root"
+    )
 
 
 def startup_image_static_paths() -> list[Path]:
