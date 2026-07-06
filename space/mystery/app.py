@@ -8408,7 +8408,7 @@ _DEMO_VIEWPORT_OVERLAY_BY_LETTER: dict[str, tuple[str, str]] = {
     "G": ("Demo G", "D8 · Octahedron · breathing deformation"),
     "H": ("Demo H", "D12 · Dodecahedron · breathing deformation"),
     "I": ("Demo I", "D20 · Icosahedron · breathing deformation"),
-    "J": ("Demo J", "Brackish heartbeat · clock + resonator + live divergence"),
+    "J": ("Demo J", "Nested Platonic resonator · wind-synced twist & breath"),
 }
 _BREATHING_DEMO_LETTERS: frozenset[str] = frozenset({"F"})
 _BRACKISH_DEMO_LETTERS: frozenset[str] = frozenset({"J"})
@@ -9656,7 +9656,7 @@ def _demo_viewport_show_brackish_preview(
     stable_mode: bool = DEFAULT_BRACKISH_PARAMS["stable_mode"],
     visual_separation: float = DEFAULT_BRACKISH_PARAMS["visual_separation"],
 ) -> tuple:
-    """Interactive Demo J — live dashboard preview (clock + solids + divergence)."""
+    """Interactive Demo J — live resonator preview."""
     html = _brackish_preview_html(
         base=base, amplitude=amplitude, freq=freq,
         residual_weight=residual_weight, stable_mode=stable_mode,
@@ -13351,7 +13351,7 @@ def build_app() -> gr.Blocks:
                 f"Demo G               : D8 octahedron deformation loop\n"
                 f"Demo H               : D12 dodecahedron deformation loop\n"
                 f"Demo I               : D20 icosahedron deformation loop\n"
-                f"Demo J               : Brackish heartbeat · gauged clock + nested solids"
+                f"Demo J               : Nested Platonic resonator · wind-synced twist & breath"
             )
             header = build_unit_cell_viewport_header_html(pressure=float(dials["pressure"]))
             control_levels = _format_gravity_control_panel_html(dials, 0)

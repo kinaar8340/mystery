@@ -88,12 +88,17 @@ _VIEWPORT_AZIM = 45.0
 _NESTED_VIEWPORT_SCALE = 1.42
 
 
+_BRACKISH_VIEWPORT_REV = "resonator-only-v1"
+
+
 def brackish_params_key(**kwargs: Any) -> str:
     """Cache key for rendered media."""
-    return "|".join(
+    parts = [
         f"{k}={kwargs.get(k, DEFAULT_BRACKISH_PARAMS.get(k))!r}"
         for k in ("base", "amplitude", "freq", "residual_weight", "stable_mode", "visual_separation")
-    )
+    ]
+    parts.append(f"viewport={_BRACKISH_VIEWPORT_REV!r}")
+    return "|".join(parts)
 
 
 def _visual_radius_scales(visual_separation: float | None = None) -> dict[str, float]:
@@ -431,8 +436,9 @@ def _draw_nested_resonator(
     viewport_scale: float = 1.0,
     visual_separation: float | None = None,
     full_viewport: bool = False,
+    color_mode: str = "layer",
 ) -> None:
-    """Rainbow nested Platonic wireframe — Demo B aesthetic."""
+    """Nested Platonic wireframe — per-solid colors or rainbow gradient."""
     ax.set_facecolor(_VIEWPORT_BG)
     layers = _nested_layer_vertices(
         t,
@@ -440,26 +446,39 @@ def _draw_nested_resonator(
         viewport_scale=viewport_scale,
         visual_separation=visual_separation,
     )
-    segments: list[tuple[np.ndarray, np.ndarray, int]] = []
-    for verts, faces, layer_idx in layers:
-        for i0, i1 in _wireframe_edges(faces):
-            segments.append((verts[i0], verts[i1], layer_idx))
-    total_edges = max(1, len(segments))
     n_layers = max(1, len(_LAYERS))
     base_line_w = 2.6 if full_viewport else 1.8
     base_line_w *= 0.85 + 0.15 * min(1.3, wind / 1.2)
-    for edge_idx, (p0, p1, layer_idx) in enumerate(segments):
+    use_rainbow = str(color_mode).strip().lower() == "rainbow"
+    total_edges = max(
+        1,
+        sum(len(_wireframe_edges(faces)) for _, faces, _ in layers),
+    )
+    edge_idx = 0
+    for verts, faces, layer_idx in layers:
+        _name, _radius, _twist, layer_color, _sign = _LAYERS[layer_idx]
         depth = layer_idx / max(1, n_layers - 1)
-        ax.plot(
-            [p0[0], p1[0]],
-            [p0[1], p1[1]],
-            [p0[2], p1[2]],
-            color=_wireframe_edge_color_hex(edge_idx, total_edges, layer_index=layer_idx),
-            linewidth=base_line_w * (0.94 + 0.10 * depth),
-            solid_capstyle="round",
-            alpha=0.88 + 0.12 * depth,
-            zorder=5 + layer_idx,
-        )
+        line_w = base_line_w * (0.96 + 0.12 * depth)
+        line_alpha = 0.90 + 0.10 * depth
+        for i0, i1 in _wireframe_edges(faces):
+            p0, p1 = verts[i0], verts[i1]
+            if use_rainbow:
+                edge_color = _wireframe_edge_color_hex(
+                    edge_idx, total_edges, layer_index=layer_idx,
+                )
+            else:
+                edge_color = layer_color
+            ax.plot(
+                [p0[0], p1[0]],
+                [p0[1], p1[1]],
+                [p0[2], p1[2]],
+                color=edge_color,
+                linewidth=line_w,
+                solid_capstyle="round",
+                alpha=line_alpha,
+                zorder=5 + layer_idx,
+            )
+            edge_idx += 1
     visual_scales = _visual_radius_scales(visual_separation)
     max_visual_r = max(visual_scales.values())
     lim = max_visual_r * viewport_scale * 1.28
@@ -596,31 +615,37 @@ def _render_kwargs(**kwargs: Any) -> dict[str, Any]:
     return {k: v for k, v in kwargs.items() if k in allowed}
 
 
-def brackish_dashboard_to_data_uri(**kwargs: Any) -> str:
-    """Base64 data URI for Gradio HTML viewport."""
-    fig = build_brackish_dashboard(**_render_kwargs(**kwargs))
-    png = _figure_to_png_bytes(fig, dpi=int(kwargs.get("dpi", 88)))
+def brackish_resonator_to_data_uri(**kwargs: Any) -> str:
+    """Base64 data URI for Gradio HTML viewport — resonator only."""
+    render = _render_kwargs(**kwargs)
+    t_val = float(render.get("t", 6.0))
+    fig = build_brackish_resonator_viewport(t_val, **render)
+    png = _figure_to_png_bytes(fig, dpi=int(render.get("dpi", 88)))
     encoded = base64.b64encode(png).decode("ascii")
     return f"data:image/png;base64,{encoded}"
 
 
+def brackish_dashboard_to_data_uri(**kwargs: Any) -> str:
+    """Backward-compatible alias — Demo J viewport is resonator-only."""
+    return brackish_resonator_to_data_uri(**kwargs)
+
+
 def brackish_dashboard_viewport_html(**kwargs: Any) -> str:
-    """HF-safe viewport HTML for interactive Demo J preview."""
+    """HF-safe viewport HTML for interactive Demo J preview — resonator only."""
     render = _render_kwargs(**kwargs)
-    uri = brackish_dashboard_to_data_uri(**render)
-    title = "Demo J — Brackish Heartbeat"
+    uri = brackish_resonator_to_data_uri(**render)
+    title = "Demo J — Nested Platonic Resonator"
     subtitle = (
-        f"base={kwargs.get('base', 1.0):.2f} · "
+        f"wind base={kwargs.get('base', 1.0):.2f} · "
         f"amp={kwargs.get('amplitude', 0.4):.2f} · "
-        f"freq={kwargs.get('freq', 0.01):.3f} · "
-        f"R_wt={kwargs.get('residual_weight', 0.15):.2f}"
+        f"sep={kwargs.get('visual_separation', DEFAULT_BRACKISH_PARAMS['visual_separation']):.2f}"
     )
     return (
         f'<div class="myst-gravity-viewport-inner myst-gravity-demo-j">'
         f'<div class="myst-gravity-viewport-title">{title}</div>'
         f'<div class="myst-gravity-viewport-sub">{subtitle}</div>'
         f'<img class="myst-brackish-dashboard-img" src="{uri}" '
-        f'alt="Brackish heartbeat dashboard" style="width:100%;max-width:960px;border-radius:8px;" />'
+        f'alt="Nested Platonic resonator" style="width:100%;max-width:960px;border-radius:8px;" />'
         f"</div>"
     )
 
@@ -660,21 +685,21 @@ def render_brackish_clock_video(
     stable_mode: bool = False,
     visual_separation: float = DEFAULT_BRACKISH_PARAMS["visual_separation"],
 ) -> str:
-    """Looping MP4 — clock + rainbow resonator + live divergence chart (frame-synced)."""
+    """Looping MP4 — full-viewport nested Platonic resonator (Demo J)."""
     n_frames = max(2, int(duration * fps))
     times = np.linspace(0, duration, n_frames)
-    series = _build_sync_series(
-        times,
-        base=base,
-        amplitude=amplitude,
-        freq=freq,
-        residual_weight=residual_weight,
-        stable_mode=stable_mode,
-        visual_separation=visual_separation,
-    )
     rgb_frames = []
-    for frame_idx in range(n_frames):
-        fig = build_brackish_sync_frame(frame_idx, series, dpi=dpi)
+    for t_val in times:
+        fig = build_brackish_resonator_viewport(
+            float(t_val),
+            base=base,
+            amplitude=amplitude,
+            freq=freq,
+            residual_weight=residual_weight,
+            stable_mode=stable_mode,
+            visual_separation=visual_separation,
+            dpi=dpi,
+        )
         rgb_frames.append(_figure_to_rgb(fig, dpi=dpi))
     path = _encode_mp4(rgb_frames, fps=fps)
     print(f"[brackish] render_brackish_clock_video: {len(rgb_frames)} frames -> {path}", flush=True)
