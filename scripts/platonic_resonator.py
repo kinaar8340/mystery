@@ -1,0 +1,227 @@
+"""Platonic solid topology, rotation, twist, and breathing for nested resonator animations."""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Iterable
+
+import numpy as np
+
+SOLID_NAMES = ("tetrahedron", "octahedron", "cube", "icosahedron", "dodecahedron")
+FACE_COUNTS = {"tetrahedron": 4, "octahedron": 8, "cube": 6, "icosahedron": 20, "dodecahedron": 12}
+
+
+def _polyhedron_dual(
+    vertices: list[tuple[float, float, float]],
+    faces: list[tuple[int, ...]],
+) -> tuple[list[tuple[float, float, float]], list[tuple[int, ...]]]:
+    vert_array = np.asarray(vertices, dtype=float)
+    dual_vertices = [tuple(vert_array[list(face)].mean(axis=0)) for face in faces]
+    vert_faces: list[list[int]] = [[] for _ in range(len(vertices))]
+    for fi, face in enumerate(faces):
+        for vi in face:
+            vert_faces[vi].append(fi)
+
+    dual_faces: list[tuple[int, ...]] = []
+    for vi, adjacent in enumerate(vert_faces):
+        if len(adjacent) < 3:
+            continue
+        center = vert_array[vi]
+        normal = center / max(np.linalg.norm(center), 1e-12)
+        ref = np.array([1.0, 0.0, 0.0])
+        if abs(float(np.dot(normal, ref))) > 0.9:
+            ref = np.array([0.0, 1.0, 0.0])
+        tangent_a = np.cross(normal, ref)
+        tangent_a /= max(np.linalg.norm(tangent_a), 1e-12)
+        tangent_b = np.cross(normal, tangent_a)
+        angles: list[tuple[float, int]] = []
+        for fi in adjacent:
+            delta = np.asarray(dual_vertices[fi]) - center
+            angle = float(np.arctan2(np.dot(delta, tangent_b), np.dot(delta, tangent_a)))
+            angles.append((angle, fi))
+        angles.sort(key=lambda item: item[0])
+        dual_faces.append(tuple(fi for _, fi in angles))
+    return dual_vertices, dual_faces
+
+
+def _icosahedron_topology() -> tuple[list[tuple[float, float, float]], list[tuple[int, ...]]]:
+    tau = (1.0 + np.sqrt(5.0)) / 2.0
+    vertices = [
+        (-1.0, tau, 0.0),
+        (1.0, tau, 0.0),
+        (-1.0, -tau, 0.0),
+        (1.0, -tau, 0.0),
+        (0.0, -1.0, tau),
+        (0.0, 1.0, tau),
+        (0.0, -1.0, -tau),
+        (0.0, 1.0, -tau),
+        (tau, 0.0, -1.0),
+        (tau, 0.0, 1.0),
+        (-tau, 0.0, -1.0),
+        (-tau, 0.0, 1.0),
+    ]
+    faces = [
+        (0, 11, 5),
+        (0, 5, 1),
+        (0, 1, 7),
+        (0, 7, 10),
+        (0, 10, 11),
+        (1, 5, 9),
+        (5, 11, 4),
+        (11, 10, 2),
+        (10, 7, 6),
+        (7, 1, 8),
+        (3, 9, 4),
+        (3, 4, 2),
+        (3, 2, 6),
+        (3, 6, 8),
+        (3, 8, 9),
+        (4, 9, 5),
+        (2, 4, 11),
+        (6, 2, 10),
+        (8, 6, 7),
+        (9, 8, 1),
+    ]
+    return vertices, faces
+
+
+def platonic_topology(name: str) -> tuple[np.ndarray, list[tuple[int, ...]]]:
+    """Return unit-scale vertices and face index loops for a named Platonic solid."""
+    solid = str(name).strip().lower()
+    if solid == "tetrahedron":
+        vertices = [(1.0, 1.0, 1.0), (1.0, -1.0, -1.0), (-1.0, 1.0, -1.0), (-1.0, -1.0, 1.0)]
+        faces = [(0, 1, 2), (0, 2, 3), (0, 3, 1), (1, 3, 2)]
+    elif solid == "octahedron":
+        vertices = [
+            (1.0, 0.0, 0.0),
+            (-1.0, 0.0, 0.0),
+            (0.0, 1.0, 0.0),
+            (0.0, -1.0, 0.0),
+            (0.0, 0.0, 1.0),
+            (0.0, 0.0, -1.0),
+        ]
+        faces = [
+            (4, 2, 0),
+            (4, 0, 3),
+            (4, 3, 1),
+            (4, 1, 2),
+            (5, 0, 2),
+            (5, 3, 0),
+            (5, 1, 3),
+            (5, 2, 1),
+        ]
+    elif solid == "cube":
+        vertices = [
+            (-1.0, -1.0, -1.0),
+            (1.0, -1.0, -1.0),
+            (1.0, 1.0, -1.0),
+            (-1.0, 1.0, -1.0),
+            (-1.0, -1.0, 1.0),
+            (1.0, -1.0, 1.0),
+            (1.0, 1.0, 1.0),
+            (-1.0, 1.0, 1.0),
+        ]
+        faces = [
+            (4, 5, 6, 7),
+            (0, 3, 2, 1),
+            (0, 1, 5, 4),
+            (2, 3, 7, 6),
+            (0, 4, 7, 3),
+            (1, 2, 6, 5),
+        ]
+    elif solid == "icosahedron":
+        raw_vertices, faces = _icosahedron_topology()
+        vertices = raw_vertices
+    elif solid == "dodecahedron":
+        raw_vertices, faces = _polyhedron_dual(*_icosahedron_topology())
+        vertices = raw_vertices
+    else:
+        raise ValueError(f"unknown Platonic solid: {name}")
+    vert_array = np.asarray(vertices, dtype=float)
+    max_abs = max(abs(c) for vtx in vert_array for c in vtx)
+    if max_abs > 1e-12:
+        vert_array = vert_array / max_abs
+    return vert_array, faces
+
+
+def rotation_matrix_xyz(rx: float, ry: float, rz: float) -> np.ndarray:
+    """Compose intrinsic rotations about x, y, z axes."""
+    cx, sx = np.cos(rx), np.sin(rx)
+    cy, sy = np.cos(ry), np.sin(ry)
+    cz, sz = np.cos(rz), np.sin(rz)
+    rx_mat = np.array([[1, 0, 0], [0, cx, -sx], [0, sx, cx]], dtype=float)
+    ry_mat = np.array([[cy, 0, sy], [0, 1, 0], [-sy, 0, cy]], dtype=float)
+    rz_mat = np.array([[cz, -sz, 0], [sz, cz, 0], [0, 0, 1]], dtype=float)
+    return rz_mat @ ry_mat @ rx_mat
+
+
+def breathing_scale(t: float, wind: float, depth: float = 0.12) -> float:
+    """Radius oscillation — depth scales with wind²."""
+    return 1.0 + depth * (wind**2) * np.sin(2.0 * np.pi * 0.5 * t + wind)
+
+
+@dataclass
+class ResonatorLayer:
+    """One concentric Platonic shell in the nested heartbeat."""
+
+    name: str
+    base_radius: float
+    base_twist_freq: float
+    harmonic_factor: float = 1.0
+    color: str = "#5eb3ff"
+    alpha: float = 0.55
+    counter_twist_sign: int = 1
+
+    def twist_angles(self, t: float, wind: float, residual_lag: float) -> tuple[float, float, float]:
+        """Rotation + counter-twist driven by brackish wind."""
+        freq = self.base_twist_freq * wind * self.harmonic_factor
+        lag = residual_lag * self.counter_twist_sign
+        rz = freq * t + lag
+        ry = -0.5 * self.counter_twist_sign * freq * t
+        rx = 0.25 * freq * np.sin(0.3 * t)
+        return float(rx), float(ry), float(rz)
+
+    def transformed_vertices(
+        self,
+        t: float,
+        wind: float,
+        residual_lag: float,
+    ) -> tuple[np.ndarray, list[tuple[int, ...]]]:
+        verts, faces = platonic_topology(self.name)
+        scale = self.base_radius * breathing_scale(t, wind)
+        rx, ry, rz = self.twist_angles(t, wind, residual_lag)
+        rot = rotation_matrix_xyz(rx, ry, rz)
+        return (rot @ (verts * scale).T).T, faces
+
+
+DEFAULT_LAYERS: tuple[ResonatorLayer, ...] = (
+    ResonatorLayer("tetrahedron", 0.22, 1.20, harmonic_factor=1.0, color="#e63946", counter_twist_sign=1),
+    ResonatorLayer("octahedron", 0.38, 0.85, harmonic_factor=np.e / np.pi, color="#457b9d", counter_twist_sign=-1),
+    ResonatorLayer("cube", 0.55, 0.62, harmonic_factor=(1 + np.sqrt(5)) / 2, color="#c9a227", counter_twist_sign=1),
+    ResonatorLayer("icosahedron", 0.72, 0.45, harmonic_factor=np.pi / np.e, color="#2a9d8f", counter_twist_sign=-1),
+    ResonatorLayer("dodecahedron", 0.90, 0.30, harmonic_factor=1.618, color="#9b5de5", counter_twist_sign=1),
+)
+
+
+def active_layers(
+    solids: Iterable[str] | None = None,
+) -> list[ResonatorLayer]:
+    """Filter default nested shells by name."""
+    if solids is None:
+        return list(DEFAULT_LAYERS)
+    wanted = {s.strip().lower() for s in solids}
+    return [layer for layer in DEFAULT_LAYERS if layer.name in wanted]
+
+
+def wireframe_edges(faces: list[tuple[int, ...]]) -> list[tuple[int, int]]:
+    """Unique undirected edges for face loops."""
+    seen: set[tuple[int, int]] = set()
+    edges: list[tuple[int, int]] = []
+    for face in faces:
+        for i in range(len(face)):
+            a, b = face[i], face[(i + 1) % len(face)]
+            key = (min(a, b), max(a, b))
+            if key not in seen:
+                seen.add(key)
+                edges.append(key)
+    return edges

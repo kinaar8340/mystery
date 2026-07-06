@@ -14,6 +14,7 @@ SCRIPTS = [
     ("phi_e_pi_analysis.py", None),
     ("hopf_constant_bridge.py", None),
     ("vortex_369_clock.py", None),
+    ("brackish_clock.py", None),
     ("residual_bound_probe.py", None),
     ("residual_kappa_sweep.py", None),
     ("pde_relaxation_probe.py", None),

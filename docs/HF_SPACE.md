@@ -84,6 +84,10 @@ Cover image is served from GitHub raw (`mystery_image.png` at repo root) — HF 
 | **README** | In-app project summary |
 | **Figures** | Reference plots from the probe suite |
 
+**Demo J — Brackish Heartbeat** (Gravity tab, demo row): gauged W_g clock +
+nested Platonic solids modulated by `brackish_dynamics` (variable wind). See
+`notes/brackish_dynamics.md` and `scripts/brackish_clock.py`.
+
 ### Gravity tab layout
 
 **Left column**

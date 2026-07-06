@@ -15,6 +15,7 @@ from collections.abc import Callable, Iterator
 import gradio as gr
 import matplotlib.pyplot as plt
 
+from brackish_core import render_brackish_clock_video
 from demo_core import (
     BOOT_QUOTE_STRING,
     CLAIMS_MD,
@@ -934,9 +935,9 @@ _SHAPE_NAV_IDS: tuple[str, ...] = ("D4", "D6", "D8", "D12", "D20")
 _DEFAULT_ACTIVE_SHAPE = "D6"
 _NO_ACTIVE_SHAPE = ""
 _NO_ACTIVE_DEMO_LETTER = ""
-# Demo B–I flip-flop with platonic D* (Demo A is outside this group).
+# Demo B–J flip-flop with platonic D* (Demo A is outside this group).
 _DEMO_PLATONIC_FLIP_LETTERS: frozenset[str] = frozenset(
-    letter for letter in tuple(chr(ord("A") + i) for i in range(9)) if letter != "A"
+    letter for letter in tuple(chr(ord("A") + i) for i in range(10)) if letter != "A"
 )
 
 
@@ -1266,6 +1267,12 @@ def _demo_viewport_preserve_active_demo(
             return _demo_viewport_show_breathing_video()
         except Exception:
             logger.exception("breathing video preserve failed on dimension switch")
+            return _demo_viewport_show_plot(dim_fig)
+    if letter in _BRACKISH_DEMO_LETTERS:
+        try:
+            return _demo_viewport_show_brackish_video()
+        except Exception:
+            logger.exception("brackish video preserve failed on dimension switch")
             return _demo_viewport_show_plot(dim_fig)
     if _is_active_shape(active_shape):
         try:
@@ -8310,8 +8317,8 @@ _RENDER_DETAIL_IMAGE_DPI = 120
 # Index of unit_cell_image within gravity_preset_outputs
 # (16 keypad + 1 legacy back skip + 9 child nav + 2 edit btns + 20 sliders + …).
 _GRAVITY_PRESET_IMAGE_OUT_INDEX = 51
-_GRAVITY_CHILD_NAV_LETTERS: tuple[str, ...] = tuple(chr(ord("A") + i) for i in range(9))
-# Demo B — E→F→G→H→I pipeline; C/D — D6 preset convex; E/G/H/I — platonic deform; F — breathing.
+_GRAVITY_CHILD_NAV_LETTERS: tuple[str, ...] = tuple(chr(ord("A") + i) for i in range(10))
+# Demo B — E→F→G→H→I pipeline; C/D — D6 preset convex; E/G/H/I — platonic deform; F — breathing; J — brackish.
 _PIPELINE_DEMO_LETTERS: frozenset[str] = frozenset({"B"})
 _PRESET_DEMO_LETTERS: frozenset[str] = frozenset({"C", "D"})
 _PRESET_DEMO_PRESSURE_BY_LETTER: dict[str, float] = {"C": 0.50, "D": 0.25}
@@ -8335,8 +8342,10 @@ _DEMO_VIEWPORT_OVERLAY_BY_LETTER: dict[str, tuple[str, str]] = {
     "G": ("Demo G", "D8 · Octahedron · breathing deformation"),
     "H": ("Demo H", "D12 · Dodecahedron · breathing deformation"),
     "I": ("Demo I", "D20 · Icosahedron · breathing deformation"),
+    "J": ("Demo J", "Brackish heartbeat · gauged clock + nested Platonic solids"),
 }
 _BREATHING_DEMO_LETTERS: frozenset[str] = frozenset({"F"})
+_BRACKISH_DEMO_LETTERS: frozenset[str] = frozenset({"J"})
 _GRAVITY_HOME_DIALS = {
     "phi": 1.0,
     "e": 1.0,
@@ -9176,6 +9185,7 @@ _DEMO_DEFORM_VIDEO_CACHE: dict[str, str] = {}
 _DEMO_PRESET_VIDEO_CACHE: dict[str, str] = {}
 _DEMO_PIPELINE_VIDEO_CACHE: str | None = None
 _BREATHING_DEMO_VIDEO_CACHE: str | None = None
+_BRACKISH_DEMO_VIDEO_CACHE: str | None = None
 _APP_DIR = os.path.dirname(os.path.abspath(__file__))
 _BUNDLED_PIPELINE_VIDEO = os.path.join(_APP_DIR, "assets", "demo_b_pipeline_efghi.mp4")
 _BUNDLED_PRESET_DEMO_VIDEOS: dict[str, str] = {
@@ -9364,6 +9374,15 @@ def _get_breathing_demo_video_path() -> str:
     return _BREATHING_DEMO_VIDEO_CACHE
 
 
+def _get_brackish_demo_video_path() -> str:
+    """Gradio-served path to looping brackish heartbeat MP4."""
+    global _BRACKISH_DEMO_VIDEO_CACHE
+    if _BRACKISH_DEMO_VIDEO_CACHE is None:
+        raw_path = render_brackish_clock_video(duration=8.0, fps=10, dpi=72)
+        _BRACKISH_DEMO_VIDEO_CACHE = _cache_media_for_gradio(raw_path)
+    return _BRACKISH_DEMO_VIDEO_CACHE
+
+
 def _get_demo_a_startup_viewport_html() -> str:
     """HF-safe startup viewport — Gradio upload cache + /gradio_api/file= img."""
     global _DEMO_A_STARTUP_HTML_CACHE
@@ -9466,6 +9485,18 @@ def _demo_viewport_show_breathing_video() -> tuple:
     """Show looping breathing GIF/MP4 via gr.Video (HF-safe cached path)."""
     video_path = _get_breathing_demo_video_path()
     title, subtitle = _demo_letter_overlay_copy("F")
+    return (
+        gr.update(value=None, visible=False),
+        gr.update(value=video_path, visible=True, autoplay=True, loop=True),
+        gr.update(value="", visible=False),
+        _demo_viewport_overlay_update(title=title, subtitle=subtitle),
+    )
+
+
+def _demo_viewport_show_brackish_video() -> tuple:
+    """Show looping brackish heartbeat MP4 via gr.Video (HF-safe cached path)."""
+    video_path = _get_brackish_demo_video_path()
+    title, subtitle = _demo_letter_overlay_copy("J")
     return (
         gr.update(value=None, visible=False),
         gr.update(value=video_path, visible=True, autoplay=True, loop=True),
@@ -9607,6 +9638,8 @@ def _switch_gravity_demo_viewport_only(letter: str) -> tuple:
         return _demo_deform_viewport_only(letter)
     if letter in _BREATHING_DEMO_LETTERS:
         return _demo_breathing_viewport_only()
+    if letter in _BRACKISH_DEMO_LETTERS:
+        return _demo_brackish_viewport_only()
     fig = _get_gravity_demo_plotly_figure(letter)
     return _demo_viewport_show_plot(fig)
 
@@ -9653,6 +9686,15 @@ def _demo_breathing_viewport_only() -> tuple:
         return _demo_viewport_show_plot(_get_rigid_preset_plotly_figure())
 
 
+def _demo_brackish_viewport_only() -> tuple:
+    """Demo J viewport — brackish heartbeat MP4 after tab latch."""
+    try:
+        return _demo_viewport_show_brackish_video()
+    except Exception:
+        logger.exception("brackish demo video failed for Demo J")
+        return _demo_viewport_show_plot(_get_rigid_preset_plotly_figure())
+
+
 def _demo_startup_viewport_only() -> tuple:
     """Demo A viewport — startup landing image after tab latch."""
     try:
@@ -9692,6 +9734,14 @@ def _launch_breathing_demo(letter: str) -> tuple:
     if active not in _BREATHING_DEMO_LETTERS:
         active = "F"
     return (*_demo_breathing_viewport_only(), *_demo_tab_latch_immediate(active))
+
+
+def _launch_brackish_demo(letter: str) -> tuple:
+    """Demo J — latch + brackish heartbeat (single-shot fallback for programmatic calls)."""
+    active = str(letter or "J").strip().upper()
+    if active not in _BRACKISH_DEMO_LETTERS:
+        active = "J"
+    return (*_demo_brackish_viewport_only(), *_demo_tab_latch_immediate(active))
 
 
 def _launch_demo_a() -> tuple:
@@ -9738,6 +9788,8 @@ def _switch_gravity_demo(letter: str) -> tuple:
         return _launch_deform_demo(letter)
     if letter in _BREATHING_DEMO_LETTERS:
         return _launch_breathing_demo(letter)
+    if letter in _BRACKISH_DEMO_LETTERS:
+        return _launch_brackish_demo(letter)
     slot = _gravity_demo_letter_slot(letter)
     fig = _get_gravity_demo_plotly_figure(letter)
     return (
@@ -12957,7 +13009,8 @@ def build_app() -> gr.Blocks:
                 f"Demo F               : breathing unit-cell loop\n"
                 f"Demo G               : D8 octahedron deformation loop\n"
                 f"Demo H               : D12 dodecahedron deformation loop\n"
-                f"Demo I               : D20 icosahedron deformation loop"
+                f"Demo I               : D20 icosahedron deformation loop\n"
+                f"Demo J               : Brackish heartbeat · gauged clock + nested solids"
             )
             header = build_unit_cell_viewport_header_html(pressure=float(dials["pressure"]))
             control_levels = _format_gravity_control_panel_html(dials, 0)

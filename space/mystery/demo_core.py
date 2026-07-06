@@ -4409,6 +4409,7 @@ PROBE_SCRIPTS: tuple[tuple[str, str], ...] = (
     ("phi_e_pi_analysis.py", "φ²+e²≈π² triangle & 30-60-90"),
     ("hopf_constant_bridge.py", "κ, W_g, θ_crit vs e/π"),
     ("vortex_369_clock.py", "3-6-9 clock & Rodin mod-9"),
+    ("brackish_clock.py", "Gauged clock + brackish heartbeat"),
     ("residual_bound_probe.py", "Bound R via W_g, κ"),
     ("residual_kappa_sweep.py", "B(κ) sweep; κ* null"),
     ("pde_relaxation_probe.py", "Meta-seeded PDE + FFT"),
