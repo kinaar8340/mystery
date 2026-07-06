@@ -67,18 +67,18 @@ DEFAULT_BRACKISH_PARAMS: dict[str, Any] = {
     "freq": 0.01,
     "residual_weight": 0.15,
     "stable_mode": False,
-    "visual_separation": 0.22,
+    "visual_separation": 0.40,
 }
 
 # === VISUAL ONLY — does not affect twist, counter-twist, or breathing math ===
 _DEFAULT_VISUAL_SCALES: dict[str, float] = {
     "tetrahedron": 0.32,
-    "octahedron": 0.52,
-    "cube": 0.72,
-    "icosahedron": 0.92,
-    "dodecahedron": 1.15,
+    "octahedron": 0.72,
+    "cube": 1.12,
+    "icosahedron": 1.52,
+    "dodecahedron": 1.92,
 }
-_DEFAULT_VISUAL_SEPARATION = 0.22
+_DEFAULT_VISUAL_SEPARATION = 0.40
 _SOLID_ORDER = ("tetrahedron", "octahedron", "cube", "icosahedron", "dodecahedron")
 
 _VIEWPORT_BG = "#0a0a0f"

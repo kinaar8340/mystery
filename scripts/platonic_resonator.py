@@ -13,12 +13,12 @@ FACE_COUNTS = {"tetrahedron": 4, "octahedron": 8, "cube": 6, "icosahedron": 20, 
 # === VISUAL ONLY — does not affect twist, counter-twist, or breathing math ===
 DEFAULT_VISUAL_SCALES: dict[str, float] = {
     "tetrahedron": 0.32,
-    "octahedron": 0.52,
-    "cube": 0.72,
-    "icosahedron": 0.92,
-    "dodecahedron": 1.15,
+    "octahedron": 0.72,
+    "cube": 1.12,
+    "icosahedron": 1.52,
+    "dodecahedron": 1.92,
 }
-DEFAULT_VISUAL_SEPARATION = 0.22
+DEFAULT_VISUAL_SEPARATION = 0.40
 
 
 def _polyhedron_dual(
