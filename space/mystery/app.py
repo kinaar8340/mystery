@@ -12814,13 +12814,13 @@ def build_app() -> gr.Blocks:
                 viewport_col,
                 brackish_controls_col,
             ]
-            brackish_slider_inputs = [
+            brackish_dial_inputs = [
                 brackish_base,
                 brackish_amplitude,
                 brackish_freq,
                 brackish_residual,
-                brackish_stable,
             ]
+            brackish_all_inputs = [*brackish_dial_inputs, brackish_stable]
             brackish_viewport_outputs = list(gravity_demo_viewport_outputs)
 
             def _make_demo_letter_click_begin(letter: str):
@@ -12847,37 +12847,43 @@ def build_app() -> gr.Blocks:
                     show_progress="hidden",
                 )
 
-            for slider in brackish_slider_inputs:
-                slider.release(
+            for dial in brackish_dial_inputs:
+                dial.release(
                     _brackish_update_preview,
-                    inputs=brackish_slider_inputs,
+                    inputs=brackish_all_inputs,
                     outputs=brackish_viewport_outputs,
                     show_progress="hidden",
                 )
+            brackish_stable.change(
+                _brackish_update_preview,
+                inputs=brackish_all_inputs,
+                outputs=brackish_viewport_outputs,
+                show_progress="hidden",
+            )
             brackish_animate_btn.click(
                 _brackish_animate_loop,
-                inputs=brackish_slider_inputs,
+                inputs=brackish_all_inputs,
                 outputs=brackish_viewport_outputs,
                 show_progress="full",
             )
             brackish_preset_calm.click(
                 lambda: _brackish_apply_preset("calm_sea"),
-                outputs=[*brackish_slider_inputs, *brackish_viewport_outputs],
+                outputs=[*brackish_all_inputs, *brackish_viewport_outputs],
                 show_progress="hidden",
             )
             brackish_preset_storm.click(
                 lambda: _brackish_apply_preset("building_storm"),
-                outputs=[*brackish_slider_inputs, *brackish_viewport_outputs],
+                outputs=[*brackish_all_inputs, *brackish_viewport_outputs],
                 show_progress="hidden",
             )
             brackish_preset_residual.click(
                 lambda: _brackish_apply_preset("residual_dominant"),
-                outputs=[*brackish_slider_inputs, *brackish_viewport_outputs],
+                outputs=[*brackish_all_inputs, *brackish_viewport_outputs],
                 show_progress="hidden",
             )
             brackish_preset_steady.click(
                 lambda: _brackish_apply_preset("steady_gauged"),
-                outputs=[*brackish_slider_inputs, *brackish_viewport_outputs],
+                outputs=[*brackish_all_inputs, *brackish_viewport_outputs],
                 show_progress="hidden",
             )
 
