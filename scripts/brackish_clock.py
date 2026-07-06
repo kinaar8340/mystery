@@ -128,20 +128,34 @@ def draw_zero_point_manifold(ax: plt.Axes, mapping: dict) -> None:
     ax.set_title("Zero-point manifold\n(W_g gauged · 3-6-9 axis)", fontsize=9)
 
 
-def draw_clock_hands(ax: plt.Axes, clock_deg: float, effective_deg: float) -> None:
-    """Steady clock hand vs integrated effective-time hand."""
-    for deg, color, label in (
-        (clock_deg, "#c9a227", "clock"),
-        (effective_deg, "#9b5de5", "effective"),
+def gauged_minute_angle(t: float, wind: float) -> float:
+    """Faster hand — 12× hour rate on the W_g manifold."""
+    tick_rate = (2.0 * np.pi * 12.0 / W_G) * wind
+    return float(np.degrees((tick_rate * t) % (2.0 * np.pi)))
+
+
+def draw_clock_hands(
+    ax: plt.Axes,
+    t: float,
+    wind: float,
+    hour_deg: float,
+    effective_deg: float,
+) -> None:
+    """Hour + minute gauged hands and integrated effective-time track."""
+    minute_deg = gauged_minute_angle(t, wind)
+    for deg, length, color, lw, ls in (
+        (hour_deg, 0.50, "#c9a227", 3.0, "-"),
+        (minute_deg, 0.72, "#f4d35e", 1.4, "-"),
+        (effective_deg, 0.62, "#9b5de5", 1.8, (0, (4, 3))),
     ):
         rad = np.radians(90 - deg)
         ax.plot(
-            [0, 0.75 * np.cos(rad)],
-            [0, 0.75 * np.sin(rad)],
+            [0, length * np.cos(rad)],
+            [0, length * np.sin(rad)],
             color=color,
-            lw=2.0 if label == "clock" else 1.5,
-            alpha=0.9 if label == "clock" else 0.65,
-            linestyle="-" if label == "clock" else "--",
+            lw=lw,
+            linestyle=ls,
+            solid_capstyle="round",
         )
 
 
@@ -261,7 +275,7 @@ def build_animation(
         eff_deg = float(np.degrees(effective[frame_idx] % (2.0 * np.pi)))
         ax_clock.cla()
         draw_zero_point_manifold(ax_clock, mapping)
-        draw_clock_hands(ax_clock, clock_deg, eff_deg)
+        draw_clock_hands(ax_clock, t, wind, clock_deg, eff_deg)
         ax_clock.text(
             -1.25,
             -1.25,

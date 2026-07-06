@@ -2,16 +2,19 @@
 
 from __future__ import annotations
 
+import base64
 import io
 import subprocess
 import tempfile
 from pathlib import Path
+from typing import Any
 
 import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.gridspec import GridSpec
 from mpl_toolkits.mplot3d import Axes3D  # noqa: F401
 
 PHI = (1.0 + np.sqrt(5.0)) / 2.0
@@ -20,6 +23,58 @@ PI = np.pi
 R = PHI**2 + E**2 - PI**2
 W_G = 350.0 / PI
 KAPPA_DOC = 0.85
+E_OVER_PI = E / PI
+
+BRACKISH_PRESETS: dict[str, dict[str, Any]] = {
+    "calm_sea": {
+        "label": "Calm Sea",
+        "base": 1.0,
+        "amplitude": 0.05,
+        "freq": 0.008,
+        "residual_weight": 0.10,
+        "stable_mode": False,
+    },
+    "building_storm": {
+        "label": "Building Storm",
+        "base": 1.0,
+        "amplitude": 0.55,
+        "freq": 0.018,
+        "residual_weight": 0.15,
+        "stable_mode": False,
+    },
+    "residual_dominant": {
+        "label": "Residual Dominant",
+        "base": 0.80,
+        "amplitude": 0.20,
+        "freq": 0.012,
+        "residual_weight": 0.35,
+        "stable_mode": False,
+    },
+    "steady_gauged": {
+        "label": "Steady Gauged",
+        "base": 1.0,
+        "amplitude": 0.0,
+        "freq": 0.01,
+        "residual_weight": 0.12,
+        "stable_mode": True,
+    },
+}
+
+DEFAULT_BRACKISH_PARAMS: dict[str, Any] = {
+    "base": 1.0,
+    "amplitude": 0.4,
+    "freq": 0.01,
+    "residual_weight": 0.15,
+    "stable_mode": False,
+}
+
+
+def brackish_params_key(**kwargs: Any) -> str:
+    """Cache key for rendered media."""
+    return "|".join(
+        f"{k}={kwargs.get(k, DEFAULT_BRACKISH_PARAMS.get(k))!r}"
+        for k in ("base", "amplitude", "freq", "residual_weight", "stable_mode")
+    )
 
 
 def brackish_dynamics(
@@ -30,10 +85,14 @@ def brackish_dynamics(
     freq: float = 0.01,
     residual_weight: float = 0.15,
     stable_mode: bool = False,
+    kappa_coupling: float = 0.0,
 ) -> float:
     if stable_mode:
-        return max(0.1, float(base + residual_weight * R))
-    wind = base + amplitude * np.sin(2.0 * np.pi * freq * t) + residual_weight * R
+        wind = base + residual_weight * R
+    else:
+        wind = base + amplitude * np.sin(2.0 * np.pi * freq * t) + residual_weight * R
+    if kappa_coupling:
+        wind *= 1.0 + kappa_coupling * (KAPPA_DOC - E_OVER_PI)
     return max(0.1, float(wind))
 
 
@@ -107,77 +166,209 @@ def _wireframe_edges(faces):
     return edges
 
 
-def _gauged_clock_angle(t: float, wind: float) -> float:
+def _hand_xy(deg: float, length: float) -> tuple[float, float]:
+    rad = np.radians(90.0 - deg)
+    return float(length * np.cos(rad)), float(length * np.sin(rad))
+
+
+def _gauged_hour_angle(t: float, wind: float) -> float:
     return float(np.degrees(((2.0 * np.pi / W_G) * wind * t) % (2.0 * np.pi)))
 
 
-def _integrate_effective(times, **kwargs):
+def _gauged_minute_angle(t: float, wind: float) -> float:
+    return float(np.degrees(((2.0 * np.pi * 12.0 / W_G) * wind * t) % (2.0 * np.pi)))
+
+
+def _integrate_effective(times: np.ndarray, **kwargs) -> np.ndarray:
     winds = np.array([brackish_dynamics(t, **kwargs) for t in times])
-    dt = times[1] - times[0] if len(times) > 1 else 1.0
+    dt = float(times[1] - times[0]) if len(times) > 1 else 1.0
     return np.cumsum(winds) * dt
 
 
-def build_brackish_frame(
-    t: float,
-    effective: float,
+def _divergence_series(
+    *,
+    horizon: float = 240.0,
+    n_points: int = 120,
+    **kwargs,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    times = np.linspace(0.0, horizon, n_points)
+    winds = np.array([brackish_dynamics(t, **kwargs) for t in times])
+    clock = np.array([_gauged_hour_angle(t, w) for t, w in zip(times, winds)])
+    effective = np.degrees(_integrate_effective(times, **kwargs) % (2.0 * np.pi))
+    return times, clock, effective
+
+
+def _wind_tint(color: str, wind: float) -> tuple[float, float, float, float]:
+    """Shift layer intensity with brackish_dynamics — visual coupling."""
+    from matplotlib.colors import to_rgb
+
+    r, g, b = to_rgb(color)
+    pulse = min(1.4, 0.75 + 0.35 * wind)
+    return (min(1.0, r * pulse), min(1.0, g * pulse), min(1.0, b * pulse), 0.35 + 0.45 * min(1.0, wind / 1.5))
+
+
+def _draw_zero_point_clock(ax, t: float, wind: float, effective: float, *, stable_mode: bool):
+    ax.set_facecolor("#0a0a0f")
+    ax.set_aspect("equal")
+    ax.add_patch(plt.Circle((0, 0), 1.0, fill=False, color="#555", lw=1.4))
+    ax.plot([0, 0], [0, 1.08], color="#c9a227", lw=2.8, zorder=6, solid_capstyle="round")
+    for hour in range(1, 13):
+        angle = np.radians(90 - hour * 30)
+        x, y = np.cos(angle), np.sin(angle)
+        is_369 = hour in (3, 6, 9, 12)
+        ax.plot([0.88 * x, x], [0.88 * y, y], color="#e63946" if is_369 else "#444", lw=1.0 if is_369 else 0.6)
+        if hour % 3 == 0:
+            ax.text(1.14 * x, 1.14 * y, str(hour), ha="center", va="center", fontsize=7, color="#e63946" if is_369 else "#888")
+
+    hour_deg = _gauged_hour_angle(t, wind)
+    minute_deg = _gauged_minute_angle(t, wind)
+    eff_deg = float(np.degrees(effective % (2.0 * np.pi)))
+
+    for deg, length, color, lw, ls, label in (
+        (hour_deg, 0.50, "#c9a227", 3.0, "-", "hour"),
+        (minute_deg, 0.72, "#f4d35e", 1.4, "-", "minute"),
+        (eff_deg, 0.62, "#9b5de5", 1.8, (0, (4, 3)), "effective"),
+    ):
+        hx, hy = _hand_xy(deg, length)
+        ax.plot([0, hx], [0, hy], color=color, lw=lw, ls=ls, solid_capstyle="round", zorder=5)
+
+    ax.set_xlim(-1.3, 1.3)
+    ax.set_ylim(-1.3, 1.3)
+    ax.axis("off")
+    mode = "Stable" if stable_mode else "Dynamic"
+    ax.set_title(f"Gauged clock ({mode}) · wind={wind:.2f}", fontsize=9, color="#ddd", pad=4)
+    ax.text(
+        -1.25, -1.18,
+        "gold=hour · thin gold=minute · purple dashed=∫wind",
+        fontsize=6.5, color="#888",
+    )
+
+
+def _draw_divergence_strip(ax, times, clock, effective, wind: float):
+    ax.set_facecolor("#0a0a0f")
+    ax.plot(times, clock, color="#c9a227", lw=1.2, label="clock")
+    ax.plot(times, effective, color="#9b5de5", lw=1.0, ls="--", label="∫wind")
+    ax.fill_between(times, clock, effective, alpha=0.12, color="#457b9d")
+    delta = float(np.mean(np.abs(clock - effective)))
+    ax.set_title(f"Divergence · mean |Δ|={delta:.1f}° · wind={wind:.2f}", fontsize=8, color="#ccc")
+    ax.tick_params(colors="#777", labelsize=6)
+    ax.set_xlabel("t", fontsize=7, color="#777")
+    ax.set_ylabel("°", fontsize=7, color="#777")
+    for spine in ax.spines.values():
+        spine.set_color("#333")
+    ax.grid(True, alpha=0.15, color="#444")
+    ax.legend(loc="upper right", fontsize=6, framealpha=0.3)
+
+
+def _draw_nested_resonator(ax, t: float, wind: float):
+    ax.set_facecolor("#0a0a0f")
+    lag = 0.08 * R * wind
+    breath_sync = np.sin(2.0 * np.pi * 0.5 * t + wind)
+    for name, radius, twist, color, sign in _LAYERS:
+        verts, faces = _platonic_topology(name)
+        scale = radius * (1.0 + 0.14 * wind**2 * breath_sync)
+        freq = twist * wind
+        rot = _rotation_matrix(0.25 * freq * np.sin(0.3 * t), -0.5 * sign * freq * t, freq * t + lag * sign)
+        verts = (rot @ (verts * scale).T).T
+        rgba = _wind_tint(color, wind)
+        lw = 0.5 + 0.9 * min(1.2, wind / 1.2)
+        for i0, i1 in _wireframe_edges(faces):
+            ax.plot(*zip(verts[i0], verts[i1]), color=rgba[:3], alpha=rgba[3], lw=lw)
+    lim = 1.1
+    ax.set_xlim(-lim, lim)
+    ax.set_ylim(-lim, lim)
+    ax.set_zlim(-lim, lim)
+    ax.view_init(elev=22, azim=38 + 0.4 * t)
+    ax.set_axis_off()
+    ax.set_title("Nested resonator · wind-synced twist/breath", fontsize=9, color="#ddd", pad=4)
+
+
+def build_brackish_dashboard(
+    t: float | None = None,
     *,
     base: float = 1.0,
     amplitude: float = 0.4,
     freq: float = 0.01,
     residual_weight: float = 0.15,
     stable_mode: bool = False,
-    dpi: int = 80,
+    dpi: int = 90,
 ) -> plt.Figure:
-    wind = brackish_dynamics(
-        t, base=base, amplitude=amplitude, freq=freq,
+    """Clock + solids + live divergence strip — Demo J interactive dashboard."""
+    kwargs = dict(
+        base=base, amplitude=amplitude, freq=freq,
         residual_weight=residual_weight, stable_mode=stable_mode,
     )
-    clock_deg = _gauged_clock_angle(t, wind)
-    eff_deg = float(np.degrees(effective % (2.0 * np.pi)))
+    t_val = 6.0 if t is None else float(t)
+    wind = brackish_dynamics(t_val, **kwargs)
+    times = np.linspace(0.0, t_val, max(20, int(t_val * 8)))
+    effective = _integrate_effective(times, **kwargs)[-1]
+    div_times, div_clock, div_eff = _divergence_series(**kwargs)
 
-    fig = plt.figure(figsize=(10, 4.5), facecolor="#0a0a0f", dpi=dpi)
-    ax_c = fig.add_subplot(121)
-    ax_3d = fig.add_subplot(122, projection="3d")
+    fig = plt.figure(figsize=(11.5, 5.8), facecolor="#0a0a0f", dpi=dpi)
+    gs = GridSpec(2, 2, figure=fig, height_ratios=[3.2, 1.2], width_ratios=[1, 1], hspace=0.28, wspace=0.12)
+    ax_clock = fig.add_subplot(gs[0, 0])
+    ax_3d = fig.add_subplot(gs[0, 1], projection="3d")
+    ax_div = fig.add_subplot(gs[1, :])
 
-    ax_c.set_aspect("equal")
-    ax_c.add_patch(plt.Circle((0, 0), 1, fill=False, color="#444", lw=1.2))
-    ax_c.plot([0, 0], [0, 1.05], color="#c9a227", lw=2.0)
-    for deg, color, ls in ((clock_deg, "#c9a227", "-"), (eff_deg, "#9b5de5", "--")):
-        rad = np.radians(90 - deg)
-        ax_c.plot([0, 0.7 * np.cos(rad)], [0, 0.7 * np.sin(rad)], color=color, lw=1.8, ls=ls)
-    ax_c.set_xlim(-1.2, 1.2)
-    ax_c.set_ylim(-1.2, 1.2)
-    ax_c.axis("off")
-    ax_c.set_title(f"Gauged clock · wind={wind:.2f}", fontsize=8, color="#ccc")
+    _draw_zero_point_clock(ax_clock, t_val, wind, effective, stable_mode=stable_mode)
+    _draw_nested_resonator(ax_3d, t_val, wind)
+    _draw_divergence_strip(ax_div, div_times, div_clock, div_eff, wind)
 
-    lag = 0.08 * R * wind
-    for name, radius, twist, color, sign in _LAYERS:
-        verts, faces = _platonic_topology(name)
-        scale = radius * (1.0 + 0.12 * wind**2 * np.sin(2.0 * np.pi * 0.5 * t + wind))
-        freq = twist * wind
-        rot = _rotation_matrix(0.25 * freq * np.sin(0.3 * t), -0.5 * sign * freq * t, freq * t + lag * sign)
-        verts = (rot @ (verts * scale).T).T
-        for i0, i1 in _wireframe_edges(faces):
-            ax_3d.plot(*zip(verts[i0], verts[i1]), color=color, alpha=0.55, lw=0.7)
-    lim = 1.1
-    ax_3d.set_xlim(-lim, lim)
-    ax_3d.set_ylim(-lim, lim)
-    ax_3d.set_zlim(-lim, lim)
-    ax_3d.view_init(elev=22, azim=38 + 0.4 * t)
-    ax_3d.set_axis_off()
-    fig.tight_layout()
+    fig.suptitle(
+        f"Brackish heartbeat · W_g={W_G:.2f} · R={R:+.4f} · κ={KAPPA_DOC}",
+        fontsize=10, color="#ddd", y=0.98,
+    )
     return fig
 
 
-def _figure_to_rgb(fig: plt.Figure, dpi: int) -> np.ndarray:
+def _figure_to_png_bytes(fig: plt.Figure, *, dpi: int) -> bytes:
+    buf = io.BytesIO()
+    fig.savefig(buf, format="png", dpi=dpi, facecolor=fig.get_facecolor(), bbox_inches="tight", pad_inches=0.05)
+    plt.close(fig)
+    return buf.getvalue()
+
+
+def _figure_to_rgb(fig: plt.Figure, *, dpi: int) -> np.ndarray:
     from PIL import Image
 
-    buf = io.BytesIO()
-    fig.savefig(buf, format="png", dpi=dpi, facecolor=fig.get_facecolor(), bbox_inches="tight", pad_inches=0)
-    buf.seek(0)
-    img = np.asarray(Image.open(buf).convert("RGB"))
+    data = _figure_to_png_bytes(fig, dpi=dpi)
+    img = np.asarray(Image.open(io.BytesIO(data)).convert("RGB"))
     h, w = img.shape[:2]
     return img[: h - h % 2, : w - w % 2]
+
+
+def _render_kwargs(**kwargs: Any) -> dict[str, Any]:
+    allowed = {"t", "base", "amplitude", "freq", "residual_weight", "stable_mode", "dpi"}
+    return {k: v for k, v in kwargs.items() if k in allowed}
+
+
+def brackish_dashboard_to_data_uri(**kwargs: Any) -> str:
+    """Base64 data URI for Gradio HTML viewport."""
+    fig = build_brackish_dashboard(**_render_kwargs(**kwargs))
+    png = _figure_to_png_bytes(fig, dpi=int(kwargs.get("dpi", 88)))
+    encoded = base64.b64encode(png).decode("ascii")
+    return f"data:image/png;base64,{encoded}"
+
+
+def brackish_dashboard_viewport_html(**kwargs: Any) -> str:
+    """HF-safe viewport HTML for interactive Demo J preview."""
+    render = _render_kwargs(**kwargs)
+    uri = brackish_dashboard_to_data_uri(**render)
+    title = "Demo J — Brackish Heartbeat"
+    subtitle = (
+        f"base={kwargs.get('base', 1.0):.2f} · "
+        f"amp={kwargs.get('amplitude', 0.4):.2f} · "
+        f"freq={kwargs.get('freq', 0.01):.3f} · "
+        f"R_wt={kwargs.get('residual_weight', 0.15):.2f}"
+    )
+    return (
+        f'<div class="myst-gravity-viewport-inner myst-gravity-demo-j">'
+        f'<div class="myst-gravity-viewport-title">{title}</div>'
+        f'<div class="myst-gravity-viewport-sub">{subtitle}</div>'
+        f'<img class="myst-brackish-dashboard-img" src="{uri}" '
+        f'alt="Brackish heartbeat dashboard" style="width:100%;max-width:960px;border-radius:8px;" />'
+        f"</div>"
+    )
 
 
 def _encode_mp4(frames: list[np.ndarray], fps: int) -> str:
@@ -214,19 +405,23 @@ def render_brackish_clock_video(
     residual_weight: float = 0.15,
     stable_mode: bool = False,
 ) -> str:
-    """Looping MP4 for Demo J — brackish heartbeat."""
+    """Looping MP4 for Demo J — uses full dashboard frames."""
     n_frames = max(2, int(duration * fps))
     times = np.linspace(0, duration, n_frames)
-    kwargs = dict(
-        base=base, amplitude=amplitude, freq=freq,
-        residual_weight=residual_weight, stable_mode=stable_mode,
-    )
-    effective = _integrate_effective(times, **kwargs)
     rgb_frames = []
-    for idx, t in enumerate(times):
-        fig = build_brackish_frame(t, effective[idx], dpi=dpi, **kwargs)
+    for t in times:
+        fig = build_brackish_dashboard(
+            t=float(t),
+            base=base, amplitude=amplitude, freq=freq,
+            residual_weight=residual_weight, stable_mode=stable_mode,
+            dpi=dpi,
+        )
         rgb_frames.append(_figure_to_rgb(fig, dpi=dpi))
-        plt.close(fig)
     path = _encode_mp4(rgb_frames, fps=fps)
     print(f"[brackish] render_brackish_clock_video: {len(rgb_frames)} frames -> {path}", flush=True)
     return path
+
+
+# Backward-compatible alias used during initial Demo J rollout.
+def build_brackish_frame(t: float, effective: float, **kwargs) -> plt.Figure:
+    return build_brackish_dashboard(t=t, **kwargs)

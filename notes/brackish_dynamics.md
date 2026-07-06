@@ -46,15 +46,22 @@ cd mystery && .venv/bin/python scripts/brackish_clock.py
 .venv/bin/python run_all.py
 ```
 
-## HF Space
+## HF Space (Demo J — Phase 4)
 
-Demo **J** on the Gravity tab — "Brackish Heartbeat" — loops a pre-rendered
-animation with the same parameter family as the local script.
+Demo **J** on the Gravity tab includes:
 
-## Presets (future)
+- **Interactive dashboard** — gauged clock (hour + minute + ∫wind track), nested
+  solids with wind-synced twist/breath, live divergence strip
+- **Sliders** — base wind, amplitude, frequency, residual weight
+- **Stable / Dynamic** toggle
+- **Presets** — Calm Sea, Building Storm, Residual Dominant, Steady Gauged
+- **Loop Animation** — encodes parameterised MP4 on demand
+
+## Presets
 
 | Preset | base | amplitude | residual_weight | Mode |
 |--------|------|-----------|-----------------|------|
-| Calm Sea | 1.0 | 0.05 | 0.10 | stable |
+| Calm Sea | 1.0 | 0.05 | 0.10 | dynamic |
 | Building Storm | 1.0 | 0.55 | 0.15 | dynamic |
 | Residual Dominant | 0.8 | 0.20 | 0.35 | dynamic |
+| Steady Gauged | 1.0 | 0.0 | 0.12 | stable |

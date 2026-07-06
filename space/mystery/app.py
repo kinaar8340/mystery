@@ -15,7 +15,13 @@ from collections.abc import Callable, Iterator
 import gradio as gr
 import matplotlib.pyplot as plt
 
-from brackish_core import render_brackish_clock_video
+from brackish_core import (
+    BRACKISH_PRESETS,
+    DEFAULT_BRACKISH_PARAMS,
+    brackish_dashboard_viewport_html,
+    brackish_params_key,
+    render_brackish_clock_video,
+)
 from demo_core import (
     BOOT_QUOTE_STRING,
     CLAIMS_MD,
@@ -3029,6 +3035,26 @@ footer {{
     background: #0a0a0f !important;
     display: block !important;
     pointer-events: none !important;
+}}
+/* Demo J — brackish controls + dashboard preview */
+.gradio-container .myst-brackish-controls {{
+    margin: 0.5rem 0 0.75rem !important;
+    padding: 0.75rem 1rem !important;
+    background: rgba(10, 10, 15, 0.88) !important;
+    border: 1px solid rgba(201, 162, 39, 0.35) !important;
+    border-radius: 10px !important;
+}}
+.gradio-container .myst-brackish-controls h3 {{
+    color: #c9a227 !important;
+    margin: 0 0 0.5rem !important;
+    font-size: 0.95rem !important;
+}}
+.gradio-container .myst-brackish-preset-row {{
+    gap: 0.4rem !important;
+    flex-wrap: wrap !important;
+}}
+.gradio-container .myst-brackish-dashboard-img {{
+    background: #0a0a0f !important;
 }}
 /* Demo A–I — opaque viewport panel (readable text/video; wallpaper stays outside). */
 .gradio-container .myst-gravity-page .myst-gravity-single-viewport.myst-demo-viewport,
@@ -9185,7 +9211,7 @@ _DEMO_DEFORM_VIDEO_CACHE: dict[str, str] = {}
 _DEMO_PRESET_VIDEO_CACHE: dict[str, str] = {}
 _DEMO_PIPELINE_VIDEO_CACHE: str | None = None
 _BREATHING_DEMO_VIDEO_CACHE: str | None = None
-_BRACKISH_DEMO_VIDEO_CACHE: str | None = None
+_BRACKISH_DEMO_VIDEO_CACHE: dict[str, str] = {}
 _APP_DIR = os.path.dirname(os.path.abspath(__file__))
 _BUNDLED_PIPELINE_VIDEO = os.path.join(_APP_DIR, "assets", "demo_b_pipeline_efghi.mp4")
 _BUNDLED_PRESET_DEMO_VIDEOS: dict[str, str] = {
@@ -9374,13 +9400,49 @@ def _get_breathing_demo_video_path() -> str:
     return _BREATHING_DEMO_VIDEO_CACHE
 
 
-def _get_brackish_demo_video_path() -> str:
+def _coerce_brackish_params(
+    base: float,
+    amplitude: float,
+    freq: float,
+    residual_weight: float,
+    stable_mode: bool,
+) -> dict[str, float | bool]:
+    return {
+        "base": float(base),
+        "amplitude": float(amplitude),
+        "freq": float(freq),
+        "residual_weight": float(residual_weight),
+        "stable_mode": bool(stable_mode),
+    }
+
+
+def _get_brackish_demo_video_path(
+    *,
+    base: float = DEFAULT_BRACKISH_PARAMS["base"],
+    amplitude: float = DEFAULT_BRACKISH_PARAMS["amplitude"],
+    freq: float = DEFAULT_BRACKISH_PARAMS["freq"],
+    residual_weight: float = DEFAULT_BRACKISH_PARAMS["residual_weight"],
+    stable_mode: bool = DEFAULT_BRACKISH_PARAMS["stable_mode"],
+) -> str:
     """Gradio-served path to looping brackish heartbeat MP4."""
-    global _BRACKISH_DEMO_VIDEO_CACHE
-    if _BRACKISH_DEMO_VIDEO_CACHE is None:
-        raw_path = render_brackish_clock_video(duration=8.0, fps=10, dpi=72)
-        _BRACKISH_DEMO_VIDEO_CACHE = _cache_media_for_gradio(raw_path)
-    return _BRACKISH_DEMO_VIDEO_CACHE
+    params = _coerce_brackish_params(base, amplitude, freq, residual_weight, stable_mode)
+    cache_key = brackish_params_key(**params)
+    if cache_key not in _BRACKISH_DEMO_VIDEO_CACHE:
+        raw_path = render_brackish_clock_video(duration=8.0, fps=10, dpi=72, **params)
+        _BRACKISH_DEMO_VIDEO_CACHE[cache_key] = _cache_media_for_gradio(raw_path)
+    return _BRACKISH_DEMO_VIDEO_CACHE[cache_key]
+
+
+def _brackish_preview_html(
+    *,
+    base: float = DEFAULT_BRACKISH_PARAMS["base"],
+    amplitude: float = DEFAULT_BRACKISH_PARAMS["amplitude"],
+    freq: float = DEFAULT_BRACKISH_PARAMS["freq"],
+    residual_weight: float = DEFAULT_BRACKISH_PARAMS["residual_weight"],
+    stable_mode: bool = DEFAULT_BRACKISH_PARAMS["stable_mode"],
+) -> str:
+    params = _coerce_brackish_params(base, amplitude, freq, residual_weight, stable_mode)
+    return brackish_dashboard_viewport_html(dpi=88, **params)
 
 
 def _get_demo_a_startup_viewport_html() -> str:
@@ -9493,9 +9555,41 @@ def _demo_viewport_show_breathing_video() -> tuple:
     )
 
 
-def _demo_viewport_show_brackish_video() -> tuple:
-    """Show looping brackish heartbeat MP4 via gr.Video (HF-safe cached path)."""
-    video_path = _get_brackish_demo_video_path()
+def _demo_viewport_show_brackish_preview(
+    *,
+    base: float = DEFAULT_BRACKISH_PARAMS["base"],
+    amplitude: float = DEFAULT_BRACKISH_PARAMS["amplitude"],
+    freq: float = DEFAULT_BRACKISH_PARAMS["freq"],
+    residual_weight: float = DEFAULT_BRACKISH_PARAMS["residual_weight"],
+    stable_mode: bool = DEFAULT_BRACKISH_PARAMS["stable_mode"],
+) -> tuple:
+    """Interactive Demo J — live dashboard preview (clock + solids + divergence)."""
+    html = _brackish_preview_html(
+        base=base, amplitude=amplitude, freq=freq,
+        residual_weight=residual_weight, stable_mode=stable_mode,
+    )
+    title, subtitle = _demo_letter_overlay_copy("J")
+    return (
+        gr.update(value=None, visible=False),
+        gr.update(value=None, visible=False),
+        gr.update(value=html, visible=True),
+        _demo_viewport_overlay_update(title=title, subtitle=subtitle),
+    )
+
+
+def _demo_viewport_show_brackish_video(
+    *,
+    base: float = DEFAULT_BRACKISH_PARAMS["base"],
+    amplitude: float = DEFAULT_BRACKISH_PARAMS["amplitude"],
+    freq: float = DEFAULT_BRACKISH_PARAMS["freq"],
+    residual_weight: float = DEFAULT_BRACKISH_PARAMS["residual_weight"],
+    stable_mode: bool = DEFAULT_BRACKISH_PARAMS["stable_mode"],
+) -> tuple:
+    """Looping brackish heartbeat MP4 — parameterised encode."""
+    video_path = _get_brackish_demo_video_path(
+        base=base, amplitude=amplitude, freq=freq,
+        residual_weight=residual_weight, stable_mode=stable_mode,
+    )
     title, subtitle = _demo_letter_overlay_copy("J")
     return (
         gr.update(value=None, visible=False),
@@ -9587,6 +9681,7 @@ def _demo_letter_click_finish(letter: str) -> tuple:
         *_switch_gravity_demo_viewport_only(latch),
         *_gravity_child_nav_btn_updates(active_slot, b_i_enabled=True, loading=False),
         _gravity_viewport_wrapper_update(latch, loading=False),
+        _brackish_controls_visible(latch),
     )
 
 
@@ -9686,13 +9781,85 @@ def _demo_breathing_viewport_only() -> tuple:
         return _demo_viewport_show_plot(_get_rigid_preset_plotly_figure())
 
 
-def _demo_brackish_viewport_only() -> tuple:
-    """Demo J viewport — brackish heartbeat MP4 after tab latch."""
+def _demo_brackish_viewport_only(
+    *,
+    base: float = DEFAULT_BRACKISH_PARAMS["base"],
+    amplitude: float = DEFAULT_BRACKISH_PARAMS["amplitude"],
+    freq: float = DEFAULT_BRACKISH_PARAMS["freq"],
+    residual_weight: float = DEFAULT_BRACKISH_PARAMS["residual_weight"],
+    stable_mode: bool = DEFAULT_BRACKISH_PARAMS["stable_mode"],
+) -> tuple:
+    """Demo J viewport — interactive dashboard preview after tab latch."""
     try:
-        return _demo_viewport_show_brackish_video()
+        return _demo_viewport_show_brackish_preview(
+            base=base, amplitude=amplitude, freq=freq,
+            residual_weight=residual_weight, stable_mode=stable_mode,
+        )
     except Exception:
-        logger.exception("brackish demo video failed for Demo J")
+        logger.exception("brackish demo preview failed for Demo J")
         return _demo_viewport_show_plot(_get_rigid_preset_plotly_figure())
+
+
+def _brackish_controls_visible(letter: str) -> gr.Update:
+    active = str(letter or "").strip().upper()
+    return gr.update(visible=active == "J")
+
+
+def _brackish_update_preview(
+    base: float,
+    amplitude: float,
+    freq: float,
+    residual_weight: float,
+    stable_mode: bool,
+) -> tuple:
+    return _demo_viewport_show_brackish_preview(
+        base=base, amplitude=amplitude, freq=freq,
+        residual_weight=residual_weight, stable_mode=stable_mode,
+    )
+
+
+def _brackish_animate_loop(
+    base: float,
+    amplitude: float,
+    freq: float,
+    residual_weight: float,
+    stable_mode: bool,
+) -> tuple:
+    try:
+        return _demo_viewport_show_brackish_video(
+            base=base, amplitude=amplitude, freq=freq,
+            residual_weight=residual_weight, stable_mode=stable_mode,
+        )
+    except Exception as exc:
+        logger.exception("brackish animate failed")
+        html = (
+            f'<div class="myst-gravity-viewport-error">Video encode failed: {exc}</div>'
+            + _brackish_preview_html(
+                base=base, amplitude=amplitude, freq=freq,
+                residual_weight=residual_weight, stable_mode=stable_mode,
+            )
+        )
+        return (
+            gr.update(value=None, visible=False),
+            gr.update(value=None, visible=False),
+            gr.update(value=html, visible=True),
+            _demo_viewport_overlay_update(title="Demo J", subtitle="preview fallback"),
+        )
+
+
+def _brackish_apply_preset(preset_key: str) -> tuple:
+    preset = BRACKISH_PRESETS.get(str(preset_key), BRACKISH_PRESETS["calm_sea"])
+    return (
+        preset["base"],
+        preset["amplitude"],
+        preset["freq"],
+        preset["residual_weight"],
+        preset["stable_mode"],
+        *_brackish_update_preview(
+            preset["base"], preset["amplitude"], preset["freq"],
+            preset["residual_weight"], preset["stable_mode"],
+        ),
+    )
 
 
 def _demo_startup_viewport_only() -> tuple:
@@ -12451,6 +12618,44 @@ def build_app() -> gr.Blocks:
                 letter: gravity_child_nav[letter] for letter in _GRAVITY_CHILD_NAV_LETTERS
             }
             gravity_active_letter = gr.State("A")
+            with gr.Column(
+                visible=False,
+                elem_classes=["myst-brackish-controls", "vqc-optics-panel"],
+            ) as brackish_controls_col:
+                gr.Markdown("### Brackish dynamics · Demo J")
+                with gr.Row(elem_classes=["myst-brackish-preset-row"]):
+                    brackish_preset_calm = gr.Button("Calm Sea", size="sm", variant="secondary")
+                    brackish_preset_storm = gr.Button("Building Storm", size="sm", variant="secondary")
+                    brackish_preset_residual = gr.Button("Residual Dominant", size="sm", variant="secondary")
+                    brackish_preset_steady = gr.Button("Steady Gauged", size="sm", variant="secondary")
+                with gr.Row(elem_classes=["vqc-optics-dial-row"]):
+                    brackish_base = gr.Slider(
+                        0.5, 1.5, value=DEFAULT_BRACKISH_PARAMS["base"], step=0.05,
+                        label="Base wind", elem_classes=["vqc-optics-dial-wrap"],
+                    )
+                    brackish_amplitude = gr.Slider(
+                        0.0, 0.8, value=DEFAULT_BRACKISH_PARAMS["amplitude"], step=0.02,
+                        label="Amplitude", elem_classes=["vqc-optics-dial-wrap"],
+                    )
+                with gr.Row(elem_classes=["vqc-optics-dial-row"]):
+                    brackish_freq = gr.Slider(
+                        0.002, 0.05, value=DEFAULT_BRACKISH_PARAMS["freq"], step=0.001,
+                        label="Frequency", elem_classes=["vqc-optics-dial-wrap"],
+                    )
+                    brackish_residual = gr.Slider(
+                        0.0, 0.5, value=DEFAULT_BRACKISH_PARAMS["residual_weight"], step=0.01,
+                        label="Residual weight (R)", elem_classes=["vqc-optics-dial-wrap"],
+                    )
+                with gr.Row(elem_classes=["myst-brackish-action-row"]):
+                    brackish_stable = gr.Checkbox(
+                        label="Stable conditions mode",
+                        value=DEFAULT_BRACKISH_PARAMS["stable_mode"],
+                    )
+                    brackish_animate_btn = gr.Button(
+                        "▶ Loop Animation",
+                        variant="primary",
+                        elem_classes=["myst-brackish-animate-btn"],
+                    )
             _startup_viewport_html = ""
             try:
                 _startup_viewport_html = _get_demo_a_startup_viewport_html()
@@ -12607,7 +12812,16 @@ def build_app() -> gr.Blocks:
                 *gravity_demo_viewport_outputs,
                 *[gravity_letter_btns[letter] for letter in _GRAVITY_CHILD_NAV_LETTERS],
                 viewport_col,
+                brackish_controls_col,
             ]
+            brackish_slider_inputs = [
+                brackish_base,
+                brackish_amplitude,
+                brackish_freq,
+                brackish_residual,
+                brackish_stable,
+            ]
+            brackish_viewport_outputs = list(gravity_demo_viewport_outputs)
 
             def _make_demo_letter_click_begin(letter: str):
                 def handler() -> tuple:
@@ -12632,6 +12846,40 @@ def build_app() -> gr.Blocks:
                     outputs=demo_letter_click_finish_outputs,
                     show_progress="hidden",
                 )
+
+            for slider in brackish_slider_inputs:
+                slider.release(
+                    _brackish_update_preview,
+                    inputs=brackish_slider_inputs,
+                    outputs=brackish_viewport_outputs,
+                    show_progress="hidden",
+                )
+            brackish_animate_btn.click(
+                _brackish_animate_loop,
+                inputs=brackish_slider_inputs,
+                outputs=brackish_viewport_outputs,
+                show_progress="full",
+            )
+            brackish_preset_calm.click(
+                lambda: _brackish_apply_preset("calm_sea"),
+                outputs=[*brackish_slider_inputs, *brackish_viewport_outputs],
+                show_progress="hidden",
+            )
+            brackish_preset_storm.click(
+                lambda: _brackish_apply_preset("building_storm"),
+                outputs=[*brackish_slider_inputs, *brackish_viewport_outputs],
+                show_progress="hidden",
+            )
+            brackish_preset_residual.click(
+                lambda: _brackish_apply_preset("residual_dominant"),
+                outputs=[*brackish_slider_inputs, *brackish_viewport_outputs],
+                show_progress="hidden",
+            )
+            brackish_preset_steady.click(
+                lambda: _brackish_apply_preset("steady_gauged"),
+                outputs=[*brackish_slider_inputs, *brackish_viewport_outputs],
+                show_progress="hidden",
+            )
 
             sz_inputs = [
                 sz_phi_scale,
