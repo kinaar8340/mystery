@@ -21,6 +21,7 @@ from mpl_toolkits.mplot3d import Axes3D  # noqa: F401
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _common import E, OUTPUT_DIR, PHI, PI, save_report
 from hopf_constant_bridge import W_G
+import geodesic as geodesic_render
 from flux_spring import (
     FLUX_SPRING_CONFIG,
     brackish_flux,
@@ -184,12 +185,18 @@ def draw_nested_resonator(
     azim: float = 38.0,
     visual_separation: float | None = None,
     spring_config: dict[str, float] | None = None,
+    use_geodesic_outer: bool | None = None,
+    geodesic_frequency: int | None = None,
 ) -> None:
     """Render wireframe Platonic shells with flux_spring radius + twist coupling."""
     ax.cla()
     flux = float(wind)
     residual_lag = 0.08 * R * flux
     spring_cfg = merge_flux_spring_config(**(spring_config or {}))
+    if use_geodesic_outer is not None:
+        geodesic_render.USE_GEODESIC_OUTER = bool(use_geodesic_outer)
+    if geodesic_frequency is not None:
+        geodesic_render.GEODESIC_OUTER_FREQUENCY = max(0, int(geodesic_frequency))
     physics = nested_orb_physics(flux, len(layers), t=t, **spring_cfg)
     orb_meshes = transform_nested_orbs(layers, t, flux, residual_lag, physics)
     visual_scales = visual_radius_scales(visual_separation)
@@ -269,6 +276,8 @@ def build_animation(
     stable_mode: bool = False,
     solids: list[str] | None = None,
     spring_config: dict[str, float] | None = None,
+    use_geodesic_outer: bool | None = None,
+    geodesic_frequency: int | None = None,
 ) -> tuple[FuncAnimation, plt.Figure, list[float], list[float]]:
     """Build matplotlib FuncAnimation for clock + nested solids."""
     layers = active_layers(solids)
@@ -316,7 +325,12 @@ def build_animation(
             fontsize=8,
             color="#aaa",
         )
-        draw_nested_resonator(ax_3d, t, wind, layers, spring_config=spring_config)
+        draw_nested_resonator(
+            ax_3d, t, wind, layers,
+            spring_config=spring_config,
+            use_geodesic_outer=use_geodesic_outer,
+            geodesic_frequency=geodesic_frequency,
+        )
         return ()
 
     anim = FuncAnimation(fig, update, frames=n_frames, interval=1000 / fps, blit=False)
@@ -375,6 +389,18 @@ def main(argv: list[str] | None = None) -> int:
         type=float,
         default=FLUX_SPRING_CONFIG["flux_influence_on_rigidness"],
     )
+    parser.add_argument(
+        "--geodesic-outer",
+        action=argparse.BooleanOptionalAction,
+        default=geodesic_render.USE_GEODESIC_OUTER,
+        help="render outermost orb as geodesic sphere (visual only)",
+    )
+    parser.add_argument(
+        "--geodesic-frequency",
+        type=int,
+        default=geodesic_render.GEODESIC_OUTER_FREQUENCY,
+        help="geodesic subdivision passes for outer shell (default 3)",
+    )
     args = parser.parse_args(argv)
 
     spring_config = merge_flux_spring_config(
@@ -405,6 +431,8 @@ def main(argv: list[str] | None = None) -> int:
         stable_mode=args.stable,
         solids=args.solids,
         spring_config=spring_config,
+        use_geodesic_outer=args.geodesic_outer,
+        geodesic_frequency=args.geodesic_frequency,
     )
     sample_physics = nested_orb_physics(
         brackish_dynamics(args.duration * 0.5, base=args.base, amplitude=args.amplitude,

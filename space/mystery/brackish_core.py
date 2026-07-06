@@ -120,7 +120,10 @@ _DEMO_J_QUAD_PANELS: tuple[tuple[int, int, int, str], ...] = (
 )
 
 
-_BRACKISH_VIEWPORT_REV = "quad-fill-spring-balanced-v1"
+_USE_GEODESIC_OUTER = True
+_GEODESIC_OUTER_FREQUENCY = 3
+
+_BRACKISH_VIEWPORT_REV = "geodesic-outer-v1"
 
 
 def brackish_params_key(**kwargs: Any) -> str:
@@ -295,6 +298,44 @@ def _blended_twist(
         ry = iry * blend + ry * (1.0 - blend)
         rz = irz * blend + rz * (1.0 - blend)
     return float(rx), float(ry), float(rz)
+
+
+def _generate_geodesic_sphere(frequency: int = _GEODESIC_OUTER_FREQUENCY) -> tuple[np.ndarray, list[tuple[int, ...]]]:
+    """Geodesic sphere — render-only; physics topology unchanged."""
+    verts, faces = _icosahedron_topology()
+    vert_list = [tuple(v) for v in np.asarray(verts, dtype=float)]
+    face_list = [tuple(int(x) for x in f) for f in faces]
+    cache: dict[tuple[int, int], int] = {}
+
+    def _key(a: int, b: int) -> tuple[int, int]:
+        return (a, b) if a < b else (b, a)
+
+    def _project(row: np.ndarray) -> tuple[float, float, float]:
+        norm = max(float(np.linalg.norm(row)), 1e-12)
+        return (float(row[0] / norm), float(row[1] / norm), float(row[2] / norm))
+
+    def _midpoint(i: int, j: int) -> int:
+        k = _key(i, j)
+        if k in cache:
+            return cache[k]
+        mid = _project((np.asarray(vert_list[i]) + np.asarray(vert_list[j])) * 0.5)
+        idx = len(vert_list)
+        vert_list.append(mid)
+        cache[k] = idx
+        return idx
+
+    for _ in range(max(0, int(frequency))):
+        next_faces: list[tuple[int, int, int]] = []
+        for a, b, c in face_list:
+            ab = _midpoint(a, b)
+            bc = _midpoint(b, c)
+            ca = _midpoint(c, a)
+            next_faces.extend([(a, ab, ca), (b, bc, ab), (c, ca, bc), (ab, bc, ca)])
+        face_list = next_faces
+
+    vert_array = np.asarray(vert_list, dtype=float)
+    norms = np.maximum(np.linalg.norm(vert_array, axis=1, keepdims=True), 1e-12)
+    return vert_array / norms, face_list
 
 
 def _icosahedron_topology():
@@ -516,8 +557,12 @@ def _nested_layer_vertices(
     physics = _nested_orb_physics(flux, len(_LAYERS), t=t, **spring_cfg)
     layers: list[tuple[np.ndarray, list[tuple[int, ...]], int]] = []
     inner_twist: tuple[float, float, float] | None = None
+    outer_idx = len(_LAYERS) - 1
     for layer_idx, (name, radius, twist, _color, sign) in enumerate(_LAYERS):
-        verts, faces = _platonic_topology(name)
+        if _USE_GEODESIC_OUTER and layer_idx == outer_idx:
+            verts, faces = _generate_geodesic_sphere(_GEODESIC_OUTER_FREQUENCY)
+        else:
+            verts, faces = _platonic_topology(name)
         scale = (
             radius
             * physics["radius_factors"][layer_idx]

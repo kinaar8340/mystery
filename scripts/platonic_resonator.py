@@ -7,6 +7,8 @@ from typing import Any, Iterable
 
 import numpy as np
 
+from geodesic import GEODESIC_OUTER_FREQUENCY, USE_GEODESIC_OUTER, generate_geodesic_sphere
+
 SOLID_NAMES = ("tetrahedron", "octahedron", "cube", "icosahedron", "dodecahedron")
 FACE_COUNTS = {"tetrahedron": 4, "octahedron": 8, "cube": 6, "icosahedron": 20, "dodecahedron": 12}
 
@@ -245,8 +247,12 @@ class ResonatorLayer:
         radius_factor: float = 1.0,
         twist_blend: float = 0.0,
         inner_twist: tuple[float, float, float] | None = None,
+        geodesic_frequency: int | None = None,
     ) -> tuple[np.ndarray, list[tuple[int, ...]]]:
-        verts, faces = platonic_topology(self.name)
+        if geodesic_frequency is not None:
+            verts, faces = generate_geodesic_sphere(geodesic_frequency)
+        else:
+            verts, faces = platonic_topology(self.name)
         scale = self.base_radius * float(radius_factor) * breathing_scale(t, flux)
         rx, ry, rz = self.blended_twist_angles(
             t, flux, residual_lag, twist_blend=twist_blend, inner_twist=inner_twist,
@@ -274,7 +280,13 @@ def transform_nested_orbs(
     """Apply flux_spring radius + twist coupling across nested orbs."""
     results: list[tuple[np.ndarray, list[tuple[int, ...]]]] = []
     inner_twist: tuple[float, float, float] | None = None
+    n_layers = len(layers)
     for idx, layer in enumerate(layers):
+        geo_freq = (
+            GEODESIC_OUTER_FREQUENCY
+            if USE_GEODESIC_OUTER and idx == n_layers - 1
+            else None
+        )
         verts, faces = layer.transformed_vertices(
             t,
             flux,
@@ -282,6 +294,7 @@ def transform_nested_orbs(
             radius_factor=physics.radius_factors[idx],
             twist_blend=physics.twist_blend[idx],
             inner_twist=inner_twist,
+            geodesic_frequency=geo_freq,
         )
         results.append((verts, faces))
         inner_twist = layer.blended_twist_angles(
