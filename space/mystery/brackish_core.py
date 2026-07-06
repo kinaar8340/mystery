@@ -192,17 +192,44 @@ def _integrate_effective(times: np.ndarray, **kwargs) -> np.ndarray:
     return np.cumsum(winds) * dt
 
 
-def _divergence_series(
-    *,
-    horizon: float = 240.0,
-    n_points: int = 120,
-    **kwargs,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    times = np.linspace(0.0, horizon, n_points)
-    winds = np.array([brackish_dynamics(t, **kwargs) for t in times])
-    clock = np.array([_gauged_hour_angle(t, w) for t, w in zip(times, winds)])
-    effective = np.degrees(_integrate_effective(times, **kwargs) % (2.0 * np.pi))
-    return times, clock, effective
+def _angle_delta_deg(clock_deg: float, effective_deg: float) -> float:
+    """Shortest angular separation on the clock manifold."""
+    return float(abs((clock_deg - effective_deg + 180.0) % 360.0 - 180.0))
+
+
+def _brackish_render_kwargs(**kwargs: Any) -> dict[str, Any]:
+    return {
+        k: kwargs.get(k, DEFAULT_BRACKISH_PARAMS[k])
+        for k in ("base", "amplitude", "freq", "residual_weight", "stable_mode")
+    }
+
+
+def _build_sync_series(times: np.ndarray, **kwargs) -> dict[str, Any]:
+    """Precompute clock, resonator wind, and divergence tracks for frame-synced animation."""
+    params = _brackish_render_kwargs(**kwargs)
+    winds = np.array([brackish_dynamics(float(t), **params) for t in times])
+    clock = np.array([_gauged_hour_angle(float(t), float(w)) for t, w in zip(times, winds)])
+    effective = np.degrees(_integrate_effective(times, **params) % (2.0 * np.pi))
+    delta_inst = np.array([_angle_delta_deg(c, e) for c, e in zip(clock, effective)])
+    idx = np.arange(1, len(times) + 1)
+    divergence_mean = np.cumsum(delta_inst) / idx
+    return {
+        "times": times,
+        "duration": float(times[-1]) if len(times) else 0.0,
+        "winds": winds,
+        "clock": clock,
+        "effective": effective,
+        "delta_inst": delta_inst,
+        "divergence_mean": divergence_mean,
+        **params,
+    }
+
+
+def _series_index_at_t(series: dict[str, Any], t: float) -> int:
+    times = series["times"]
+    if len(times) == 0:
+        return 0
+    return int(np.argmin(np.abs(times - float(t))))
 
 
 def _wireframe_edge_color_hex(
@@ -269,7 +296,7 @@ def _nested_layer_vertices(
     return layers
 
 
-def _draw_zero_point_clock(ax, t: float, wind: float, effective: float, *, stable_mode: bool):
+def _draw_zero_point_clock(ax, t: float, wind: float, effective_deg: float, *, stable_mode: bool):
     ax.set_facecolor("#0a0a0f")
     ax.set_aspect("equal")
     ax.add_patch(plt.Circle((0, 0), 1.0, fill=False, color="#555", lw=1.4))
@@ -284,7 +311,7 @@ def _draw_zero_point_clock(ax, t: float, wind: float, effective: float, *, stabl
 
     hour_deg = _gauged_hour_angle(t, wind)
     minute_deg = _gauged_minute_angle(t, wind)
-    eff_deg = float(np.degrees(effective % (2.0 * np.pi)))
+    eff_deg = float(effective_deg % 360.0)
 
     for deg, length, color, lw, ls, label in (
         (hour_deg, 0.50, "#c9a227", 3.0, "-", "hour"),
@@ -306,13 +333,37 @@ def _draw_zero_point_clock(ax, t: float, wind: float, effective: float, *, stabl
     )
 
 
-def _draw_divergence_strip(ax, times, clock, effective, wind: float):
-    ax.set_facecolor("#0a0a0f")
-    ax.plot(times, clock, color="#c9a227", lw=1.2, label="clock")
-    ax.plot(times, effective, color="#9b5de5", lw=1.0, ls="--", label="∫wind")
-    ax.fill_between(times, clock, effective, alpha=0.12, color="#457b9d")
-    delta = float(np.mean(np.abs(clock - effective)))
-    ax.set_title(f"Divergence · mean |Δ|={delta:.1f}° · wind={wind:.2f}", fontsize=8, color="#ccc")
+def _draw_divergence_strip_live(ax, series: dict[str, Any], frame_idx: int, wind: float) -> None:
+    """Row 2 — clock, ∫wind, and running mean |Δ| grow in sync with the animation."""
+    ax.set_facecolor(_VIEWPORT_BG)
+    end = min(frame_idx + 1, len(series["times"]))
+    if end < 1:
+        return
+    sl = slice(0, end)
+    times = series["times"][sl]
+    clock = series["clock"][sl]
+    effective = series["effective"][sl]
+    div_mean = series["divergence_mean"][sl]
+
+    ax.plot(times, clock, color="#c9a227", lw=1.3, label="clock", zorder=3)
+    ax.plot(times, effective, color="#9b5de5", lw=1.1, ls="--", label="∫wind", zorder=3)
+    ax.plot(times, div_mean, color="#2ec4b6", lw=1.4, label="mean |Δ|", zorder=4)
+    ax.fill_between(times, clock, effective, alpha=0.10, color="#457b9d", zorder=1)
+
+    ax.scatter(times[-1], clock[-1], color="#c9a227", s=18, zorder=6, edgecolors="white", linewidths=0.3)
+    ax.scatter(times[-1], effective[-1], color="#9b5de5", s=18, zorder=6, edgecolors="white", linewidths=0.3)
+    ax.scatter(times[-1], div_mean[-1], color="#2ec4b6", s=18, zorder=6, edgecolors="white", linewidths=0.3)
+
+    current_mean = float(div_mean[-1])
+    ax.set_title(
+        f"Divergence · mean |Δ|={current_mean:.1f}° · wind={wind:.2f}",
+        fontsize=8,
+        color="#ccc",
+    )
+    ax.set_xlim(0.0, max(series["duration"], 0.5))
+    y_vals = np.concatenate([clock, effective, div_mean])
+    y_pad = max(12.0, 0.08 * (float(y_vals.max()) - float(y_vals.min()) + 1.0))
+    ax.set_ylim(float(y_vals.min()) - y_pad, float(y_vals.max()) + y_pad)
     ax.tick_params(colors="#777", labelsize=6)
     ax.set_xlabel("t", fontsize=7, color="#777")
     ax.set_ylabel("°", fontsize=7, color="#777")
@@ -361,7 +412,7 @@ def _draw_nested_resonator(
     ax.view_init(elev=elev, azim=azim)
     _hide_3d_scene_axes(ax)
     if not full_viewport:
-        ax.set_title("Nested resonator · rainbow wireframe", fontsize=9, color="#ddd", pad=4)
+        ax.set_title("Nested resonator · wind-synced twist/breath", fontsize=9, color="#ddd", pad=4)
 
 
 def build_brackish_resonator_viewport(
@@ -390,6 +441,47 @@ def build_brackish_resonator_viewport(
     return fig
 
 
+def build_brackish_sync_frame(
+    frame_idx: int,
+    series: dict[str, Any],
+    *,
+    dpi: int = 90,
+) -> plt.Figure:
+    """
+    Synchronized Demo J frame:
+    row 1 — gauged clock (col 1) + rainbow nested resonator (col 2)
+    row 2 — live divergence chart (mean |Δ| grows with animation)
+    """
+    idx = int(np.clip(frame_idx, 0, len(series["times"]) - 1))
+    t_val = float(series["times"][idx])
+    wind = float(series["winds"][idx])
+    effective_deg = float(series["effective"][idx])
+    stable_mode = bool(series["stable_mode"])
+
+    fig = plt.figure(figsize=(11.5, 6.0), facecolor=_VIEWPORT_BG, dpi=dpi)
+    gs = GridSpec(2, 2, figure=fig, height_ratios=[3.0, 1.25], width_ratios=[1, 1], hspace=0.30, wspace=0.10)
+    ax_clock = fig.add_subplot(gs[0, 0])
+    ax_3d = fig.add_subplot(gs[0, 1], projection="3d")
+    ax_div = fig.add_subplot(gs[1, :])
+
+    _draw_zero_point_clock(ax_clock, t_val, wind, effective_deg, stable_mode=stable_mode)
+    _draw_nested_resonator(
+        ax_3d, t_val, wind,
+        viewport_scale=1.18,
+        full_viewport=False,
+    )
+    _draw_divergence_strip_live(ax_div, series, idx, wind)
+
+    fig.suptitle(
+        f"Brackish heartbeat · W_g={W_G:.2f} · R={R:+.4f} · κ={KAPPA_DOC}",
+        fontsize=10,
+        color="#ddd",
+        y=0.98,
+    )
+    fig.subplots_adjust(top=0.92, bottom=0.06, left=0.04, right=0.98)
+    return fig
+
+
 def build_brackish_dashboard(
     t: float | None = None,
     *,
@@ -399,33 +491,20 @@ def build_brackish_dashboard(
     residual_weight: float = 0.15,
     stable_mode: bool = False,
     dpi: int = 90,
+    duration: float = 8.0,
 ) -> plt.Figure:
-    """Clock + solids + live divergence strip — Demo J interactive dashboard."""
-    kwargs = dict(
-        base=base, amplitude=amplitude, freq=freq,
-        residual_weight=residual_weight, stable_mode=stable_mode,
-    )
+    """Static snapshot of the synced dashboard at time t."""
     t_val = 6.0 if t is None else float(t)
-    wind = brackish_dynamics(t_val, **kwargs)
-    times = np.linspace(0.0, t_val, max(20, int(t_val * 8)))
-    effective = _integrate_effective(times, **kwargs)[-1]
-    div_times, div_clock, div_eff = _divergence_series(**kwargs)
-
-    fig = plt.figure(figsize=(11.5, 5.8), facecolor="#0a0a0f", dpi=dpi)
-    gs = GridSpec(2, 2, figure=fig, height_ratios=[3.2, 1.2], width_ratios=[1, 1], hspace=0.28, wspace=0.12)
-    ax_clock = fig.add_subplot(gs[0, 0])
-    ax_3d = fig.add_subplot(gs[0, 1], projection="3d")
-    ax_div = fig.add_subplot(gs[1, :])
-
-    _draw_zero_point_clock(ax_clock, t_val, wind, effective, stable_mode=stable_mode)
-    _draw_nested_resonator(ax_3d, t_val, wind, viewport_scale=1.0, full_viewport=False)
-    _draw_divergence_strip(ax_div, div_times, div_clock, div_eff, wind)
-
-    fig.suptitle(
-        f"Brackish heartbeat · W_g={W_G:.2f} · R={R:+.4f} · κ={KAPPA_DOC}",
-        fontsize=10, color="#ddd", y=0.98,
+    times = np.linspace(0.0, max(duration, t_val), max(40, int(max(duration, t_val) * 10)))
+    series = _build_sync_series(
+        times,
+        base=base,
+        amplitude=amplitude,
+        freq=freq,
+        residual_weight=residual_weight,
+        stable_mode=stable_mode,
     )
-    return fig
+    return build_brackish_sync_frame(_series_index_at_t(series, t_val), series, dpi=dpi)
 
 
 def _figure_to_png_bytes(fig: plt.Figure, *, dpi: int) -> bytes:
@@ -512,17 +591,20 @@ def render_brackish_clock_video(
     residual_weight: float = 0.15,
     stable_mode: bool = False,
 ) -> str:
-    """Looping MP4 for Demo J — full-viewport rainbow nested resonator (Demo B aesthetic)."""
+    """Looping MP4 — clock + rainbow resonator + live divergence chart (frame-synced)."""
     n_frames = max(2, int(duration * fps))
     times = np.linspace(0, duration, n_frames)
+    series = _build_sync_series(
+        times,
+        base=base,
+        amplitude=amplitude,
+        freq=freq,
+        residual_weight=residual_weight,
+        stable_mode=stable_mode,
+    )
     rgb_frames = []
-    for t in times:
-        fig = build_brackish_resonator_viewport(
-            t=float(t),
-            base=base, amplitude=amplitude, freq=freq,
-            residual_weight=residual_weight, stable_mode=stable_mode,
-            dpi=dpi,
-        )
+    for frame_idx in range(n_frames):
+        fig = build_brackish_sync_frame(frame_idx, series, dpi=dpi)
         rgb_frames.append(_figure_to_rgb(fig, dpi=dpi))
     path = _encode_mp4(rgb_frames, fps=fps)
     print(f"[brackish] render_brackish_clock_video: {len(rgb_frames)} frames -> {path}", flush=True)
@@ -531,4 +613,4 @@ def render_brackish_clock_video(
 
 # Backward-compatible alias used during initial Demo J rollout.
 def build_brackish_frame(t: float, effective: float, **kwargs) -> plt.Figure:
-    return build_brackish_resonator_viewport(t=t, **kwargs)
+    return build_brackish_dashboard(t=t, **kwargs)
