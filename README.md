@@ -32,6 +32,70 @@ Quantified research notebook exploring the near-Pythagorean triangle formed by �
 
 Full table: [`docs/RESULTS.md`](docs/RESULTS.md) · Scaling note: [`notes/residual_scaling.md`](notes/residual_scaling.md)
 
+---
+
+## Emergent Residual Analogs: Golden Angle & Exponential Survival (e⁻²)
+
+The Pythagorean residual
+
+```
+R = φ² + e² − π² ≈ +0.137486   (~1.39% relative error on π²)
+```
+
+is not treated as a numerical mistake. Two independent dynamical analogs sit within ~1–2% of R and offer complementary interpretive lenses inside the gauged Hopf lattice / conduit / PDE framework ([toe](https://github.com/kinaar8340/toe)).
+
+### Golden-angle proportion (~0.1375)
+
+| Quantity | Value | Δ from R |
+|----------|-------|----------|
+| 137.5° / 1000 | **0.1375** | ~0.07% |
+| Golden angle 360°(1 − φ⁻¹) | **137.51°** | — |
+| Related packing scale φ⁻² | **0.3820** | (conceptual link to irrational rotation) |
+
+**Dynamical meaning:** The golden angle is the optimal irrational rotational increment for dense, non-repeating coverage (phyllotaxis-style self-organization). It connects naturally to:
+
+- Hopf-fiber twisting and unit-circle phase walks on \(S^1\)
+- Rigid-cube + axial unit-circle presets in the [HF Space Gravity tab](https://huggingface.co/spaces/kinaar111/mystery)
+- Rotational efficiency in conduit helix geometry (`twist_rate`, toroidal modulo-9 wrap)
+
+This analog addresses **how** residual structure may persist in angular packing — not **whether** \(R\) is an exact identity.
+
+### Exponential survival e⁻² (~0.1353)
+
+| Quantity | Value | Δ from R |
+|----------|-------|----------|
+| e⁻² | **0.135335** | **~1.57%** |
+| R = φ² + e² − π² | **0.137486** | — |
+
+**Dynamical meaning:** In any memoryless constant-rate process `f(t) = f₀·e^(−λt)`, the universal **survival fraction** after exactly two characteristic times (λt = 2) is e⁻². This is the broadest "residual after normalized dynamics" — theory-agnostic and already tied to the e² term inside R.
+
+In the TOE twist-PDE and conduit gauge dynamics, the mean-field restoring torque `−κθ̄` identifies an effective rate λ ≈ κ (locked **κ ≈ 0.85**). Normalizing simulation time to λt = 2 therefore tests whether measured survival fractions (mean twist, fluctuation energy, braiding phase residuals, identity persistence) track e⁻² or the observed R.
+
+**Connections to existing probes:**
+
+| Element | Role |
+|---------|------|
+| `pde_relaxation_probe` / `pde_relaxation.py` | Dissipative relaxation; uniform IC → low-twist minimum; structured IC retains \(\sigma > 0\) |
+| `RubikConeConduit` gauge damping | Global pointer \(\kappa\); \(W_g \approx 111.408\); braiding \(\approx 0.814\) |
+| `hopf_constant_bridge` | Holonomy gap e/π − κ; B(κ) = π²(e/π − κ) scaling |
+| `conduit_angular_probe` | Angular distributions near 30°/60°/90° (modest, not forced) |
+| Attractors / meta_optimize | κ locks at 0.85; transcendentals are not optima — residual is emergent |
+
+**Complementarity:** Golden angle → **rotational packing efficiency**; e⁻² → **temporal persistence after scaled relaxation**. Together they strengthen the reading of R as a **compatible emergent signature** in a geometric-dynamical system with both twist and decay — not as a fitting error.
+
+### Proposed Experiments
+
+1. **λt = 2 normalization (implemented):** Run PDE and gauged-twist evolution with `normalize_to_lambda_t=2`; compare mean survival, fluctuation survival, and invariant residuals to e⁻², R, and golden-angle fraction.
+   ```bash
+   python scripts/exponential_survival_probe.py
+   python ../toe/scripts/pde_relaxation.py --normalize-to-lambda-t 2
+   ```
+2. **Golden-angle twist increments (Stage 3):** Step helix / rigid-cube rotation by 137.5078° or fractional φ⁻²; measure angular histogram shift vs `conduit_angular_probe` baseline.
+3. **Combined analog sweep (Stage 4):** Vary `twist_rate`, IC structure, and normalization jointly; quantify which analog (or pair) best aligns W_g, κ, and braiding residuals.
+4. **Cross-link PDE ↔ conduit:** Correlate PDE mean_survival at λt = 2 with conduit `identity_residual` and `braiding_residual` from `run_survival_probe`.
+
+See [`notes/emergent_signatures.md`](notes/emergent_signatures.md) and toe [`relaxation_survival.py`](../toe/src/relaxation_survival.py) for implementation details.
+
 ### Holonomy-gap scaling (standout)
 
 At **κ* = e/π − R/π² ≈ 0.8513**, the scaling B(κ) = π²(e/π−κ) exactly nulls R. Documented **κ = 0.85** is only **0.16%** away — but B(κ_doc) is still **9.5%** above R. κ* is not claimed as the physical value; its proximity to the locked invariant is the observation.
@@ -121,9 +185,14 @@ cd ../mystery && .venv/bin/python run_all.py
 | `pde_relaxation_probe.py` | Meta-seeded PDE + FFT/correlation analysis |
 | `conduit_angular_probe.py` | 30°/60°/90° separations with `vortex_math_369` |
 | `conduit_probe.py` | TOE conduit invariant smoke test |
-| `meta_optimize_phi_probe.py` | Meta-optimizer + φ/e/π clustering |
+| `meta_optimize_phi_probe.py` | Meta-optimizer + optional survival/golden objective (Stage 6) |
 | `residual_kappa_sweep.py` | R vs π²(e/π−κ) sweep; κ* null point |
 | `pde_structured_ic_probe.py` | Hopfion + two-gyro helical PDE seeds |
+| `exponential_survival_probe.py` | λt = 2 normalization; survival vs e⁻², R, golden angle |
+| `kappa_survival_sweep.py` | κ ∈ [0.80, 0.90] mean_survival @ λt=2 |
+| `golden_angle_twist_probe.py` | Golden helix steps + S¹ phase histograms |
+| `analog_comparative_sweep.py` | Grid: IC × twist_rate × λt × step_mode |
+| `analog_cross_analysis.py` | Stage 5 overlay figure (κ sweep + sweep scatter) |
 | `rodin_hopf_fiber_map.py` | Rodin mod-9 doubling → Hopf fiber phases |
 
 ---
@@ -167,10 +236,11 @@ Triangle angles: φ→31.0°, e→59.9°, π→89.1° — near 30-60-90, not exa
 
 ## Prioritized next moves
 
-1. **Extend structured PDE** — longer runs, higher resolution; correlate FFT peaks with φ/e/π at scale
-2. **Derive residual bound** — formal Skyrme + holonomy reduction for B(κ) = π²(e/π−κ)
-3. **Falsify Rodin map** — match doubling-step ΔΘ to burst-reset events in lattice sims
-4. **Island-bake conduit** — 369 flags with `epoch_bake_sweep` configurations
+1. **λt = 2 + golden-angle sweeps** — `exponential_survival_probe.py` baseline; Stage 3–4 twist increments at 137.5°
+2. **Extend structured PDE** — longer runs, higher resolution; correlate FFT peaks with φ/e/π at scale
+3. **Derive residual bound** — formal Skyrme + holonomy reduction for B(κ) = π²(e/π−κ)
+4. **Falsify Rodin map** — match doubling-step ΔΘ to burst-reset events in lattice sims
+5. **Island-bake conduit** — 369 flags with `epoch_bake_sweep` configurations
 
 ---
 

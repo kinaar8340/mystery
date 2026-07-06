@@ -55,6 +55,30 @@ This moves the project from "beautiful coincidence?" to **quantified emergent si
 
 ![Structured IC](../docs/figures/pde_structured_ic_probe.png)
 
+### λ ≈ κ and normalized survival at λt = 2
+
+In the mean-field reduction of the twist PDE, the global gauge restoring torque **−κθ̄** acts like exponential damping with characteristic rate **λ ≈ κ**. Normalizing simulation time to **λt = 2** (exactly two characteristic times) tests whether the remaining mean twist fraction tracks the universal survival **e⁻² ≈ 0.1353**, the φ-e-π residual **R ≈ 0.1375**, or the golden-angle fraction **137.5°/1000 ≈ 0.1375**.
+
+| Quantity | Meaning |
+|----------|---------|
+| λ ≈ κ | Gauge damping rate from locked pointer κ = 0.85 |
+| λt = 2 | Two characteristic relaxation times (memoryless survival benchmark) |
+| mean_survival | θ̄(t_norm) / θ̄(0) after PDE run to t_norm = 2/κ |
+
+**Headline result (July 2026):** At κ = 0.85, dt = 0.001, n_steps = 2353:
+
+```
+mean_survival = 0.137606   (Δ 0.09% from R, 0.07% from golden/1000, 1.68% from e⁻²)
+```
+
+This is a reproducible link between normalized dissipative dynamics and the φ-e-π residual — interpretive, not an exact identity. See `exponential_survival_probe.py`, `kappa_survival_sweep.py`, and toe `relaxation_survival.py`.
+
+**Hybrid score:** `compare_to_analogs()` now reports **0.6 × golden closeness + 0.4 × e⁻² closeness** to quantify the combined rotational-packing + dissipative-persistence reading.
+
+**κ sweep (July 2026):** mean_survival vs R is **broad** across κ ∈ [0.80, 0.90] — not a narrow peak at κ_doc. Best in sweep: κ ≈ 0.891 (Δ% vs R ~0.015%); at κ = 0.85: Δ% ~0.09%. Supports emergent-signature framing over single-parameter tuning.
+
+**Stage 4–5 scripts:** `analog_comparative_sweep.py` (grid over IC / twist_rate / λt / step_mode), `golden_angle_twist_probe.py` (S¹ phase histograms), `analog_cross_analysis.py` → `docs/figures/analog_survival_comparison.png`.
+
 ---
 
 ## 4. Conduit angular probe

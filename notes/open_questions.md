@@ -37,6 +37,17 @@
 
 `vortex_math_369=True` + `toroidal_modulo9=True` with island configurations from `toe/scripts/epoch_bake_sweep.py`.
 
+### 5. Stage 6 meta-optimization (implemented)
+
+`meta_optimize_phi_probe.py` now supports analog objective:
+
+- `--use-survival-penalty` — \|mean_survival − R\| at λt=2
+- `--golden-angle-steps` + `--golden-reward-weight` (default 0.3)
+- `--use-hybrid-objective` — hybrid Δ% instead of raw survival error
+- `--compare-baseline` — baseline vs survival vs dual-analog in one JSON
+
+**Open:** Does dual-analog optimization drift κ away from 0.85 or improve mean_survival vs R without breaking W_g lock? Run with `--trials 30+` for production comparison.
+
 ---
 
 ## Run probes

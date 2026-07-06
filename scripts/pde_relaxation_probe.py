@@ -39,7 +39,11 @@ def simulate_pde(
     delta_omega: float = 0.002,
     theta_crit: float | None = None,
     seed: int = 42,
+    normalize_to_lambda_t: float | None = None,
 ) -> np.ndarray:
+    # When normalize_to_lambda_t is set, evolve to λt = target with λ ≈ κ (gauge rate).
+    if normalize_to_lambda_t is not None:
+        nt = max(1, int(round(normalize_to_lambda_t / (kappa * dt))))
     if theta_crit is None:
         theta_crit = PI * (1 + kappa)
     rng = np.random.default_rng(seed)
@@ -147,13 +151,47 @@ def plot_slice(theta: np.ndarray, path: Path) -> None:
     plt.close(fig)
 
 
+def survival_at_lambda_t(
+    theta: np.ndarray,
+    theta0_mean: float,
+    theta0_std: float,
+) -> dict:
+    """Survival fractions vs e^{-2} and R after normalized relaxation."""
+    e_inv2 = float(np.exp(-2.0))
+    r_residual = PHI**2 + E**2 - PI**2
+    mean_surv = float(theta.mean() / theta0_mean) if abs(theta0_mean) > 1e-12 else 0.0
+    std_surv = float(theta.std() / theta0_std) if theta0_std > 1e-12 else 0.0
+    return {
+        "mean_survival": mean_surv,
+        "std_survival": std_surv,
+        "e_inv2": e_inv2,
+        "R_residual": r_residual,
+        "delta_pct_vs_e_inv2": 100 * abs(mean_surv - e_inv2) / e_inv2,
+        "delta_pct_vs_R": 100 * abs(mean_surv - r_residual) / abs(r_residual),
+    }
+
+
 def main() -> int:
+    import os
+
     seeds = load_meta_seeds()
     kappa = seeds["kappa"]
     theta_crit = PI * (1 + kappa)
+    normalize_lt = float(os.environ.get("NORMALIZE_TO_LAMBDA_T", "0")) or None
+    if normalize_lt is not None and normalize_lt <= 0:
+        normalize_lt = None
 
     print(f"PDE seeds: κ={kappa}, θ_crit={theta_crit:.4f}, W_g={seeds['w_g']:.4f}")
-    theta = simulate_pde(kappa=kappa, theta_crit=theta_crit)
+    if normalize_lt:
+        print(f"Normalizing to λt = {normalize_lt} (λ ≈ κ)")
+    rng = np.random.default_rng(42)
+    theta0 = rng.uniform(0.1, 2.0, (20, 20, 20))
+    theta0_mean, theta0_std = float(theta0.mean()), float(theta0.std())
+    theta = simulate_pde(
+        kappa=kappa,
+        theta_crit=theta_crit,
+        normalize_to_lambda_t=normalize_lt,
+    )
 
     fft = fft_analysis(theta)
     corr = correlation_length(theta)
@@ -161,8 +199,14 @@ def main() -> int:
     plot_path = OUTPUT_DIR / "pde_relaxation_probe.png"
     plot_slice(theta, plot_path)
 
+    survival = (
+        survival_at_lambda_t(theta, theta0_mean, theta0_std) if normalize_lt else None
+    )
+
     result = {
         "meta_seeds": seeds,
+        "normalize_to_lambda_t": normalize_lt,
+        "lambda_t_survival": survival,
         "theta_crit_rad": theta_crit,
         "field_stats": {
             "mean": float(theta.mean()),
@@ -181,6 +225,11 @@ def main() -> int:
     print("=== PDE Relaxation Probe ===")
     print(f"⟨θ⟩={result['field_stats']['mean']:.4f}  σ={result['field_stats']['std']:.4f}")
     print(f"Correlation length ξ={corr['correlation_length_grid_units']:.3f} grid units")
+    if survival:
+        print(f"λt survival: mean={survival['mean_survival']:.6f}  "
+              f"(e^{{-2}}={survival['e_inv2']:.6f}, R={survival['R_residual']:.6f})")
+        print(f"  Δ vs e^{{-2}}: {survival['delta_pct_vs_e_inv2']:.2f}%  "
+              f"Δ vs R: {survival['delta_pct_vs_R']:.2f}%")
     if sig.get("degenerate_uniform_field"):
         print("Field uniform after relaxation — no meaningful φ/e/π length-scale signature.")
     else:

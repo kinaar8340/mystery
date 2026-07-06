@@ -11406,6 +11406,8 @@ def _run_residual_explorer_ui(
     status_zoom_slot: int,
     active_shape: str,
     active_demo_letter: str = "A",
+    golden_angle_steps: bool = False,
+    normalize_lambda_t: bool = True,
 ) -> tuple:
     config_shape = _normalize_shape_id(active_shape)
     dim_config = get_dimension_config(config_shape)
@@ -11424,6 +11426,9 @@ def _run_residual_explorer_ui(
         view_azim,
         subdiv=subdiv,
         face_count=face_count,
+        show_golden_circle=golden_angle_steps,
+        normalize_lambda_t=normalize_lambda_t,
+        golden_angle_steps=golden_angle_steps,
     )
     dials = _gravity_dial_bundle(
         phi_sq_scale,
@@ -11483,6 +11488,8 @@ def _run_residual_explorer_ui_manual(
     active_shape: str,
     active_demo_letter: str,
     edit_params_enabled: bool,
+    golden_angle_steps: bool = False,
+    normalize_lambda_t: bool = True,
 ) -> tuple:
     """Manual dial refresh — only when Manual Edit is latched (avoids preset cascade)."""
     if not edit_params_enabled:
@@ -11503,6 +11510,8 @@ def _run_residual_explorer_ui_manual(
         status_zoom_slot,
         active_shape,
         active_demo_letter,
+        golden_angle_steps,
+        normalize_lambda_t,
     )
 
 
@@ -12783,6 +12792,15 @@ def build_app() -> gr.Blocks:
                             interactive=False,
                             value=_init_re_metrics,
                         )
+                        with gr.Row(elem_classes=["myst-analog-probe-row"]):
+                            edit_golden_angle_steps = gr.Checkbox(
+                                label="Golden-angle twist (137.5° S¹ ticks on rigid cube)",
+                                value=False,
+                            )
+                            edit_normalize_lambda_t = gr.Checkbox(
+                                label="Normalize to λt = 2 (show mean_survival in metrics)",
+                                value=True,
+                            )
 
         with gr.Column(visible=True, elem_classes=["myst-gravity-page"], scale=1) as page_gravity:
             gravity_letter_btns = {
@@ -12911,6 +12929,8 @@ def build_app() -> gr.Blocks:
                 re_delta_z = gr.Slider(0.0, 0.5, value=0.1, step=0.01, visible=False)
                 re_alpha = gr.Slider(0.0, 2.0, value=1.0, step=0.05, visible=False)
                 re_beta = gr.Slider(0.0, 2.0, value=1.0, step=0.05, visible=False)
+                re_golden_angle_steps = gr.Checkbox(value=False, visible=False)
+                re_normalize_lambda_t = gr.Checkbox(value=True, visible=False)
                 re_metrics = gr.Textbox(value=_init_re_metrics, visible=False)
             re_inputs = [
                 re_phi_scale,
@@ -12957,7 +12977,70 @@ def build_app() -> gr.Blocks:
                 status_zoom_slot,
                 active_shape,
                 gravity_active_letter,
+                re_golden_angle_steps,
+                re_normalize_lambda_t,
             ]
+
+            def _analog_probe_explorer_refresh(
+                golden_angle_steps: bool,
+                normalize_lambda_t: bool,
+                phi_sq_scale: float,
+                e_sq_scale: float,
+                pi_sq_scale: float,
+                kappa: float,
+                delta_z: float,
+                alpha: float,
+                beta: float,
+                deform_pressure: float,
+                view_elev: float,
+                view_azim: float,
+                active_preset: int,
+                zoom_slot: int,
+                shape: str,
+                demo_letter: str,
+            ) -> tuple:
+                explorer_out = _run_residual_explorer_ui(
+                    phi_sq_scale,
+                    e_sq_scale,
+                    pi_sq_scale,
+                    kappa,
+                    delta_z,
+                    alpha,
+                    beta,
+                    deform_pressure,
+                    view_elev,
+                    view_azim,
+                    active_preset,
+                    zoom_slot,
+                    shape,
+                    demo_letter,
+                    golden_angle_steps,
+                    normalize_lambda_t,
+                )
+                return (
+                    *explorer_out,
+                    gr.update(value=golden_angle_steps),
+                    gr.update(value=normalize_lambda_t),
+                )
+
+            _analog_probe_inputs = [
+                edit_golden_angle_steps,
+                edit_normalize_lambda_t,
+                *re_inputs,
+                re_active_preset,
+                status_zoom_slot,
+                active_shape,
+                gravity_active_letter,
+            ]
+            _analog_probe_outputs = [*re_outputs, re_golden_angle_steps, re_normalize_lambda_t]
+            for _analog_ctrl in (edit_golden_angle_steps, edit_normalize_lambda_t):
+                _analog_ctrl.change(
+                    _analog_probe_explorer_refresh,
+                    inputs=_analog_probe_inputs,
+                    outputs=_analog_probe_outputs,
+                    show_progress="hidden",
+                )
+
             gravity_demo_nav_outputs = [
                 *[gravity_letter_btns[letter] for letter in _GRAVITY_CHILD_NAV_LETTERS],
                 gravity_active_letter,

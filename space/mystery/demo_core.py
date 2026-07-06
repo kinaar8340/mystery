@@ -26,6 +26,10 @@ PI = np.pi
 R = PHI**2 + E**2 - PI**2
 E_OVER_PI = E / PI
 KAPPA_DOC = 0.85
+E_INV2 = float(np.exp(-2.0))
+GOLDEN_ANGLE_DEG = 360.0 * (1.0 - 1.0 / PHI)
+GOLDEN_ANGLE_FRACTION = GOLDEN_ANGLE_DEG / 1000.0
+GOLDEN_ANGLE_RAD = float(np.radians(GOLDEN_ANGLE_DEG))
 UNIT_CELL_VIEWPORT_PX = 550
 UNIT_CELL_FIGSIZE = (6.0, 6.0)
 UNIT_CELL_VIEW_ELEV = 26.0
@@ -982,6 +986,131 @@ def delta_side_contraction(
     return float(alpha * delta_z + beta * r * bound(kappa))
 
 
+def steps_for_lambda_t(
+    lambda_t_target: float = 2.0,
+    kappa: float = KAPPA_DOC,
+    dt: float = 0.001,
+) -> int:
+    """Discrete PDE steps for λt = lambda_t_target with λ ≈ κ."""
+    return max(1, int(round(lambda_t_target / (kappa * dt))))
+
+
+def quick_mean_survival_at_lambda_t(
+    kappa: float = KAPPA_DOC,
+    lambda_t: float = 2.0,
+    dt: float = 0.001,
+    seed: int = 42,
+) -> float:
+    """Lightweight PDE mean_survival at λt (for HF Space TUI / explorer)."""
+    toe_rs = Path.home() / "Projects" / "toe" / "src" / "relaxation_survival.py"
+    if toe_rs.is_file():
+        try:
+            import importlib.util
+            import sys
+
+            spec = importlib.util.spec_from_file_location("relaxation_survival", toe_rs)
+            if spec and spec.loader:
+                mod = importlib.util.module_from_spec(spec)
+                sys.modules[spec.name] = mod
+                spec.loader.exec_module(mod)
+                result = mod.simulate_twist_pde_survival(
+                    normalize_to_lambda_t=lambda_t,
+                    kappa=kappa,
+                    dt=dt,
+                    seed=seed,
+                )
+                return float(result["survival"]["mean_survival"])
+        except Exception:
+            pass
+
+    rng = np.random.default_rng(seed)
+    nx, nt = 20, steps_for_lambda_t(lambda_t, kappa, dt)
+    theta = rng.uniform(0.1, 2.0, (nx, nx, nx))
+    theta0_mean = float(theta.mean())
+    theta_crit = PI * (1.0 + kappa)
+    D, delta_omega = 0.05, 0.002
+    for _ in range(nt):
+        lap = (
+            np.roll(theta, 1, 0) + np.roll(theta, -1, 0)
+            + np.roll(theta, 1, 1) + np.roll(theta, -1, 1)
+            + np.roll(theta, 1, 2) + np.roll(theta, -1, 2) - 6 * theta
+        ) / (1.0 / nx) ** 2
+        bar_theta = float(theta.mean())
+        gauge = -kappa * bar_theta
+        burst = np.where(theta > theta_crit, -50.0 * (theta - theta_crit), 0.0)
+        theta += dt * (D * lap + delta_omega + gauge + burst)
+        theta = np.clip(theta, 0.01, 2 * PI - 0.01)
+    if abs(theta0_mean) < 1e-12:
+        return 0.0
+    return float(theta.mean() / theta0_mean)
+
+
+def hybrid_analog_delta_pct(measured: float) -> tuple[float, float]:
+    """60% golden + 40% e⁻² weighted Δ%. Returns (hybrid_delta_pct, hybrid_score)."""
+    golden_d = 100.0 * abs(measured - GOLDEN_ANGLE_FRACTION) / GOLDEN_ANGLE_FRACTION
+    e_d = 100.0 * abs(measured - E_INV2) / E_INV2
+    hybrid_d = 0.6 * golden_d + 0.4 * e_d
+    golden_c = 1.0 / (1.0 + abs(measured - GOLDEN_ANGLE_FRACTION))
+    e_c = 1.0 / (1.0 + abs(measured - E_INV2))
+    return hybrid_d, 0.6 * golden_c + 0.4 * e_c
+
+
+def _append_golden_unit_circle_mpl(ax, *, radius: float = 1.15, n_ticks: int = 8) -> None:
+    """Axial unit circle + golden-angle tick marks (rigid-cube + S¹ visualization)."""
+    t = np.linspace(0.0, 2.0 * PI, 200)
+    ax.plot(
+        radius * np.cos(t),
+        radius * np.sin(t),
+        np.zeros_like(t),
+        color=_UNIT_CELL_GOLD,
+        linewidth=1.8,
+        alpha=0.85,
+        zorder=6,
+    )
+    for k in range(n_ticks):
+        ang = (k * GOLDEN_ANGLE_RAD) % (2.0 * PI)
+        ax.plot(
+            [0.0, radius * np.cos(ang)],
+            [0.0, radius * np.sin(ang)],
+            [0.0, 0.0],
+            color=_UNIT_CELL_GOLD,
+            linewidth=1.2,
+            alpha=0.65,
+            zorder=6,
+        )
+
+
+def _append_golden_unit_circle_plotly(traces: list, *, radius: float = 1.15, n_ticks: int = 8) -> None:
+    import plotly.graph_objects as go
+
+    t = np.linspace(0.0, 2.0 * PI, 200)
+    traces.append(
+        go.Scatter3d(
+            x=(radius * np.cos(t)).tolist(),
+            y=(radius * np.sin(t)).tolist(),
+            z=np.zeros_like(t).tolist(),
+            mode="lines",
+            line=dict(color=_UNIT_CELL_GOLD, width=5),
+            name="S¹ unit circle",
+            hoverinfo="skip",
+            showlegend=False,
+        )
+    )
+    for k in range(n_ticks):
+        ang = (k * GOLDEN_ANGLE_RAD) % (2.0 * PI)
+        traces.append(
+            go.Scatter3d(
+                x=[0.0, radius * np.cos(ang)],
+                y=[0.0, radius * np.sin(ang)],
+                z=[0.0, 0.0],
+                mode="lines",
+                line=dict(color=_UNIT_CELL_GOLD, width=3),
+                hoverinfo="skip",
+                showlegend=False,
+            )
+        )
+
+
 def format_residual_explorer(
     phi_sq_scale: float,
     e_sq_scale: float,
@@ -990,6 +1119,9 @@ def format_residual_explorer(
     delta_z: float,
     alpha: float,
     beta: float,
+    *,
+    normalize_lambda_t: bool = True,
+    golden_angle_steps: bool = False,
 ) -> str:
     r_val = residual_from_scales(phi_sq_scale, e_sq_scale, pi_sq_scale)
     k_star = kappa_star_from_r(r_val)
@@ -997,32 +1129,60 @@ def format_residual_explorer(
     d_side = delta_side_contraction(delta_z, r_val, kappa, alpha=alpha, beta=beta)
     rel_err = 100 * abs(r_val) / PI**2
     gap = b_k - r_val
-    return "\n".join(
-        [
-            "=== Residual Explorer ===",
+    lines = [
+        "=== Residual Explorer ===",
+        "",
+        f"φ² scale       : {phi_sq_scale:.4f}   →  {phi_sq_scale * PHI**2:.6f}",
+        f"e² scale       : {e_sq_scale:.4f}   →  {e_sq_scale * E**2:.6f}",
+        f"π² scale       : {pi_sq_scale:.4f}   →  {pi_sq_scale * PI**2:.6f}",
+        "",
+        f"R              : {r_val:+.8f}",
+        f"Rel. error     : {rel_err:.4f}%",
+        "",
+        f"κ              : {kappa:.4f}",
+        f"κ* (nulls gap) : {k_star:.6f}",
+        f"B(κ)           : {b_k:.6f}",
+        f"B(κ) − R       : {gap:+.6f}",
+        "",
+        f"δ_z (push)     : {delta_z:.4f}",
+        f"α, β           : {alpha:.3f}, {beta:.3f}",
+        f"δ_side         : {d_side:.6f}",
+        f"  α·δ_z term   : {alpha * delta_z:.6f}",
+        f"  β·R·B(κ)     : {beta * r_val * b_k:.6f}",
+        "",
+        f"W_g target     : {W_G_TARGET:.4f}  (350/π)",
+        f"350/π vs W_g   : meta-opt W_g ≈ 111.89",
+    ]
+    if normalize_lambda_t:
+        mean_surv = quick_mean_survival_at_lambda_t(kappa=kappa, lambda_t=2.0)
+        hybrid_d, hybrid_s = hybrid_analog_delta_pct(mean_surv)
+        n_steps = steps_for_lambda_t(2.0, kappa)
+        lines.extend([
             "",
-            f"φ² scale       : {phi_sq_scale:.4f}   →  {phi_sq_scale * PHI**2:.6f}",
-            f"e² scale       : {e_sq_scale:.4f}   →  {e_sq_scale * E**2:.6f}",
-            f"π² scale       : {pi_sq_scale:.4f}   →  {pi_sq_scale * PI**2:.6f}",
+            "=== λt = 2 survival (λ ≈ κ) ===",
+            f"n_steps        : {n_steps}  (dt=0.001)",
+            f"mean_survival  : {mean_surv:.6f}",
+            f"e⁻² reference  : {E_INV2:.6f}",
+            f"golden/1000    : {GOLDEN_ANGLE_FRACTION:.6f}",
+            f"Δ% vs R        : {100 * abs(mean_surv - r_val) / abs(r_val):.3f}%",
+            f"hybrid Δ%      : {hybrid_d:.3f}%  (60% golden + 40% e⁻²)",
+            f"hybrid score   : {hybrid_s:.4f}",
+        ])
+    if golden_angle_steps:
+        lines.extend([
             "",
-            f"R              : {r_val:+.8f}",
-            f"Rel. error     : {rel_err:.4f}%",
+            f"Golden steps   : ON ({GOLDEN_ANGLE_DEG:.2f}° / S¹ ticks)",
+        ])
+    if normalize_lambda_t and golden_angle_steps:
+        mean_surv = quick_mean_survival_at_lambda_t(kappa=kappa, lambda_t=2.0)
+        hybrid_d, hybrid_s = hybrid_analog_delta_pct(mean_surv)
+        lines.extend([
             "",
-            f"κ              : {kappa:.4f}",
-            f"κ* (nulls gap) : {k_star:.6f}",
-            f"B(κ)           : {b_k:.6f}",
-            f"B(κ) − R       : {gap:+.6f}",
-            "",
-            f"δ_z (push)     : {delta_z:.4f}",
-            f"α, β           : {alpha:.3f}, {beta:.3f}",
-            f"δ_side         : {d_side:.6f}",
-            f"  α·δ_z term   : {alpha * delta_z:.6f}",
-            f"  β·R·B(κ)     : {beta * r_val * b_k:.6f}",
-            "",
-            f"W_g target     : {W_G_TARGET:.4f}  (350/π)",
-            f"350/π vs W_g   : meta-opt W_g ≈ 111.89",
-        ]
-    )
+            "=== Dual analog (golden + λt=2) ===",
+            f"combined hybrid: {hybrid_s:.4f}  (Δ% {hybrid_d:.3f}%)",
+            "Interpretation  : rotational packing + dissipative survival",
+        ])
+    return "\n".join(lines)
 
 
 _UNIT_CELL_MATRIX_GREEN = "#33ff66"
@@ -2735,6 +2895,7 @@ def build_unit_cell_figure(
     dpi: int = 150,
     subdiv: int = 8,
     face_count: int = 6,
+    show_golden_circle: bool = False,
 ) -> plt.Figure:
     """Server-rendered deformable geodesic — bowing π-face, concave φ/e sides."""
     from matplotlib.colors import to_rgba
@@ -2936,6 +3097,9 @@ def build_unit_cell_figure(
             fontsize=font_small,
         )
 
+    if show_golden_circle:
+        _append_golden_unit_circle_mpl(ax, radius=1.15)
+
     if shape_only:
         half = float(UNIT_CELL_SHAPE_ONLY_AXIS_HALF)
         frame_dist = float(UNIT_CELL_SHAPE_ONLY_VIEW_DIST)
@@ -3116,6 +3280,7 @@ def build_unit_cell_plotly_figure(
     camera_radius: float | None = None,
     subdiv: int = 8,
     face_count: int = 6,
+    show_golden_circle: bool = False,
 ):
     """Interactive Plotly geodesic mesh for Render preset detail view."""
     import plotly.graph_objects as go
@@ -3276,6 +3441,9 @@ def build_unit_cell_plotly_figure(
         layout_margin = dict(l=0, r=0, t=0, b=0, pad=0)
         layout_height = None
 
+    if show_golden_circle:
+        _append_golden_unit_circle_plotly(traces)
+
     fig = go.Figure(data=traces)
     layout_kw: dict = dict(
         paper_bgcolor="#000000",
@@ -3306,8 +3474,11 @@ def run_residual_explorer_plotly(
     detail_scene: bool = False,
     subdiv: int = 8,
     face_count: int = 6,
+    show_golden_circle: bool = False,
+    normalize_lambda_t: bool = True,
 ):
     """Return an interactive Plotly unit-cell figure for preset detail view."""
+    _ = normalize_lambda_t  # survival shown in metrics text via run_residual_explorer
     r_val = residual_from_scales(phi_sq_scale, e_sq_scale, pi_sq_scale)
     d_side = delta_side_contraction(delta_z, r_val, kappa, alpha=alpha, beta=beta)
     return build_unit_cell_plotly_figure(
@@ -3322,6 +3493,7 @@ def run_residual_explorer_plotly(
         camera_radius=UNIT_CELL_DETAIL_PLOTLY_RADIUS if detail_scene else None,
         subdiv=subdiv,
         face_count=face_count,
+        show_golden_circle=show_golden_circle,
     )
 
 
@@ -3409,12 +3581,23 @@ def run_residual_explorer(
     shape_only: bool = False,
     subdiv: int = 8,
     face_count: int = 6,
+    show_golden_circle: bool = False,
+    normalize_lambda_t: bool = True,
+    golden_angle_steps: bool = False,
 ) -> tuple[str, str, plt.Figure]:
     """Return explorer metrics, viewport header HTML, and unit-cell figure."""
     r_val = residual_from_scales(phi_sq_scale, e_sq_scale, pi_sq_scale)
     d_side = delta_side_contraction(delta_z, r_val, kappa, alpha=alpha, beta=beta)
     metrics = format_residual_explorer(
-        phi_sq_scale, e_sq_scale, pi_sq_scale, kappa, delta_z, alpha, beta
+        phi_sq_scale,
+        e_sq_scale,
+        pi_sq_scale,
+        kappa,
+        delta_z,
+        alpha,
+        beta,
+        normalize_lambda_t=normalize_lambda_t,
+        golden_angle_steps=golden_angle_steps,
     )
     p = _clamp_deform_pressure(deform_pressure)
     mode = _deform_pressure_hint(p)
@@ -3429,6 +3612,7 @@ def run_residual_explorer(
         "view_elev": view_elev,
         "view_azim": view_azim,
         "shape_only": shape_only,
+        "show_golden_circle": show_golden_circle or golden_angle_steps,
     }
     if view_dist is not None:
         fig_kwargs["view_dist"] = float(view_dist)
