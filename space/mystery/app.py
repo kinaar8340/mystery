@@ -8408,7 +8408,7 @@ _DEMO_VIEWPORT_OVERLAY_BY_LETTER: dict[str, tuple[str, str]] = {
     "G": ("Demo G", "D8 · Octahedron · breathing deformation"),
     "H": ("Demo H", "D12 · Dodecahedron · breathing deformation"),
     "I": ("Demo I", "D20 · Icosahedron · breathing deformation"),
-    "J": ("Demo J", "Nested Platonic resonator · wind-synced twist & breath"),
+    "J": ("Demo J", "2×2 resonator · exterior · interior · interior · central"),
 }
 _BREATHING_DEMO_LETTERS: frozenset[str] = frozenset({"F"})
 _BRACKISH_DEMO_LETTERS: frozenset[str] = frozenset({"J"})
@@ -13351,7 +13351,7 @@ def build_app() -> gr.Blocks:
                 f"Demo G               : D8 octahedron deformation loop\n"
                 f"Demo H               : D12 dodecahedron deformation loop\n"
                 f"Demo I               : D20 icosahedron deformation loop\n"
-                f"Demo J               : Nested Platonic resonator · wind-synced twist & breath"
+                f"Demo J               : 2×2 resonator · exterior · interior · interior · central"
             )
             header = build_unit_cell_viewport_header_html(pressure=float(dials["pressure"]))
             control_levels = _format_gravity_control_panel_html(dials, 0)

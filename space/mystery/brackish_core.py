@@ -86,9 +86,22 @@ _VIEWPORT_FIGSIZE = (6.0, 6.0)
 _VIEWPORT_ELEV = 26.0
 _VIEWPORT_AZIM = 45.0
 _NESTED_VIEWPORT_SCALE = 1.42
+_QUAD_VIEWPORT_SCALE = 1.22
+_DIMMED_LINE_COLOR = "#ffffff"
+_DIMMED_LINE_ALPHA = 0.6
+_DIMMED_LINE_WIDTH = 0.65
+_HIGHLIGHT_LINE_WIDTH = 2.3
+
+# Demo J 2×2 — exterior | interior | interior | central (row-major)
+_DEMO_J_QUAD_PANELS: tuple[tuple[int, int, int, str], ...] = (
+    (0, 0, 4, "Exterior"),
+    (0, 1, 3, "Interior"),
+    (1, 0, 2, "Interior"),
+    (1, 1, 0, "Central"),
+)
 
 
-_BRACKISH_VIEWPORT_REV = "resonator-only-v1"
+_BRACKISH_VIEWPORT_REV = "quad-highlight-v1"
 
 
 def brackish_params_key(**kwargs: Any) -> str:
@@ -428,57 +441,14 @@ def _draw_divergence_strip_live(ax, series: dict[str, Any], frame_idx: int, wind
     ax.legend(loc="upper right", fontsize=6, framealpha=0.3)
 
 
-def _draw_nested_resonator(
+def _configure_resonator_axes(
     ax,
-    t: float,
-    wind: float,
     *,
-    viewport_scale: float = 1.0,
-    visual_separation: float | None = None,
-    full_viewport: bool = False,
-    color_mode: str = "layer",
+    t: float,
+    viewport_scale: float,
+    visual_separation: float | None,
+    full_viewport: bool,
 ) -> None:
-    """Nested Platonic wireframe — per-solid colors or rainbow gradient."""
-    ax.set_facecolor(_VIEWPORT_BG)
-    layers = _nested_layer_vertices(
-        t,
-        wind,
-        viewport_scale=viewport_scale,
-        visual_separation=visual_separation,
-    )
-    n_layers = max(1, len(_LAYERS))
-    base_line_w = 2.6 if full_viewport else 1.8
-    base_line_w *= 0.85 + 0.15 * min(1.3, wind / 1.2)
-    use_rainbow = str(color_mode).strip().lower() == "rainbow"
-    total_edges = max(
-        1,
-        sum(len(_wireframe_edges(faces)) for _, faces, _ in layers),
-    )
-    edge_idx = 0
-    for verts, faces, layer_idx in layers:
-        _name, _radius, _twist, layer_color, _sign = _LAYERS[layer_idx]
-        depth = layer_idx / max(1, n_layers - 1)
-        line_w = base_line_w * (0.96 + 0.12 * depth)
-        line_alpha = 0.90 + 0.10 * depth
-        for i0, i1 in _wireframe_edges(faces):
-            p0, p1 = verts[i0], verts[i1]
-            if use_rainbow:
-                edge_color = _wireframe_edge_color_hex(
-                    edge_idx, total_edges, layer_index=layer_idx,
-                )
-            else:
-                edge_color = layer_color
-            ax.plot(
-                [p0[0], p1[0]],
-                [p0[1], p1[1]],
-                [p0[2], p1[2]],
-                color=edge_color,
-                linewidth=line_w,
-                solid_capstyle="round",
-                alpha=line_alpha,
-                zorder=5 + layer_idx,
-            )
-            edge_idx += 1
     visual_scales = _visual_radius_scales(visual_separation)
     max_visual_r = max(visual_scales.values())
     lim = max_visual_r * viewport_scale * 1.28
@@ -490,8 +460,174 @@ def _draw_nested_resonator(
     azim = (_VIEWPORT_AZIM if full_viewport else 38.0) + 0.35 * t
     ax.view_init(elev=elev, azim=azim)
     _hide_3d_scene_axes(ax)
-    if not full_viewport:
-        ax.set_title("Nested resonator · wind-synced twist/breath", fontsize=9, color="#ddd", pad=4)
+
+
+def _plot_resonator_layer_edges(
+    ax,
+    verts: np.ndarray,
+    faces: list[tuple[int, ...]],
+    *,
+    layer_idx: int,
+    edge_color: str,
+    linewidth: float,
+    alpha: float,
+    zorder: int,
+) -> None:
+    for i0, i1 in _wireframe_edges(faces):
+        p0, p1 = verts[i0], verts[i1]
+        ax.plot(
+            [p0[0], p1[0]],
+            [p0[1], p1[1]],
+            [p0[2], p1[2]],
+            color=edge_color,
+            linewidth=linewidth,
+            solid_capstyle="round",
+            alpha=alpha,
+            zorder=zorder,
+        )
+
+
+def _draw_nested_resonator(
+    ax,
+    t: float,
+    wind: float,
+    *,
+    layers: list[tuple[np.ndarray, list[tuple[int, ...]], int]] | None = None,
+    viewport_scale: float = 1.0,
+    visual_separation: float | None = None,
+    full_viewport: bool = False,
+    color_mode: str = "layer",
+    highlight_layer_idx: int | None = None,
+    panel_label: str | None = None,
+) -> None:
+    """Nested Platonic wireframe — full color, rainbow, or single-layer highlight."""
+    ax.set_facecolor(_VIEWPORT_BG)
+    if layers is None:
+        layers = _nested_layer_vertices(
+            t,
+            wind,
+            viewport_scale=viewport_scale,
+            visual_separation=visual_separation,
+        )
+    n_layers = max(1, len(_LAYERS))
+    base_line_w = 2.6 if full_viewport else 1.8
+    base_line_w *= 0.85 + 0.15 * min(1.3, wind / 1.2)
+    highlight_w = _HIGHLIGHT_LINE_WIDTH * (0.92 + 0.08 * min(1.3, wind / 1.2))
+
+    if highlight_layer_idx is not None:
+        for verts, faces, layer_idx in layers:
+            name, _radius, _twist, layer_color, _sign = _LAYERS[layer_idx]
+            is_highlight = layer_idx == highlight_layer_idx
+            if is_highlight:
+                edge_color = layer_color
+                line_w = highlight_w
+                line_alpha = 1.0
+                zorder = 20 + layer_idx
+            else:
+                edge_color = _DIMMED_LINE_COLOR
+                line_w = _DIMMED_LINE_WIDTH
+                line_alpha = _DIMMED_LINE_ALPHA
+                zorder = 5 + layer_idx
+            _plot_resonator_layer_edges(
+                ax,
+                verts,
+                faces,
+                layer_idx=layer_idx,
+                edge_color=edge_color,
+                linewidth=line_w,
+                alpha=line_alpha,
+                zorder=zorder,
+            )
+        if panel_label:
+            _name, _radius, _twist, accent, _sign = _LAYERS[highlight_layer_idx]
+            ax.set_title(
+                f"{panel_label} · {_name.title()}",
+                fontsize=7,
+                color=accent,
+                pad=2,
+            )
+    else:
+        use_rainbow = str(color_mode).strip().lower() == "rainbow"
+        total_edges = max(
+            1,
+            sum(len(_wireframe_edges(faces)) for _, faces, _ in layers),
+        )
+        edge_idx = 0
+        for verts, faces, layer_idx in layers:
+            _name, _radius, _twist, layer_color, _sign = _LAYERS[layer_idx]
+            depth = layer_idx / max(1, n_layers - 1)
+            line_w = base_line_w * (0.96 + 0.12 * depth)
+            line_alpha = 0.90 + 0.10 * depth
+            for i0, i1 in _wireframe_edges(faces):
+                p0, p1 = verts[i0], verts[i1]
+                if use_rainbow:
+                    edge_color = _wireframe_edge_color_hex(
+                        edge_idx, total_edges, layer_index=layer_idx,
+                    )
+                else:
+                    edge_color = layer_color
+                ax.plot(
+                    [p0[0], p1[0]],
+                    [p0[1], p1[1]],
+                    [p0[2], p1[2]],
+                    color=edge_color,
+                    linewidth=line_w,
+                    solid_capstyle="round",
+                    alpha=line_alpha,
+                    zorder=5 + layer_idx,
+                )
+                edge_idx += 1
+        if not full_viewport:
+            ax.set_title("Nested resonator · wind-synced twist/breath", fontsize=9, color="#ddd", pad=4)
+
+    _configure_resonator_axes(
+        ax,
+        t=t,
+        viewport_scale=viewport_scale,
+        visual_separation=visual_separation,
+        full_viewport=full_viewport,
+    )
+
+
+def build_brackish_quad_viewport(
+    t: float,
+    *,
+    base: float = 1.0,
+    amplitude: float = 0.4,
+    freq: float = 0.01,
+    residual_weight: float = 0.15,
+    stable_mode: bool = False,
+    visual_separation: float = DEFAULT_BRACKISH_PARAMS["visual_separation"],
+    dpi: int = 88,
+) -> plt.Figure:
+    """Demo J — 2×2 synced resonator panels with per-quadrant layer highlight."""
+    wind = brackish_dynamics(
+        t, base=base, amplitude=amplitude, freq=freq,
+        residual_weight=residual_weight, stable_mode=stable_mode,
+    )
+    layers = _nested_layer_vertices(
+        t,
+        wind,
+        viewport_scale=_QUAD_VIEWPORT_SCALE,
+        visual_separation=visual_separation,
+    )
+    fig = plt.figure(figsize=_VIEWPORT_FIGSIZE, facecolor=_VIEWPORT_BG, dpi=dpi)
+    gs = GridSpec(2, 2, figure=fig, wspace=0.04, hspace=0.06)
+    for row, col, layer_idx, panel_label in _DEMO_J_QUAD_PANELS:
+        ax = fig.add_subplot(gs[row, col], projection="3d", facecolor=_VIEWPORT_BG)
+        _draw_nested_resonator(
+            ax,
+            t,
+            wind,
+            layers=layers,
+            viewport_scale=_QUAD_VIEWPORT_SCALE,
+            visual_separation=visual_separation,
+            full_viewport=True,
+            highlight_layer_idx=layer_idx,
+            panel_label=panel_label,
+        )
+    fig.subplots_adjust(left=0.02, right=0.98, bottom=0.02, top=0.98)
+    return fig
 
 
 def build_brackish_resonator_viewport(
@@ -505,21 +641,17 @@ def build_brackish_resonator_viewport(
     visual_separation: float = DEFAULT_BRACKISH_PARAMS["visual_separation"],
     dpi: int = 88,
 ) -> plt.Figure:
-    """Full-viewport nested resonator loop frame — matches Demo B wireframe look."""
-    wind = brackish_dynamics(
-        t, base=base, amplitude=amplitude, freq=freq,
-        residual_weight=residual_weight, stable_mode=stable_mode,
-    )
-    fig = plt.figure(figsize=_VIEWPORT_FIGSIZE, facecolor=_VIEWPORT_BG, dpi=dpi)
-    ax = fig.add_subplot(111, projection="3d", facecolor=_VIEWPORT_BG)
-    _draw_nested_resonator(
-        ax, t, wind,
-        viewport_scale=_NESTED_VIEWPORT_SCALE,
+    """Full-viewport nested resonator — alias for Demo J 2×2 quad layout."""
+    return build_brackish_quad_viewport(
+        t,
+        base=base,
+        amplitude=amplitude,
+        freq=freq,
+        residual_weight=residual_weight,
+        stable_mode=stable_mode,
         visual_separation=visual_separation,
-        full_viewport=True,
+        dpi=dpi,
     )
-    fig.subplots_adjust(left=0, right=1, bottom=0, top=1)
-    return fig
 
 
 def build_brackish_sync_frame(
@@ -634,7 +766,7 @@ def brackish_dashboard_viewport_html(**kwargs: Any) -> str:
     """HF-safe viewport HTML for interactive Demo J preview — resonator only."""
     render = _render_kwargs(**kwargs)
     uri = brackish_resonator_to_data_uri(**render)
-    title = "Demo J — Nested Platonic Resonator"
+    title = "Demo J — 2×2 Platonic Resonator"
     subtitle = (
         f"wind base={kwargs.get('base', 1.0):.2f} · "
         f"amp={kwargs.get('amplitude', 0.4):.2f} · "
@@ -685,7 +817,7 @@ def render_brackish_clock_video(
     stable_mode: bool = False,
     visual_separation: float = DEFAULT_BRACKISH_PARAMS["visual_separation"],
 ) -> str:
-    """Looping MP4 — full-viewport nested Platonic resonator (Demo J)."""
+    """Looping MP4 — 2×2 synced Platonic resonator panels (Demo J)."""
     n_frames = max(2, int(duration * fps))
     times = np.linspace(0, duration, n_frames)
     rgb_frames = []
