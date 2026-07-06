@@ -9447,6 +9447,7 @@ def _get_brackish_demo_video_path(
             raw_path = _BUNDLED_BRACKISH_VIDEO
             print(f"[demo-j] using bundled asset: {raw_path}", flush=True)
         else:
+            print(f"[demo-j] encoding brackish loop (params={cache_key})", flush=True)
             raw_path = render_brackish_clock_video(duration=8.0, fps=10, dpi=72, **params)
         _BRACKISH_DEMO_VIDEO_CACHE[cache_key] = _cache_media_for_gradio(raw_path)
     return _BRACKISH_DEMO_VIDEO_CACHE[cache_key]
