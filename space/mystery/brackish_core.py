@@ -67,7 +67,7 @@ DEFAULT_BRACKISH_PARAMS: dict[str, Any] = {
     "freq": 0.01,
     "residual_weight": 0.15,
     "stable_mode": False,
-    "visual_separation": 0.16,
+    "visual_separation": 0.12,
     "flux_gauge_rigidness": 0.25,
     "compression_strength": 0.35,
     "base_coupling": 0.75,
@@ -93,13 +93,13 @@ FLUX_SPRING_CONFIG: dict[str, float] = {
 # === VISUAL ONLY — does not affect twist, counter-twist, or breathing math ===
 # Tight nesting: inner shells must stay inside the outer geodesic shield.
 _DEFAULT_VISUAL_SCALES: dict[str, float] = {
-    "tetrahedron": 0.22,
-    "octahedron": 0.36,
-    "cube": 0.50,
-    "icosahedron": 0.64,
-    "dodecahedron": 0.92,
+    "tetrahedron": 0.20,
+    "octahedron": 0.32,
+    "cube": 0.44,
+    "icosahedron": 0.56,
+    "dodecahedron": 0.86,
 }
-_DEFAULT_VISUAL_SEPARATION = 0.16
+_DEFAULT_VISUAL_SEPARATION = 0.12
 _SOLID_ORDER = ("tetrahedron", "octahedron", "cube", "icosahedron", "dodecahedron")
 
 _VIEWPORT_BG = "#0a0a0f"
@@ -114,7 +114,7 @@ _QUAD_LIM_FACTOR = 1.04
 _DIMMED_LINE_COLOR = "#ffffff"
 _DIMMED_LINE_ALPHA = 0.6
 _DIMMED_LINE_WIDTH = 0.65
-_HIGHLIGHT_LINE_WIDTH = 2.3
+_HIGHLIGHT_LINE_WIDTH = 0.65
 
 # Demo J 2×2 — exterior | interior | interior | central (row-major)
 _DEMO_J_QUAD_PANELS: tuple[tuple[int, int, int, str], ...] = (
@@ -130,7 +130,7 @@ _STABLE_OUTER_SHIELD = True
 # 1-frequency: readable wireframe. freq=3 (~1280 faces) muddles inner Platonic shells.
 _GEODESIC_OUTER_FREQUENCY = 1
 
-_BRACKISH_VIEWPORT_REV = "visual-nest-tight-v1"
+_BRACKISH_VIEWPORT_REV = "visual-nest-tight-v2"
 _GEODESIC_MESH_CACHE: dict[int, tuple[np.ndarray, list[tuple[int, ...]]]] = {}
 
 
@@ -843,16 +843,14 @@ def _draw_nested_resonator(
     n_layers = max(1, len(_LAYERS))
     base_line_w = 2.6 if full_viewport else 1.8
     base_line_w *= 0.85 + 0.15 * min(1.3, wind / 1.2)
-    highlight_w = _HIGHLIGHT_LINE_WIDTH * (0.92 + 0.08 * min(1.3, wind / 1.2))
-
     if highlight_layer_idx is not None:
         for verts, faces, layer_idx in layers:
             name, _radius, _twist, layer_color, _sign = _LAYERS[layer_idx]
             is_highlight = layer_idx == highlight_layer_idx
             if is_highlight:
                 edge_color = layer_color
-                line_w = highlight_w
-                line_alpha = 1.0
+                line_w = _DIMMED_LINE_WIDTH
+                line_alpha = _DIMMED_LINE_ALPHA
                 zorder = 20 + layer_idx
             else:
                 edge_color = _DIMMED_LINE_COLOR
