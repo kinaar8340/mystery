@@ -83,14 +83,16 @@ At w_s = 5.0, κ drifts from pilot 0.77 → 0.89 (|κ−0.85| halved). Dual-anal
 
 ### Stage 6 — w_s sensitivity sweep (25 trials per mode)
 
-| w_s | dual_analog loss | κ | mean_survival | Δ% vs R | hybrid |
-|-----|------------------|---|---------------|---------|--------|
-| 5.0 | **56.98** | 0.89 | 0.137651 | 0.121% | 0.9990 |
-| 8.0 | 57.01 | 0.89 | 0.137651 | 0.121% | 0.9990 |
-| 10.0 | 57.02 | 0.89 | 0.137651 | 0.121% | 0.9990 |
-| 12.0 | 57.04 | 0.89 | 0.137651 | 0.121% | 0.9990 |
+Command: `w_s_sweep.py --weights 8 10 12 --trials 25` (includes w_s=5 reference from 30-trial run).
 
-κ and survival metrics are **stable across w_s ∈ [5, 12]** — all runs lock to the κ-sweep optimum (~0.89). **w_s = 5** gives the best dual-analog loss; higher weights only increase the survival penalty term without shifting κ toward 0.85. JSON: `outputs/w_s_sweep_20260706_233453.json`.
+| w_s | baseline | survival_penalty | dual_analog | κ | mean_survival | Δ% vs R | hybrid |
+|-----|----------|------------------|-------------|---|---------------|---------|--------|
+| 5.0 | 57.22 | 57.26 | **56.98** | 0.89 | 0.137651 | 0.121% | 0.9990 |
+| 8.0 | 57.22 | 57.28 | **57.01** | 0.89 | 0.137651 | 0.121% | 0.9990 |
+| 10.0 | 57.22 | 57.30 | **57.02** | 0.89 | 0.137651 | 0.121% | 0.9990 |
+| 12.0 | 57.22 | 57.31 | **57.04** | 0.89 | 0.137651 | 0.121% | 0.9990 |
+
+κ and survival metrics are **stable across w_s ∈ [5, 12]** — all runs lock to the κ-sweep optimum (~0.89). **w_s = 5** gives the best dual-analog loss; higher weights only increase the survival penalty term (e.g. w_s×term = 0.037 → 0.090 at w_s=12) without shifting κ toward 0.85. JSON: `outputs/w_s_sweep_20260706_233453.json`.
 
 ## Analog sweeps (Stages 4–5)
 

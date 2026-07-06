@@ -54,32 +54,34 @@ def _ic_hopfion(nx: int) -> np.ndarray:
     return 0.2 + 2.5 * np.exp(-r2 / (2 * 0.35**2))
 
 
-def _ic_helical(nx: int) -> np.ndarray:
+def _ic_helical(nx: int, kappa: float = KAPPA) -> np.ndarray:
     lin = np.linspace(0, 2 * PI, nx, endpoint=False)
     x, y, z = np.meshgrid(lin, lin, lin, indexing="ij")
     cw = 1.2 * np.sin(2.0 * x + 0.5 * z)
     ccw = 1.2 * np.sin(2.0 * x - 0.5 * z)
-    theta_crit = PI * (1 + KAPPA)
+    theta_crit = PI * (1 + kappa)
     return np.clip(0.3 + cw + ccw, 0.1, theta_crit - 0.1)
 
 
-IC_BUILDERS: dict[str, Callable[[int, int], np.ndarray]] = {
-    "uniform": lambda nx, seed: _ic_uniform(nx, seed),
-    "hopfion": lambda nx, seed: _ic_hopfion(nx),
-    "helical": lambda nx, seed: _ic_helical(nx),
-}
+def _ic_builders(kappa: float) -> dict[str, Callable[[int, int], np.ndarray]]:
+    return {
+        "uniform": lambda nx, seed: _ic_uniform(nx, seed),
+        "hopfion": lambda nx, seed: _ic_hopfion(nx),
+        "helical": lambda nx, seed: _ic_helical(nx, kappa=kappa),
+    }
 
 
 def simulate_pde_case(
     ic_type: str,
     normalize_to_lambda_t: float | None,
     kappa: float = KAPPA,
+    wg_base: float = 350.0,
     dt: float = 0.001,
     seed: int = 42,
     nx: int = 16,
 ) -> dict[str, Any]:
     rs = _load_module("relaxation_survival", TOE_SRC / "relaxation_survival.py")
-    theta0 = IC_BUILDERS[ic_type](nx, seed)
+    theta0 = _ic_builders(kappa)[ic_type](nx, seed)
     theta0_mean = float(theta0.mean())
 
     if normalize_to_lambda_t is not None:
@@ -106,6 +108,9 @@ def simulate_pde_case(
     comp = rs.compare_to_analogs(mean_survival, f"pde_{ic_type}")
     return {
         "subsystem": "pde",
+        "kappa": kappa,
+        "wg_base": wg_base,
+        "W_g": wg_base / PI,
         "ic_type": ic_type,
         "normalize_to_lambda_t": normalize_to_lambda_t,
         "n_steps": nt,
@@ -144,6 +149,7 @@ def simulate_conduit_case(
     step_mode: str,
     normalize_to_lambda_t: float | None,
     kappa: float = KAPPA,
+    wg_base: float = 350.0,
     dt: float = 0.001,
     n_samples: int = 128,
 ) -> dict[str, Any]:
@@ -159,7 +165,7 @@ def simulate_conduit_case(
 
     conduit = RubikConeConduit(
         twist_rate=twist_rate,
-        wg_base=350.0,
+        wg_base=wg_base,
         kappa=kappa,
         braiding_target=BRAIDING_TARGET,
         toroidal_modulo9=True,
@@ -206,6 +212,9 @@ def simulate_conduit_case(
 
     return {
         "subsystem": "conduit",
+        "kappa": kappa,
+        "wg_base": wg_base,
+        "W_g": wg_base / PI,
         "twist_rate": twist_rate,
         "step_mode": step_mode,
         "golden_angle_steps": golden,
@@ -227,6 +236,8 @@ def simulate_conduit_case(
 
 def run_grid(
     *,
+    kappa: float = KAPPA,
+    wg_base: float = 350.0,
     twist_rates: tuple[float, ...] = (10.0, 12.5, 15.0),
     ic_types: tuple[str, ...] = ("uniform", "hopfion", "helical"),
     lambda_t_values: tuple[float | None, ...] = (None, 2.0),
@@ -236,7 +247,7 @@ def run_grid(
     rows: list[dict[str, Any]] = []
 
     for ic_type, lambda_t in itertools.product(ic_types, lambda_t_values):
-        rows.append(simulate_pde_case(ic_type, lambda_t))
+        rows.append(simulate_pde_case(ic_type, lambda_t, kappa=kappa, wg_base=wg_base))
 
     conduit_rates = (12.5,) if fast else twist_rates
     conduit_lts = (2.0,) if fast else lambda_t_values
@@ -245,7 +256,11 @@ def run_grid(
     for twist_rate, lambda_t, mode in itertools.product(
         conduit_rates, conduit_lts, conduit_modes
     ):
-        rows.append(simulate_conduit_case(twist_rate, mode, lambda_t))
+        rows.append(
+            simulate_conduit_case(
+                twist_rate, mode, lambda_t, kappa=kappa, wg_base=wg_base
+            )
+        )
 
     return rows
 
@@ -269,9 +284,16 @@ def main() -> int:
 
     parser = argparse.ArgumentParser(description="Analog comparative sweep")
     parser.add_argument("--fast", action="store_true", help="Reduced grid for quick test")
+    parser.add_argument("--kappa", type=float, default=KAPPA, help="κ for PDE/conduit runs")
+    parser.add_argument(
+        "--wg-base",
+        type=float,
+        default=350.0,
+        help="wg_base (W_g = wg_base/π; 350 → W_g≈111.41)",
+    )
     args = parser.parse_args()
 
-    rows = run_grid(fast=args.fast)
+    rows = run_grid(kappa=args.kappa, wg_base=args.wg_base, fast=args.fast)
     synergy = rank_synergy(rows)
     best_overall = min(
         [r for r in rows if r.get("mean_survival") is not None],
@@ -281,6 +303,9 @@ def main() -> int:
 
     result = {
         "reference": {"R": R_RESIDUAL, "e_inv2": E_INV2, "golden_fraction": GOLDEN_FRACTION},
+        "kappa": args.kappa,
+        "wg_base": args.wg_base,
+        "W_g": args.wg_base / PI,
         "n_runs": len(rows),
         "sweep": rows,
         "synergy_ranked": synergy[:10],
