@@ -20,6 +20,7 @@ from brackish_core import (
     DEFAULT_BRACKISH_PARAMS,
     brackish_dashboard_viewport_html,
     brackish_params_key,
+    brackish_resonator_to_data_uri,
     render_brackish_clock_video,
 )
 from demo_core import (
@@ -3197,10 +3198,15 @@ footer {{
 }}
 .gradio-container .myst-gravity-page #myst-gravity-viewport-startup .prose .myst-demo-viewport-loading,
 .gradio-container .myst-gravity-page #myst-gravity-viewport-startup .html-container .myst-demo-viewport-loading,
+.gradio-container .myst-gravity-page .myst-brackish-quad-viewport.myst-demo-loading-active #myst-gravity-viewport-startup .myst-demo-viewport-loading {{
+    min-height: var(--myst-brackish-viewport-height, clamp(360px, calc(100dvh - 20rem), 480px)) !important;
+    max-height: var(--myst-brackish-viewport-height, clamp(360px, calc(100dvh - 20rem), 480px)) !important;
+}}
 .gradio-container .myst-gravity-page .myst-demo-viewport-loading {{
     width: 100% !important;
     height: 100% !important;
-    min-height: 580px !important;
+    min-height: clamp(360px, calc(100dvh - 20rem), 480px) !important;
+    max-height: clamp(360px, calc(100dvh - 20rem), 480px) !important;
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
@@ -3211,6 +3217,27 @@ footer {{
     opacity: 1 !important;
     filter: none !important;
     text-align: center !important;
+    position: relative !important;
+    overflow: hidden !important;
+}}
+.gradio-container .myst-gravity-page .myst-demo-viewport-loading-j {{
+    background: #0a0a0f !important;
+}}
+.gradio-container .myst-gravity-page .myst-demo-viewport-loading-preview {{
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
+    object-position: center center !important;
+    opacity: 0.42 !important;
+    pointer-events: none !important;
+    z-index: 1 !important;
+}}
+.gradio-container .myst-gravity-page .myst-demo-viewport-loading-j .myst-demo-viewport-loading-card {{
+    position: relative !important;
+    z-index: 2 !important;
+    background: rgba(10, 10, 15, 0.82) !important;
 }}
 .gradio-container .myst-gravity-page .myst-demo-viewport-loading-card {{
     display: flex !important;
@@ -9530,7 +9557,7 @@ def _get_brackish_demo_video_path(
             print(f"[demo-j] using bundled asset: {raw_path}", flush=True)
         else:
             print(f"[demo-j] encoding brackish loop (params={cache_key})", flush=True)
-            raw_path = render_brackish_clock_video(duration=8.0, fps=8, dpi=88, **params)
+            raw_path = render_brackish_clock_video(duration=6.0, fps=6, dpi=72, **params)
         _BRACKISH_DEMO_VIDEO_CACHE[cache_key] = _cache_media_for_gradio(raw_path)
     return _BRACKISH_DEMO_VIDEO_CACHE[cache_key]
 
@@ -9758,19 +9785,32 @@ def _demo_viewport_loading_html(letter: str) -> str:
     title, subtitle = _demo_letter_overlay_copy(active)
     safe_title = html.escape(title)
     safe_sub = html.escape(subtitle)
+    preview_html = ""
+    loading_class = "myst-demo-viewport-loading"
+    if active == "J":
+        loading_class += " myst-demo-viewport-loading-j"
+        try:
+            preview_uri = brackish_resonator_to_data_uri(t=6.0, dpi=72, **DEFAULT_BRACKISH_PARAMS)
+            preview_html = (
+                f'<img class="myst-demo-viewport-loading-preview" src="{preview_uri}" '
+                'alt="" aria-hidden="true" />'
+            )
+        except Exception:
+            logger.exception("brackish loading preview failed")
+    hint = (
+        "Encoding 2×2 resonator loop — preview shown while the loop builds."
+        if active == "J"
+        else "Encoding deformation loop — this may take up to two minutes on first load."
+    )
     return (
-        '<div class="myst-demo-viewport-loading" role="status" aria-live="polite">'
+        f'<div class="{loading_class}" role="status" aria-live="polite">'
+        f"{preview_html}"
         '<div class="myst-demo-viewport-loading-card">'
         '<div class="myst-demo-viewport-loading-spinner" aria-hidden="true"></div>'
         f'<div class="myst-demo-viewport-loading-title">Rendering {safe_title}</div>'
         f'<div class="myst-demo-viewport-loading-sub">{safe_sub}</div>'
-        '<div class="myst-demo-viewport-loading-hint">'
-        + (
-            "Encoding 2×2 resonator loop — typically 2–4 minutes on first load."
-            if active == "J"
-            else "Encoding deformation loop — this may take up to two minutes on first load."
-        )
-        + "</div></div></div>"
+        f'<div class="myst-demo-viewport-loading-hint">{hint}</div>'
+        "</div></div>"
     )
 
 
