@@ -81,6 +81,17 @@ Command: `meta_optimize_phi_probe.py --compare-baseline --trials 30 --use-surviv
 
 At w_s = 5.0, κ drifts from pilot 0.77 → 0.89 (|κ−0.85| halved). Dual-analog lowers loss via golden_reward (0.275) while improving survival alignment (Δ% vs R: 0.355% → 0.121%). JSON: `outputs/meta_optimize_phi_probe_20260706_231311.json`.
 
+### Stage 6 — w_s sensitivity sweep (25 trials per mode)
+
+| w_s | dual_analog loss | κ | mean_survival | Δ% vs R | hybrid |
+|-----|------------------|---|---------------|---------|--------|
+| 5.0 | **56.98** | 0.89 | 0.137651 | 0.121% | 0.9990 |
+| 8.0 | 57.01 | 0.89 | 0.137651 | 0.121% | 0.9990 |
+| 10.0 | 57.02 | 0.89 | 0.137651 | 0.121% | 0.9990 |
+| 12.0 | 57.04 | 0.89 | 0.137651 | 0.121% | 0.9990 |
+
+κ and survival metrics are **stable across w_s ∈ [5, 12]** — all runs lock to the κ-sweep optimum (~0.89). **w_s = 5** gives the best dual-analog loss; higher weights only increase the survival penalty term without shifting κ toward 0.85. JSON: `outputs/w_s_sweep_20260706_233453.json`.
+
 ## Analog sweeps (Stages 4–5)
 
 | Probe | Key result |
