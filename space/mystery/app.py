@@ -1279,7 +1279,7 @@ def _demo_viewport_preserve_active_demo(
             return _demo_viewport_show_brackish_video()
         except Exception:
             logger.exception("brackish video preserve failed on dimension switch")
-            return _demo_viewport_show_plot(dim_fig)
+            return _demo_viewport_show_brackish_preview()
     if _is_active_shape(active_shape):
         try:
             return _demo_viewport_show_platonic_shape_video(active_shape)
@@ -9921,7 +9921,11 @@ def _demo_brackish_viewport_only(
         )
     except Exception:
         logger.exception("brackish demo video failed for Demo J")
-        return _demo_viewport_show_plot(_get_rigid_preset_plotly_figure())
+        return _demo_viewport_show_brackish_preview(
+            base=base, amplitude=amplitude, freq=freq,
+            residual_weight=residual_weight, stable_mode=stable_mode,
+            visual_separation=visual_separation,
+        )
 
 
 def _brackish_controls_visible(letter: str) -> gr.Update:

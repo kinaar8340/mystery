@@ -570,9 +570,27 @@ def _brackish_physics_kwargs(**kwargs: Any) -> dict[str, Any]:
     }
 
 
+def _flux_spring_defaults() -> dict[str, float]:
+    """Merge render dials with FLUX_SPRING_CONFIG — spring-only keys live in the latter."""
+    merged = dict(FLUX_SPRING_CONFIG)
+    for key in (
+        "flux_gauge_rigidness",
+        "compression_strength",
+        "base_coupling",
+        "flux_influence_on_rigidness",
+        "inner_emergent_expansion",
+        "twist_coupling_blend",
+        "flux_turbulence",
+    ):
+        if key in DEFAULT_BRACKISH_PARAMS:
+            merged[key] = float(DEFAULT_BRACKISH_PARAMS[key])
+    return merged
+
+
 def _flux_spring_kwargs(**kwargs: Any) -> dict[str, float]:
+    defaults = _flux_spring_defaults()
     return {
-        k: float(kwargs.get(k, DEFAULT_BRACKISH_PARAMS[k]))
+        k: float(kwargs.get(k, defaults[k]))
         for k in (
             "flux_gauge_rigidness",
             "compression_strength",
