@@ -58,6 +58,7 @@ from demo_core import (
     render_d6_convex_preset_demo_video,
     build_breathing_animation_figure,
     build_readme_full_page_html,
+    build_stage6_results_html,
     create_breathing_animation,
     dimension_config_to_dials,
     figure_to_viewport_cached_html,
@@ -6404,6 +6405,33 @@ footer {{ visibility: hidden; }}
 }}
 .gradio-container .myst-readme-fullpage a:hover {{
     color: #c8e4ff !important;
+}}
+.gradio-container .myst-stage6-card {{
+    margin: 0 0 1.25rem 0;
+    padding: 1rem 1.1rem;
+    border: 1px solid rgba(201, 162, 39, 0.45);
+    border-radius: 10px;
+    background: rgba(12, 18, 10, 0.82);
+    color: #e8f0e6 !important;
+}}
+.gradio-container .myst-stage6-card h2,
+.gradio-container .myst-stage6-title {{
+    color: #c9a227 !important;
+    font-size: 1.05rem !important;
+    margin: 0 0 0.6rem 0 !important;
+}}
+.gradio-container .myst-stage6-compact p {{
+    margin: 0.35rem 0 !important;
+    font-size: 0.92rem !important;
+    line-height: 1.45 !important;
+}}
+.gradio-container .myst-stage6-table th,
+.gradio-container .myst-stage6-table td {{
+    font-size: 0.88rem !important;
+    padding: 0.35rem 0.5rem !important;
+}}
+.gradio-container .myst-gravity-stage6-accordion .myst-stage6-card {{
+    margin: 0.5rem 0 0 0;
 }}
 .gradio-container .myst-readme-fullpage code {{
     color: #e8e8e8 !important;
@@ -12801,6 +12829,12 @@ def build_app() -> gr.Blocks:
                                 label="Normalize to λt = 2 (show mean_survival in metrics)",
                                 value=True,
                             )
+                with gr.Accordion(
+                    "Stage 6 — Latest Analog Objective Results",
+                    open=False,
+                    elem_classes=["myst-gravity-stage6-accordion"],
+                ):
+                    gr.HTML(build_stage6_results_html(compact=True))
 
         with gr.Column(visible=True, elem_classes=["myst-gravity-page"], scale=1) as page_gravity:
             gravity_letter_btns = {

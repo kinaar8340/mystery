@@ -61,6 +61,16 @@ Opens on the **Gravity** tab — two-column preset explorer with live TUI metric
 | 3-6-9 tens | **3.10 / 5.99 / 8.91** |
 | κ* = e/π − R/π² | **≈ 0.8513** (0.16% from κ_doc) |
 
+### Stage 6 — analog objective tuning (w_s=5, 30 trials)
+
+| Mode | Loss | κ | mean_survival | Δ% vs R | hybrid |
+|------|------|---|---------------|---------|--------|
+| baseline | 57.22 | 0.89 | — | — | — |
+| survival_penalty | 57.26 | 0.89 | 0.137651 | 0.121% | 0.9990 |
+| dual_analog | **56.98** | 0.89 | 0.137651 | 0.121% | 0.9990 |
+
+Full tables and loss breakdowns: [docs/RESULTS.md](https://github.com/kinaar8340/mystery/blob/main/docs/RESULTS.md) · also shown in-app under **Manual Edit → Stage 6**.
+
 **Framing:** compatible emergent signature within the gauged Hopf lattice TOE — not a derived identity.
 
 ---

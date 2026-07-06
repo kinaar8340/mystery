@@ -491,6 +491,8 @@ def build_readme_full_page_html() -> str:
         for url, label in zip(FIGURE_URLS, fig_labels, strict=True)
     )
     return f"""<article class="myst-readme-fullpage" id="myst-readme-fullpage">
+{build_stage6_results_html()}
+
 <section class="myst-readme-exec myst-readme-card">
 <h2 class="myst-readme-exec-title">Executive Summary</h2>
 <p><strong>Mystery</strong> is an interactive probe asking whether the near-relation
@@ -1182,6 +1184,8 @@ def format_residual_explorer(
             f"combined hybrid: {hybrid_s:.4f}  (Δ% {hybrid_d:.3f}%)",
             "Interpretation  : rotational packing + dissipative survival",
         ])
+    if normalize_lambda_t or golden_angle_steps:
+        lines.extend(["", stage6_results_explorer_footer()])
     return "\n".join(lines)
 
 
@@ -4620,6 +4624,84 @@ TERM_KEY_ACTIONS: dict[int, tuple[str, str]] = {
 }
 
 
+RESULTS_MD_URL = f"{GITHUB_URL}/blob/main/docs/RESULTS.md"
+
+STAGE6_TUNING = {
+    "label": "30-trial analog objective tuning",
+    "w_s": 5.0,
+    "trials": 30,
+    "json": "meta_optimize_phi_probe_20260706_231311.json",
+    "modes": {
+        "baseline": {"loss": 57.22, "kappa": 0.89, "mean_survival": None, "delta_pct_vs_R": None, "hybrid": None, "golden_reward": None},
+        "survival_penalty": {"loss": 57.26, "kappa": 0.89, "mean_survival": 0.137651, "delta_pct_vs_R": 0.121, "hybrid": 0.9990, "golden_reward": None},
+        "dual_analog": {"loss": 56.98, "kappa": 0.89, "mean_survival": 0.137651, "delta_pct_vs_R": 0.121, "hybrid": 0.9990, "golden_reward": 0.275},
+    },
+    "summary": (
+        "κ drifted 0.77 → 0.89 (|κ−0.85| halved). "
+        "mean_survival Δ% vs R improved 0.355% → 0.121%. "
+        "Dual-analog wins on loss via golden_reward."
+    ),
+}
+
+
+def stage6_results_explorer_footer() -> str:
+    d = STAGE6_TUNING["modes"]["dual_analog"]
+    return "\n".join([
+        "=== Stage 6 meta-opt (w_s=5, 30 trials) ===",
+        f"best κ         : {d['kappa']:.2f}  (pilot 0.77)",
+        f"mean_survival  : {d['mean_survival']:.6f}  (Δ% vs R {d['delta_pct_vs_R']:.3f}%)",
+        f"hybrid score   : {d['hybrid']:.4f}",
+        f"dual_analog loss: {d['loss']:.2f}  (golden_reward {d['golden_reward']:.3f})",
+        f"Full table     : {RESULTS_MD_URL}",
+    ])
+
+
+def build_stage6_results_html(*, compact: bool = False) -> str:
+    s = STAGE6_TUNING
+    rows = []
+    for mode, data in s["modes"].items():
+        ms = f"{data['mean_survival']:.6f}" if data["mean_survival"] is not None else "—"
+        d_r = f"{data['delta_pct_vs_R']:.3f}%" if data["delta_pct_vs_R"] is not None else "—"
+        hybrid = f"{data['hybrid']:.4f}" if data["hybrid"] is not None else "—"
+        golden = f"{data['golden_reward']:.3f}" if data.get("golden_reward") else "—"
+        loss = f"<strong>{data['loss']:.2f}</strong>" if mode == "dual_analog" else f"{data['loss']:.2f}"
+        rows.append(
+            f"<tr><td>{html.escape(mode)}</td><td>{loss}</td>"
+            f"<td>{data['kappa']:.2f}</td><td>{ms}</td>"
+            f"<td>{d_r}</td><td>{hybrid}</td><td>{golden}</td></tr>"
+        )
+    table = "\n".join(rows)
+    summary = html.escape(s["summary"])
+    link = html.escape(RESULTS_MD_URL)
+    if compact:
+        d = s["modes"]["dual_analog"]
+        return (
+            f'<div class="myst-stage6-card myst-stage6-compact">'
+            f'<p class="myst-stage6-title">Stage 6 — Analog Objective (w<sub>s</sub>=5)</p>'
+            f'<p>κ <strong>{d["kappa"]:.2f}</strong> · mean_survival <strong>{d["mean_survival"]:.6f}</strong> · '
+            f'hybrid <strong>{d["hybrid"]:.4f}</strong> · loss <strong>{d["loss"]:.2f}</strong></p>'
+            f'<p><a href="{link}" target="_blank" rel="noopener">View full RESULTS.md on GitHub →</a></p>'
+            f"</div>"
+        )
+    return f"""<section class="myst-stage6-card" id="myst-stage6-results">
+<h2>Stage 6 — Analog Objective Results</h2>
+<p class="myst-readme-muted">{s['label']} · w<sub>s</sub> = {s['w_s']} · {s['trials']} trials per mode</p>
+<p>{summary}</p>
+<table class="myst-readme-table myst-stage6-table">
+<thead><tr>
+<th>Mode</th><th>Loss</th><th>κ</th><th>mean_survival</th>
+<th>Δ% vs R</th><th>Hybrid</th><th>Golden</th>
+</tr></thead>
+<tbody>
+{table}
+</tbody>
+</table>
+<p class="myst-stage6-links">
+<a href="{link}" target="_blank" rel="noopener">View full RESULTS.md on GitHub →</a>
+</p>
+</section>"""
+
+
 def terminal_results_snapshot() -> str:
     tri = phi_e_pi_triangle()
     k_star = kappa_star()
@@ -4645,6 +4727,8 @@ def terminal_results_snapshot() -> str:
             f"({100 * abs(b_doc - tri['pythagorean_residual']) / abs(tri['pythagorean_residual']):.1f}% gap)",
             "",
             "Not a derived identity — compatible with gauged Hopf lattice TOE.",
+            "",
+            stage6_results_explorer_footer(),
         ]
     )
 

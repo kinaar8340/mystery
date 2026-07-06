@@ -1,0 +1,5 @@
+# Large demo videos — route through Git LFS / Xet (required for HF Space pushes).
+*.mp4 filter=lfs diff=lfs merge=lfs -text
+*.mp4 xet
+*.gif filter=lfs diff=lfs merge=lfs -text
+*.gif xet
