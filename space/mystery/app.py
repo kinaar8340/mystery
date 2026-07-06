@@ -3056,6 +3056,19 @@ footer {{
 .gradio-container .myst-brackish-dashboard-img {{
     background: #0a0a0f !important;
 }}
+/* Demo J — video must sit above any residual startup/html layer */
+.gradio-container .myst-gravity-page .myst-demo-viewport #myst-gravity-viewport {{
+    position: relative !important;
+    z-index: 3 !important;
+}}
+.gradio-container .myst-gravity-page .myst-demo-viewport #myst-gravity-viewport-startup {{
+    position: relative !important;
+    z-index: 1 !important;
+}}
+.gradio-container .myst-gravity-page .myst-demo-viewport #myst-gravity-viewport-plot {{
+    position: relative !important;
+    z-index: 2 !important;
+}}
 /* Demo A–I — opaque viewport panel (readable text/video; wallpaper stays outside). */
 .gradio-container .myst-gravity-page .myst-gravity-single-viewport.myst-demo-viewport,
 .gradio-container .myst-gravity-page .myst-demo-viewport#myst-gravity-viewport-wrapper {{
@@ -9226,6 +9239,7 @@ _BUNDLED_DEMO_DEFORM_VIDEOS: dict[str, str] = {
 }
 _BUNDLED_BREATHING_VIDEO_MP4 = os.path.join(_APP_DIR, "assets", "demo_f_d6_breathing.mp4")
 _BUNDLED_BREATHING_VIDEO = os.path.join(_APP_DIR, "assets", "demo_a_breathing.gif")
+_BUNDLED_BRACKISH_VIDEO = os.path.join(_APP_DIR, "assets", "demo_j_brackish_heartbeat.mp4")
 _DEMO_A_STARTUP_HTML_CACHE: str | None = None
 
 
@@ -9428,7 +9442,12 @@ def _get_brackish_demo_video_path(
     params = _coerce_brackish_params(base, amplitude, freq, residual_weight, stable_mode)
     cache_key = brackish_params_key(**params)
     if cache_key not in _BRACKISH_DEMO_VIDEO_CACHE:
-        raw_path = render_brackish_clock_video(duration=8.0, fps=10, dpi=72, **params)
+        default_key = brackish_params_key(**DEFAULT_BRACKISH_PARAMS)
+        if cache_key == default_key and os.path.isfile(_BUNDLED_BRACKISH_VIDEO):
+            raw_path = _BUNDLED_BRACKISH_VIDEO
+            print(f"[demo-j] using bundled asset: {raw_path}", flush=True)
+        else:
+            raw_path = render_brackish_clock_video(duration=8.0, fps=10, dpi=72, **params)
         _BRACKISH_DEMO_VIDEO_CACHE[cache_key] = _cache_media_for_gradio(raw_path)
     return _BRACKISH_DEMO_VIDEO_CACHE[cache_key]
 
@@ -9789,33 +9808,20 @@ def _demo_brackish_viewport_only(
     residual_weight: float = DEFAULT_BRACKISH_PARAMS["residual_weight"],
     stable_mode: bool = DEFAULT_BRACKISH_PARAMS["stable_mode"],
 ) -> tuple:
-    """Demo J viewport — interactive dashboard preview after tab latch."""
+    """Demo J viewport — looping heartbeat MP4 (bundled default, encode on param change)."""
     try:
-        return _demo_viewport_show_brackish_preview(
+        return _demo_viewport_show_brackish_video(
             base=base, amplitude=amplitude, freq=freq,
             residual_weight=residual_weight, stable_mode=stable_mode,
         )
     except Exception:
-        logger.exception("brackish demo preview failed for Demo J")
+        logger.exception("brackish demo video failed for Demo J")
         return _demo_viewport_show_plot(_get_rigid_preset_plotly_figure())
 
 
 def _brackish_controls_visible(letter: str) -> gr.Update:
     active = str(letter or "").strip().upper()
     return gr.update(visible=active == "J")
-
-
-def _brackish_update_preview(
-    base: float,
-    amplitude: float,
-    freq: float,
-    residual_weight: float,
-    stable_mode: bool,
-) -> tuple:
-    return _demo_viewport_show_brackish_preview(
-        base=base, amplitude=amplitude, freq=freq,
-        residual_weight=residual_weight, stable_mode=stable_mode,
-    )
 
 
 def _brackish_animate_loop(
@@ -9855,9 +9861,9 @@ def _brackish_apply_preset(preset_key: str) -> tuple:
         preset["freq"],
         preset["residual_weight"],
         preset["stable_mode"],
-        *_brackish_update_preview(
-            preset["base"], preset["amplitude"], preset["freq"],
-            preset["residual_weight"], preset["stable_mode"],
+        *_demo_viewport_show_brackish_video(
+            base=preset["base"], amplitude=preset["amplitude"], freq=preset["freq"],
+            residual_weight=preset["residual_weight"], stable_mode=preset["stable_mode"],
         ),
     )
 
@@ -12652,7 +12658,7 @@ def build_app() -> gr.Blocks:
                         value=DEFAULT_BRACKISH_PARAMS["stable_mode"],
                     )
                     brackish_animate_btn = gr.Button(
-                        "▶ Loop Animation",
+                        "Apply & Loop",
                         variant="primary",
                         elem_classes=["myst-brackish-animate-btn"],
                     )
@@ -12847,19 +12853,6 @@ def build_app() -> gr.Blocks:
                     show_progress="hidden",
                 )
 
-            for dial in brackish_dial_inputs:
-                dial.release(
-                    _brackish_update_preview,
-                    inputs=brackish_all_inputs,
-                    outputs=brackish_viewport_outputs,
-                    show_progress="hidden",
-                )
-            brackish_stable.change(
-                _brackish_update_preview,
-                inputs=brackish_all_inputs,
-                outputs=brackish_viewport_outputs,
-                show_progress="hidden",
-            )
             brackish_animate_btn.click(
                 _brackish_animate_loop,
                 inputs=brackish_all_inputs,
