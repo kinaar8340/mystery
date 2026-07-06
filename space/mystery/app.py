@@ -3056,6 +3056,26 @@ footer {{
 .gradio-container .myst-brackish-dashboard-img {{
     background: #0a0a0f !important;
 }}
+/* Demo J — 2×2 quad video fills viewport edge-to-edge */
+.gradio-container .myst-gravity-page .myst-brackish-quad-viewport #myst-gravity-viewport,
+.gradio-container .myst-gravity-page .myst-brackish-quad-viewport #myst-gravity-viewport .block,
+.gradio-container .myst-gravity-page .myst-brackish-quad-viewport #myst-gravity-viewport .video-container,
+.gradio-container .myst-gravity-page .myst-brackish-quad-viewport #myst-gravity-viewport .wrap {{
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 100% !important;
+    max-height: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}}
+.gradio-container .myst-gravity-page .myst-brackish-quad-viewport #myst-gravity-viewport video {{
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 100% !important;
+    max-height: none !important;
+    object-fit: cover !important;
+    object-position: center center !important;
+}}
 /* Viewport layer modes — only the active layer paints (prevents black overlay on Demo A) */
 .gradio-container .myst-gravity-page .myst-viewport-layer-startup #myst-gravity-viewport,
 .gradio-container .myst-gravity-page .myst-viewport-layer-startup #myst-gravity-viewport-plot {{
@@ -9194,6 +9214,8 @@ def _gravity_viewport_wrapper_classes(
     letter = str(active_letter or "A").strip().upper()
     if letter in _GRAVITY_CHILD_NAV_LETTERS:
         classes.append("myst-demo-viewport")
+    if letter == "J":
+        classes.append("myst-brackish-quad-viewport")
     elif _is_active_shape(active_shape):
         classes.append("myst-demo-viewport")
         classes.append("myst-platonic-viewport")
@@ -9497,7 +9519,7 @@ def _get_brackish_demo_video_path(
             print(f"[demo-j] using bundled asset: {raw_path}", flush=True)
         else:
             print(f"[demo-j] encoding brackish loop (params={cache_key})", flush=True)
-            raw_path = render_brackish_clock_video(duration=8.0, fps=10, dpi=72, **params)
+            raw_path = render_brackish_clock_video(duration=8.0, fps=10, dpi=100, **params)
         _BRACKISH_DEMO_VIDEO_CACHE[cache_key] = _cache_media_for_gradio(raw_path)
     return _BRACKISH_DEMO_VIDEO_CACHE[cache_key]
 

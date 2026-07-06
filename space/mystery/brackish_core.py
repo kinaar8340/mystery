@@ -83,10 +83,13 @@ _SOLID_ORDER = ("tetrahedron", "octahedron", "cube", "icosahedron", "dodecahedro
 
 _VIEWPORT_BG = "#0a0a0f"
 _VIEWPORT_FIGSIZE = (6.0, 6.0)
+_QUAD_VIEWPORT_FIGSIZE = (12.8, 6.2)  # matches HF single-viewport (~620px tall)
+_QUAD_RENDER_DPI = 100
 _VIEWPORT_ELEV = 26.0
 _VIEWPORT_AZIM = 45.0
 _NESTED_VIEWPORT_SCALE = 1.42
-_QUAD_VIEWPORT_SCALE = 1.22
+_QUAD_VIEWPORT_SCALE = 1.62
+_QUAD_LIM_FACTOR = 1.04
 _DIMMED_LINE_COLOR = "#ffffff"
 _DIMMED_LINE_ALPHA = 0.6
 _DIMMED_LINE_WIDTH = 0.65
@@ -101,7 +104,7 @@ _DEMO_J_QUAD_PANELS: tuple[tuple[int, int, int, str], ...] = (
 )
 
 
-_BRACKISH_VIEWPORT_REV = "quad-highlight-v1"
+_BRACKISH_VIEWPORT_REV = "quad-fill-v1"
 
 
 def brackish_params_key(**kwargs: Any) -> str:
@@ -448,10 +451,12 @@ def _configure_resonator_axes(
     viewport_scale: float,
     visual_separation: float | None,
     full_viewport: bool,
+    quad_panel: bool = False,
 ) -> None:
     visual_scales = _visual_radius_scales(visual_separation)
     max_visual_r = max(visual_scales.values())
-    lim = max_visual_r * viewport_scale * 1.28
+    lim_factor = _QUAD_LIM_FACTOR if quad_panel else 1.28
+    lim = max_visual_r * viewport_scale * lim_factor
     ax.set_xlim(-lim, lim)
     ax.set_ylim(-lim, lim)
     ax.set_zlim(-lim, lim)
@@ -540,11 +545,16 @@ def _draw_nested_resonator(
             )
         if panel_label:
             _name, _radius, _twist, accent, _sign = _LAYERS[highlight_layer_idx]
-            ax.set_title(
+            ax.text2D(
+                0.5,
+                0.03,
                 f"{panel_label} · {_name.title()}",
-                fontsize=7,
+                transform=ax.transAxes,
+                ha="center",
+                va="bottom",
+                fontsize=6,
                 color=accent,
-                pad=2,
+                zorder=30,
             )
     else:
         use_rainbow = str(color_mode).strip().lower() == "rainbow"
@@ -586,6 +596,7 @@ def _draw_nested_resonator(
         viewport_scale=viewport_scale,
         visual_separation=visual_separation,
         full_viewport=full_viewport,
+        quad_panel=highlight_layer_idx is not None,
     )
 
 
@@ -611,8 +622,18 @@ def build_brackish_quad_viewport(
         viewport_scale=_QUAD_VIEWPORT_SCALE,
         visual_separation=visual_separation,
     )
-    fig = plt.figure(figsize=_VIEWPORT_FIGSIZE, facecolor=_VIEWPORT_BG, dpi=dpi)
-    gs = GridSpec(2, 2, figure=fig, wspace=0.04, hspace=0.06)
+    fig = plt.figure(figsize=_QUAD_VIEWPORT_FIGSIZE, facecolor=_VIEWPORT_BG, dpi=dpi)
+    gs = GridSpec(
+        2,
+        2,
+        figure=fig,
+        wspace=0.0,
+        hspace=0.0,
+        left=0.0,
+        right=1.0,
+        top=1.0,
+        bottom=0.0,
+    )
     for row, col, layer_idx, panel_label in _DEMO_J_QUAD_PANELS:
         ax = fig.add_subplot(gs[row, col], projection="3d", facecolor=_VIEWPORT_BG)
         _draw_nested_resonator(
@@ -626,7 +647,7 @@ def build_brackish_quad_viewport(
             highlight_layer_idx=layer_idx,
             panel_label=panel_label,
         )
-    fig.subplots_adjust(left=0.02, right=0.98, bottom=0.02, top=0.98)
+    fig.subplots_adjust(left=0.0, right=1.0, bottom=0.0, top=1.0, wspace=0.0, hspace=0.0)
     return fig
 
 
@@ -723,17 +744,34 @@ def build_brackish_dashboard(
     return build_brackish_sync_frame(_series_index_at_t(series, t_val), series, dpi=dpi)
 
 
-def _figure_to_png_bytes(fig: plt.Figure, *, dpi: int) -> bytes:
+def _figure_to_png_bytes(
+    fig: plt.Figure,
+    *,
+    dpi: int,
+    fill_frame: bool = False,
+) -> bytes:
     buf = io.BytesIO()
-    fig.savefig(buf, format="png", dpi=dpi, facecolor=fig.get_facecolor(), bbox_inches="tight", pad_inches=0.05)
+    save_kwargs: dict[str, Any] = {
+        "format": "png",
+        "dpi": dpi,
+        "facecolor": fig.get_facecolor(),
+        "edgecolor": "none",
+    }
+    if fill_frame:
+        save_kwargs["bbox_inches"] = None
+        save_kwargs["pad_inches"] = 0
+    else:
+        save_kwargs["bbox_inches"] = "tight"
+        save_kwargs["pad_inches"] = 0.05
+    fig.savefig(buf, **save_kwargs)
     plt.close(fig)
     return buf.getvalue()
 
 
-def _figure_to_rgb(fig: plt.Figure, *, dpi: int) -> np.ndarray:
+def _figure_to_rgb(fig: plt.Figure, *, dpi: int, fill_frame: bool = False) -> np.ndarray:
     from PIL import Image
 
-    data = _figure_to_png_bytes(fig, dpi=dpi)
+    data = _figure_to_png_bytes(fig, dpi=dpi, fill_frame=fill_frame)
     img = np.asarray(Image.open(io.BytesIO(data)).convert("RGB"))
     h, w = img.shape[:2]
     return img[: h - h % 2, : w - w % 2]
@@ -752,7 +790,11 @@ def brackish_resonator_to_data_uri(**kwargs: Any) -> str:
     render = _render_kwargs(**kwargs)
     t_val = float(render.get("t", 6.0))
     fig = build_brackish_resonator_viewport(t_val, **render)
-    png = _figure_to_png_bytes(fig, dpi=int(render.get("dpi", 88)))
+    png = _figure_to_png_bytes(
+        fig,
+        dpi=int(render.get("dpi", _QUAD_RENDER_DPI)),
+        fill_frame=True,
+    )
     encoded = base64.b64encode(png).decode("ascii")
     return f"data:image/png;base64,{encoded}"
 
@@ -820,6 +862,7 @@ def render_brackish_clock_video(
     """Looping MP4 — 2×2 synced Platonic resonator panels (Demo J)."""
     n_frames = max(2, int(duration * fps))
     times = np.linspace(0, duration, n_frames)
+    encode_dpi = max(dpi, _QUAD_RENDER_DPI)
     rgb_frames = []
     for t_val in times:
         fig = build_brackish_resonator_viewport(
@@ -830,9 +873,9 @@ def render_brackish_clock_video(
             residual_weight=residual_weight,
             stable_mode=stable_mode,
             visual_separation=visual_separation,
-            dpi=dpi,
+            dpi=encode_dpi,
         )
-        rgb_frames.append(_figure_to_rgb(fig, dpi=dpi))
+        rgb_frames.append(_figure_to_rgb(fig, dpi=encode_dpi, fill_frame=True))
     path = _encode_mp4(rgb_frames, fps=fps)
     print(f"[brackish] render_brackish_clock_video: {len(rgb_frames)} frames -> {path}", flush=True)
     return path
