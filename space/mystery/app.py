@@ -3056,18 +3056,45 @@ footer {{
 .gradio-container .myst-brackish-dashboard-img {{
     background: #0a0a0f !important;
 }}
-/* Demo J — video must sit above any residual startup/html layer */
-.gradio-container .myst-gravity-page .myst-demo-viewport #myst-gravity-viewport {{
-    position: relative !important;
-    z-index: 3 !important;
+/* Viewport layer modes — only the active layer paints (prevents black overlay on Demo A) */
+.gradio-container .myst-gravity-page .myst-viewport-layer-startup #myst-gravity-viewport,
+.gradio-container .myst-gravity-page .myst-viewport-layer-startup #myst-gravity-viewport-plot {{
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    opacity: 0 !important;
 }}
-.gradio-container .myst-gravity-page .myst-demo-viewport #myst-gravity-viewport-startup {{
-    position: relative !important;
-    z-index: 1 !important;
+.gradio-container .myst-gravity-page .myst-viewport-layer-startup #myst-gravity-viewport-startup {{
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    z-index: 4 !important;
 }}
-.gradio-container .myst-gravity-page .myst-demo-viewport #myst-gravity-viewport-plot {{
-    position: relative !important;
-    z-index: 2 !important;
+.gradio-container .myst-gravity-page .myst-viewport-layer-video #myst-gravity-viewport-startup,
+.gradio-container .myst-gravity-page .myst-viewport-layer-video #myst-gravity-viewport-plot {{
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    opacity: 0 !important;
+}}
+.gradio-container .myst-gravity-page .myst-viewport-layer-video #myst-gravity-viewport {{
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    z-index: 4 !important;
+}}
+.gradio-container .myst-gravity-page .myst-viewport-layer-plot #myst-gravity-viewport-startup,
+.gradio-container .myst-gravity-page .myst-viewport-layer-plot #myst-gravity-viewport {{
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    opacity: 0 !important;
+}}
+.gradio-container .myst-gravity-page .myst-viewport-layer-plot #myst-gravity-viewport-plot {{
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    z-index: 4 !important;
 }}
 /* Demo A–I — opaque viewport panel (readable text/video; wallpaper stays outside). */
 .gradio-container .myst-gravity-page .myst-gravity-single-viewport.myst-demo-viewport,
@@ -9145,11 +9172,22 @@ def _demo_active_tab_updates(active_letter: str, *, b_i_enabled: bool = True) ->
     return _gravity_child_nav_btn_updates(slot, b_i_enabled=b_i_enabled)
 
 
+def _viewport_layer_for_letter(letter: str) -> str:
+    """Which viewport child should paint: startup (Demo A), video (demos), or plot."""
+    active = str(letter or "A").strip().upper()
+    if active == "A":
+        return "startup"
+    if active in _GRAVITY_CHILD_NAV_LETTERS:
+        return "video"
+    return "plot"
+
+
 def _gravity_viewport_wrapper_classes(
     active_letter: str,
     *,
     active_shape: str = _NO_ACTIVE_SHAPE,
     loading: bool = False,
+    viewport_layer: str | None = None,
 ) -> list[str]:
     """Viewport shell classes — Demo A–I and latched D* use semi-transparent panel."""
     classes = ["myst-gravity-single-viewport", "myst-viewport-transition"]
@@ -9159,6 +9197,10 @@ def _gravity_viewport_wrapper_classes(
     elif _is_active_shape(active_shape):
         classes.append("myst-demo-viewport")
         classes.append("myst-platonic-viewport")
+    layer = viewport_layer or _viewport_layer_for_letter(letter)
+    if loading and layer == "video":
+        layer = "startup"
+    classes.append(f"myst-viewport-layer-{layer}")
     if loading:
         classes.append("myst-demo-loading-active")
     return classes
@@ -9169,12 +9211,14 @@ def _gravity_viewport_wrapper_update(
     *,
     active_shape: str = _NO_ACTIVE_SHAPE,
     loading: bool = False,
+    viewport_layer: str | None = None,
 ) -> gr.Update:
     return gr.update(
         elem_classes=_gravity_viewport_wrapper_classes(
             active_letter,
             active_shape=active_shape,
             loading=loading,
+            viewport_layer=viewport_layer,
         )
     )
 
@@ -9465,10 +9509,10 @@ def _brackish_preview_html(
     return brackish_dashboard_viewport_html(dpi=88, **params)
 
 
-def _get_demo_a_startup_viewport_html() -> str:
+def _get_demo_a_startup_viewport_html(*, fresh: bool = False) -> str:
     """HF-safe startup viewport — Gradio upload cache + /gradio_api/file= img."""
     global _DEMO_A_STARTUP_HTML_CACHE
-    if _DEMO_A_STARTUP_HTML_CACHE is None:
+    if fresh or _DEMO_A_STARTUP_HTML_CACHE is None:
         from demo_core import startup_viewport_file_html
 
         raw_path = resolve_demo_a_startup_image_source_path()
@@ -9523,6 +9567,26 @@ def _demo_viewport_show_plot(fig, *, overlay_title: str = "", overlay_sub: str =
             title=overlay_title,
             subtitle=overlay_sub,
             visible=bool(overlay_title),
+        ),
+    )
+
+
+def _demo_viewport_tuple_with_wrapper(
+    viewport: tuple,
+    *,
+    active_letter: str,
+    viewport_layer: str,
+    active_shape: str = _NO_ACTIVE_SHAPE,
+    loading: bool = False,
+) -> tuple:
+    """Append wrapper class update so CSS layer mode matches visible child."""
+    return (
+        *viewport,
+        _gravity_viewport_wrapper_update(
+            active_letter,
+            active_shape=active_shape,
+            loading=loading,
+            viewport_layer=viewport_layer,
         ),
     )
 
@@ -9638,7 +9702,7 @@ def _demo_viewport_show_startup_image() -> tuple:
     return (
         gr.update(value=None, visible=False),
         gr.update(value=None, visible=False),
-        gr.update(value=_get_demo_a_startup_viewport_html(), visible=True),
+        gr.update(value=_get_demo_a_startup_viewport_html(fresh=True), visible=True),
         _demo_viewport_overlay_update(title=title, subtitle=subtitle),
     )
 
@@ -12665,11 +12729,15 @@ def build_app() -> gr.Blocks:
                     )
             _startup_viewport_html = ""
             try:
-                _startup_viewport_html = _get_demo_a_startup_viewport_html()
+                _startup_viewport_html = _get_demo_a_startup_viewport_html(fresh=True)
             except Exception:
                 logger.exception("Demo A startup viewport init failed")
             with gr.Column(
-                elem_classes=["myst-gravity-single-viewport"],
+                elem_classes=[
+                    "myst-gravity-single-viewport",
+                    "myst-demo-viewport",
+                    "myst-viewport-layer-startup",
+                ],
                 elem_id="myst-gravity-viewport-wrapper",
             ) as viewport_col:
                 gravity_viewport_plot = gr.Plot(
