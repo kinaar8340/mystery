@@ -9464,6 +9464,7 @@ def _coerce_brackish_params(
     freq: float,
     residual_weight: float,
     stable_mode: bool,
+    visual_separation: float = DEFAULT_BRACKISH_PARAMS["visual_separation"],
 ) -> dict[str, float | bool]:
     return {
         "base": float(base),
@@ -9471,6 +9472,7 @@ def _coerce_brackish_params(
         "freq": float(freq),
         "residual_weight": float(residual_weight),
         "stable_mode": bool(stable_mode),
+        "visual_separation": float(visual_separation),
     }
 
 
@@ -9481,9 +9483,12 @@ def _get_brackish_demo_video_path(
     freq: float = DEFAULT_BRACKISH_PARAMS["freq"],
     residual_weight: float = DEFAULT_BRACKISH_PARAMS["residual_weight"],
     stable_mode: bool = DEFAULT_BRACKISH_PARAMS["stable_mode"],
+    visual_separation: float = DEFAULT_BRACKISH_PARAMS["visual_separation"],
 ) -> str:
     """Gradio-served path to looping brackish heartbeat MP4."""
-    params = _coerce_brackish_params(base, amplitude, freq, residual_weight, stable_mode)
+    params = _coerce_brackish_params(
+        base, amplitude, freq, residual_weight, stable_mode, visual_separation,
+    )
     cache_key = brackish_params_key(**params)
     if cache_key not in _BRACKISH_DEMO_VIDEO_CACHE:
         default_key = brackish_params_key(**DEFAULT_BRACKISH_PARAMS)
@@ -9504,8 +9509,11 @@ def _brackish_preview_html(
     freq: float = DEFAULT_BRACKISH_PARAMS["freq"],
     residual_weight: float = DEFAULT_BRACKISH_PARAMS["residual_weight"],
     stable_mode: bool = DEFAULT_BRACKISH_PARAMS["stable_mode"],
+    visual_separation: float = DEFAULT_BRACKISH_PARAMS["visual_separation"],
 ) -> str:
-    params = _coerce_brackish_params(base, amplitude, freq, residual_weight, stable_mode)
+    params = _coerce_brackish_params(
+        base, amplitude, freq, residual_weight, stable_mode, visual_separation,
+    )
     return brackish_dashboard_viewport_html(dpi=88, **params)
 
 
@@ -9646,11 +9654,13 @@ def _demo_viewport_show_brackish_preview(
     freq: float = DEFAULT_BRACKISH_PARAMS["freq"],
     residual_weight: float = DEFAULT_BRACKISH_PARAMS["residual_weight"],
     stable_mode: bool = DEFAULT_BRACKISH_PARAMS["stable_mode"],
+    visual_separation: float = DEFAULT_BRACKISH_PARAMS["visual_separation"],
 ) -> tuple:
     """Interactive Demo J — live dashboard preview (clock + solids + divergence)."""
     html = _brackish_preview_html(
         base=base, amplitude=amplitude, freq=freq,
         residual_weight=residual_weight, stable_mode=stable_mode,
+        visual_separation=visual_separation,
     )
     title, subtitle = _demo_letter_overlay_copy("J")
     return (
@@ -9668,11 +9678,13 @@ def _demo_viewport_show_brackish_video(
     freq: float = DEFAULT_BRACKISH_PARAMS["freq"],
     residual_weight: float = DEFAULT_BRACKISH_PARAMS["residual_weight"],
     stable_mode: bool = DEFAULT_BRACKISH_PARAMS["stable_mode"],
+    visual_separation: float = DEFAULT_BRACKISH_PARAMS["visual_separation"],
 ) -> tuple:
     """Looping brackish heartbeat MP4 — parameterised encode."""
     video_path = _get_brackish_demo_video_path(
         base=base, amplitude=amplitude, freq=freq,
         residual_weight=residual_weight, stable_mode=stable_mode,
+        visual_separation=visual_separation,
     )
     title, subtitle = _demo_letter_overlay_copy("J")
     return (
@@ -9872,12 +9884,14 @@ def _demo_brackish_viewport_only(
     freq: float = DEFAULT_BRACKISH_PARAMS["freq"],
     residual_weight: float = DEFAULT_BRACKISH_PARAMS["residual_weight"],
     stable_mode: bool = DEFAULT_BRACKISH_PARAMS["stable_mode"],
+    visual_separation: float = DEFAULT_BRACKISH_PARAMS["visual_separation"],
 ) -> tuple:
     """Demo J viewport — looping heartbeat MP4 (bundled default, encode on param change)."""
     try:
         return _demo_viewport_show_brackish_video(
             base=base, amplitude=amplitude, freq=freq,
             residual_weight=residual_weight, stable_mode=stable_mode,
+            visual_separation=visual_separation,
         )
     except Exception:
         logger.exception("brackish demo video failed for Demo J")
@@ -9895,11 +9909,13 @@ def _brackish_animate_loop(
     freq: float,
     residual_weight: float,
     stable_mode: bool,
+    visual_separation: float,
 ) -> tuple:
     try:
         return _demo_viewport_show_brackish_video(
             base=base, amplitude=amplitude, freq=freq,
             residual_weight=residual_weight, stable_mode=stable_mode,
+            visual_separation=visual_separation,
         )
     except Exception as exc:
         logger.exception("brackish animate failed")
@@ -9908,6 +9924,7 @@ def _brackish_animate_loop(
             + _brackish_preview_html(
                 base=base, amplitude=amplitude, freq=freq,
                 residual_weight=residual_weight, stable_mode=stable_mode,
+                visual_separation=visual_separation,
             )
         )
         return (
@@ -9926,9 +9943,11 @@ def _brackish_apply_preset(preset_key: str) -> tuple:
         preset["freq"],
         preset["residual_weight"],
         preset["stable_mode"],
+        DEFAULT_BRACKISH_PARAMS["visual_separation"],
         *_demo_viewport_show_brackish_video(
             base=preset["base"], amplitude=preset["amplitude"], freq=preset["freq"],
             residual_weight=preset["residual_weight"], stable_mode=preset["stable_mode"],
+            visual_separation=DEFAULT_BRACKISH_PARAMS["visual_separation"],
         ),
     )
 
@@ -12717,6 +12736,12 @@ def build_app() -> gr.Blocks:
                         0.0, 0.5, value=DEFAULT_BRACKISH_PARAMS["residual_weight"], step=0.01,
                         label="Residual weight (R)", elem_classes=["vqc-optics-dial-wrap"],
                     )
+                with gr.Row(elem_classes=["vqc-optics-dial-row"]):
+                    brackish_visual_sep = gr.Slider(
+                        0.0, 0.40, value=DEFAULT_BRACKISH_PARAMS["visual_separation"], step=0.02,
+                        label="Layer separation (visual only)",
+                        elem_classes=["vqc-optics-dial-wrap"],
+                    )
                 with gr.Row(elem_classes=["myst-brackish-action-row"]):
                     brackish_stable = gr.Checkbox(
                         label="Stable conditions mode",
@@ -12895,7 +12920,7 @@ def build_app() -> gr.Blocks:
                 brackish_freq,
                 brackish_residual,
             ]
-            brackish_all_inputs = [*brackish_dial_inputs, brackish_stable]
+            brackish_all_inputs = [*brackish_dial_inputs, brackish_stable, brackish_visual_sep]
             brackish_viewport_outputs = list(gravity_demo_viewport_outputs)
 
             def _make_demo_letter_click_begin(letter: str):

@@ -10,6 +10,16 @@ import numpy as np
 SOLID_NAMES = ("tetrahedron", "octahedron", "cube", "icosahedron", "dodecahedron")
 FACE_COUNTS = {"tetrahedron": 4, "octahedron": 8, "cube": 6, "icosahedron": 20, "dodecahedron": 12}
 
+# === VISUAL ONLY — does not affect twist, counter-twist, or breathing math ===
+DEFAULT_VISUAL_SCALES: dict[str, float] = {
+    "tetrahedron": 0.32,
+    "octahedron": 0.52,
+    "cube": 0.72,
+    "icosahedron": 0.92,
+    "dodecahedron": 1.15,
+}
+DEFAULT_VISUAL_SEPARATION = 0.22
+
 
 def _polyhedron_dual(
     vertices: list[tuple[float, float, float]],
@@ -158,6 +168,33 @@ def rotation_matrix_xyz(rx: float, ry: float, rz: float) -> np.ndarray:
 def breathing_scale(t: float, wind: float, depth: float = 0.12) -> float:
     """Radius oscillation — depth scales with wind²."""
     return 1.0 + depth * (wind**2) * np.sin(2.0 * np.pi * 0.5 * t + wind)
+
+
+def visual_radius_scales(visual_separation: float | None = None) -> dict[str, float]:
+    """Absolute render radii per shell — frontend spacing only."""
+    if visual_separation is None or abs(float(visual_separation) - DEFAULT_VISUAL_SEPARATION) < 1e-9:
+        return dict(DEFAULT_VISUAL_SCALES)
+    inner = DEFAULT_VISUAL_SCALES["tetrahedron"]
+    sep = float(visual_separation)
+    return {name: inner + idx * sep for idx, name in enumerate(SOLID_NAMES)}
+
+
+def visual_render_multiplier(
+    layer_name: str,
+    base_radius: float,
+    *,
+    layer_index: int | None = None,
+    visual_separation: float | None = None,
+) -> float:
+    """Scale physics vertices to visual radius without changing backend geometry."""
+    scales = visual_radius_scales(visual_separation)
+    visual_radius = scales.get(layer_name, base_radius)
+    return visual_radius / max(float(base_radius), 1e-12)
+
+
+def apply_visual_layer_scale(vertices: np.ndarray, multiplier: float) -> np.ndarray:
+    """Element-wise radius remap for plotting — preserves rotation and breathing phase."""
+    return vertices * float(multiplier)
 
 
 @dataclass

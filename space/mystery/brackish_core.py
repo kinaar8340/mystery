@@ -67,7 +67,19 @@ DEFAULT_BRACKISH_PARAMS: dict[str, Any] = {
     "freq": 0.01,
     "residual_weight": 0.15,
     "stable_mode": False,
+    "visual_separation": 0.22,
 }
+
+# === VISUAL ONLY — does not affect twist, counter-twist, or breathing math ===
+_DEFAULT_VISUAL_SCALES: dict[str, float] = {
+    "tetrahedron": 0.32,
+    "octahedron": 0.52,
+    "cube": 0.72,
+    "icosahedron": 0.92,
+    "dodecahedron": 1.15,
+}
+_DEFAULT_VISUAL_SEPARATION = 0.22
+_SOLID_ORDER = ("tetrahedron", "octahedron", "cube", "icosahedron", "dodecahedron")
 
 _VIEWPORT_BG = "#0a0a0f"
 _VIEWPORT_FIGSIZE = (6.0, 6.0)
@@ -80,8 +92,30 @@ def brackish_params_key(**kwargs: Any) -> str:
     """Cache key for rendered media."""
     return "|".join(
         f"{k}={kwargs.get(k, DEFAULT_BRACKISH_PARAMS.get(k))!r}"
-        for k in ("base", "amplitude", "freq", "residual_weight", "stable_mode")
+        for k in ("base", "amplitude", "freq", "residual_weight", "stable_mode", "visual_separation")
     )
+
+
+def _visual_radius_scales(visual_separation: float | None = None) -> dict[str, float]:
+    """Absolute render radii per shell — frontend spacing only."""
+    if visual_separation is None or abs(float(visual_separation) - _DEFAULT_VISUAL_SEPARATION) < 1e-9:
+        return dict(_DEFAULT_VISUAL_SCALES)
+    inner = _DEFAULT_VISUAL_SCALES["tetrahedron"]
+    sep = float(visual_separation)
+    return {name: inner + idx * sep for idx, name in enumerate(_SOLID_ORDER)}
+
+
+def _visual_render_multiplier(
+    layer_name: str,
+    base_radius: float,
+    *,
+    layer_index: int,
+    visual_separation: float | None = None,
+) -> float:
+    """Scale physics vertices to visual radius without changing backend geometry."""
+    scales = _visual_radius_scales(visual_separation)
+    visual_radius = scales.get(layer_name, base_radius)
+    return visual_radius / max(float(base_radius), 1e-12)
 
 
 def brackish_dynamics(
@@ -200,6 +234,13 @@ def _angle_delta_deg(clock_deg: float, effective_deg: float) -> float:
 def _brackish_render_kwargs(**kwargs: Any) -> dict[str, Any]:
     return {
         k: kwargs.get(k, DEFAULT_BRACKISH_PARAMS[k])
+        for k in ("base", "amplitude", "freq", "residual_weight", "stable_mode", "visual_separation")
+    }
+
+
+def _brackish_physics_kwargs(**kwargs: Any) -> dict[str, Any]:
+    return {
+        k: kwargs.get(k, DEFAULT_BRACKISH_PARAMS[k])
         for k in ("base", "amplitude", "freq", "residual_weight", "stable_mode")
     }
 
@@ -207,9 +248,10 @@ def _brackish_render_kwargs(**kwargs: Any) -> dict[str, Any]:
 def _build_sync_series(times: np.ndarray, **kwargs) -> dict[str, Any]:
     """Precompute clock, resonator wind, and divergence tracks for frame-synced animation."""
     params = _brackish_render_kwargs(**kwargs)
-    winds = np.array([brackish_dynamics(float(t), **params) for t in times])
+    physics = _brackish_physics_kwargs(**kwargs)
+    winds = np.array([brackish_dynamics(float(t), **physics) for t in times])
     clock = np.array([_gauged_hour_angle(float(t), float(w)) for t, w in zip(times, winds)])
-    effective = np.degrees(_integrate_effective(times, **params) % (2.0 * np.pi))
+    effective = np.degrees(_integrate_effective(times, **physics) % (2.0 * np.pi))
     delta_inst = np.array([_angle_delta_deg(c, e) for c, e in zip(clock, effective)])
     idx = np.arange(1, len(times) + 1)
     divergence_mean = np.cumsum(delta_inst) / idx
@@ -278,6 +320,7 @@ def _nested_layer_vertices(
     wind: float,
     *,
     viewport_scale: float = 1.0,
+    visual_separation: float | None = None,
 ) -> list[tuple[np.ndarray, list[tuple[int, ...]], int]]:
     """Transformed vertices per shell — (verts, faces, layer_index)."""
     lag = 0.08 * R * wind
@@ -285,14 +328,21 @@ def _nested_layer_vertices(
     layers: list[tuple[np.ndarray, list[tuple[int, ...]], int]] = []
     for layer_idx, (name, radius, twist, _color, sign) in enumerate(_LAYERS):
         verts, faces = _platonic_topology(name)
-        scale = viewport_scale * radius * (1.0 + 0.14 * wind**2 * breath_sync)
+        scale = radius * (1.0 + 0.14 * wind**2 * breath_sync)
         freq = twist * wind
         rot = _rotation_matrix(
             0.25 * freq * np.sin(0.3 * t),
             -0.5 * sign * freq * t,
             freq * t + lag * sign,
         )
-        layers.append(((rot @ (verts * scale).T).T, faces, layer_idx))
+        physics_verts = (rot @ (verts * scale).T).T
+        visual_mult = _visual_render_multiplier(
+            name,
+            radius,
+            layer_index=layer_idx,
+            visual_separation=visual_separation,
+        )
+        layers.append((physics_verts * visual_mult * viewport_scale, faces, layer_idx))
     return layers
 
 
@@ -379,30 +429,40 @@ def _draw_nested_resonator(
     wind: float,
     *,
     viewport_scale: float = 1.0,
+    visual_separation: float | None = None,
     full_viewport: bool = False,
 ) -> None:
     """Rainbow nested Platonic wireframe — Demo B aesthetic."""
     ax.set_facecolor(_VIEWPORT_BG)
-    layers = _nested_layer_vertices(t, wind, viewport_scale=viewport_scale)
+    layers = _nested_layer_vertices(
+        t,
+        wind,
+        viewport_scale=viewport_scale,
+        visual_separation=visual_separation,
+    )
     segments: list[tuple[np.ndarray, np.ndarray, int]] = []
     for verts, faces, layer_idx in layers:
         for i0, i1 in _wireframe_edges(faces):
             segments.append((verts[i0], verts[i1], layer_idx))
     total_edges = max(1, len(segments))
-    line_w = 2.6 if full_viewport else 1.8
-    line_w *= 0.85 + 0.15 * min(1.3, wind / 1.2)
+    n_layers = max(1, len(_LAYERS))
+    base_line_w = 2.6 if full_viewport else 1.8
+    base_line_w *= 0.85 + 0.15 * min(1.3, wind / 1.2)
     for edge_idx, (p0, p1, layer_idx) in enumerate(segments):
+        depth = layer_idx / max(1, n_layers - 1)
         ax.plot(
             [p0[0], p1[0]],
             [p0[1], p1[1]],
             [p0[2], p1[2]],
             color=_wireframe_edge_color_hex(edge_idx, total_edges, layer_index=layer_idx),
-            linewidth=line_w,
+            linewidth=base_line_w * (0.94 + 0.10 * depth),
             solid_capstyle="round",
-            alpha=1.0,
-            zorder=5,
+            alpha=0.88 + 0.12 * depth,
+            zorder=5 + layer_idx,
         )
-    lim = 1.55 * viewport_scale
+    visual_scales = _visual_radius_scales(visual_separation)
+    max_visual_r = max(visual_scales.values())
+    lim = max_visual_r * viewport_scale * 1.28
     ax.set_xlim(-lim, lim)
     ax.set_ylim(-lim, lim)
     ax.set_zlim(-lim, lim)
@@ -423,6 +483,7 @@ def build_brackish_resonator_viewport(
     freq: float = 0.01,
     residual_weight: float = 0.15,
     stable_mode: bool = False,
+    visual_separation: float = DEFAULT_BRACKISH_PARAMS["visual_separation"],
     dpi: int = 88,
 ) -> plt.Figure:
     """Full-viewport nested resonator loop frame — matches Demo B wireframe look."""
@@ -435,6 +496,7 @@ def build_brackish_resonator_viewport(
     _draw_nested_resonator(
         ax, t, wind,
         viewport_scale=_NESTED_VIEWPORT_SCALE,
+        visual_separation=visual_separation,
         full_viewport=True,
     )
     fig.subplots_adjust(left=0, right=1, bottom=0, top=1)
@@ -468,6 +530,7 @@ def build_brackish_sync_frame(
     _draw_nested_resonator(
         ax_3d, t_val, wind,
         viewport_scale=1.18,
+        visual_separation=series.get("visual_separation", DEFAULT_BRACKISH_PARAMS["visual_separation"]),
         full_viewport=False,
     )
     _draw_divergence_strip_live(ax_div, series, idx, wind)
@@ -490,6 +553,7 @@ def build_brackish_dashboard(
     freq: float = 0.01,
     residual_weight: float = 0.15,
     stable_mode: bool = False,
+    visual_separation: float = DEFAULT_BRACKISH_PARAMS["visual_separation"],
     dpi: int = 90,
     duration: float = 8.0,
 ) -> plt.Figure:
@@ -503,6 +567,7 @@ def build_brackish_dashboard(
         freq=freq,
         residual_weight=residual_weight,
         stable_mode=stable_mode,
+        visual_separation=visual_separation,
     )
     return build_brackish_sync_frame(_series_index_at_t(series, t_val), series, dpi=dpi)
 
@@ -524,7 +589,10 @@ def _figure_to_rgb(fig: plt.Figure, *, dpi: int) -> np.ndarray:
 
 
 def _render_kwargs(**kwargs: Any) -> dict[str, Any]:
-    allowed = {"t", "base", "amplitude", "freq", "residual_weight", "stable_mode", "dpi"}
+    allowed = {
+        "t", "base", "amplitude", "freq", "residual_weight", "stable_mode",
+        "visual_separation", "dpi",
+    }
     return {k: v for k, v in kwargs.items() if k in allowed}
 
 
@@ -590,6 +658,7 @@ def render_brackish_clock_video(
     freq: float = 0.01,
     residual_weight: float = 0.15,
     stable_mode: bool = False,
+    visual_separation: float = DEFAULT_BRACKISH_PARAMS["visual_separation"],
 ) -> str:
     """Looping MP4 — clock + rainbow resonator + live divergence chart (frame-synced)."""
     n_frames = max(2, int(duration * fps))
@@ -601,6 +670,7 @@ def render_brackish_clock_video(
         freq=freq,
         residual_weight=residual_weight,
         stable_mode=stable_mode,
+        visual_separation=visual_separation,
     )
     rgb_frames = []
     for frame_idx in range(n_frames):

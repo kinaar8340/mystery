@@ -21,7 +21,15 @@ from mpl_toolkits.mplot3d import Axes3D  # noqa: F401
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _common import E, OUTPUT_DIR, PHI, PI, save_report
 from hopf_constant_bridge import W_G
-from platonic_resonator import DEFAULT_LAYERS, ResonatorLayer, active_layers, wireframe_edges
+from platonic_resonator import (
+    DEFAULT_LAYERS,
+    ResonatorLayer,
+    active_layers,
+    apply_visual_layer_scale,
+    visual_radius_scales,
+    visual_render_multiplier,
+    wireframe_edges,
+)
 from vortex_369_clock import digital_root, map_angles_to_369_tens
 
 R = PHI**2 + E**2 - PI**2
@@ -167,12 +175,25 @@ def draw_nested_resonator(
     *,
     elev: float = 22.0,
     azim: float = 38.0,
+    visual_separation: float | None = None,
 ) -> None:
     """Render wireframe Platonic shells with twist, counter-twist, breathing."""
     ax.cla()
     residual_lag = 0.08 * R * wind
-    for layer in layers:
+    visual_scales = visual_radius_scales(visual_separation)
+    n_layers = max(1, len(layers))
+    for layer_idx, layer in enumerate(layers):
         verts, faces = layer.transformed_vertices(t, wind, residual_lag)
+        visual_mult = visual_render_multiplier(
+            layer.name,
+            layer.base_radius,
+            layer_index=layer_idx,
+            visual_separation=visual_separation,
+        )
+        verts = apply_visual_layer_scale(verts, visual_mult)
+        depth = layer_idx / max(1, n_layers - 1)
+        line_alpha = min(0.95, layer.alpha + 0.12 * depth)
+        line_width = 0.85 + 0.35 * depth
         for i0, i1 in wireframe_edges(faces):
             p0, p1 = verts[i0], verts[i1]
             ax.plot(
@@ -180,10 +201,10 @@ def draw_nested_resonator(
                 [p0[1], p1[1]],
                 [p0[2], p1[2]],
                 color=layer.color,
-                alpha=layer.alpha,
-                lw=0.9,
+                alpha=line_alpha,
+                lw=line_width,
             )
-    lim = max(layer.base_radius for layer in layers) * 1.25
+    lim = max(visual_scales.get(layer.name, layer.base_radius) for layer in layers) * 1.28
     ax.set_xlim(-lim, lim)
     ax.set_ylim(-lim, lim)
     ax.set_zlim(-lim, lim)
