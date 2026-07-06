@@ -74,7 +74,7 @@ DEFAULT_BRACKISH_PARAMS: dict[str, Any] = {
     "flux_influence_on_rigidness": 0.15,
     "inner_emergent_expansion": 0.35,
     "twist_coupling_blend": 0.55,
-    "flux_turbulence": 0.35,
+    "flux_turbulence": 0.40,
 }
 
 FLUX_SPRING_CONFIG: dict[str, float] = {
@@ -85,7 +85,10 @@ FLUX_SPRING_CONFIG: dict[str, float] = {
     "inner_emergent_expansion": 0.35,
     "twist_coupling_blend": 0.55,
     "flux_floor": 0.2,
-    "flux_turbulence": 0.35,
+    "flux_turbulence": 0.40,
+    "turbulence_influence": 0.65,
+    "stable_outer_shield": 1.0,
+    "outer_radius_fixed": 1.0,
     "burst_perturbation_strength": 0.12,
     "shield_probe_modulation": 0.015,
 }
@@ -130,7 +133,7 @@ _STABLE_OUTER_SHIELD = True
 # 1-frequency: readable wireframe. freq=3 (~1280 faces) muddles inner Platonic shells.
 _GEODESIC_OUTER_FREQUENCY = 1
 
-_BRACKISH_VIEWPORT_REV = "visual-nest-tight-v3"
+_BRACKISH_VIEWPORT_REV = "spec-align-burst-v1"
 _GEODESIC_MESH_CACHE: dict[int, tuple[np.ndarray, list[tuple[int, ...]]]] = {}
 
 
@@ -174,6 +177,10 @@ def _merge_flux_spring_config(**overrides: Any) -> dict[str, float]:
     return cfg
 
 
+def _compute_350_pi_burst_phase(t: float, wg: float = W_G) -> float:
+    return float((float(t) * 2.0 * np.pi) % float(wg))
+
+
 def _wg_burst_envelope(t: float, *, width: float = 0.06) -> dict[str, float | bool]:
     phase = float((float(t) / W_G) % 1.0)
     dist = min(phase, 1.0 - phase)
@@ -185,9 +192,9 @@ def _effective_flux_turbulence(
     flux_turbulence: float,
     burst_strength: float,
     *,
-    burst_coupling: float = 0.65,
+    turbulence_influence: float = 0.65,
 ) -> float:
-    return float(flux_turbulence * (1.0 + burst_coupling * burst_strength))
+    return float(flux_turbulence * (1.0 + turbulence_influence * burst_strength))
 
 
 def _lorentz_perturbation(
@@ -295,14 +302,21 @@ def _nested_orb_physics(
     cfg = _merge_flux_spring_config(**config_overrides)
     spring = flux_spring(flux_value, **cfg)
     n = max(1, int(n_orbs))
-    stable_shield = _STABLE_OUTER_SHIELD if stable_outer_shield is None else bool(stable_outer_shield)
+    if stable_outer_shield is None:
+        stable_shield = bool(cfg.get("stable_outer_shield", float(_STABLE_OUTER_SHIELD)))
+    else:
+        stable_shield = bool(stable_outer_shield)
 
     burst = _wg_burst_envelope(t)
     burst_strength = float(burst["strength"])
     turb_base = float(cfg["flux_turbulence"])
-    turb_eff = _effective_flux_turbulence(turb_base, burst_strength)
+    turb_influence = float(cfg["turbulence_influence"])
+    turb_eff = _effective_flux_turbulence(
+        turb_base, burst_strength, turbulence_influence=turb_influence,
+    )
     pert_strength = float(cfg["burst_perturbation_strength"])
     probe_mod = float(cfg["shield_probe_modulation"])
+    outer_fixed = float(cfg["outer_radius_fixed"])
 
     radius_factors = [1.0] * n
     twist_blend = [0.0] * n
@@ -340,9 +354,14 @@ def _nested_orb_physics(
         radius_factors[idx] += r_off
         twist_perturbations[idx] = t_off
 
+    if turb_base > 0.0 and n > 1:
+        inner_scale = 1.0 + turb_base * turb_influence
+        for idx in range(n - 1):
+            radius_factors[idx] *= inner_scale
+
     if stable_shield and n > 0:
         outer_idx = n - 1
-        radius_factors[outer_idx] = 1.0 + probe_mod * burst_strength * np.sin(
+        radius_factors[outer_idx] = outer_fixed + probe_mod * burst_strength * np.sin(
             2.0 * np.pi * float(burst["phase"])
         )
         twist_perturbations[outer_idx] = 0.0
@@ -562,6 +581,9 @@ def _flux_spring_kwargs(**kwargs: Any) -> dict[str, float]:
             "inner_emergent_expansion",
             "twist_coupling_blend",
             "flux_turbulence",
+            "turbulence_influence",
+            "outer_radius_fixed",
+            "stable_outer_shield",
         )
     }
 

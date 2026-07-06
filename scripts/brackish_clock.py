@@ -188,6 +188,7 @@ def draw_nested_resonator(
     spring_config: dict[str, float] | None = None,
     use_geodesic_outer: bool | None = None,
     geodesic_frequency: int | None = None,
+    burst_debug: bool = False,
 ) -> None:
     """Render wireframe Platonic shells with flux_spring radius + twist coupling."""
     ax.cla()
@@ -200,6 +201,9 @@ def draw_nested_resonator(
         geodesic_render.GEODESIC_OUTER_FREQUENCY = max(0, int(geodesic_frequency))
     physics = nested_orb_physics(flux, len(layers), t=t, **spring_cfg)
     orb_meshes = transform_nested_orbs(layers, t, flux, residual_lag, physics)
+    burst_note = ""
+    if burst_debug and physics.burst_active:
+        burst_note = f" · W_g BURST {physics.burst_strength:.2f}"
     visual_scales = visual_radius_scales(visual_separation)
     n_layers = max(1, len(layers))
     for layer_idx, (layer, (verts, faces)) in enumerate(zip(layers, orb_meshes)):
@@ -213,15 +217,22 @@ def draw_nested_resonator(
         depth = layer_idx / max(1, n_layers - 1)
         line_alpha = min(0.95, layer.alpha + 0.12 * depth)
         line_width = 0.85 + 0.35 * depth
+        is_outer_burst = (
+            burst_debug
+            and physics.burst_active
+            and layer_idx == len(layers) - 1
+        )
+        edge_color = "#00f0ff" if is_outer_burst else layer.color
+        edge_lw = line_width * 1.6 if is_outer_burst else line_width
         for i0, i1 in wireframe_edges(faces):
             p0, p1 = verts[i0], verts[i1]
             ax.plot(
                 [p0[0], p1[0]],
                 [p0[1], p1[1]],
                 [p0[2], p1[2]],
-                color=layer.color,
+                color=edge_color,
                 alpha=line_alpha,
-                lw=line_width,
+                lw=edge_lw,
             )
     lim = max(visual_scales.get(layer.name, layer.base_radius) for layer in layers) * 1.28
     ax.set_xlim(-lim, lim)
@@ -230,7 +241,7 @@ def draw_nested_resonator(
     ax.set_box_aspect((1, 1, 1))
     ax.view_init(elev=elev, azim=azim + 0.4 * t)
     ax.set_axis_off()
-    ax.set_title(f"Nested resonator · wind={wind:.3f}", fontsize=9, pad=2)
+    ax.set_title(f"Nested resonator · wind={wind:.3f}{burst_note}", fontsize=9, pad=2)
 
 
 def plot_long_horizon(
@@ -279,6 +290,7 @@ def build_animation(
     spring_config: dict[str, float] | None = None,
     use_geodesic_outer: bool | None = None,
     geodesic_frequency: int | None = None,
+    burst_debug: bool = False,
 ) -> tuple[FuncAnimation, plt.Figure, list[float], list[float]]:
     """Build matplotlib FuncAnimation for clock + nested solids."""
     layers = active_layers(solids)
@@ -331,6 +343,7 @@ def build_animation(
             spring_config=spring_config,
             use_geodesic_outer=use_geodesic_outer,
             geodesic_frequency=geodesic_frequency,
+            burst_debug=burst_debug,
         )
         return ()
 
@@ -409,15 +422,32 @@ def main(argv: list[str] | None = None) -> int:
         help="inner oscillation / breathing turbulence scale",
     )
     parser.add_argument(
-        "--no-stable-outer-shield",
+        "--stable-outer",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="lock outer geodesic radius as stable shield (default: on)",
+    )
+    parser.add_argument(
+        "--turbulence-influence",
+        type=float,
+        default=FLUX_SPRING_CONFIG["turbulence_influence"],
+        help="how strongly flux_turbulence scales inner oscillation",
+    )
+    parser.add_argument(
+        "--outer-radius-fixed",
+        type=float,
+        default=FLUX_SPRING_CONFIG["outer_radius_fixed"],
+        help="base outer shield radius factor when stable_outer is enabled",
+    )
+    parser.add_argument(
+        "--burst-debug",
         action="store_true",
-        help="disable fixed outer geodesic shield (allow outer breathing)",
+        help="highlight 350/π bursts on outer geodesic (cyan wireframe)",
     )
     args = parser.parse_args(argv)
 
-    if args.no_stable_outer_shield:
-        geodesic_render.STABLE_OUTER_SHIELD = False
-        flux_spring_mod.STABLE_OUTER_SHIELD = False
+    geodesic_render.STABLE_OUTER_SHIELD = bool(args.stable_outer)
+    flux_spring_mod.STABLE_OUTER_SHIELD = bool(args.stable_outer)
 
     spring_config = merge_flux_spring_config(
         flux_gauge_rigidness=args.rigidness,
@@ -425,6 +455,9 @@ def main(argv: list[str] | None = None) -> int:
         base_coupling=args.base_coupling,
         flux_influence_on_rigidness=args.flux_rigidness_influence,
         flux_turbulence=args.flux_turbulence,
+        turbulence_influence=args.turbulence_influence,
+        outer_radius_fixed=args.outer_radius_fixed,
+        stable_outer_shield=1.0 if args.stable_outer else 0.0,
     )
 
     mapping = map_angles_to_369_tens()
@@ -450,6 +483,7 @@ def main(argv: list[str] | None = None) -> int:
         spring_config=spring_config,
         use_geodesic_outer=args.geodesic_outer,
         geodesic_frequency=args.geodesic_frequency,
+        burst_debug=args.burst_debug,
     )
     sample_physics = nested_orb_physics(
         brackish_dynamics(args.duration * 0.5, base=args.base, amplitude=args.amplitude,

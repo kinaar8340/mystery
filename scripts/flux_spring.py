@@ -19,7 +19,10 @@ FLUX_SPRING_CONFIG: dict[str, float] = {
     "inner_emergent_expansion": 0.35,
     "twist_coupling_blend": 0.55,
     "flux_floor": 0.2,
-    "flux_turbulence": 0.35,
+    "flux_turbulence": 0.40,
+    "turbulence_influence": 0.65,
+    "stable_outer_shield": 1.0,
+    "outer_radius_fixed": 1.0,
     "burst_perturbation_strength": 0.12,
     "shield_probe_modulation": 0.015,
 }
@@ -32,6 +35,11 @@ def merge_flux_spring_config(**overrides: Any) -> dict[str, float]:
         if key in cfg and value is not None:
             cfg[key] = float(value)
     return cfg
+
+
+def compute_350_pi_burst_phase(t: float, wg: float = W_G) -> float:
+    """Spec-aligned burst phase: (t · 2π) mod W_g."""
+    return float((float(t) * 2.0 * np.pi) % float(wg))
 
 
 def wg_burst_envelope(t: float, *, width: float = 0.06) -> dict[str, float | bool]:
@@ -50,10 +58,10 @@ def effective_flux_turbulence(
     flux_turbulence: float,
     burst_strength: float,
     *,
-    burst_coupling: float = 0.65,
+    turbulence_influence: float = 0.65,
 ) -> float:
     """Base turbulence plus burst-derived amplification for inner oscillation."""
-    return float(flux_turbulence * (1.0 + burst_coupling * burst_strength))
+    return float(flux_turbulence * (1.0 + turbulence_influence * burst_strength))
 
 
 def lorentz_perturbation(
@@ -208,14 +216,21 @@ def nested_orb_physics(
     cfg = merge_flux_spring_config(**config_overrides)
     spring = flux_spring(flux_value, **cfg)
     n = max(1, int(n_orbs))
-    stable_shield = STABLE_OUTER_SHIELD if stable_outer_shield is None else bool(stable_outer_shield)
+    if stable_outer_shield is None:
+        stable_shield = bool(cfg.get("stable_outer_shield", float(STABLE_OUTER_SHIELD)))
+    else:
+        stable_shield = bool(stable_outer_shield)
 
     burst = wg_burst_envelope(t)
     burst_strength = float(burst["strength"])
     turb_base = float(cfg["flux_turbulence"])
-    turb_eff = effective_flux_turbulence(turb_base, burst_strength)
+    turb_influence = float(cfg["turbulence_influence"])
+    turb_eff = effective_flux_turbulence(
+        turb_base, burst_strength, turbulence_influence=turb_influence,
+    )
     pert_strength = float(cfg["burst_perturbation_strength"])
     probe_mod = float(cfg["shield_probe_modulation"])
+    outer_fixed = float(cfg["outer_radius_fixed"])
 
     radius_factors = [1.0] * n
     twist_blend = [0.0] * n
@@ -251,9 +266,14 @@ def nested_orb_physics(
         radius_factors[idx] += r_off
         twist_perturbations[idx] = t_off
 
+    if turb_base > 0.0 and n > 1:
+        inner_scale = 1.0 + turb_base * turb_influence
+        for idx in range(n - 1):
+            radius_factors[idx] *= inner_scale
+
     if stable_shield and n > 0:
         outer_idx = n - 1
-        radius_factors[outer_idx] = 1.0 + probe_mod * burst_strength * np.sin(
+        radius_factors[outer_idx] = outer_fixed + probe_mod * burst_strength * np.sin(
             2.0 * np.pi * float(burst["phase"])
         )
         twist_perturbations[outer_idx] = 0.0
@@ -273,6 +293,8 @@ def nested_orb_physics(
         "twist_blend_max": float(max(twist_blend)),
         "global_pointer_deg": pointer,
         "flux_turbulence": turb_base,
+        "turbulence_influence": turb_influence,
+        "outer_radius_fixed": outer_fixed,
         "flux_turbulence_effective": turb_eff,
         "burst_strength": burst_strength,
         "burst_active": float(bool(burst["active"])),
