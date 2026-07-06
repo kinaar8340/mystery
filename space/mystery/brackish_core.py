@@ -67,7 +67,7 @@ DEFAULT_BRACKISH_PARAMS: dict[str, Any] = {
     "freq": 0.01,
     "residual_weight": 0.15,
     "stable_mode": False,
-    "visual_separation": 0.12,
+    "visual_separation": 0.024,
     "flux_gauge_rigidness": 0.25,
     "compression_strength": 0.35,
     "base_coupling": 0.75,
@@ -94,12 +94,12 @@ FLUX_SPRING_CONFIG: dict[str, float] = {
 # Tight nesting: inner shells must stay inside the outer geodesic shield.
 _DEFAULT_VISUAL_SCALES: dict[str, float] = {
     "tetrahedron": 0.20,
-    "octahedron": 0.32,
-    "cube": 0.44,
-    "icosahedron": 0.56,
+    "octahedron": 0.224,
+    "cube": 0.248,
+    "icosahedron": 0.272,
     "dodecahedron": 0.86,
 }
-_DEFAULT_VISUAL_SEPARATION = 0.12
+_DEFAULT_VISUAL_SEPARATION = 0.024
 _SOLID_ORDER = ("tetrahedron", "octahedron", "cube", "icosahedron", "dodecahedron")
 
 _VIEWPORT_BG = "#0a0a0f"
@@ -112,7 +112,7 @@ _NESTED_VIEWPORT_SCALE = 1.42
 _QUAD_VIEWPORT_SCALE = 1.62
 _QUAD_LIM_FACTOR = 1.04
 _DIMMED_LINE_COLOR = "#ffffff"
-_DIMMED_LINE_ALPHA = 0.6
+_DIMMED_LINE_ALPHA = 0.3
 _DIMMED_LINE_WIDTH = 0.65
 _HIGHLIGHT_LINE_WIDTH = 0.65
 
@@ -130,7 +130,7 @@ _STABLE_OUTER_SHIELD = True
 # 1-frequency: readable wireframe. freq=3 (~1280 faces) muddles inner Platonic shells.
 _GEODESIC_OUTER_FREQUENCY = 1
 
-_BRACKISH_VIEWPORT_REV = "visual-nest-tight-v2"
+_BRACKISH_VIEWPORT_REV = "visual-nest-tight-v3"
 _GEODESIC_MESH_CACHE: dict[int, tuple[np.ndarray, list[tuple[int, ...]]]] = {}
 
 
@@ -850,7 +850,7 @@ def _draw_nested_resonator(
             if is_highlight:
                 edge_color = layer_color
                 line_w = _DIMMED_LINE_WIDTH
-                line_alpha = _DIMMED_LINE_ALPHA
+                line_alpha = 1.0
                 zorder = 20 + layer_idx
             else:
                 edge_color = _DIMMED_LINE_COLOR

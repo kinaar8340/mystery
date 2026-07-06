@@ -21,12 +21,12 @@ FACE_COUNTS = {"tetrahedron": 4, "octahedron": 8, "cube": 6, "icosahedron": 20, 
 # Tight nesting: stay inside outer geodesic even with inner breathing/turbulence.
 DEFAULT_VISUAL_SCALES: dict[str, float] = {
     "tetrahedron": 0.20,
-    "octahedron": 0.32,
-    "cube": 0.44,
-    "icosahedron": 0.56,
+    "octahedron": 0.224,
+    "cube": 0.248,
+    "icosahedron": 0.272,
     "dodecahedron": 0.86,
 }
-DEFAULT_VISUAL_SEPARATION = 0.12
+DEFAULT_VISUAL_SEPARATION = 0.024
 
 
 def _polyhedron_dual(
