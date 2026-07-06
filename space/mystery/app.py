@@ -6425,6 +6425,18 @@ footer {{ visibility: hidden; }}
     font-size: 0.92rem !important;
     line-height: 1.45 !important;
 }}
+.gradio-container .myst-stage6-best {{
+    color: #c9e6b8 !important;
+}}
+.gradio-container .myst-stage6-robust {{
+    color: #9ecbff !important;
+    font-size: 0.88rem !important;
+}}
+.gradio-container .myst-stage6-card h3 {{
+    color: #c9a227 !important;
+    font-size: 0.95rem !important;
+    margin: 1rem 0 0.5rem 0 !important;
+}}
 .gradio-container .myst-stage6-table th,
 .gradio-container .myst-stage6-table td {{
     font-size: 0.88rem !important;
@@ -12830,7 +12842,7 @@ def build_app() -> gr.Blocks:
                                 value=True,
                             )
                 with gr.Accordion(
-                    "Stage 6 — Latest Analog Objective Results",
+                    "Stage 6 — Current Best & Robustness",
                     open=False,
                     elem_classes=["myst-gravity-stage6-accordion"],
                 ):

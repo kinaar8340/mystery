@@ -69,7 +69,7 @@ Opens on the **Gravity** tab — two-column preset explorer with live TUI metric
 | survival_penalty | 57.26 | 0.89 | 0.137651 | 0.121% | 0.9990 |
 | dual_analog | **56.98** | 0.89 | 0.137651 | 0.121% | 0.9990 |
 
-Full tables and loss breakdowns: [docs/RESULTS.md](https://github.com/kinaar8340/mystery/blob/main/docs/RESULTS.md) · also shown in-app under **Manual Edit → Stage 6**.
+**50-trial confirmed** · robust across 18 grid points @ κ=0.89. Full tables: [docs/RESULTS.md](https://github.com/kinaar8340/mystery/blob/main/docs/RESULTS.md) · in-app under **Manual Edit → Stage 6 — Current Best & Robustness**.
 
 **Framing:** compatible emergent signature within the gauged Hopf lattice TOE — not a derived identity.
 

@@ -4626,40 +4626,80 @@ TERM_KEY_ACTIONS: dict[int, tuple[str, str]] = {
 
 RESULTS_MD_URL = f"{GITHUB_URL}/blob/main/docs/RESULTS.md"
 
-STAGE6_TUNING = {
-    "label": "30-trial analog objective tuning",
+STAGE6_BEST = {
+    "kappa": 0.89,
+    "wg_base": 350.0,
+    "W_g": 111.41,
+    "braiding_target": 0.798,
     "w_s": 5.0,
-    "trials": 30,
-    "json": "meta_optimize_phi_probe_20260706_231311.json",
-    "modes": {
-        "baseline": {"loss": 57.22, "kappa": 0.89, "mean_survival": None, "delta_pct_vs_R": None, "hybrid": None, "golden_reward": None},
-        "survival_penalty": {"loss": 57.26, "kappa": 0.89, "mean_survival": 0.137651, "delta_pct_vs_R": 0.121, "hybrid": 0.9990, "golden_reward": None},
-        "dual_analog": {"loss": 56.98, "kappa": 0.89, "mean_survival": 0.137651, "delta_pct_vs_R": 0.121, "hybrid": 0.9990, "golden_reward": 0.275},
-    },
-    "summary": (
-        "κ drifted 0.77 → 0.89 (|κ−0.85| halved). "
-        "mean_survival Δ% vs R improved 0.355% → 0.121%. "
-        "Dual-analog wins on loss via golden_reward."
-    ),
+    "golden_reward_weight": 0.3,
+    "mean_survival": 0.137651,
+    "delta_pct_vs_R": 0.121,
+    "hybrid": 0.9990,
+    "dual_analog_loss": 56.98,
+    "golden_reward": 0.275,
+}
+
+STAGE6_TIMELINE = (
+    {"run": "Pilot", "trials": 8, "w_s": 1, "loss": 63.64, "kappa": 0.77, "delta_pct_vs_R": 0.355, "hybrid": 0.9987, "note": "baseline"},
+    {"run": "30-trial", "trials": 30, "w_s": 5, "loss": 56.98, "kappa": 0.89, "delta_pct_vs_R": 0.121, "hybrid": 0.9990, "note": "big improvement"},
+    {"run": "50-trial", "trials": 50, "w_s": 5, "loss": 56.98, "kappa": 0.89, "delta_pct_vs_R": 0.121, "hybrid": 0.9990, "note": "identical to 30-trial"},
+    {"run": "w_s sweep", "trials": 25, "w_s": "5–12", "loss": 56.98, "kappa": 0.89, "delta_pct_vs_R": 0.121, "hybrid": 0.9990, "note": "stable; w_s=5 best"},
+    {"run": "Robustness", "trials": "—", "w_s": "—", "loss": "—", "kappa": 0.89, "delta_pct_vs_R": 0.121, "hybrid": 0.9990, "note": "18 grid points"},
+)
+
+STAGE6_MODES = {
+    "baseline": {"loss": 57.22, "kappa": 0.89, "mean_survival": None, "delta_pct_vs_R": None, "hybrid": None, "golden_reward": None},
+    "survival_penalty": {"loss": 57.26, "kappa": 0.89, "mean_survival": 0.137651, "delta_pct_vs_R": 0.121, "hybrid": 0.9990, "golden_reward": None},
+    "dual_analog": {"loss": 56.98, "kappa": 0.89, "mean_survival": 0.137651, "delta_pct_vs_R": 0.121, "hybrid": 0.9990, "golden_reward": 0.275},
+}
+
+STAGE6_ROBUSTNESS = {
+    "n_runs": 18,
+    "kappa": 0.89,
+    "W_g": 111.41,
+    "best_delta_pct_vs_R": 0.121,
+    "best_hybrid": 0.9990,
+    "mean_survival_at_lambda_t2": 0.137651,
+    "golden_packing": 0.78,
+    "json": "analog_comparative_sweep_20260706_233723.json",
 }
 
 
 def stage6_results_explorer_footer() -> str:
-    d = STAGE6_TUNING["modes"]["dual_analog"]
+    b = STAGE6_BEST
     return "\n".join([
-        "=== Stage 6 meta-opt (w_s=5, 30 trials) ===",
-        f"best κ         : {d['kappa']:.2f}  (pilot 0.77)",
-        f"mean_survival  : {d['mean_survival']:.6f}  (Δ% vs R {d['delta_pct_vs_R']:.3f}%)",
-        f"hybrid score   : {d['hybrid']:.4f}",
-        f"dual_analog loss: {d['loss']:.2f}  (golden_reward {d['golden_reward']:.3f})",
-        f"Full table     : {RESULTS_MD_URL}",
+        "=== Stage 6 — current best (50-trial confirmed) ===",
+        f"κ              : {b['kappa']:.2f}  (pilot 0.77 → |κ−0.85| halved)",
+        f"W_g            : {b['W_g']:.2f}  (wg_base {b['wg_base']:.0f})",
+        f"mean_survival  : {b['mean_survival']:.6f}  (Δ% vs R {b['delta_pct_vs_R']:.3f}%)",
+        f"hybrid score   : {b['hybrid']:.4f}",
+        f"dual_analog    : loss {b['dual_analog_loss']:.2f}  golden_reward {b['golden_reward']:.3f}",
+        f"Robustness     : {STAGE6_ROBUSTNESS['n_runs']} grid pts @ κ=0.89 — stable",
+        f"Full docs      : {RESULTS_MD_URL}",
     ])
 
 
-def build_stage6_results_html(*, compact: bool = False) -> str:
-    s = STAGE6_TUNING
+def _stage6_timeline_rows_html() -> str:
     rows = []
-    for mode, data in s["modes"].items():
+    for r in STAGE6_TIMELINE:
+        loss = "—" if r["loss"] == "—" else f"{r['loss']:.2f}"
+        if r["run"] in ("30-trial", "50-trial", "w_s sweep"):
+            loss = f"<strong>{loss}</strong>"
+        d_r = f"{r['delta_pct_vs_R']:.3f}%"
+        hybrid = f"{r['hybrid']:.4f}"
+        w_s = html.escape(str(r["w_s"]))
+        rows.append(
+            f"<tr><td>{html.escape(r['run'])}</td><td>{r['trials']}</td><td>{w_s}</td>"
+            f"<td>{loss}</td><td>{r['kappa']:.2f}</td>"
+            f"<td>{d_r}</td><td>{hybrid}</td><td>{html.escape(r['note'])}</td></tr>"
+        )
+    return "\n".join(rows)
+
+
+def _stage6_modes_rows_html() -> str:
+    rows = []
+    for mode, data in STAGE6_MODES.items():
         ms = f"{data['mean_survival']:.6f}" if data["mean_survival"] is not None else "—"
         d_r = f"{data['delta_pct_vs_R']:.3f}%" if data["delta_pct_vs_R"] is not None else "—"
         hybrid = f"{data['hybrid']:.4f}" if data["hybrid"] is not None else "—"
@@ -4670,32 +4710,72 @@ def build_stage6_results_html(*, compact: bool = False) -> str:
             f"<td>{data['kappa']:.2f}</td><td>{ms}</td>"
             f"<td>{d_r}</td><td>{hybrid}</td><td>{golden}</td></tr>"
         )
-    table = "\n".join(rows)
-    summary = html.escape(s["summary"])
+    return "\n".join(rows)
+
+
+def build_stage6_results_html(*, compact: bool = False) -> str:
+    b = STAGE6_BEST
+    rob = STAGE6_ROBUSTNESS
     link = html.escape(RESULTS_MD_URL)
     if compact:
-        d = s["modes"]["dual_analog"]
         return (
             f'<div class="myst-stage6-card myst-stage6-compact">'
-            f'<p class="myst-stage6-title">Stage 6 — Analog Objective (w<sub>s</sub>=5)</p>'
-            f'<p>κ <strong>{d["kappa"]:.2f}</strong> · mean_survival <strong>{d["mean_survival"]:.6f}</strong> · '
-            f'hybrid <strong>{d["hybrid"]:.4f}</strong> · loss <strong>{d["loss"]:.2f}</strong></p>'
-            f'<p><a href="{link}" target="_blank" rel="noopener">View full RESULTS.md on GitHub →</a></p>'
+            f'<p class="myst-stage6-title">Stage 6 — Current Best Parameters</p>'
+            f'<p class="myst-stage6-best">'
+            f'κ <strong>{b["kappa"]:.2f}</strong> · W<sub>g</sub> <strong>{b["W_g"]:.2f}</strong> · '
+            f'w<sub>s</sub> <strong>{b["w_s"]:.0f}</strong> · loss <strong>{b["dual_analog_loss"]:.2f}</strong>'
+            f'</p>'
+            f'<p>mean_survival <strong>{b["mean_survival"]:.6f}</strong> · '
+            f'Δ% vs R <strong>{b["delta_pct_vs_R"]:.3f}%</strong> · '
+            f'hybrid <strong>{b["hybrid"]:.4f}</strong></p>'
+            f'<p class="myst-stage6-robust">'
+            f'Robustness: <strong>{rob["n_runs"]}</strong> grid points @ κ=0.89 — '
+            f'Δ% and hybrid stable across IC/twist/λt/step modes.'
+            f'</p>'
+            f'<p><a href="{link}" target="_blank" rel="noopener">Full RESULTS.md on GitHub →</a></p>'
             f"</div>"
         )
+    timeline = _stage6_timeline_rows_html()
+    modes = _stage6_modes_rows_html()
     return f"""<section class="myst-stage6-card" id="myst-stage6-results">
-<h2>Stage 6 — Analog Objective Results</h2>
-<p class="myst-readme-muted">{s['label']} · w<sub>s</sub> = {s['w_s']} · {s['trials']} trials per mode</p>
-<p>{summary}</p>
+<h2>Stage 6 — Analog Objective (tuning complete)</h2>
+<p class="myst-readme-muted">50-trial confirmed · w<sub>s</sub> = 5 · dual-analog objective</p>
+
+<h3>Current best parameters</h3>
+<table class="myst-readme-table myst-stage6-table">
+<tbody>
+<tr><td>κ</td><td><strong>{b['kappa']:.2f}</strong></td><td>W<sub>g</sub></td><td><strong>{b['W_g']:.2f}</strong></td></tr>
+<tr><td>wg_base</td><td>{b['wg_base']:.0f}</td><td>φ_b target</td><td>{b['braiding_target']:.3f}</td></tr>
+<tr><td>w<sub>s</sub></td><td>{b['w_s']:.0f}</td><td>golden_reward</td><td>{b['golden_reward']:.3f}</td></tr>
+<tr><td>mean_survival</td><td>{b['mean_survival']:.6f}</td><td>Δ% vs R</td><td>{b['delta_pct_vs_R']:.3f}%</td></tr>
+<tr><td>hybrid score</td><td>{b['hybrid']:.4f}</td><td>dual_analog loss</td><td><strong>{b['dual_analog_loss']:.2f}</strong></td></tr>
+</tbody>
+</table>
+
+<h3>Tuning timeline</h3>
+<table class="myst-readme-table myst-stage6-table">
+<thead><tr>
+<th>Run</th><th>Trials</th><th>w<sub>s</sub></th><th>Loss (dual)</th><th>κ</th>
+<th>Δ% vs R</th><th>Hybrid</th><th>Notes</th>
+</tr></thead>
+<tbody>{timeline}</tbody>
+</table>
+
+<h3>50-trial mode comparison (w<sub>s</sub> = 5)</h3>
 <table class="myst-readme-table myst-stage6-table">
 <thead><tr>
 <th>Mode</th><th>Loss</th><th>κ</th><th>mean_survival</th>
 <th>Δ% vs R</th><th>Hybrid</th><th>Golden</th>
 </tr></thead>
-<tbody>
-{table}
-</tbody>
+<tbody>{modes}</tbody>
 </table>
+
+<h3>Robustness @ κ = 0.89, W<sub>g</sub> = 111.41</h3>
+<p>{rob['n_runs']} runs (3 IC × 2 λt + 3 twist × 2 λt × 2 step modes). Best Δ% vs R =
+<strong>{rob['best_delta_pct_vs_R']:.3f}%</strong>, hybrid <strong>{rob['best_hybrid']:.4f}</strong>,
+mean_survival @ λt=2 = <strong>{rob['mean_survival_at_lambda_t2']:.6f}</strong>
+(golden+λt=2 packing ≈ {rob['golden_packing']:.2f}).</p>
+
 <p class="myst-stage6-links">
 <a href="{link}" target="_blank" rel="noopener">View full RESULTS.md on GitHub →</a>
 </p>
