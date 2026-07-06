@@ -6,7 +6,11 @@ import numpy as np
 
 # === VISUAL ONLY ===
 USE_GEODESIC_OUTER = True
-GEODESIC_OUTER_FREQUENCY = 3
+STABLE_OUTER_SHIELD = True
+# 1-frequency: clean wireframe (~80 faces). 3-frequency reads as solid diffusion.
+GEODESIC_OUTER_FREQUENCY = 1
+
+_MESH_CACHE: dict[int, tuple[np.ndarray, list[tuple[int, ...]]]] = {}
 
 
 def _icosahedron_base() -> tuple[np.ndarray, list[tuple[int, int, int]]]:
@@ -66,9 +70,13 @@ def generate_geodesic_sphere(
     """
     Geodesic sphere from icosahedron + midpoint subdivision.
 
-    frequency = number of subdivision passes (3 → 3-frequency mesh).
+    frequency = subdivision passes (0 = icosahedron, 1 = light geodesic, 3 = dense).
     Returns unit-radius vertices and triangular faces.
     """
+    freq = max(0, int(frequency))
+    if freq in _MESH_CACHE:
+        return _MESH_CACHE[freq]
+
     verts, faces = _icosahedron_base()
     vert_list = [tuple(v) for v in verts]
     face_list = [tuple(f) for f in faces]
@@ -89,8 +97,7 @@ def generate_geodesic_sphere(
         cache[k] = idx
         return idx
 
-    passes = max(0, int(frequency))
-    for _ in range(passes):
+    for _ in range(freq):
         next_faces: list[tuple[int, int, int]] = []
         for a, b, c in face_list:
             ab = _midpoint(a, b)
@@ -107,4 +114,6 @@ def generate_geodesic_sphere(
         face_list = next_faces
 
     vert_array = _project_unit(np.asarray(vert_list, dtype=float))
-    return vert_array, face_list
+    result = (vert_array, face_list)
+    _MESH_CACHE[freq] = result
+    return result

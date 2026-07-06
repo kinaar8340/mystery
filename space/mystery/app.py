@@ -9519,7 +9519,7 @@ def _get_brackish_demo_video_path(
             print(f"[demo-j] using bundled asset: {raw_path}", flush=True)
         else:
             print(f"[demo-j] encoding brackish loop (params={cache_key})", flush=True)
-            raw_path = render_brackish_clock_video(duration=8.0, fps=10, dpi=100, **params)
+            raw_path = render_brackish_clock_video(duration=8.0, fps=8, dpi=88, **params)
         _BRACKISH_DEMO_VIDEO_CACHE[cache_key] = _cache_media_for_gradio(raw_path)
     return _BRACKISH_DEMO_VIDEO_CACHE[cache_key]
 
@@ -9754,8 +9754,12 @@ def _demo_viewport_loading_html(letter: str) -> str:
         f'<div class="myst-demo-viewport-loading-title">Rendering {safe_title}</div>'
         f'<div class="myst-demo-viewport-loading-sub">{safe_sub}</div>'
         '<div class="myst-demo-viewport-loading-hint">'
-        "Encoding deformation loop — this may take up to two minutes on first load."
-        "</div></div></div>"
+        + (
+            "Encoding 2×2 resonator loop — typically 2–4 minutes on first load."
+            if active == "J"
+            else "Encoding deformation loop — this may take up to two minutes on first load."
+        )
+        + "</div></div></div>"
     )
 
 

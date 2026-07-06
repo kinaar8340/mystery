@@ -74,6 +74,7 @@ DEFAULT_BRACKISH_PARAMS: dict[str, Any] = {
     "flux_influence_on_rigidness": 0.15,
     "inner_emergent_expansion": 0.35,
     "twist_coupling_blend": 0.55,
+    "flux_turbulence": 0.35,
 }
 
 FLUX_SPRING_CONFIG: dict[str, float] = {
@@ -84,6 +85,9 @@ FLUX_SPRING_CONFIG: dict[str, float] = {
     "inner_emergent_expansion": 0.35,
     "twist_coupling_blend": 0.55,
     "flux_floor": 0.2,
+    "flux_turbulence": 0.35,
+    "burst_perturbation_strength": 0.12,
+    "shield_probe_modulation": 0.015,
 }
 
 # === VISUAL ONLY — does not affect twist, counter-twist, or breathing math ===
@@ -121,9 +125,12 @@ _DEMO_J_QUAD_PANELS: tuple[tuple[int, int, int, str], ...] = (
 
 
 _USE_GEODESIC_OUTER = True
-_GEODESIC_OUTER_FREQUENCY = 3
+_STABLE_OUTER_SHIELD = True
+# 1-frequency: readable wireframe. freq=3 (~1280 faces) muddles inner Platonic shells.
+_GEODESIC_OUTER_FREQUENCY = 1
 
-_BRACKISH_VIEWPORT_REV = "geodesic-outer-v1"
+_BRACKISH_VIEWPORT_REV = "stable-shield-burst-v1"
+_GEODESIC_MESH_CACHE: dict[int, tuple[np.ndarray, list[tuple[int, ...]]]] = {}
 
 
 def brackish_params_key(**kwargs: Any) -> str:
@@ -164,6 +171,47 @@ def _merge_flux_spring_config(**overrides: Any) -> dict[str, float]:
         if key in cfg and value is not None:
             cfg[key] = float(value)
     return cfg
+
+
+def _wg_burst_envelope(t: float, *, width: float = 0.06) -> dict[str, float | bool]:
+    phase = float((float(t) / W_G) % 1.0)
+    dist = min(phase, 1.0 - phase)
+    strength = float(np.exp(-(dist / width) ** 2))
+    return {"phase": phase, "strength": strength, "active": strength > 0.35}
+
+
+def _effective_flux_turbulence(
+    flux_turbulence: float,
+    burst_strength: float,
+    *,
+    burst_coupling: float = 0.65,
+) -> float:
+    return float(flux_turbulence * (1.0 + burst_coupling * burst_strength))
+
+
+def _lorentz_perturbation(
+    t: float,
+    layer_idx: int,
+    n_orbs: int,
+    *,
+    burst_strength: float,
+    turbulence: float,
+    perturbation_strength: float,
+) -> tuple[float, float]:
+    if layer_idx >= n_orbs - 1 or burst_strength < 1e-6:
+        return 0.0, 0.0
+    depth = layer_idx / max(1, n_orbs - 2)
+    sigma, rho, beta = 10.0, 28.0, 8.0 / 3.0
+    dt = 0.018 * burst_strength
+    x = np.sin(0.37 * t + depth * 2.1) * 0.5
+    y = np.cos(0.29 * t + depth * 1.7) * 0.5
+    z = np.sin(0.41 * t + depth * 3.3) * 0.5 + 0.1 * burst_strength
+    for _ in range(3):
+        x = x + dt * sigma * (y - x)
+        y = y + dt * (x * (rho - z) - y)
+        z = z + dt * (x * y - beta * z)
+    scale = perturbation_strength * turbulence * burst_strength * (1.0 - 0.4 * depth)
+    return float(scale * np.tanh(x)), float(scale * 1.8 * np.tanh(y))
 
 
 def brackish_flux(
@@ -239,14 +287,25 @@ def _nested_orb_physics(
     n_orbs: int,
     *,
     t: float = 0.0,
+    stable_outer_shield: bool | None = None,
     **config_overrides: Any,
 ) -> dict[str, Any]:
     """N-orb extension of flux_spring — radius factors + twist blend per orb."""
     cfg = _merge_flux_spring_config(**config_overrides)
     spring = flux_spring(flux_value, **cfg)
     n = max(1, int(n_orbs))
+    stable_shield = _STABLE_OUTER_SHIELD if stable_outer_shield is None else bool(stable_outer_shield)
+
+    burst = _wg_burst_envelope(t)
+    burst_strength = float(burst["strength"])
+    turb_base = float(cfg["flux_turbulence"])
+    turb_eff = _effective_flux_turbulence(turb_base, burst_strength)
+    pert_strength = float(cfg["burst_perturbation_strength"])
+    probe_mod = float(cfg["shield_probe_modulation"])
+
     radius_factors = [1.0] * n
     twist_blend = [0.0] * n
+    twist_perturbations = [0.0] * n
     compression = spring["outer_compression"]
     coupling = spring["coupling"]
     rigid = spring["effective_rigidness"]
@@ -268,12 +327,40 @@ def _nested_orb_physics(
             np.clip(twist_base * coupling * rigid * (0.5 + 0.5 * pair_exposure), 0.0, 0.95)
         )
 
+    for idx in range(n):
+        r_off, t_off = _lorentz_perturbation(
+            t,
+            idx,
+            n,
+            burst_strength=burst_strength,
+            turbulence=turb_eff,
+            perturbation_strength=pert_strength,
+        )
+        radius_factors[idx] += r_off
+        twist_perturbations[idx] = t_off
+
+    if stable_shield and n > 0:
+        outer_idx = n - 1
+        radius_factors[outer_idx] = 1.0 + probe_mod * burst_strength * np.sin(
+            2.0 * np.pi * float(burst["phase"])
+        )
+        twist_perturbations[outer_idx] = 0.0
+
+    outer_spiral_twist = float(
+        burst_strength * 2.5 * np.sin(2.0 * np.pi * 3.0 * t / W_G + float(burst["phase"]) * 2.0 * np.pi)
+    )
+
     pointer = _global_pointer_deg(flux_value, spring, t=t)
     return {
         "radius_factors": radius_factors,
         "twist_blend": twist_blend,
+        "twist_perturbations": twist_perturbations,
         "global_pointer_deg": pointer,
         "spring": spring,
+        "flux_turbulence_effective": turb_eff,
+        "burst_strength": burst_strength,
+        "burst_active": bool(burst["active"]),
+        "outer_spiral_twist": outer_spiral_twist,
     }
 
 
@@ -302,6 +389,10 @@ def _blended_twist(
 
 def _generate_geodesic_sphere(frequency: int = _GEODESIC_OUTER_FREQUENCY) -> tuple[np.ndarray, list[tuple[int, ...]]]:
     """Geodesic sphere — render-only; physics topology unchanged."""
+    freq = max(0, int(frequency))
+    if freq in _GEODESIC_MESH_CACHE:
+        return _GEODESIC_MESH_CACHE[freq]
+
     verts, faces = _icosahedron_topology()
     vert_list = [tuple(v) for v in np.asarray(verts, dtype=float)]
     face_list = [tuple(int(x) for x in f) for f in faces]
@@ -324,7 +415,7 @@ def _generate_geodesic_sphere(frequency: int = _GEODESIC_OUTER_FREQUENCY) -> tup
         cache[k] = idx
         return idx
 
-    for _ in range(max(0, int(frequency))):
+    for _ in range(freq):
         next_faces: list[tuple[int, int, int]] = []
         for a, b, c in face_list:
             ab = _midpoint(a, b)
@@ -335,7 +426,9 @@ def _generate_geodesic_sphere(frequency: int = _GEODESIC_OUTER_FREQUENCY) -> tup
 
     vert_array = np.asarray(vert_list, dtype=float)
     norms = np.maximum(np.linalg.norm(vert_array, axis=1, keepdims=True), 1e-12)
-    return vert_array / norms, face_list
+    result = (vert_array / norms, face_list)
+    _GEODESIC_MESH_CACHE[freq] = result
+    return result
 
 
 def _icosahedron_topology():
@@ -467,6 +560,7 @@ def _flux_spring_kwargs(**kwargs: Any) -> dict[str, float]:
             "flux_influence_on_rigidness",
             "inner_emergent_expansion",
             "twist_coupling_blend",
+            "flux_turbulence",
         )
     }
 
@@ -555,19 +649,21 @@ def _nested_layer_vertices(
     breath_sync = np.sin(2.0 * np.pi * 0.5 * t + flux)
     spring_cfg = _merge_flux_spring_config(**(spring_config or {}))
     physics = _nested_orb_physics(flux, len(_LAYERS), t=t, **spring_cfg)
+    turb_eff = float(physics["flux_turbulence_effective"])
     layers: list[tuple[np.ndarray, list[tuple[int, ...]], int]] = []
     inner_twist: tuple[float, float, float] | None = None
     outer_idx = len(_LAYERS) - 1
     for layer_idx, (name, radius, twist, _color, sign) in enumerate(_LAYERS):
-        if _USE_GEODESIC_OUTER and layer_idx == outer_idx:
+        is_outer_shield = _USE_GEODESIC_OUTER and layer_idx == outer_idx
+        if is_outer_shield:
             verts, faces = _generate_geodesic_sphere(_GEODESIC_OUTER_FREQUENCY)
         else:
             verts, faces = _platonic_topology(name)
-        scale = (
-            radius
-            * physics["radius_factors"][layer_idx]
-            * (1.0 + 0.14 * flux**2 * breath_sync)
-        )
+        if is_outer_shield and _STABLE_OUTER_SHIELD:
+            breath = 1.0 + 0.008 * flux * np.sin(2.0 * np.pi * 0.5 * t)
+        else:
+            breath = 1.0 + 0.14 * (1.0 + turb_eff) * flux**2 * breath_sync
+        scale = radius * physics["radius_factors"][layer_idx] * breath
         rx, ry, rz = _blended_twist(
             twist,
             sign,
@@ -577,6 +673,12 @@ def _nested_layer_vertices(
             twist_blend=physics["twist_blend"][layer_idx],
             inner_twist=inner_twist,
         )
+        rz += physics["twist_perturbations"][layer_idx]
+        if is_outer_shield:
+            spiral = float(physics["outer_spiral_twist"])
+            rz += spiral
+            ry += 0.35 * spiral
+            rx += 0.15 * np.sin(spiral)
         rot = _rotation_matrix(rx, ry, rz)
         physics_verts = (rot @ (verts * scale).T).T
         inner_twist = (rx, ry, rz)

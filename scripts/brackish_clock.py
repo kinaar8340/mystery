@@ -22,6 +22,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _common import E, OUTPUT_DIR, PHI, PI, save_report
 from hopf_constant_bridge import W_G
 import geodesic as geodesic_render
+import flux_spring as flux_spring_mod
 from flux_spring import (
     FLUX_SPRING_CONFIG,
     brackish_flux,
@@ -399,15 +400,31 @@ def main(argv: list[str] | None = None) -> int:
         "--geodesic-frequency",
         type=int,
         default=geodesic_render.GEODESIC_OUTER_FREQUENCY,
-        help="geodesic subdivision passes for outer shell (default 3)",
+        help="geodesic subdivision passes for outer shell (default 1; 3 is very dense)",
+    )
+    parser.add_argument(
+        "--flux-turbulence",
+        type=float,
+        default=FLUX_SPRING_CONFIG["flux_turbulence"],
+        help="inner oscillation / breathing turbulence scale",
+    )
+    parser.add_argument(
+        "--no-stable-outer-shield",
+        action="store_true",
+        help="disable fixed outer geodesic shield (allow outer breathing)",
     )
     args = parser.parse_args(argv)
+
+    if args.no_stable_outer_shield:
+        geodesic_render.STABLE_OUTER_SHIELD = False
+        flux_spring_mod.STABLE_OUTER_SHIELD = False
 
     spring_config = merge_flux_spring_config(
         flux_gauge_rigidness=args.rigidness,
         compression_strength=args.compression_strength,
         base_coupling=args.base_coupling,
         flux_influence_on_rigidness=args.flux_rigidness_influence,
+        flux_turbulence=args.flux_turbulence,
     )
 
     mapping = map_angles_to_369_tens()

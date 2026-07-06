@@ -7,7 +7,12 @@ from typing import Any, Iterable
 
 import numpy as np
 
-from geodesic import GEODESIC_OUTER_FREQUENCY, USE_GEODESIC_OUTER, generate_geodesic_sphere
+from geodesic import (
+    GEODESIC_OUTER_FREQUENCY,
+    STABLE_OUTER_SHIELD,
+    USE_GEODESIC_OUTER,
+    generate_geodesic_sphere,
+)
 
 SOLID_NAMES = ("tetrahedron", "octahedron", "cube", "icosahedron", "dodecahedron")
 FACE_COUNTS = {"tetrahedron": 4, "octahedron": 8, "cube": 6, "icosahedron": 20, "dodecahedron": 12}
@@ -167,9 +172,19 @@ def rotation_matrix_xyz(rx: float, ry: float, rz: float) -> np.ndarray:
     return rz_mat @ ry_mat @ rx_mat
 
 
-def breathing_scale(t: float, wind: float, depth: float = 0.12) -> float:
-    """Radius oscillation — depth scales with wind²."""
-    return 1.0 + depth * (wind**2) * np.sin(2.0 * np.pi * 0.5 * t + wind)
+def breathing_scale(
+    t: float,
+    wind: float,
+    depth: float = 0.12,
+    *,
+    turbulence: float = 0.0,
+    is_outer_shield: bool = False,
+) -> float:
+    """Radius oscillation — turbulence scales inner breathing; outer shield stays nearly fixed."""
+    if is_outer_shield and STABLE_OUTER_SHIELD:
+        return 1.0 + 0.008 * wind * np.sin(2.0 * np.pi * 0.5 * t)
+    eff_depth = depth * (1.0 + turbulence)
+    return 1.0 + eff_depth * (wind**2) * np.sin(2.0 * np.pi * 0.5 * t + wind)
 
 
 def visual_radius_scales(visual_separation: float | None = None) -> dict[str, float]:
@@ -248,15 +263,33 @@ class ResonatorLayer:
         twist_blend: float = 0.0,
         inner_twist: tuple[float, float, float] | None = None,
         geodesic_frequency: int | None = None,
+        turbulence: float = 0.0,
+        twist_perturbation: float = 0.0,
+        outer_spiral_twist: float = 0.0,
     ) -> tuple[np.ndarray, list[tuple[int, ...]]]:
         if geodesic_frequency is not None:
             verts, faces = generate_geodesic_sphere(geodesic_frequency)
         else:
             verts, faces = platonic_topology(self.name)
-        scale = self.base_radius * float(radius_factor) * breathing_scale(t, flux)
+        is_outer_shield = geodesic_frequency is not None
+        scale = (
+            self.base_radius
+            * float(radius_factor)
+            * breathing_scale(
+                t,
+                flux,
+                turbulence=turbulence,
+                is_outer_shield=is_outer_shield,
+            )
+        )
         rx, ry, rz = self.blended_twist_angles(
             t, flux, residual_lag, twist_blend=twist_blend, inner_twist=inner_twist,
         )
+        rz += float(twist_perturbation)
+        if is_outer_shield and outer_spiral_twist:
+            rz += float(outer_spiral_twist)
+            ry += 0.35 * float(outer_spiral_twist)
+            rx += 0.15 * np.sin(float(outer_spiral_twist))
         rot = rotation_matrix_xyz(rx, ry, rz)
         return (rot @ (verts * scale).T).T, faces
 
@@ -295,6 +328,17 @@ def transform_nested_orbs(
             twist_blend=physics.twist_blend[idx],
             inner_twist=inner_twist,
             geodesic_frequency=geo_freq,
+            turbulence=getattr(physics, "flux_turbulence_effective", 0.0),
+            twist_perturbation=(
+                physics.twist_perturbations[idx]
+                if getattr(physics, "twist_perturbations", None)
+                else 0.0
+            ),
+            outer_spiral_twist=(
+                physics.outer_spiral_twist
+                if geo_freq is not None
+                else 0.0
+            ),
         )
         results.append((verts, faces))
         inner_twist = layer.blended_twist_angles(
