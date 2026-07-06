@@ -94,6 +94,31 @@ Command: `w_s_sweep.py --weights 8 10 12 --trials 25` (includes w_s=5 reference 
 
 κ and survival metrics are **stable across w_s ∈ [5, 12]** — all runs lock to the κ-sweep optimum (~0.89). **w_s = 5** gives the best dual-analog loss; higher weights only increase the survival penalty term (e.g. w_s×term = 0.037 → 0.090 at w_s=12) without shifting κ toward 0.85. JSON: `outputs/w_s_sweep_20260706_233453.json`.
 
+### Stage 6 — 50-trial confirmation (w_s=5.0)
+
+Command: `meta_optimize_phi_probe.py --compare-baseline --trials 50 … --survival-penalty-weight 5`
+
+| Mode | Best loss | κ | W_g | mean_survival | Δ% vs R | hybrid |
+|------|-----------|---|-----|---------------|---------|--------|
+| baseline | 57.22 | 0.89 | 111.41 | — | — | — |
+| survival_penalty | 57.26 | 0.89 | 111.41 | 0.137651 | 0.121% | 0.9990 |
+| dual_analog | **56.98** | 0.89 | 111.41 | 0.137651 | 0.121% | 0.9990 |
+
+**Identical to the 30-trial run** — TPE converged by trial ~22; 50 trials confirm stability. JSON: `outputs/meta_optimize_phi_probe_20260706_233925.json`.
+
+### Stage 6 — robustness sweep at meta-opt best point (κ=0.89, W_g=111.41)
+
+Command: `analog_comparative_sweep.py --kappa 0.89 --wg-base 350.0` (18 runs: 3 IC × 2 λt + 3 twist × 2 λt × 2 step modes).
+
+| Metric | Value |
+|--------|-------|
+| Best Δ% vs R | **0.121%** (conduit, λt=2, all twist rates) |
+| Best hybrid score | **0.9990** (conduit + PDE @ λt=2) |
+| mean_survival @ λt=2 | **0.137651** (matches meta-opt) |
+| Top synergy (golden+λt=2) | hybrid **0.9990**, packing ≈ 0.78 |
+
+Alignment holds across IC types, twist rates, and step modes at the converged κ/W_g point. JSON: `outputs/analog_comparative_sweep_20260706_233723.json`.
+
 ## Analog sweeps (Stages 4–5)
 
 | Probe | Key result |
