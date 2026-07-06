@@ -68,6 +68,22 @@ DEFAULT_BRACKISH_PARAMS: dict[str, Any] = {
     "residual_weight": 0.15,
     "stable_mode": False,
     "visual_separation": 0.40,
+    "flux_gauge_rigidness": 0.25,
+    "compression_strength": 0.35,
+    "base_coupling": 0.75,
+    "flux_influence_on_rigidness": 0.15,
+    "inner_emergent_expansion": 0.35,
+    "twist_coupling_blend": 0.55,
+}
+
+FLUX_SPRING_CONFIG: dict[str, float] = {
+    "flux_gauge_rigidness": 0.25,
+    "compression_strength": 0.35,
+    "base_coupling": 0.75,
+    "flux_influence_on_rigidness": 0.15,
+    "inner_emergent_expansion": 0.35,
+    "twist_coupling_blend": 0.55,
+    "flux_floor": 0.2,
 }
 
 # === VISUAL ONLY — does not affect twist, counter-twist, or breathing math ===
@@ -104,7 +120,7 @@ _DEMO_J_QUAD_PANELS: tuple[tuple[int, int, int, str], ...] = (
 )
 
 
-_BRACKISH_VIEWPORT_REV = "quad-fill-v1"
+_BRACKISH_VIEWPORT_REV = "quad-fill-spring-balanced-v1"
 
 
 def brackish_params_key(**kwargs: Any) -> str:
@@ -139,7 +155,15 @@ def _visual_render_multiplier(
     return visual_radius / max(float(base_radius), 1e-12)
 
 
-def brackish_dynamics(
+def _merge_flux_spring_config(**overrides: Any) -> dict[str, float]:
+    cfg = dict(FLUX_SPRING_CONFIG)
+    for key, value in overrides.items():
+        if key in cfg and value is not None:
+            cfg[key] = float(value)
+    return cfg
+
+
+def brackish_flux(
     t: float,
     *,
     base: float = 1.0,
@@ -148,14 +172,129 @@ def brackish_dynamics(
     residual_weight: float = 0.15,
     stable_mode: bool = False,
     kappa_coupling: float = 0.0,
+    flux_floor: float | None = None,
 ) -> float:
+    """Variable solar-wind-like driver (primary modulator)."""
+    floor = FLUX_SPRING_CONFIG["flux_floor"] if flux_floor is None else float(flux_floor)
     if stable_mode:
-        wind = base + residual_weight * R
+        flux = base + residual_weight * R
     else:
-        wind = base + amplitude * np.sin(2.0 * np.pi * freq * t) + residual_weight * R
+        flux = base + amplitude * np.sin(2.0 * np.pi * freq * t) + residual_weight * R
     if kappa_coupling:
-        wind *= 1.0 + kappa_coupling * (KAPPA_DOC - E_OVER_PI)
-    return max(0.1, float(wind))
+        flux *= 1.0 + kappa_coupling * (KAPPA_DOC - E_OVER_PI)
+    return max(floor, float(flux))
+
+
+def brackish_dynamics(t: float, **kwargs: Any) -> float:
+    """Backward-compatible alias for brackish_flux."""
+    return brackish_flux(t, **kwargs)
+
+
+def flux_spring(
+    flux_value: float,
+    *,
+    rigidness: float | None = None,
+    compression_strength: float | None = None,
+    base_coupling: float | None = None,
+    flux_influence_on_rigidness: float | None = None,
+    **_: Any,
+) -> dict[str, float]:
+    """Minimal two-orb interaction — outer compression + gauge coupling."""
+    cfg = _merge_flux_spring_config(
+        flux_gauge_rigidness=rigidness,
+        compression_strength=compression_strength,
+        base_coupling=base_coupling,
+        flux_influence_on_rigidness=flux_influence_on_rigidness,
+    )
+    rigid = float(cfg["flux_gauge_rigidness"])
+    compression_strength = float(cfg["compression_strength"])
+    base_coupling = float(cfg["base_coupling"])
+    flux_influence = float(cfg["flux_influence_on_rigidness"])
+
+    effective_rigidness = rigid * (1.0 + flux_influence * (float(flux_value) - 1.0))
+    effective_rigidness = float(np.clip(effective_rigidness, 0.1, 1.0))
+    excess_flux = max(0.0, float(flux_value) - 1.0)
+    outer_compression = max(0.55, 1.0 - compression_strength * excess_flux)
+    coupling = base_coupling * (0.7 + 0.5 * effective_rigidness)
+    return {
+        "outer_compression": float(outer_compression),
+        "coupling": float(coupling),
+        "effective_rigidness": effective_rigidness,
+        "excess_flux": float(excess_flux),
+    }
+
+
+def _global_pointer_deg(flux_value: float, spring: dict[str, float], *, t: float = 0.0) -> float:
+    push = spring["outer_compression"]
+    pull = spring["coupling"] * (float(flux_value) - push)
+    wobble = 0.12 * spring["effective_rigidness"] * np.sin(2.0 * np.pi * 0.01 * t)
+    return float(np.degrees(np.arctan2(pull + wobble, push - 1.0)) % 360.0)
+
+
+def _nested_orb_physics(
+    flux_value: float,
+    n_orbs: int,
+    *,
+    t: float = 0.0,
+    **config_overrides: Any,
+) -> dict[str, Any]:
+    """N-orb extension of flux_spring — radius factors + twist blend per orb."""
+    cfg = _merge_flux_spring_config(**config_overrides)
+    spring = flux_spring(flux_value, **cfg)
+    n = max(1, int(n_orbs))
+    radius_factors = [1.0] * n
+    twist_blend = [0.0] * n
+    compression = spring["outer_compression"]
+    coupling = spring["coupling"]
+    rigid = spring["effective_rigidness"]
+    emergent = float(cfg["inner_emergent_expansion"])
+    twist_base = float(cfg["twist_coupling_blend"])
+
+    for idx in range(n):
+        exposure = idx / max(1, n - 1) if n > 1 else 1.0
+        radius_factors[idx] = compression ** (
+            exposure * (1.0 + 0.5 * (n - 1 - idx) / max(1, n - 1))
+        )
+        if idx < n - 1:
+            slack = max(0.0, 1.0 - compression)
+            radius_factors[idx] *= 1.0 + emergent * coupling * slack * (1.0 - exposure)
+
+    for idx in range(1, n):
+        pair_exposure = idx / max(1, n - 1)
+        twist_blend[idx] = float(
+            np.clip(twist_base * coupling * rigid * (0.5 + 0.5 * pair_exposure), 0.0, 0.95)
+        )
+
+    pointer = _global_pointer_deg(flux_value, spring, t=t)
+    return {
+        "radius_factors": radius_factors,
+        "twist_blend": twist_blend,
+        "global_pointer_deg": pointer,
+        "spring": spring,
+    }
+
+
+def _blended_twist(
+    twist: float,
+    sign: int,
+    t: float,
+    flux: float,
+    lag: float,
+    *,
+    twist_blend: float,
+    inner_twist: tuple[float, float, float] | None,
+) -> tuple[float, float, float]:
+    freq = twist * flux
+    rz = freq * t + lag * sign
+    ry = -0.5 * sign * freq * t
+    rx = 0.25 * freq * np.sin(0.3 * t)
+    if inner_twist is not None and twist_blend > 0.0:
+        irx, iry, irz = inner_twist
+        blend = float(np.clip(twist_blend, 0.0, 0.95))
+        rx = irx * blend + rx * (1.0 - blend)
+        ry = iry * blend + ry * (1.0 - blend)
+        rz = irz * blend + rz * (1.0 - blend)
+    return float(rx), float(ry), float(rz)
 
 
 def _icosahedron_topology():
@@ -253,10 +392,21 @@ def _angle_delta_deg(clock_deg: float, effective_deg: float) -> float:
 
 
 def _brackish_render_kwargs(**kwargs: Any) -> dict[str, Any]:
-    return {
-        k: kwargs.get(k, DEFAULT_BRACKISH_PARAMS[k])
-        for k in ("base", "amplitude", "freq", "residual_weight", "stable_mode", "visual_separation")
-    }
+    keys = (
+        "base",
+        "amplitude",
+        "freq",
+        "residual_weight",
+        "stable_mode",
+        "visual_separation",
+        "flux_gauge_rigidness",
+        "compression_strength",
+        "base_coupling",
+        "flux_influence_on_rigidness",
+        "inner_emergent_expansion",
+        "twist_coupling_blend",
+    )
+    return {k: kwargs.get(k, DEFAULT_BRACKISH_PARAMS[k]) for k in keys}
 
 
 def _brackish_physics_kwargs(**kwargs: Any) -> dict[str, Any]:
@@ -266,11 +416,25 @@ def _brackish_physics_kwargs(**kwargs: Any) -> dict[str, Any]:
     }
 
 
+def _flux_spring_kwargs(**kwargs: Any) -> dict[str, float]:
+    return {
+        k: float(kwargs.get(k, DEFAULT_BRACKISH_PARAMS[k]))
+        for k in (
+            "flux_gauge_rigidness",
+            "compression_strength",
+            "base_coupling",
+            "flux_influence_on_rigidness",
+            "inner_emergent_expansion",
+            "twist_coupling_blend",
+        )
+    }
+
+
 def _build_sync_series(times: np.ndarray, **kwargs) -> dict[str, Any]:
     """Precompute clock, resonator wind, and divergence tracks for frame-synced animation."""
     params = _brackish_render_kwargs(**kwargs)
     physics = _brackish_physics_kwargs(**kwargs)
-    winds = np.array([brackish_dynamics(float(t), **physics) for t in times])
+    winds = np.array([brackish_flux(float(t), **physics) for t in times])
     clock = np.array([_gauged_hour_angle(float(t), float(w)) for t, w in zip(times, winds)])
     effective = np.degrees(_integrate_effective(times, **physics) % (2.0 * np.pi))
     delta_inst = np.array([_angle_delta_deg(c, e) for c, e in zip(clock, effective)])
@@ -342,21 +506,35 @@ def _nested_layer_vertices(
     *,
     viewport_scale: float = 1.0,
     visual_separation: float | None = None,
+    spring_config: dict[str, float] | None = None,
 ) -> list[tuple[np.ndarray, list[tuple[int, ...]], int]]:
     """Transformed vertices per shell — (verts, faces, layer_index)."""
-    lag = 0.08 * R * wind
-    breath_sync = np.sin(2.0 * np.pi * 0.5 * t + wind)
+    flux = float(wind)
+    lag = 0.08 * R * flux
+    breath_sync = np.sin(2.0 * np.pi * 0.5 * t + flux)
+    spring_cfg = _merge_flux_spring_config(**(spring_config or {}))
+    physics = _nested_orb_physics(flux, len(_LAYERS), t=t, **spring_cfg)
     layers: list[tuple[np.ndarray, list[tuple[int, ...]], int]] = []
+    inner_twist: tuple[float, float, float] | None = None
     for layer_idx, (name, radius, twist, _color, sign) in enumerate(_LAYERS):
         verts, faces = _platonic_topology(name)
-        scale = radius * (1.0 + 0.14 * wind**2 * breath_sync)
-        freq = twist * wind
-        rot = _rotation_matrix(
-            0.25 * freq * np.sin(0.3 * t),
-            -0.5 * sign * freq * t,
-            freq * t + lag * sign,
+        scale = (
+            radius
+            * physics["radius_factors"][layer_idx]
+            * (1.0 + 0.14 * flux**2 * breath_sync)
         )
+        rx, ry, rz = _blended_twist(
+            twist,
+            sign,
+            t,
+            flux,
+            lag,
+            twist_blend=physics["twist_blend"][layer_idx],
+            inner_twist=inner_twist,
+        )
+        rot = _rotation_matrix(rx, ry, rz)
         physics_verts = (rot @ (verts * scale).T).T
+        inner_twist = (rx, ry, rz)
         visual_mult = _visual_render_multiplier(
             name,
             radius,
@@ -610,17 +788,26 @@ def build_brackish_quad_viewport(
     stable_mode: bool = False,
     visual_separation: float = DEFAULT_BRACKISH_PARAMS["visual_separation"],
     dpi: int = 88,
+    **spring_overrides: Any,
 ) -> plt.Figure:
     """Demo J — 2×2 synced resonator panels with per-quadrant layer highlight."""
-    wind = brackish_dynamics(
-        t, base=base, amplitude=amplitude, freq=freq,
-        residual_weight=residual_weight, stable_mode=stable_mode,
+    render = _brackish_render_kwargs(
+        base=base,
+        amplitude=amplitude,
+        freq=freq,
+        residual_weight=residual_weight,
+        stable_mode=stable_mode,
+        visual_separation=visual_separation,
+        **spring_overrides,
     )
+    wind = brackish_flux(t, **_brackish_physics_kwargs(**render))
+    spring_config = _flux_spring_kwargs(**render)
     layers = _nested_layer_vertices(
         t,
         wind,
         viewport_scale=_QUAD_VIEWPORT_SCALE,
         visual_separation=visual_separation,
+        spring_config=spring_config,
     )
     fig = plt.figure(figsize=_QUAD_VIEWPORT_FIGSIZE, facecolor=_VIEWPORT_BG, dpi=dpi)
     gs = GridSpec(
@@ -661,6 +848,7 @@ def build_brackish_resonator_viewport(
     stable_mode: bool = False,
     visual_separation: float = DEFAULT_BRACKISH_PARAMS["visual_separation"],
     dpi: int = 88,
+    **spring_overrides: Any,
 ) -> plt.Figure:
     """Full-viewport nested resonator — alias for Demo J 2×2 quad layout."""
     return build_brackish_quad_viewport(
@@ -672,6 +860,7 @@ def build_brackish_resonator_viewport(
         stable_mode=stable_mode,
         visual_separation=visual_separation,
         dpi=dpi,
+        **spring_overrides,
     )
 
 
@@ -852,29 +1041,16 @@ def render_brackish_clock_video(
     duration: float = 8.0,
     fps: int = 10,
     dpi: int = 72,
-    base: float = 1.0,
-    amplitude: float = 0.4,
-    freq: float = 0.01,
-    residual_weight: float = 0.15,
-    stable_mode: bool = False,
-    visual_separation: float = DEFAULT_BRACKISH_PARAMS["visual_separation"],
+    **kwargs: Any,
 ) -> str:
     """Looping MP4 — 2×2 synced Platonic resonator panels (Demo J)."""
+    render = _brackish_render_kwargs(**kwargs)
     n_frames = max(2, int(duration * fps))
     times = np.linspace(0, duration, n_frames)
-    encode_dpi = max(dpi, _QUAD_RENDER_DPI)
+    encode_dpi = max(int(kwargs.get("dpi", dpi)), _QUAD_RENDER_DPI)
     rgb_frames = []
     for t_val in times:
-        fig = build_brackish_resonator_viewport(
-            float(t_val),
-            base=base,
-            amplitude=amplitude,
-            freq=freq,
-            residual_weight=residual_weight,
-            stable_mode=stable_mode,
-            visual_separation=visual_separation,
-            dpi=encode_dpi,
-        )
+        fig = build_brackish_resonator_viewport(float(t_val), dpi=encode_dpi, **render)
         rgb_frames.append(_figure_to_rgb(fig, dpi=encode_dpi, fill_frame=True))
     path = _encode_mp4(rgb_frames, fps=fps)
     print(f"[brackish] render_brackish_clock_video: {len(rgb_frames)} frames -> {path}", flush=True)

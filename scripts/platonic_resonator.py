@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Iterable
+from typing import Any, Iterable
 
 import numpy as np
 
@@ -209,24 +209,48 @@ class ResonatorLayer:
     alpha: float = 0.55
     counter_twist_sign: int = 1
 
-    def twist_angles(self, t: float, wind: float, residual_lag: float) -> tuple[float, float, float]:
-        """Rotation + counter-twist driven by brackish wind."""
-        freq = self.base_twist_freq * wind * self.harmonic_factor
+    def twist_angles(self, t: float, flux: float, residual_lag: float) -> tuple[float, float, float]:
+        """Rotation + counter-twist driven by brackish_flux."""
+        freq = self.base_twist_freq * flux * self.harmonic_factor
         lag = residual_lag * self.counter_twist_sign
         rz = freq * t + lag
         ry = -0.5 * self.counter_twist_sign * freq * t
         rx = 0.25 * freq * np.sin(0.3 * t)
         return float(rx), float(ry), float(rz)
 
+    def blended_twist_angles(
+        self,
+        t: float,
+        flux: float,
+        residual_lag: float,
+        *,
+        twist_blend: float = 0.0,
+        inner_twist: tuple[float, float, float] | None = None,
+    ) -> tuple[float, float, float]:
+        rx, ry, rz = self.twist_angles(t, flux, residual_lag)
+        if inner_twist is not None and twist_blend > 0.0:
+            irx, iry, irz = inner_twist
+            blend = float(np.clip(twist_blend, 0.0, 0.95))
+            rx = irx * blend + rx * (1.0 - blend)
+            ry = iry * blend + ry * (1.0 - blend)
+            rz = irz * blend + rz * (1.0 - blend)
+        return float(rx), float(ry), float(rz)
+
     def transformed_vertices(
         self,
         t: float,
-        wind: float,
+        flux: float,
         residual_lag: float,
+        *,
+        radius_factor: float = 1.0,
+        twist_blend: float = 0.0,
+        inner_twist: tuple[float, float, float] | None = None,
     ) -> tuple[np.ndarray, list[tuple[int, ...]]]:
         verts, faces = platonic_topology(self.name)
-        scale = self.base_radius * breathing_scale(t, wind)
-        rx, ry, rz = self.twist_angles(t, wind, residual_lag)
+        scale = self.base_radius * float(radius_factor) * breathing_scale(t, flux)
+        rx, ry, rz = self.blended_twist_angles(
+            t, flux, residual_lag, twist_blend=twist_blend, inner_twist=inner_twist,
+        )
         rot = rotation_matrix_xyz(rx, ry, rz)
         return (rot @ (verts * scale).T).T, faces
 
@@ -238,6 +262,36 @@ DEFAULT_LAYERS: tuple[ResonatorLayer, ...] = (
     ResonatorLayer("icosahedron", 0.72, 0.45, harmonic_factor=np.pi / np.e, color="#2a9d8f", counter_twist_sign=-1),
     ResonatorLayer("dodecahedron", 0.90, 0.30, harmonic_factor=1.618, color="#9b5de5", counter_twist_sign=1),
 )
+
+
+def transform_nested_orbs(
+    layers: list[ResonatorLayer],
+    t: float,
+    flux: float,
+    residual_lag: float,
+    physics: Any,
+) -> list[tuple[np.ndarray, list[tuple[int, ...]]]]:
+    """Apply flux_spring radius + twist coupling across nested orbs."""
+    results: list[tuple[np.ndarray, list[tuple[int, ...]]]] = []
+    inner_twist: tuple[float, float, float] | None = None
+    for idx, layer in enumerate(layers):
+        verts, faces = layer.transformed_vertices(
+            t,
+            flux,
+            residual_lag,
+            radius_factor=physics.radius_factors[idx],
+            twist_blend=physics.twist_blend[idx],
+            inner_twist=inner_twist,
+        )
+        results.append((verts, faces))
+        inner_twist = layer.blended_twist_angles(
+            t,
+            flux,
+            residual_lag,
+            twist_blend=physics.twist_blend[idx],
+            inner_twist=inner_twist,
+        )
+    return results
 
 
 def active_layers(

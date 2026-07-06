@@ -21,11 +21,19 @@ from mpl_toolkits.mplot3d import Axes3D  # noqa: F401
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _common import E, OUTPUT_DIR, PHI, PI, save_report
 from hopf_constant_bridge import W_G
+from flux_spring import (
+    FLUX_SPRING_CONFIG,
+    brackish_flux,
+    flux_spring_metrics_line,
+    merge_flux_spring_config,
+    nested_orb_physics,
+)
 from platonic_resonator import (
     DEFAULT_LAYERS,
     ResonatorLayer,
     active_layers,
     apply_visual_layer_scale,
+    transform_nested_orbs,
     visual_radius_scales,
     visual_render_multiplier,
     wireframe_edges,
@@ -47,20 +55,19 @@ def brackish_dynamics(
     kappa: float = KAPPA_DOC,
     kappa_coupling: float = 0.0,
 ) -> float:
-    """
-    Modulating 'wind' — base + slow sinusoid + persistent residual influence.
-
-    stable_mode forces near-constant wind for baseline comparisons.
-    """
-    if stable_mode:
-        wind = base + residual_weight * R
-        return max(0.1, float(wind))
-
-    wind = base + amplitude * np.sin(2.0 * np.pi * freq * t)
-    wind += residual_weight * R
+    """Backward-compatible alias — delegates to brackish_flux."""
+    flux = brackish_flux(
+        t,
+        base=base,
+        amplitude=amplitude,
+        freq=freq,
+        residual_weight=residual_weight,
+        stable_mode=stable_mode,
+        residual_r=R,
+    )
     if kappa_coupling:
-        wind *= 1.0 + kappa_coupling * (kappa - E / PI)
-    return max(0.1, float(wind))
+        flux *= 1.0 + kappa_coupling * (kappa - E / PI)
+    return flux
 
 
 def integrate_effective_time(
@@ -176,14 +183,18 @@ def draw_nested_resonator(
     elev: float = 22.0,
     azim: float = 38.0,
     visual_separation: float | None = None,
+    spring_config: dict[str, float] | None = None,
 ) -> None:
-    """Render wireframe Platonic shells with twist, counter-twist, breathing."""
+    """Render wireframe Platonic shells with flux_spring radius + twist coupling."""
     ax.cla()
-    residual_lag = 0.08 * R * wind
+    flux = float(wind)
+    residual_lag = 0.08 * R * flux
+    spring_cfg = merge_flux_spring_config(**(spring_config or {}))
+    physics = nested_orb_physics(flux, len(layers), t=t, **spring_cfg)
+    orb_meshes = transform_nested_orbs(layers, t, flux, residual_lag, physics)
     visual_scales = visual_radius_scales(visual_separation)
     n_layers = max(1, len(layers))
-    for layer_idx, layer in enumerate(layers):
-        verts, faces = layer.transformed_vertices(t, wind, residual_lag)
+    for layer_idx, (layer, (verts, faces)) in enumerate(zip(layers, orb_meshes)):
         visual_mult = visual_render_multiplier(
             layer.name,
             layer.base_radius,
@@ -257,6 +268,7 @@ def build_animation(
     residual_weight: float = 0.15,
     stable_mode: bool = False,
     solids: list[str] | None = None,
+    spring_config: dict[str, float] | None = None,
 ) -> tuple[FuncAnimation, plt.Figure, list[float], list[float]]:
     """Build matplotlib FuncAnimation for clock + nested solids."""
     layers = active_layers(solids)
@@ -304,7 +316,7 @@ def build_animation(
             fontsize=8,
             color="#aaa",
         )
-        draw_nested_resonator(ax_3d, t, wind, layers)
+        draw_nested_resonator(ax_3d, t, wind, layers, spring_config=spring_config)
         return ()
 
     anim = FuncAnimation(fig, update, frames=n_frames, interval=1000 / fps, blit=False)
@@ -355,7 +367,22 @@ def main(argv: list[str] | None = None) -> int:
         default=None,
         help="active shells (default: all five)",
     )
+    parser.add_argument("--rigidness", type=float, default=FLUX_SPRING_CONFIG["flux_gauge_rigidness"])
+    parser.add_argument("--compression-strength", type=float, default=FLUX_SPRING_CONFIG["compression_strength"])
+    parser.add_argument("--base-coupling", type=float, default=FLUX_SPRING_CONFIG["base_coupling"])
+    parser.add_argument(
+        "--flux-rigidness-influence",
+        type=float,
+        default=FLUX_SPRING_CONFIG["flux_influence_on_rigidness"],
+    )
     args = parser.parse_args(argv)
+
+    spring_config = merge_flux_spring_config(
+        flux_gauge_rigidness=args.rigidness,
+        compression_strength=args.compression_strength,
+        base_coupling=args.base_coupling,
+        flux_influence_on_rigidness=args.flux_rigidness_influence,
+    )
 
     mapping = map_angles_to_369_tens()
     layers = active_layers(args.solids)
@@ -377,6 +404,14 @@ def main(argv: list[str] | None = None) -> int:
         residual_weight=args.residual_weight,
         stable_mode=args.stable,
         solids=args.solids,
+        spring_config=spring_config,
+    )
+    sample_physics = nested_orb_physics(
+        brackish_dynamics(args.duration * 0.5, base=args.base, amplitude=args.amplitude,
+                          freq=args.freq, residual_weight=args.residual_weight, stable_mode=args.stable),
+        len(layers),
+        t=args.duration * 0.5,
+        **spring_config,
     )
 
     gif_path = OUTPUT_DIR / "brackish_clock.gif"
@@ -401,14 +436,16 @@ def main(argv: list[str] | None = None) -> int:
             "e": float(E),
             "pi": float(PI),
         },
-        "brackish_dynamics": {
+        "brackish_flux": {
             "base": args.base,
             "amplitude": args.amplitude,
             "freq": args.freq,
             "residual_weight": args.residual_weight,
             "stable_mode": args.stable,
-            "formula": "max(0.1, base + amp*sin(2π·freq·t) + residual_weight·R)",
+            "formula": "max(flux_floor, base + amp*sin(2π·freq·t) + residual_weight·R)",
         },
+        "flux_spring": spring_config,
+        "flux_spring_sample": sample_physics.metrics,
         "phi_e_pi_369_mapping": mapping,
         "active_solids": [layer.name for layer in layers],
         "animation": {
@@ -433,7 +470,8 @@ def main(argv: list[str] | None = None) -> int:
     print(f"R   = {R:+.8f}")
     print(f"Mode: {'stable' if args.stable else 'dynamic'}")
     print(f"Active solids: {[l.name for l in layers]}")
-    print(f"Mean wind: {np.mean(winds):.4f}" if winds else "")
+    print(f"Mean flux: {np.mean(winds):.4f}" if winds else "")
+    print(f"flux_spring @ t≈{args.duration * 0.5:.1f}s: {flux_spring_metrics_line(sample_physics)}")
     print(f"Long horizon: {long_path}")
     if not args.no_gif:
         print(f"GIF:   {gif_path}")
