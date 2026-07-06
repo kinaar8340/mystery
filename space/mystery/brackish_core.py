@@ -67,7 +67,7 @@ DEFAULT_BRACKISH_PARAMS: dict[str, Any] = {
     "freq": 0.01,
     "residual_weight": 0.15,
     "stable_mode": False,
-    "visual_separation": 0.40,
+    "visual_separation": 0.16,
     "flux_gauge_rigidness": 0.25,
     "compression_strength": 0.35,
     "base_coupling": 0.75,
@@ -91,14 +91,15 @@ FLUX_SPRING_CONFIG: dict[str, float] = {
 }
 
 # === VISUAL ONLY — does not affect twist, counter-twist, or breathing math ===
+# Tight nesting: inner shells must stay inside the outer geodesic shield.
 _DEFAULT_VISUAL_SCALES: dict[str, float] = {
-    "tetrahedron": 0.32,
-    "octahedron": 0.72,
-    "cube": 1.12,
-    "icosahedron": 1.52,
-    "dodecahedron": 1.92,
+    "tetrahedron": 0.22,
+    "octahedron": 0.36,
+    "cube": 0.50,
+    "icosahedron": 0.64,
+    "dodecahedron": 0.92,
 }
-_DEFAULT_VISUAL_SEPARATION = 0.40
+_DEFAULT_VISUAL_SEPARATION = 0.16
 _SOLID_ORDER = ("tetrahedron", "octahedron", "cube", "icosahedron", "dodecahedron")
 
 _VIEWPORT_BG = "#0a0a0f"
@@ -129,7 +130,7 @@ _STABLE_OUTER_SHIELD = True
 # 1-frequency: readable wireframe. freq=3 (~1280 faces) muddles inner Platonic shells.
 _GEODESIC_OUTER_FREQUENCY = 1
 
-_BRACKISH_VIEWPORT_REV = "stable-shield-burst-v1"
+_BRACKISH_VIEWPORT_REV = "visual-nest-tight-v1"
 _GEODESIC_MESH_CACHE: dict[int, tuple[np.ndarray, list[tuple[int, ...]]]] = {}
 
 

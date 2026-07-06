@@ -18,14 +18,15 @@ SOLID_NAMES = ("tetrahedron", "octahedron", "cube", "icosahedron", "dodecahedron
 FACE_COUNTS = {"tetrahedron": 4, "octahedron": 8, "cube": 6, "icosahedron": 20, "dodecahedron": 12}
 
 # === VISUAL ONLY — does not affect twist, counter-twist, or breathing math ===
+# Tight nesting: stay inside outer geodesic even with inner breathing/turbulence.
 DEFAULT_VISUAL_SCALES: dict[str, float] = {
-    "tetrahedron": 0.32,
-    "octahedron": 0.72,
-    "cube": 1.12,
-    "icosahedron": 1.52,
-    "dodecahedron": 1.92,
+    "tetrahedron": 0.22,
+    "octahedron": 0.36,
+    "cube": 0.50,
+    "icosahedron": 0.64,
+    "dodecahedron": 0.92,
 }
-DEFAULT_VISUAL_SEPARATION = 0.40
+DEFAULT_VISUAL_SEPARATION = 0.16
 
 
 def _polyhedron_dual(

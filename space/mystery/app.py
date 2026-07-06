@@ -12764,7 +12764,7 @@ def build_app() -> gr.Blocks:
                     )
                 with gr.Row(elem_classes=["vqc-optics-dial-row"]):
                     brackish_visual_sep = gr.Slider(
-                        0.0, 0.55, value=DEFAULT_BRACKISH_PARAMS["visual_separation"], step=0.02,
+                        0.0, 0.28, value=DEFAULT_BRACKISH_PARAMS["visual_separation"], step=0.02,
                         label="Layer separation (visual only)",
                         elem_classes=["vqc-optics-dial-wrap"],
                     )
