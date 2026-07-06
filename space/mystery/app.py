@@ -3056,14 +3056,25 @@ footer {{
 .gradio-container .myst-brackish-dashboard-img {{
     background: #0a0a0f !important;
 }}
-/* Demo J — 2×2 quad video fills viewport edge-to-edge */
+/* Demo J — 2×2 quad fits available viewport (no browser zoom required) */
+.gradio-container .myst-gravity-page .myst-brackish-quad-viewport#myst-gravity-viewport-wrapper,
+.gradio-container .myst-gravity-page .myst-brackish-quad-viewport.myst-gravity-single-viewport {{
+    --myst-brackish-viewport-height: clamp(360px, calc(100dvh - 20rem), 480px) !important;
+    min-height: var(--myst-brackish-viewport-height) !important;
+    height: var(--myst-brackish-viewport-height) !important;
+    max-height: var(--myst-brackish-viewport-height) !important;
+}}
+.gradio-container .myst-gravity-page .myst-brackish-quad-viewport.myst-gravity-single-viewport > .block,
+.gradio-container .myst-gravity-page .myst-brackish-quad-viewport.myst-gravity-single-viewport > .form {{
+    max-height: 100% !important;
+}}
 .gradio-container .myst-gravity-page .myst-brackish-quad-viewport #myst-gravity-viewport,
 .gradio-container .myst-gravity-page .myst-brackish-quad-viewport #myst-gravity-viewport .block,
 .gradio-container .myst-gravity-page .myst-brackish-quad-viewport #myst-gravity-viewport .video-container,
 .gradio-container .myst-gravity-page .myst-brackish-quad-viewport #myst-gravity-viewport .wrap {{
     width: 100% !important;
     height: 100% !important;
-    min-height: 100% !important;
+    min-height: 0 !important;
     max-height: 100% !important;
     padding: 0 !important;
     margin: 0 !important;
@@ -3071,9 +3082,9 @@ footer {{
 .gradio-container .myst-gravity-page .myst-brackish-quad-viewport #myst-gravity-viewport video {{
     width: 100% !important;
     height: 100% !important;
-    min-height: 100% !important;
-    max-height: none !important;
-    object-fit: cover !important;
+    min-height: 0 !important;
+    max-height: 100% !important;
+    object-fit: contain !important;
     object-position: center center !important;
 }}
 /* Viewport layer modes — only the active layer paints (prevents black overlay on Demo A) */
