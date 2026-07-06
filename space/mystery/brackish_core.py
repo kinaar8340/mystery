@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import base64
+import colorsys
 import io
 import subprocess
 import tempfile
@@ -67,6 +68,12 @@ DEFAULT_BRACKISH_PARAMS: dict[str, Any] = {
     "residual_weight": 0.15,
     "stable_mode": False,
 }
+
+_VIEWPORT_BG = "#0a0a0f"
+_VIEWPORT_FIGSIZE = (6.0, 6.0)
+_VIEWPORT_ELEV = 26.0
+_VIEWPORT_AZIM = 45.0
+_NESTED_VIEWPORT_SCALE = 1.42
 
 
 def brackish_params_key(**kwargs: Any) -> str:
@@ -198,13 +205,68 @@ def _divergence_series(
     return times, clock, effective
 
 
-def _wind_tint(color: str, wind: float) -> tuple[float, float, float, float]:
-    """Shift layer intensity with brackish_dynamics — visual coupling."""
-    from matplotlib.colors import to_rgb
+def _wireframe_edge_color_hex(
+    edge_index: int,
+    total_edges: int,
+    *,
+    layer_index: int = 0,
+    t_along: float = 0.5,
+) -> str:
+    """Gold → rainbow gradient — matches Demo B platonic wireframe aesthetic."""
+    span = (edge_index + layer_index * 0.06 + float(t_along) * 0.35) / max(1.0, float(total_edges))
+    hue = 0.11 + span * 0.78
+    red, green, blue = colorsys.hsv_to_rgb(hue % 1.0, 0.92, 1.0)
+    return f"#{int(red * 255):02x}{int(green * 255):02x}{int(blue * 255):02x}"
 
-    r, g, b = to_rgb(color)
-    pulse = min(1.4, 0.75 + 0.35 * wind)
-    return (min(1.0, r * pulse), min(1.0, g * pulse), min(1.0, b * pulse), 0.35 + 0.45 * min(1.0, wind / 1.5))
+
+def _hide_3d_scene_axes(ax) -> None:
+    """Hide panes/ticks — pure black viewport like Demo B."""
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.set_zticks([])
+    ax.set_xlabel("")
+    ax.set_ylabel("")
+    ax.set_zlabel("")
+    ax.grid(False)
+    for axis in (ax.xaxis, ax.yaxis, ax.zaxis):
+        axis.pane.fill = False
+        axis.pane.set_edgecolor((0.0, 0.0, 0.0, 0.0))
+        axis.pane.set_alpha(0.0)
+        axis._axinfo["grid"].update({"linewidth": 0})
+        axis.line.set_color((0.0, 0.0, 0.0, 0.0))
+        axis.set_tick_params(
+            bottom=False,
+            top=False,
+            left=False,
+            right=False,
+            labelbottom=False,
+            labeltop=False,
+            labelleft=False,
+            labelright=False,
+        )
+
+
+def _nested_layer_vertices(
+    t: float,
+    wind: float,
+    *,
+    viewport_scale: float = 1.0,
+) -> list[tuple[np.ndarray, list[tuple[int, ...]], int]]:
+    """Transformed vertices per shell — (verts, faces, layer_index)."""
+    lag = 0.08 * R * wind
+    breath_sync = np.sin(2.0 * np.pi * 0.5 * t + wind)
+    layers: list[tuple[np.ndarray, list[tuple[int, ...]], int]] = []
+    for layer_idx, (name, radius, twist, _color, sign) in enumerate(_LAYERS):
+        verts, faces = _platonic_topology(name)
+        scale = viewport_scale * radius * (1.0 + 0.14 * wind**2 * breath_sync)
+        freq = twist * wind
+        rot = _rotation_matrix(
+            0.25 * freq * np.sin(0.3 * t),
+            -0.5 * sign * freq * t,
+            freq * t + lag * sign,
+        )
+        layers.append(((rot @ (verts * scale).T).T, faces, layer_idx))
+    return layers
 
 
 def _draw_zero_point_clock(ax, t: float, wind: float, effective: float, *, stable_mode: bool):
@@ -260,27 +322,72 @@ def _draw_divergence_strip(ax, times, clock, effective, wind: float):
     ax.legend(loc="upper right", fontsize=6, framealpha=0.3)
 
 
-def _draw_nested_resonator(ax, t: float, wind: float):
-    ax.set_facecolor("#0a0a0f")
-    lag = 0.08 * R * wind
-    breath_sync = np.sin(2.0 * np.pi * 0.5 * t + wind)
-    for name, radius, twist, color, sign in _LAYERS:
-        verts, faces = _platonic_topology(name)
-        scale = radius * (1.0 + 0.14 * wind**2 * breath_sync)
-        freq = twist * wind
-        rot = _rotation_matrix(0.25 * freq * np.sin(0.3 * t), -0.5 * sign * freq * t, freq * t + lag * sign)
-        verts = (rot @ (verts * scale).T).T
-        rgba = _wind_tint(color, wind)
-        lw = 0.5 + 0.9 * min(1.2, wind / 1.2)
+def _draw_nested_resonator(
+    ax,
+    t: float,
+    wind: float,
+    *,
+    viewport_scale: float = 1.0,
+    full_viewport: bool = False,
+) -> None:
+    """Rainbow nested Platonic wireframe — Demo B aesthetic."""
+    ax.set_facecolor(_VIEWPORT_BG)
+    layers = _nested_layer_vertices(t, wind, viewport_scale=viewport_scale)
+    segments: list[tuple[np.ndarray, np.ndarray, int]] = []
+    for verts, faces, layer_idx in layers:
         for i0, i1 in _wireframe_edges(faces):
-            ax.plot(*zip(verts[i0], verts[i1]), color=rgba[:3], alpha=rgba[3], lw=lw)
-    lim = 1.1
+            segments.append((verts[i0], verts[i1], layer_idx))
+    total_edges = max(1, len(segments))
+    line_w = 2.6 if full_viewport else 1.8
+    line_w *= 0.85 + 0.15 * min(1.3, wind / 1.2)
+    for edge_idx, (p0, p1, layer_idx) in enumerate(segments):
+        ax.plot(
+            [p0[0], p1[0]],
+            [p0[1], p1[1]],
+            [p0[2], p1[2]],
+            color=_wireframe_edge_color_hex(edge_idx, total_edges, layer_index=layer_idx),
+            linewidth=line_w,
+            solid_capstyle="round",
+            alpha=1.0,
+            zorder=5,
+        )
+    lim = 1.55 * viewport_scale
     ax.set_xlim(-lim, lim)
     ax.set_ylim(-lim, lim)
     ax.set_zlim(-lim, lim)
-    ax.view_init(elev=22, azim=38 + 0.4 * t)
-    ax.set_axis_off()
-    ax.set_title("Nested resonator · wind-synced twist/breath", fontsize=9, color="#ddd", pad=4)
+    ax.set_box_aspect((1, 1, 1))
+    elev = _VIEWPORT_ELEV if full_viewport else 22.0
+    azim = (_VIEWPORT_AZIM if full_viewport else 38.0) + 0.35 * t
+    ax.view_init(elev=elev, azim=azim)
+    _hide_3d_scene_axes(ax)
+    if not full_viewport:
+        ax.set_title("Nested resonator · rainbow wireframe", fontsize=9, color="#ddd", pad=4)
+
+
+def build_brackish_resonator_viewport(
+    t: float,
+    *,
+    base: float = 1.0,
+    amplitude: float = 0.4,
+    freq: float = 0.01,
+    residual_weight: float = 0.15,
+    stable_mode: bool = False,
+    dpi: int = 88,
+) -> plt.Figure:
+    """Full-viewport nested resonator loop frame — matches Demo B wireframe look."""
+    wind = brackish_dynamics(
+        t, base=base, amplitude=amplitude, freq=freq,
+        residual_weight=residual_weight, stable_mode=stable_mode,
+    )
+    fig = plt.figure(figsize=_VIEWPORT_FIGSIZE, facecolor=_VIEWPORT_BG, dpi=dpi)
+    ax = fig.add_subplot(111, projection="3d", facecolor=_VIEWPORT_BG)
+    _draw_nested_resonator(
+        ax, t, wind,
+        viewport_scale=_NESTED_VIEWPORT_SCALE,
+        full_viewport=True,
+    )
+    fig.subplots_adjust(left=0, right=1, bottom=0, top=1)
+    return fig
 
 
 def build_brackish_dashboard(
@@ -311,7 +418,7 @@ def build_brackish_dashboard(
     ax_div = fig.add_subplot(gs[1, :])
 
     _draw_zero_point_clock(ax_clock, t_val, wind, effective, stable_mode=stable_mode)
-    _draw_nested_resonator(ax_3d, t_val, wind)
+    _draw_nested_resonator(ax_3d, t_val, wind, viewport_scale=1.0, full_viewport=False)
     _draw_divergence_strip(ax_div, div_times, div_clock, div_eff, wind)
 
     fig.suptitle(
@@ -405,12 +512,12 @@ def render_brackish_clock_video(
     residual_weight: float = 0.15,
     stable_mode: bool = False,
 ) -> str:
-    """Looping MP4 for Demo J — uses full dashboard frames."""
+    """Looping MP4 for Demo J — full-viewport rainbow nested resonator (Demo B aesthetic)."""
     n_frames = max(2, int(duration * fps))
     times = np.linspace(0, duration, n_frames)
     rgb_frames = []
     for t in times:
-        fig = build_brackish_dashboard(
+        fig = build_brackish_resonator_viewport(
             t=float(t),
             base=base, amplitude=amplitude, freq=freq,
             residual_weight=residual_weight, stable_mode=stable_mode,
@@ -424,4 +531,4 @@ def render_brackish_clock_video(
 
 # Backward-compatible alias used during initial Demo J rollout.
 def build_brackish_frame(t: float, effective: float, **kwargs) -> plt.Figure:
-    return build_brackish_dashboard(t=t, **kwargs)
+    return build_brackish_resonator_viewport(t=t, **kwargs)

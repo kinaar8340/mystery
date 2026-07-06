@@ -8408,7 +8408,7 @@ _DEMO_VIEWPORT_OVERLAY_BY_LETTER: dict[str, tuple[str, str]] = {
     "G": ("Demo G", "D8 · Octahedron · breathing deformation"),
     "H": ("Demo H", "D12 · Dodecahedron · breathing deformation"),
     "I": ("Demo I", "D20 · Icosahedron · breathing deformation"),
-    "J": ("Demo J", "Brackish heartbeat · gauged clock + nested Platonic solids"),
+    "J": ("Demo J", "Brackish heartbeat · rainbow nested Platonic resonator"),
 }
 _BREATHING_DEMO_LETTERS: frozenset[str] = frozenset({"F"})
 _BRACKISH_DEMO_LETTERS: frozenset[str] = frozenset({"J"})
