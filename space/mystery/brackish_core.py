@@ -107,13 +107,13 @@ _SOLID_ORDER = ("tetrahedron", "octahedron", "cube", "icosahedron", "dodecahedro
 
 _VIEWPORT_BG = "#0a0a0f"
 _VIEWPORT_FIGSIZE = (6.0, 6.0)
-_QUAD_VIEWPORT_FIGSIZE = (11.2, 5.6)  # 2:1 — sized for fit-to-screen quad viewport
+_QUAD_VIEWPORT_FIGSIZE = (12.0, 6.0)  # 2:1 — tuned for ~133% perceived scale at 100% zoom
 _QUAD_RENDER_DPI = 96
 _VIEWPORT_ELEV = 26.0
 _VIEWPORT_AZIM = 45.0
 _NESTED_VIEWPORT_SCALE = 1.42
-_QUAD_VIEWPORT_SCALE = 1.38
-_QUAD_LIM_FACTOR = 1.26
+_QUAD_VIEWPORT_SCALE = 1.52
+_QUAD_LIM_FACTOR = 1.05
 _DIMMED_LINE_COLOR = "#ffffff"
 _DIMMED_LINE_ALPHA = 0.3
 _DIMMED_LINE_WIDTH = 0.65
@@ -133,7 +133,7 @@ _STABLE_OUTER_SHIELD = True
 # 1-frequency: readable wireframe. freq=3 (~1280 faces) muddles inner Platonic shells.
 _GEODESIC_OUTER_FREQUENCY = 1
 
-_BRACKISH_VIEWPORT_REV = "quad-fit-screen-v2"
+_BRACKISH_VIEWPORT_REV = "quad-fit-screen-v3"
 _GEODESIC_MESH_CACHE: dict[int, tuple[np.ndarray, list[tuple[int, ...]]]] = {}
 
 

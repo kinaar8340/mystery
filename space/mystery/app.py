@@ -3060,7 +3060,7 @@ footer {{
 /* Demo J — 2×2 quad fits available viewport (no browser zoom required) */
 .gradio-container .myst-gravity-page .myst-brackish-quad-viewport#myst-gravity-viewport-wrapper,
 .gradio-container .myst-gravity-page .myst-brackish-quad-viewport.myst-gravity-single-viewport {{
-    --myst-brackish-viewport-height: clamp(360px, calc(100dvh - 20rem), 480px) !important;
+    --myst-brackish-viewport-height: clamp(470px, calc(100dvh - 15.5rem), 545px) !important;
     min-height: var(--myst-brackish-viewport-height) !important;
     height: var(--myst-brackish-viewport-height) !important;
     max-height: var(--myst-brackish-viewport-height) !important;
@@ -3199,14 +3199,14 @@ footer {{
 .gradio-container .myst-gravity-page #myst-gravity-viewport-startup .prose .myst-demo-viewport-loading,
 .gradio-container .myst-gravity-page #myst-gravity-viewport-startup .html-container .myst-demo-viewport-loading,
 .gradio-container .myst-gravity-page .myst-brackish-quad-viewport.myst-demo-loading-active #myst-gravity-viewport-startup .myst-demo-viewport-loading {{
-    min-height: var(--myst-brackish-viewport-height, clamp(360px, calc(100dvh - 20rem), 480px)) !important;
-    max-height: var(--myst-brackish-viewport-height, clamp(360px, calc(100dvh - 20rem), 480px)) !important;
+    min-height: var(--myst-brackish-viewport-height, clamp(470px, calc(100dvh - 15.5rem), 545px)) !important;
+    max-height: var(--myst-brackish-viewport-height, clamp(470px, calc(100dvh - 15.5rem), 545px)) !important;
 }}
 .gradio-container .myst-gravity-page .myst-demo-viewport-loading {{
     width: 100% !important;
     height: 100% !important;
-    min-height: clamp(360px, calc(100dvh - 20rem), 480px) !important;
-    max-height: clamp(360px, calc(100dvh - 20rem), 480px) !important;
+    min-height: clamp(470px, calc(100dvh - 15.5rem), 545px) !important;
+    max-height: clamp(470px, calc(100dvh - 15.5rem), 545px) !important;
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
