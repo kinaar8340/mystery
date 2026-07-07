@@ -1319,7 +1319,11 @@ def _set_active_shape_and_apply(new_shape: str, active_demo_letter: str = "A") -
         metrics,
         header,
         control_levels,
-        _gravity_viewport_wrapper_update(active_demo_letter, active_shape=shape),
+        _gravity_viewport_wrapper_update(
+            active_demo_letter,
+            active_shape=shape,
+            viewport_layer="video",
+        ),
     )
 
 
@@ -1988,8 +1992,24 @@ WALLPAPER_HEAD = f"""
             vid.style.setProperty('max-height', '100%', 'important');
         }}
     }}
+    function mystFixPlatonicViewportLayer() {{
+        var wrap = document.getElementById('myst-gravity-viewport-wrapper');
+        if (!wrap || !wrap.classList.contains('myst-platonic-viewport')) return;
+        var host = document.getElementById('myst-gravity-viewport');
+        var video = host && host.querySelector('video');
+        if (!video || !video.getAttribute('src')) return;
+        wrap.classList.remove('myst-viewport-layer-startup', 'myst-viewport-layer-plot');
+        wrap.classList.add('myst-viewport-layer-video');
+        host.style.setProperty('display', 'block', 'important');
+        host.style.setProperty('visibility', 'visible', 'important');
+        host.style.setProperty('opacity', '1', 'important');
+        video.style.setProperty('display', 'block', 'important');
+        video.style.setProperty('visibility', 'visible', 'important');
+        video.style.setProperty('opacity', '1', 'important');
+    }}
     function mystReflowViewport() {{
         mystSyncVisorHeight();
+        mystFixPlatonicViewportLayer();
         var vp = document.getElementById('unit-cell-main-view');
         var visor = document.querySelector('.myst-unit-cell-visor');
         if (vp) void vp.offsetHeight;
@@ -2004,6 +2024,7 @@ WALLPAPER_HEAD = f"""
             requestAnimationFrame(mystReflowViewport);
         }});
         var roots = [
+            document.getElementById('myst-gravity-viewport-wrapper'),
             document.querySelector('.myst-unit-cell-visor'),
             document.querySelector('.myst-gravity-preset-tui-section'),
             document.querySelector('.myst-gravity-presets-tui-card'),
@@ -3129,6 +3150,36 @@ footer {{
     visibility: visible !important;
     opacity: 1 !important;
     z-index: 4 !important;
+}}
+/* Platonic D* — show MP4 even when Gradio leaves myst-viewport-layer-startup on the wrapper */
+.gradio-container .myst-gravity-page #myst-gravity-viewport-wrapper.myst-platonic-viewport #myst-gravity-viewport,
+.gradio-container .myst-gravity-page #myst-gravity-viewport-wrapper.myst-platonic-viewport.myst-viewport-layer-startup #myst-gravity-viewport,
+.gradio-container .myst-gravity-page .myst-platonic-viewport#myst-gravity-viewport-wrapper #myst-gravity-viewport {{
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    z-index: 6 !important;
+    pointer-events: auto !important;
+}}
+.gradio-container .myst-gravity-page #myst-gravity-viewport-wrapper.myst-platonic-viewport #myst-gravity-viewport video,
+.gradio-container .myst-gravity-page #myst-gravity-viewport-wrapper.myst-platonic-viewport.myst-viewport-layer-startup #myst-gravity-viewport video,
+.gradio-container .myst-gravity-page .myst-platonic-viewport#myst-gravity-viewport-wrapper #myst-gravity-viewport video {{
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    max-height: 100% !important;
+    object-fit: contain !important;
+}}
+.gradio-container .myst-gravity-page #myst-gravity-viewport-wrapper.myst-platonic-viewport #myst-gravity-viewport-startup,
+.gradio-container .myst-gravity-page #myst-gravity-viewport-wrapper.myst-platonic-viewport #myst-gravity-viewport-plot,
+.gradio-container .myst-gravity-page #myst-gravity-viewport-wrapper.myst-platonic-viewport.myst-viewport-layer-startup #myst-gravity-viewport-startup,
+.gradio-container .myst-gravity-page #myst-gravity-viewport-wrapper.myst-platonic-viewport.myst-viewport-layer-startup #myst-gravity-viewport-plot,
+.gradio-container .myst-gravity-page .myst-platonic-viewport#myst-gravity-viewport-wrapper #myst-gravity-viewport-startup,
+.gradio-container .myst-gravity-page .myst-platonic-viewport#myst-gravity-viewport-wrapper #myst-gravity-viewport-plot {{
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
 }}
 /* Demo A–I — opaque viewport panel (readable text/video; wallpaper stays outside). */
 .gradio-container .myst-gravity-page .myst-gravity-single-viewport.myst-demo-viewport,
@@ -9806,7 +9857,13 @@ def _demo_viewport_show_platonic_shape_video(shape: str) -> tuple:
     overlay = build_platonic_viewport_overlay_html(dim)
     return (
         gr.update(value=None, visible=False),
-        gr.update(value=video_path, visible=True, autoplay=True, loop=True),
+        gr.update(
+            value=video_path,
+            visible=True,
+            autoplay=True,
+            loop=True,
+            elem_classes=["myst-gravity-viewport", "myst-gravity-demo-video", "myst-platonic-video"],
+        ),
         gr.update(value="", visible=False),
         gr.update(value=overlay, visible=bool(overlay)),
     )
