@@ -65,6 +65,7 @@ from demo_core import (
     figure_to_viewport_cached_html,
     format_platonic_geo_label,
     format_platonic_preset_header_prefix,
+    platonic_solid_name,
     geodesic_face_count,
     get_dimension_config,
     resolve_platonic_shape_metric,
@@ -1132,43 +1133,49 @@ def _resolve_latched_platonic_shape(active_shape: str) -> str:
     return dim if dim in _SHAPE_NAV_IDS else _NO_ACTIVE_SHAPE
 
 
-def _shape_btn_classes(shape: str, active_shape: str) -> list[str]:
+def _shape_btn_classes(shape: str, active_shape: str, *, loading: bool = False) -> list[str]:
     classes = ["vqc-source-tab", "shape-btn"]
     active = str(active_shape or "").strip().upper()
     if active and shape == active:
         classes.append("active")
+        if loading:
+            classes.append("myst-shape-loading")
     return classes
+
+
+def _shape_btn_updates(active_shape: str, *, loading: bool = False) -> tuple:
+    active = str(active_shape or "").strip().upper()
+    return tuple(
+        gr.update(
+            elem_classes=_shape_btn_classes(shape_id, active, loading=loading),
+            interactive=True,
+            variant="secondary",
+        )
+        for shape_id in _SHAPE_NAV_IDS
+    )
 
 
 def _clear_active_shape() -> tuple:
     """No platonic tab latched — boot and neutral nav state."""
-    updates: list = [_NO_ACTIVE_SHAPE]
-    for shape_id in _SHAPE_NAV_IDS:
-        updates.append(
-            gr.update(
-                elem_classes=_shape_btn_classes(shape_id, _NO_ACTIVE_SHAPE),
-                interactive=True,
-                variant="secondary",
-            )
-        )
-    return tuple(updates)
+    return (_NO_ACTIVE_SHAPE, *_shape_btn_updates(_NO_ACTIVE_SHAPE))
 
 
-def _set_active_shape(new_shape: str) -> tuple:
+def _set_active_shape(new_shape: str, *, loading: bool = False) -> tuple:
     """Latching updates for geodesic face-count tabs (D4–D20)."""
     shape = str(new_shape or "").strip().upper()
     if shape not in _SHAPE_NAV_IDS:
         return _clear_active_shape()
-    updates: list = [shape]
-    for shape_id in _SHAPE_NAV_IDS:
-        updates.append(
-            gr.update(
-                elem_classes=_shape_btn_classes(shape_id, shape),
-                interactive=True,
-                variant="secondary",
-            )
-        )
-    return tuple(updates)
+    return (shape, *_shape_btn_updates(shape, loading=loading))
+
+
+def _platonic_preserve_demo_letter(active_demo_letter: str) -> str:
+    """Which Demo letter stays latched when a D* tab interrupts Home."""
+    letter = _normalize_active_demo_letter(active_demo_letter)
+    if _is_demo_platonic_flip_letter(letter):
+        return _NO_ACTIVE_DEMO_LETTER
+    if letter == "A":
+        return "A"
+    return _NO_ACTIVE_DEMO_LETTER
 
 
 def _normalize_shape_id(shape: str) -> str:
@@ -1347,18 +1354,97 @@ def _platonic_geo_presets_interrupt_reset(active_shape: str) -> tuple:
     )
 
 
+def _platonic_viewport_loading_html(shape: str) -> str:
+    """Full-panel rendering status while a platonic D* MP4 prepares."""
+    dim = str(shape or _DEFAULT_ACTIVE_SHAPE).strip().upper()
+    title = f"{dim} · {platonic_solid_name(dim)}"
+    config = get_dimension_config(dim)
+    subtitle = str(config.get("description", ""))
+    safe_title = html.escape(title)
+    safe_sub = html.escape(subtitle)
+    hint = "Loading geodesic deformation loop — wireframe render follows."
+    return (
+        f'<div class="myst-demo-viewport-loading myst-platonic-viewport-loading" role="status" aria-live="polite">'
+        '<div class="myst-demo-viewport-loading-card myst-platonic-viewport-loading-card">'
+        '<div class="myst-demo-viewport-loading-spinner myst-platonic-viewport-loading-spinner" aria-hidden="true"></div>'
+        f'<div class="myst-demo-viewport-loading-title">Rendering {safe_title}</div>'
+        f'<div class="myst-demo-viewport-loading-sub">{safe_sub}</div>'
+        f'<div class="myst-demo-viewport-loading-hint">{hint}</div>'
+        "</div></div>"
+    )
+
+
+def _demo_viewport_show_platonic_loading(shape: str) -> tuple:
+    """Swap viewport to platonic loading panel while D* media prepares."""
+    return (
+        gr.update(value=None, visible=False),
+        gr.update(value=None, visible=False),
+        gr.update(value=_platonic_viewport_loading_html(shape), visible=True),
+        _demo_viewport_overlay_update(visible=False),
+    )
+
+
+def _platonic_shape_click_begin(new_shape: str, active_demo_letter: str = "A") -> tuple:
+    """Instant D* latch — cyan active glow + loading panel before MP4 work."""
+    shape = str(new_shape or "").strip().upper()
+    if shape not in _SHAPE_NAV_IDS:
+        shape = _DEFAULT_ACTIVE_SHAPE
+    preserve_letter = _platonic_preserve_demo_letter(active_demo_letter)
+    return (
+        *_nav_to_platonic_home_with_demo(shape),
+        shape,
+        *_shape_btn_updates(shape, loading=True),
+        *_platonic_interrupt_demo_nav_updates(active_demo_letter, active_shape=shape),
+        *_demo_viewport_show_platonic_loading(shape),
+        _gravity_viewport_wrapper_update(
+            preserve_letter,
+            active_shape=shape,
+            loading=True,
+        ),
+    )
+
+
+def _platonic_shape_click_finish(new_shape: str, active_demo_letter: str = "A") -> tuple:
+    """Load platonic viewport media, sliders, and metrics after instant latch."""
+    shape = str(new_shape or "").strip().upper()
+    if shape not in _SHAPE_NAV_IDS:
+        shape = _DEFAULT_ACTIVE_SHAPE
+    preserve_letter = _platonic_preserve_demo_letter(active_demo_letter)
+    config = get_dimension_config(shape)
+    slider_updates = _apply_dimension_slider_updates(config)
+    dim_fig = _build_dimension_viewport_figure(shape, config)
+    viewport_updates = _demo_viewport_preserve_active_demo(
+        preserve_letter,
+        dim_fig=dim_fig,
+        active_shape=shape,
+    )
+    metrics, header, control_levels = _dimension_explorer_side_outputs(shape, config)
+    return (
+        *slider_updates,
+        *viewport_updates,
+        metrics,
+        metrics,
+        header,
+        control_levels,
+        _gravity_viewport_wrapper_update(
+            preserve_letter,
+            active_shape=shape,
+            viewport_layer="video",
+            loading=False,
+        ),
+        *_platonic_geo_presets_interrupt_reset(shape),
+        *_platonic_interrupt_demo_nav_updates(active_demo_letter, active_shape=shape),
+        shape,
+        *_shape_btn_updates(shape, loading=False),
+    )
+
+
 def _platonic_geo_interrupt_home(new_shape: str, active_demo_letter: str = "A") -> tuple:
     """Platonic D4–D20 interrupt — latch D*, unlatch Home + Demo B–I (flip-flop)."""
     shape = str(new_shape or "").strip().upper()
     if shape not in _SHAPE_NAV_IDS:
         shape = _DEFAULT_ACTIVE_SHAPE
-    letter = _normalize_active_demo_letter(active_demo_letter)
-    if _is_demo_platonic_flip_letter(letter):
-        preserve_letter = _NO_ACTIVE_DEMO_LETTER
-    elif letter == "A":
-        preserve_letter = "A"
-    else:
-        preserve_letter = _NO_ACTIVE_DEMO_LETTER
+    preserve_letter = _platonic_preserve_demo_letter(active_demo_letter)
     return (
         *_nav_to_platonic_home_with_demo(shape),
         *_set_active_shape_and_apply(shape, preserve_letter),
@@ -3351,6 +3437,13 @@ footer {{
     line-height: 1.45 !important;
     text-shadow: none !important;
 }}
+.gradio-container .myst-gravity-page .myst-platonic-viewport-loading-card {{
+    border-color: cyan !important;
+    box-shadow: 0 0 22px rgba(0, 255, 255, 0.42) !important;
+}}
+.gradio-container .myst-gravity-page .myst-platonic-viewport-loading-spinner {{
+    border-top-color: cyan !important;
+}}
 .gradio-container button.demo-btn.active.myst-demo-loading,
 .gradio-container button.demo-btn.active.myst-demo-loading span {{
     animation: myst-demo-btn-loading-blink 1s step-end infinite !important;
@@ -4076,6 +4169,16 @@ footer {{
     border-color: cyan !important;
     box-shadow: 0 0 14px rgba(0, 255, 255, 0.85), 0 0 26px rgba(0, 255, 255, 0.5), 0 0 0 1px cyan !important;
     font-weight: 600 !important;
+}}
+.gradio-container button.shape-btn.active.myst-shape-loading,
+.gradio-container button.shape-btn.active.myst-shape-loading span,
+.gradio-container .vqc-source-tabs-row button.vqc-source-tab.shape-btn.active.myst-shape-loading,
+.gradio-container .vqc-source-tabs-row button.vqc-source-tab.shape-btn.active.myst-shape-loading span {{
+    animation: myst-shape-btn-loading-blink 1s step-end infinite !important;
+}}
+@keyframes myst-shape-btn-loading-blink {{
+    0%, 49% {{ opacity: 1; }}
+    50%, 100% {{ opacity: 0.28; }}
 }}
 /* ========== DEMO: BAR (A–I) + Figures/Presets 01–09 + Edit/Save ========== */
 .gradio-container button.vqc-source-tab.demo-btn.active,
@@ -13532,17 +13635,59 @@ def build_app() -> gr.Blocks:
                 show_progress="hidden",
             )
 
-        def _make_platonic_geo_interrupt_click(shape: str):
+        platonic_shape_click_begin_outputs = [
+            *nav_outputs,
+            *demo_nav_outputs,
+            active_shape,
+            *[unified_nav[shape_id] for shape_id in _SHAPE_NAV_IDS],
+            *[gravity_letter_btns[letter] for letter in _GRAVITY_CHILD_NAV_LETTERS],
+            gravity_active_letter,
+            gravity_viewport_plot,
+            gravity_viewport_video,
+            gravity_viewport_startup,
+            gravity_viewport_overlay,
+            viewport_col,
+        ]
+        platonic_shape_click_finish_outputs = [
+            *dimension_slider_outputs,
+            gravity_viewport_plot,
+            gravity_viewport_video,
+            gravity_viewport_startup,
+            gravity_viewport_overlay,
+            re_metrics,
+            edit_re_metrics,
+            unit_cell_header,
+            re_control_levels,
+            viewport_col,
+            *platonic_geo_interrupt_outputs,
+            *[gravity_letter_btns[letter] for letter in _GRAVITY_CHILD_NAV_LETTERS],
+            gravity_active_letter,
+            active_shape,
+            *[unified_nav[shape_id] for shape_id in _SHAPE_NAV_IDS],
+        ]
+
+        def _make_platonic_shape_click_begin(shape: str):
             def handler(active_demo_letter: str) -> tuple:
-                return _platonic_geo_interrupt_home(shape, active_demo_letter)
+                return _platonic_shape_click_begin(shape, active_demo_letter)
+
+            return handler
+
+        def _make_platonic_shape_click_finish(shape: str):
+            def handler(active_demo_letter: str) -> tuple:
+                return _platonic_shape_click_finish(shape, active_demo_letter)
 
             return handler
 
         for shape_id in _SHAPE_NAV_IDS:
             unified_nav[shape_id].click(
-                _make_platonic_geo_interrupt_click(shape_id),
+                _make_platonic_shape_click_begin(shape_id),
                 inputs=[gravity_active_letter],
-                outputs=dimension_shape_outputs,
+                outputs=platonic_shape_click_begin_outputs,
+                show_progress="hidden",
+            ).then(
+                _make_platonic_shape_click_finish(shape_id),
+                inputs=[gravity_active_letter],
+                outputs=platonic_shape_click_finish_outputs,
                 show_progress="hidden",
             )
 
