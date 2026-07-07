@@ -188,6 +188,53 @@ The ~4% gap between κ_doc and κ_sim is **not a contradiction** — theory anch
 
 JSON: `outputs/analog_comparative_sweep_20260707_004010.json` (κ=0.85) · `outputs/analog_comparative_sweep_20260706_233723.json` (κ=0.89).
 
+### Stage 8 — topology κ bake grid (2×2, 500 steps)
+
+Command: `toe/venv/bin/python scripts/epoch_bake_sweep.py --topology-grid --bake-steps 500`  
+Mystery wrapper: `scripts/topology_kappa_bake_grid.py`
+
+κ seeded at **κ_doc = 0.85**, W_g = 111.41, adaptive κ feedback during bake.
+
+| Config | toroidal | vortex_369 | κ_final | κ_proxy | κ_proxy nearest | vortex_sync |
+|--------|----------|------------|---------|---------|-----------------|-------------|
+| baseline | off | off | 0.716 | 0.854 | κ_doc (Δ 0.035) | 0.018 |
+| toroidal_only | on | off | 0.716 | 0.854 | κ_doc (Δ 0.035) | 0.018 |
+| vortex369_only | off | on | 0.716 | **0.885** | **κ_sim (Δ 0.005)** | 0.203 |
+| full_topology | on | on | 0.716 | **0.885** | **κ_sim (Δ 0.005)** | 0.203 |
+
+**Finding:** `vortex_math_369` shifts the holonomy-gap **κ_proxy** toward **κ_sim ≈ 0.89** (|proxy − κ_sim| = 0.005 vs 0.035 without 369). `toroidal_modulo9` alone does not change κ_proxy or κ_final. Adaptive κ_final drifts to **0.716** (floor clip) in all configs — driven by large braiding_delta (0.73 vs target 0.8145), not topology-differentiated.
+
+**Interpretation:** 369 topology affects emergent holonomy observables (κ_proxy, vortex_sync); it does **not** uniquely determine κ_final under current bake feedback. κ_sim ≈ 0.89 from meta-opt likely arises from island+survival loss, with 369 topology as a supporting mechanism. Variational sketch: [`notes/kappa_star_variational.md`](../notes/kappa_star_variational.md).
+
+JSON: `outputs/topology_kappa_bake_grid_20260707_005300.json`
+
+**Braid-feedback tuning** (gain 0.02 → **0.002** default; sweep 0.002 / 0.005 / 0.01):
+
+| braid_gain | κ_final (all configs) | κ_drift | κ_proxy (no 369) | κ_proxy (369 on) |
+|------------|----------------------|---------|-------------------|-------------------|
+| 0.002 | 0.837 | −0.013 | 0.854 | 0.885 |
+| 0.005 | 0.816 | −0.034 | 0.854 | 0.885 |
+| 0.01 | 0.783 | −0.067 | 0.854 | 0.885 |
+
+JSON: `outputs/topology_kappa_braid_sweep_20260707_005540.json`
+
+### Stage 8b — magic island topology grid (Z=129, quick bake)
+
+Command: `toe/venv/bin/python scripts/magic_island_sweep.py --topology-grid --island-z 129 --quick --braid-gains 0.002 0.005 0.01`
+
+Island preset: layers=4, pol=9, facts=12 (quick), gauge=0.85 — magic island pseudo_Z=129.
+
+| braid_gain | topology | κ_final | κ_drift | κ_proxy | stability |
+|------------|----------|---------|---------|---------|-----------|
+| **0.002** | baseline / toroidal | **0.849** | **−0.0015** | 0.854 | **8.0** |
+| **0.002** | vortex369 / full | **0.849** | **−0.0015** | **0.885** | **8.0** |
+| 0.005 | all | 0.846 | −0.0037 | 0.854 / 0.885 | 8.0 |
+| 0.01 | all | 0.843 | −0.0075 | 0.854 / 0.885 | 8.0 |
+
+**Finding:** Magic-island training **anchors κ_final near κ_doc/κ\*** (|drift| &lt; 0.002 at gain=0.002) while **vortex_math_369** still shifts κ_proxy toward **κ_sim**. Bare epoch bake over-corrected κ to 0.716; island bake fixes this. **Production braid_feedback_gain = 0.002.**
+
+JSON: `outputs/magic_island_topology_grid_z129_20260707_005606.json`
+
 ## Analog sweeps (Stages 4–5)
 
 | Probe | Key result |

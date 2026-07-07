@@ -27,15 +27,15 @@
 
 ### 2. Formal residual bound (in progress)
 
-`residual_kappa_sweep.py` shows **κ* = e/π − R/π² ≈ 0.8513** (0.15% from κ_doc). See `notes/residual_scaling.md`. Need variational derivation from Skyrme + holonomy.
+`residual_kappa_sweep.py` shows **κ* = e/π − R/π² ≈ 0.8513** (0.15% from κ_doc). Variational sketch in [`kappa_star_variational.md`](kappa_star_variational.md). Still need full π² prefactor derivation from reduced Skyrme action.
 
 ### 3. Rodin cycle ↔ S³ fiber phase (scaffolded)
 
 `rodin_hopf_fiber_map.py` maps 1-2-4-8-7-5 to tens_degrees / ninth_turn / hopf_weighted increments. Open: falsify against lattice burst-reset ΔΘ.
 
-### 4. Longer conduit + island-bake runs
+### 4. Topology κ bake grid — **mostly closed** (July 2026)
 
-`vortex_math_369=True` + `toroidal_modulo9=True` with island configurations from `toe/scripts/epoch_bake_sweep.py`.
+`epoch_bake_sweep.py --topology-grid` + `magic_island_sweep.py --topology-grid --island-z 129`. **vortex_math_369** shifts κ_proxy → κ_sim (0.885). **braid_feedback_gain = 0.002** (tuned from 0.02). Magic-island bake anchors κ_final ≈ 0.849 (|drift| &lt; 0.002); bare bake still over-drifts. See `docs/RESULTS.md` Stage 8/8b, `notes/kappa_star_variational.md`.
 
 ### 5. Stage 6 meta-optimization — **closed** (July 2026)
 
