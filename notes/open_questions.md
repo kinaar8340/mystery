@@ -15,7 +15,7 @@
 |---|------|--------|
 | 0 | Triangle angle derivation | **Documented** — [angle_derivation.md](angle_derivation.md); 3-6-9 mapping still interpretive |
 | 1 | Closed form for φ, e, π | Best near-miss: π²(e/π−κ) ≈ 0.151 vs R ≈ 0.137 (9.5% off) |
-| 4 | κ vs e/π | κ = 0.85 is attractor; e/π is independent ~1.8% near-miss |
+| 4 | κ vs e/π | **Dual-role κ:** κ_doc = 0.85 (theory anchor); κ_sim ≈ 0.89 (island+survival optimum); κ* ≈ 0.8513 (exact null). e/π is independent ~1.8% near-miss |
 | 7 | φ_b | Meta best ≈ 0.754 (3/4 anyonic); not φ⁻¹ |
 | 8 | Conduit 369 flags | ~8% near 30°; modest, not locked |
 
@@ -37,16 +37,13 @@
 
 `vortex_math_369=True` + `toroidal_modulo9=True` with island configurations from `toe/scripts/epoch_bake_sweep.py`.
 
-### 5. Stage 6 meta-optimization (implemented)
+### 5. Stage 6 meta-optimization — **closed** (July 2026)
 
-`meta_optimize_phi_probe.py` now supports analog objective:
+Dual-analog objective converges to **κ_sim ≈ 0.89**, W_g ≈ 111.41, mean_survival = 0.137651, Δ% vs R = 0.121%, dual-analog loss = **56.98**. W_g lock holds; survival alignment improved vs pilot (0.355% → 0.121%). Squared κ prior (w_κ ≤ 500) does not shift κ.
 
-- `--use-survival-penalty` — \|mean_survival − R\| at λt=2
-- `--golden-angle-steps` + `--golden-reward-weight` (default 0.3)
-- `--use-hybrid-objective` — hybrid Δ% instead of raw survival error
-- `--compare-baseline` — baseline vs survival vs dual-analog in one JSON
+**κ_doc vs κ_sim:** paired comparative sweep confirms κ_sim wins on best Δ% vs R (0.121% vs 0.166%) and island+Hopf loss; κ_doc marginally wins on uniform PDE hybrid. See [`docs/RESULTS.md`](../docs/RESULTS.md) Stage 7 section and [`stage6_analog_tuning.md`](stage6_analog_tuning.md).
 
-**Open:** Does dual-analog optimization drift κ away from 0.85 or improve mean_survival vs R without breaking W_g lock? Run with `--trials 30+` for production comparison.
+**Production:** dual-analog, w_s=5, golden_reward_weight=0.3, hybrid survival, **no κ prior**, κ ≈ 0.89.
 
 ---
 

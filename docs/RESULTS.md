@@ -18,8 +18,9 @@ Regenerate JSON: `python run_all.py` → `outputs/`.
 | Quantity | Value |
 |----------|-------|
 | W_g = 350/π | **111.408460** |
-| κ (documented) | **0.8500** |
-| e/π | **0.865256** (Δ from κ: **1.76%**) |
+| κ_doc (documented) | **0.8500** |
+| κ_sim (simulation optimum) | **≈ 0.890** |
+| e/π | **0.865256** (Δ from κ_doc: **1.76%**) |
 | Θ_link | **≈ π** (3.128 rad) |
 | θ_crit = π(1+κ) | **5.812 rad** |
 
@@ -145,6 +146,48 @@ Command: `meta_optimize_phi_probe.py --compare-baseline --trials 30 --use-surviv
 | w_κ=50 (bugged) | `outputs/meta_optimize_phi_probe_20260707_003033.json` |
 | w_κ=500 (valid) | `outputs/meta_optimize_phi_probe_20260707_003333.json` |
 
+### Stage 7 — paired κ comparison (κ_doc vs κ_sim)
+
+Fixed-point comparison at **W_g = 111.41** (wg_base = 350), same 18-run grid (3 IC × 2 λt + 3 twist × 2 step modes):
+
+```bash
+toe/venv/bin/python scripts/analog_comparative_sweep.py --kappa 0.85 --wg-base 350.0
+toe/venv/bin/python scripts/analog_comparative_sweep.py --kappa 0.89 --wg-base 350.0
+```
+
+**PDE @ λt = 2** (primary survival probe):
+
+| IC | mean_survival @ κ=0.85 | mean_survival @ κ=0.89 | Δ% vs R @ 0.85 | Δ% vs R @ 0.89 | hybrid @ 0.85 | hybrid @ 0.89 |
+|----|------------------------|-------------------------|----------------|----------------|---------------|---------------|
+| uniform | 0.137159 | 0.137096 | 0.238% | 0.284% | 0.9991 | 0.9990 |
+| hopfion | 0.145053 | 0.144634 | 5.504% | 5.200% | 0.9917 | 0.9921 |
+| helical | 0.138165 | 0.138057 | 0.494% | 0.416% | 0.9985 | 0.9986 |
+
+**Conduit @ λt = 2** (all twist rates 10/12.5/15, linear + golden): identical across twist/step — best Δ% **0.166%** @ κ=0.85 vs **0.121%** @ κ=0.89; hybrid **0.9989** vs **0.9990**.
+
+**Grid summary @ λt = 2:**
+
+| Metric | κ = 0.85 (κ_doc) | κ = 0.89 (κ_sim) | Winner |
+|--------|------------------|------------------|--------|
+| Best Δ% vs R | 0.166% | **0.121%** | κ_sim |
+| Best hybrid | **0.9991** | 0.9990 | κ_doc (marginal) |
+| Avg mean_survival | **0.138518** | 0.138411 | κ_doc (marginal) |
+| Meta-opt island+Hopf loss | ~58.6 @ κ=0.85 | **57.22 @ κ=0.89** | κ_sim |
+
+κ survival sweep (uniform PDE, λt=2) independently shows best Δ% vs R at **κ ≈ 0.891** (0.015%); κ_doc = 0.85 gives Δ% = 0.088%.
+
+**Decision — dual-role κ:**
+
+| Symbol | Value | Role |
+|--------|-------|------|
+| **κ_doc** | 0.85 | Documented holonomy-gap parameter: θ_crit = π(1+κ), residual scaling B(κ), e/π proximity framing |
+| **κ_sim** | ≈ 0.89 | Simulation optimum: island+Hopf base_loss minimum + best conduit/κ-sweep alignment with R at λt=2 |
+| **κ\*** | ≈ 0.8513 | Exact null e/π − R/π² (residual bound; 0.15% from κ_doc) |
+
+The ~4% gap between κ_doc and κ_sim is **not a contradiction** — theory anchor vs combined PDE+island optimum. **Production meta-opt uses κ_sim ≈ 0.89** (dual-analog, w_s=5, loss 56.98). **Documentation and nulling formulas retain κ_doc = 0.85.**
+
+JSON: `outputs/analog_comparative_sweep_20260707_004010.json` (κ=0.85) · `outputs/analog_comparative_sweep_20260706_233723.json` (κ=0.89).
+
 ## Analog sweeps (Stages 4–5)
 
 | Probe | Key result |
@@ -156,4 +199,4 @@ Command: `meta_optimize_phi_probe.py --compare-baseline --trials 30 --use-surviv
 
 ## Framing
 
-**Compatible emergent signature** — not an exact identity, not forced by invariants, not contradicted by simulation.
+**Compatible emergent signature** — not an exact identity, not forced by invariants, not contradicted by simulation. κ_doc (0.85) and κ_sim (≈0.89) coexist as documentation anchor vs simulation optimum; neither is claimed as a unique physical constant.

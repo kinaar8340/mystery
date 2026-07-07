@@ -180,7 +180,7 @@ python scripts/meta_optimize_phi_probe.py \
 
 **Compatible emergent signature** — the analog objective does not force an exact identity. It trades a small island-loss increase (+0.04 via survival term) for measurably better alignment with R at λt = 2. The converged κ ≈ 0.89 is consistent with the earlier κ-survival sweep (best Δ% vs R near κ ≈ 0.891), suggesting the model prefers the value that best balances PDE survival with Hopf/island constraints rather than the documented κ_doc = 0.85 alone.
 
-**Production recommendation:** use **dual-analog** objective with **w_s = 5**, **golden_reward_weight = 0.3**, **hybrid survival term**, **no κ prior**, at κ ≈ 0.89, W_g ≈ 111.41 (loss **56.98**).
+**Production recommendation:** use **dual-analog** objective with **w_s = 5**, **golden_reward_weight = 0.3**, **hybrid survival term**, **no κ prior**, at **κ_sim ≈ 0.89**, W_g ≈ 111.41 (loss **56.98**). Keep **κ_doc = 0.85** for documentation and nulling formulas — see Stage 7 paired comparison in [`docs/RESULTS.md`](../docs/RESULTS.md).
 
 ---
 
@@ -188,8 +188,8 @@ python scripts/meta_optimize_phi_probe.py \
 
 | Question | Status / next step |
 |----------|-------------------|
-| Pull κ toward 0.85? | **Squared prior tested** (w_κ=50, 500) — κ stays 0.89. Try linear prior, narrowed search, or accept κ≈0.89 |
-| Is κ ≈ 0.89 preferred over κ_doc? | **Likely yes** — aligned with κ-survival sweep and island+Hopf minimum |
+| Pull κ toward 0.85? | **Closed** — squared prior (w_κ≤500) and paired sweep confirm κ_sim ≈ 0.89; retain κ_doc=0.85 for docs |
+| Is κ ≈ 0.89 preferred over κ_doc? | **Yes for simulation** — best Δ% vs R, island+Hopf minimum; κ_doc marginally better on uniform hybrid |
 | golden_reward_weight sensitivity | Grid w_s × golden_reward_weight at fixed 30+ trials |
 | 100+ trials | Diminishing returns given convergence by trial ~22 |
 
