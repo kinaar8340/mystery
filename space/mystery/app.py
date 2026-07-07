@@ -216,8 +216,8 @@ NAV_THEME: dict = {
     },
 }
 
-# Global UI scale applied via html zoom (1.0 = native browser sizing).
-_MYST_UI_SCALE = 1.3
+# Global UI scale (1.0 = native). Avoid html zoom — it breaks viewport sync + scroll.
+_MYST_UI_SCALE = 1.0
 
 # Legacy aliases — prefer NAV_THEME for new code.
 DEFAULT_BUTTON_BORDER_COLOR = NAV_THEME["nav_button"]["border_color"]
@@ -2085,36 +2085,45 @@ WALLPAPER_HEAD = f"""
             vid.style.removeProperty('max-height');
         }}
     }}
+    function mystApplyGravityViewportHeight(wrap, h) {{
+        var last = parseInt(wrap.dataset.mystSyncedH || '-1', 10);
+        if (last === h) return false;
+        wrap.dataset.mystSyncedH = String(h);
+        window.__mystViewportSyncing = true;
+        try {{
+            document.documentElement.style.setProperty('--myst-gravity-viewport-height', h + 'px');
+            wrap.style.setProperty('height', h + 'px', 'important');
+            wrap.style.setProperty('min-height', h + 'px', 'important');
+            wrap.style.setProperty('max-height', h + 'px', 'important');
+            var host = document.getElementById('myst-gravity-viewport');
+            if (host) {{
+                host.style.setProperty('height', '100%', 'important');
+                host.style.setProperty('min-height', '0', 'important');
+                host.style.setProperty('max-height', '100%', 'important');
+            }}
+            var vid = wrap.querySelector('video');
+            if (vid) {{
+                vid.style.setProperty('height', '100%', 'important');
+                vid.style.setProperty('min-height', '0', 'important');
+                vid.style.setProperty('max-height', '100%', 'important');
+            }}
+        }} finally {{
+            window.__mystViewportSyncing = false;
+        }}
+        return true;
+    }}
     function mystSyncGravityViewportHeight() {{
         var wrap = document.getElementById('myst-gravity-viewport-wrapper');
         if (!wrap) return;
         if (!mystGravityPageActive()) {{
+            delete wrap.dataset.mystSyncedH;
             mystClearGravityViewportInlineSize(wrap);
             return;
         }}
         var rect = wrap.getBoundingClientRect();
-        if (rect.height <= 0 || rect.width <= 0) {{
-            mystClearGravityViewportInlineSize(wrap);
-            return;
-        }}
-        var top = rect.top;
-        var h = Math.max(360, Math.round(window.innerHeight - top - 8));
-        document.documentElement.style.setProperty('--myst-gravity-viewport-height', h + 'px');
-        wrap.style.setProperty('height', h + 'px', 'important');
-        wrap.style.setProperty('min-height', h + 'px', 'important');
-        wrap.style.setProperty('max-height', h + 'px', 'important');
-        var host = document.getElementById('myst-gravity-viewport');
-        if (host) {{
-            host.style.setProperty('height', '100%', 'important');
-            host.style.setProperty('min-height', '0', 'important');
-            host.style.setProperty('max-height', '100%', 'important');
-        }}
-        var vid = wrap.querySelector('video');
-        if (vid) {{
-            vid.style.setProperty('height', '100%', 'important');
-            vid.style.setProperty('min-height', '0', 'important');
-            vid.style.setProperty('max-height', '100%', 'important');
-        }}
+        if (rect.width <= 0 || rect.top >= window.innerHeight) return;
+        var h = Math.max(360, Math.round(window.innerHeight - rect.top - 8));
+        mystApplyGravityViewportHeight(wrap, h);
     }}
     function mystSyncVisorHeight() {{
         if (mystGravityPageActive()) {{
@@ -2166,6 +2175,12 @@ WALLPAPER_HEAD = f"""
         video.style.setProperty('visibility', 'visible', 'important');
         video.style.setProperty('opacity', '1', 'important');
     }}
+    function mystLockGravityScroll() {{
+        if (!mystGravityPageActive()) return;
+        if (window.scrollY > 0) window.scrollTo(0, 0);
+        if (document.documentElement.scrollTop > 0) document.documentElement.scrollTop = 0;
+        if (document.body.scrollTop > 0) document.body.scrollTop = 0;
+    }}
     function mystReflowViewport() {{
         if (!mystGravityPageActive()) {{
             mystClearGravityViewportInlineSize();
@@ -2173,25 +2188,28 @@ WALLPAPER_HEAD = f"""
         }}
         mystSyncVisorHeight();
         mystFixPlatonicViewportLayer();
-        var vp = document.getElementById('unit-cell-main-view');
-        var visor = document.querySelector('.myst-unit-cell-visor');
-        if (vp) void vp.offsetHeight;
-        if (visor) void visor.offsetHeight;
+        mystLockGravityScroll();
     }}
     function bootViewportReflow() {{
         mystReflowViewport();
         requestAnimationFrame(mystReflowViewport);
         if (window.__mystViewportReflowObs) return;
-        window.__mystViewportReflowObs = new MutationObserver(function() {{
+        window.__mystViewportReflowObs = new MutationObserver(function(mutations) {{
+            if (window.__mystViewportSyncing) return;
             if (!mystGravityPageActive()) {{
                 mystClearGravityViewportInlineSize();
                 return;
             }}
+            var relevant = false;
+            for (var i = 0; i < mutations.length; i++) {{
+                var m = mutations[i];
+                if (m.type === 'childList') {{ relevant = true; break; }}
+                if (m.type === 'attributes' && m.attributeName === 'class') {{ relevant = true; break; }}
+            }}
+            if (!relevant) return;
             requestAnimationFrame(mystReflowViewport);
         }});
         var roots = [
-            document.getElementById('myst-gravity-viewport-wrapper'),
-            document.querySelector('.myst-unit-cell-visor'),
             document.querySelector('.myst-gravity-preset-tui-section'),
             document.querySelector('.myst-gravity-presets-tui-card'),
             document.querySelector('.myst-gravity-page'),
@@ -2199,7 +2217,7 @@ WALLPAPER_HEAD = f"""
         roots.forEach(function(root) {{
             if (!root) return;
             window.__mystViewportReflowObs.observe(root, {{
-                subtree: true, childList: true, attributes: true, attributeFilter: ['style', 'class']
+                subtree: true, childList: true, attributes: true, attributeFilter: ['class']
             }});
         }});
         window.addEventListener('resize', function() {{
@@ -2303,6 +2321,7 @@ WALLPAPER_HEAD = f"""
         document.documentElement.style.removeProperty('--myst-render-grid-height');
         ['.myst-render-catalog-host', '#myst-render-grid-host', '.myst-render-grid-wrap', '.myst-render-grid'].forEach(function(sel) {{
             document.querySelectorAll(sel).forEach(function(el) {{
+                delete el.dataset.mystSyncedH;
                 el.style.removeProperty('height');
                 el.style.removeProperty('min-height');
                 el.style.removeProperty('max-height');
@@ -2330,15 +2349,23 @@ WALLPAPER_HEAD = f"""
             top = rect.top;
         }}
         var h = Math.max(240, Math.round(window.innerHeight - top - 6));
-        document.documentElement.style.setProperty('--myst-render-grid-height', h + 'px');
-        [catalog, document.getElementById('myst-render-grid-host'),
-            document.querySelector('.myst-render-grid-wrap'),
-            document.querySelector('.myst-render-grid')].forEach(function(el) {{
-            if (!el) return;
-            el.style.setProperty('height', h + 'px', 'important');
-            el.style.setProperty('min-height', h + 'px', 'important');
-            el.style.setProperty('max-height', h + 'px', 'important');
-        }});
+        var last = parseInt(catalog.dataset.mystSyncedH || '-1', 10);
+        if (last === h) return;
+        catalog.dataset.mystSyncedH = String(h);
+        window.__mystRenderGridSyncing = true;
+        try {{
+            document.documentElement.style.setProperty('--myst-render-grid-height', h + 'px');
+            [catalog, document.getElementById('myst-render-grid-host'),
+                document.querySelector('.myst-render-grid-wrap'),
+                document.querySelector('.myst-render-grid')].forEach(function(el) {{
+                if (!el) return;
+                el.style.setProperty('height', h + 'px', 'important');
+                el.style.setProperty('min-height', h + 'px', 'important');
+                el.style.setProperty('max-height', h + 'px', 'important');
+            }});
+        }} finally {{
+            window.__mystRenderGridSyncing = false;
+        }}
     }}
     function mystBindRenderGridClicks() {{
         document.querySelectorAll('.myst-render-cell-clickable[data-slot]').forEach(function(cell) {{
@@ -2367,7 +2394,15 @@ WALLPAPER_HEAD = f"""
         mystBindRenderGridClicks();
         mystSyncRenderGridHeight();
         if (window.__mystRenderGridObs) return;
-        window.__mystRenderGridObs = new MutationObserver(function() {{
+        window.__mystRenderGridObs = new MutationObserver(function(mutations) {{
+            if (window.__mystRenderGridSyncing) return;
+            var relevant = false;
+            for (var i = 0; i < mutations.length; i++) {{
+                var m = mutations[i];
+                if (m.type === 'childList') {{ relevant = true; break; }}
+                if (m.type === 'attributes' && m.attributeName === 'class') {{ relevant = true; break; }}
+            }}
+            if (!relevant) return;
             requestAnimationFrame(function() {{
                 mystBindRenderGridClicks();
                 if (mystRenderGridVisible()) {{
@@ -2381,26 +2416,26 @@ WALLPAPER_HEAD = f"""
         var host = document.getElementById('myst-render-grid-host');
         if (host) {{
             window.__mystRenderGridObs.observe(host, {{
-                subtree: true, childList: true, attributes: true, attributeFilter: ['class', 'style']
+                subtree: true, childList: true, attributes: true, attributeFilter: ['class']
             }});
         }}
         var catalog = document.querySelector('.myst-render-catalog-host');
         if (catalog) {{
             window.__mystRenderGridObs.observe(catalog, {{
-                attributes: true, attributeFilter: ['class', 'style']
+                attributes: true, attributeFilter: ['class']
             }});
         }}
         var renderPage = document.querySelector('.myst-render-page');
         if (renderPage) {{
             window.__mystRenderGridObs.observe(renderPage, {{
-                subtree: true, childList: true, attributes: true, attributeFilter: ['class', 'style']
+                subtree: true, childList: true, attributes: true, attributeFilter: ['class']
             }});
         }}
         var detailHost = document.getElementById('myst-render-detail-wrapper')
             || document.querySelector('.myst-render-detail-view');
         if (detailHost) {{
             window.__mystRenderGridObs.observe(detailHost, {{
-                subtree: true, childList: true, attributes: true, attributeFilter: ['class', 'style']
+                subtree: true, childList: true, attributes: true, attributeFilter: ['class']
             }});
         }}
         window.addEventListener('resize', function() {{
@@ -2671,17 +2706,15 @@ HFB_CSS = f"""
 }}
 html {{
     --myst-ui-scale: {_MYST_UI_SCALE};
-    zoom: var(--myst-ui-scale);
     background-color: #0a0818 !important;
     min-height: 100% !important;
 }}
-@supports not (zoom: 1) {{
-    html {{
-        transform: scale(var(--myst-ui-scale));
-        transform-origin: top left;
-        width: calc(100% / var(--myst-ui-scale));
-        min-height: calc(100% / var(--myst-ui-scale));
-    }}
+html:has(.gradio-container .myst-gravity-page:not(.hide):not(.hidden)),
+html:has(.gradio-container .myst-readme-page:not(.hide):not(.hidden)),
+html:has(.gradio-container .myst-render-page:not(.hide):not(.hidden)) {{
+    overflow: hidden !important;
+    max-height: 100dvh !important;
+    height: 100dvh !important;
 }}
 body {{
     background: transparent !important;
