@@ -26,6 +26,7 @@ PI = np.pi
 R = PHI**2 + E**2 - PI**2
 E_OVER_PI = E / PI
 KAPPA_DOC = 0.85
+KAPPA_SIM = 0.89
 E_INV2 = float(np.exp(-2.0))
 GOLDEN_ANGLE_DEG = 360.0 * (1.0 - 1.0 / PHI)
 GOLDEN_ANGLE_FRACTION = GOLDEN_ANGLE_DEG / 1000.0
@@ -346,7 +347,7 @@ vortex geometry. This Space runs the **core numerical checks** interactively.
 [GitHub](https://github.com/kinaar8340/mystery) ([angle steps](https://github.com/kinaar8340/mystery/blob/main/notes/angle_derivation.md)).
 
 ### Three steps (60 seconds)
-1. **Adjust κ** on the slider (documented κ = 0.85 is marked).
+1. **Adjust κ** on the slider (default κ_doc = 0.85; production κ_sim ≈ 0.89 noted in Stage 6).
 2. **Run analysis** — read metrics for R, B(κ), κ*, and angle/369 tens.
 3. **Open Gravity** — 3D unit cell, residual explorer, and probe hooks; or **Figures** for reference plots.
 
@@ -368,7 +369,9 @@ CLAIMS_MD = """
 | **30-60-90 proximity** | Bar chart comparing φ-e-π angles vs exact 30°/60°/90°. |
 | **3-6-9 tens** | Angle÷10° values (~3.10 / 5.99 / 8.91) in metrics block. |
 | **Holonomy gap** | B(κ) = π²(e/π−κ) vs R; κ* nulls the bound exactly. |
-| **κ_doc = 0.85** | Documented locked invariant — 0.16% from κ*, 9.5% bound gap at κ_doc. |
+| **κ_doc = 0.85** | Documentation / theory anchor — 0.16% from κ*, 9.5% bound gap at κ_doc. |
+| **κ_sim ≈ 0.89** | Simulation / production optimum (Stage 6 dual-analog, survival @ λt=2). |
+| **Dual-role κ** | Mild consistent preference: docs retain κ_doc; tuned runs use κ_sim — not a contradiction. |
 | **TOE linkage** | θ_crit ≈ π(1+κ), Θ_link ≈ π — see [toe repo](https://github.com/kinaar8340/toe). |
 
 Full results: [docs/RESULTS.md](https://github.com/kinaar8340/mystery/blob/main/docs/RESULTS.md)
@@ -853,7 +856,8 @@ def format_metrics(kappa: float) -> str:
             f"  π tens        : {tens['pi_angle_tens']:.4f}",
             "",
             f"κ (slider)      : {kappa:.4f}",
-            f"κ_doc           : {KAPPA_DOC}",
+            f"κ_doc           : {KAPPA_DOC}  (documentation / theory)",
+            f"κ_sim           : {KAPPA_SIM}  (production optimum)",
             f"κ* = e/π−R/π²  : {k_star:.6f}",
             f"κ* vs κ_doc     : {100 * abs(k_star - KAPPA_DOC) / KAPPA_DOC:.3f}%",
             "",
@@ -4670,7 +4674,7 @@ def stage6_results_explorer_footer() -> str:
     b = STAGE6_BEST
     return "\n".join([
         "=== Stage 6 — current best (50-trial confirmed) ===",
-        f"κ              : {b['kappa']:.2f}  (pilot 0.77 → |κ−0.85| halved)",
+        f"κ_sim          : {b['kappa']:.2f}  (production; κ_doc = {KAPPA_DOC})",
         f"W_g            : {b['W_g']:.2f}  (wg_base {b['wg_base']:.0f})",
         f"mean_survival  : {b['mean_survival']:.6f}  (Δ% vs R {b['delta_pct_vs_R']:.3f}%)",
         f"hybrid score   : {b['hybrid']:.4f}",
@@ -4722,7 +4726,7 @@ def build_stage6_results_html(*, compact: bool = False) -> str:
             f'<div class="myst-stage6-card myst-stage6-compact">'
             f'<p class="myst-stage6-title">Stage 6 — Current Best Parameters</p>'
             f'<p class="myst-stage6-best">'
-            f'κ <strong>{b["kappa"]:.2f}</strong> · W<sub>g</sub> <strong>{b["W_g"]:.2f}</strong> · '
+            f'κ<sub>sim</sub> <strong>{b["kappa"]:.2f}</strong> · W<sub>g</sub> <strong>{b["W_g"]:.2f}</strong> · '
             f'w<sub>s</sub> <strong>{b["w_s"]:.0f}</strong> · loss <strong>{b["dual_analog_loss"]:.2f}</strong>'
             f'</p>'
             f'<p>mean_survival <strong>{b["mean_survival"]:.6f}</strong> · '
@@ -4744,8 +4748,9 @@ def build_stage6_results_html(*, compact: bool = False) -> str:
 <h3>Current best parameters</h3>
 <table class="myst-readme-table myst-stage6-table">
 <tbody>
-<tr><td>κ</td><td><strong>{b['kappa']:.2f}</strong></td><td>W<sub>g</sub></td><td><strong>{b['W_g']:.2f}</strong></td></tr>
-<tr><td>wg_base</td><td>{b['wg_base']:.0f}</td><td>φ_b target</td><td>{b['braiding_target']:.3f}</td></tr>
+<tr><td>κ<sub>sim</sub></td><td><strong>{b['kappa']:.2f}</strong></td><td>κ<sub>doc</sub></td><td>{KAPPA_DOC}</td></tr>
+<tr><td>W<sub>g</sub></td><td><strong>{b['W_g']:.2f}</strong></td><td>wg_base</td><td>{b['wg_base']:.0f}</td></tr>
+<tr><td>φ_b target</td><td>{b['braiding_target']:.3f}</td><td>κ*</td><td>{kappa_star():.4f}</td></tr>
 <tr><td>w<sub>s</sub></td><td>{b['w_s']:.0f}</td><td>golden_reward</td><td>{b['golden_reward']:.3f}</td></tr>
 <tr><td>mean_survival</td><td>{b['mean_survival']:.6f}</td><td>Δ% vs R</td><td>{b['delta_pct_vs_R']:.3f}%</td></tr>
 <tr><td>hybrid score</td><td>{b['hybrid']:.4f}</td><td>dual_analog loss</td><td><strong>{b['dual_analog_loss']:.2f}</strong></td></tr>
@@ -4770,7 +4775,21 @@ def build_stage6_results_html(*, compact: bool = False) -> str:
 <tbody>{modes}</tbody>
 </table>
 
-<h3>Robustness @ κ = 0.89, W<sub>g</sub> = 111.41</h3>
+<h3>Dual-role κ</h3>
+<p>The model exhibits a mild but consistent preference: while the documented gauge value is
+<strong>κ<sub>doc</sub> = {KAPPA_DOC}</strong>, systematic tuning and survival alignment at λt = 2
+converge near <strong>κ<sub>sim</sub> ≈ {KAPPA_SIM}</strong>. We maintain both with clearly separated roles —
+not a contradiction. κ* = e/π − R/π² ≈ {kappa_star():.4f} nulls the residual bound exactly.</p>
+<table class="myst-readme-table myst-stage6-table">
+<thead><tr><th>Symbol</th><th>Value</th><th>Role</th></tr></thead>
+<tbody>
+<tr><td>κ<sub>doc</sub></td><td>{KAPPA_DOC}</td><td>Documentation, θ_crit, B(κ) framing</td></tr>
+<tr><td>κ<sub>sim</sub></td><td>≈ {KAPPA_SIM}</td><td>Production meta-opt &amp; survival alignment</td></tr>
+<tr><td>κ*</td><td>≈ {kappa_star():.4f}</td><td>Exact null e/π − R/π²</td></tr>
+</tbody>
+</table>
+
+<h3>Robustness @ κ<sub>sim</sub> = {KAPPA_SIM}, W<sub>g</sub> = 111.41</h3>
 <p>{rob['n_runs']} runs (3 IC × 2 λt + 3 twist × 2 λt × 2 step modes). Best Δ% vs R =
 <strong>{rob['best_delta_pct_vs_R']:.3f}%</strong>, hybrid <strong>{rob['best_hybrid']:.4f}</strong>,
 mean_survival @ λt=2 = <strong>{rob['mean_survival_at_lambda_t2']:.6f}</strong>
@@ -4801,7 +4820,8 @@ def terminal_results_snapshot() -> str:
             f"{tens['e_angle_tens']:.2f} / "
             f"{tens['pi_angle_tens']:.2f}",
             "",
-            f"κ_doc          {KAPPA_DOC}",
+            f"κ_doc          {KAPPA_DOC}  (documentation / theory)",
+            f"κ_sim          {KAPPA_SIM}  (production optimum)",
             f"κ*             {k_star:.5f}  ({100 * abs(k_star - KAPPA_DOC) / KAPPA_DOC:.2f}% from κ_doc)",
             f"B(κ_doc)−R     {b_doc - tri['pythagorean_residual']:+.5f}  "
             f"({100 * abs(b_doc - tri['pythagorean_residual']) / abs(tri['pythagorean_residual']):.1f}% gap)",

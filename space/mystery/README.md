@@ -59,7 +59,11 @@ Opens on the **Gravity** tab — two-column preset explorer with live TUI metric
 | R = φ²+e²−π² | **+0.137486** (~1.39% error) |
 | Angles | **31.0° / 59.9° / 89.1°** |
 | 3-6-9 tens | **3.10 / 5.99 / 8.91** |
+| κ_doc | **0.85** (documentation / theory) |
+| κ_sim | **≈ 0.89** (production optimum) |
 | κ* = e/π − R/π² | **≈ 0.8513** (0.16% from κ_doc) |
+
+> Mild consistent preference: docs retain κ_doc; tuned runs use κ_sim — not a contradiction.
 
 ### Stage 6 — analog objective tuning (w_s=5, 30 trials)
 

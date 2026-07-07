@@ -22,7 +22,23 @@ Regenerate JSON: `python run_all.py` → `outputs/`.
 | κ_sim (simulation optimum) | **≈ 0.890** |
 | e/π | **0.865256** (Δ from κ_doc: **1.76%**) |
 | Θ_link | **≈ π** (3.128 rad) |
-| θ_crit = π(1+κ) | **5.812 rad** |
+| θ_crit = π(1+κ_doc) | **5.812 rad** |
+
+## Production vs documentation parameters
+
+The model exhibits a mild but consistent preference: while the documented gauge value is **κ_doc = 0.85**, systematic tuning and survival alignment at λt = 2 converge near **κ_sim ≈ 0.89**. We maintain both with clearly separated roles — not a contradiction.
+
+| Symbol | Value | Role |
+|--------|-------|------|
+| **κ_doc** | 0.85 | Documentation / theory: θ_crit = π(1+κ), residual scaling B(κ), Hopf lattice framing |
+| **κ_sim** | ≈ 0.89 | Simulation / production: Stage 6 dual-analog optimum, best Δ% vs R, island+Hopf minimum |
+| **κ\*** | ≈ 0.8513 | Exact mathematical null: e/π − R/π² (0.16% from κ_doc) |
+
+**Production meta-opt:** dual-analog, w_s = 5, golden_reward_weight = 0.3, hybrid survival, **no κ prior**, κ = **κ_sim ≈ 0.89**, W_g ≈ 111.41, loss **56.98**.
+
+**Documentation:** retain κ_doc = 0.85 in formulas, nulling discussion, and browser κ slider default.
+
+Paired sweep (Stage 7): κ_sim wins best Δ% vs R (0.121% vs 0.166%) and island+Hopf loss; κ_doc marginally wins uniform PDE hybrid. See Stage 7 section below.
 
 ## Residual scaling
 
@@ -267,7 +283,24 @@ Grid: **3 braid gains × 4 topology configs** = 12 runs; adaptive κ feedback ev
 
 **vs bare epoch bake (Stage 8):** island training prevents κ over-correction; κ_proxy behavior (369 → κ_sim) is consistent across both engines.
 
-JSON (toe): `toe/outputs/magic_island/island_topology_grid_z129_20260707_005606.json`
+JSON (quick, 12 effective facts): `toe/outputs/magic_island/island_topology_grid_z129_20260707_005606.json`
+
+**Full corpus (60 paper-derived facts, no `--quick`):**
+
+```bash
+toe/venv/bin/python scripts/magic_island_sweep.py \
+  --topology-grid --island-z 129 --braid-gains 0.002 0.005 0.01
+```
+
+| braid_gain | κ_final | κ_drift | κ_proxy (369 on) | stability |
+|------------|---------|---------|------------------|-----------|
+| **0.002** | **0.832** | −0.018 | **0.885** | **43.0** |
+| 0.005 | 0.805 | −0.045 | 0.885 | 43.0 |
+| 0.01 | 0.760 | −0.090 | 0.885 | 43.0 |
+
+vs quick (12 facts): κ_final **0.849** @ gain 0.002. Topology still flat on κ_final; **vortex_369** still shifts κ_proxy → κ_sim. Deeper training pulls κ_final below κ_doc — production **braid_feedback_gain = 0.002** remains the tuned default.
+
+JSON (60 facts): `toe/outputs/magic_island/island_topology_grid_z129_20260707_011316.json`
 
 ## Analog sweeps (Stages 4–5)
 

@@ -31,6 +31,7 @@ from demo_core import (
     GITHUB_URL,
     HF_SPACE_URL,
     KAPPA_DOC,
+    KAPPA_SIM,
     PHYSICAL_INTERPRETATION_INTRO_MD,
     PHYSICAL_INTERPRETATION_MATH_MD,
     PROBE_HOOKS_TABLE_MD,
@@ -280,7 +281,7 @@ SIGNAL_SCANNER_HTML = f"""
   <pre class="myst-signal-body">PHOSPHOR SIGNAL SCAN — φ · e · π
 {'─' * 72}
 R = φ²+e²−π²     {R:+.6f}
-κ_doc = {KAPPA_DOC}    κ* ≈ {kappa_star():.5f}
+κ_doc = {KAPPA_DOC}    κ_sim ≈ {KAPPA_SIM}    κ* ≈ {kappa_star():.5f}
 angles ≈ 31.0° / 59.9° / 89.1°
 369 tens ≈ 3.10 / 5.99 / 8.91
 {'─' * 72}
@@ -460,7 +461,7 @@ def _optics_terminal_status() -> str:
         "\n".join(
             [
                 f"Environment : {env}",
-                f"κ default   : {KAPPA_DOC} (documented invariant)",
+                f"κ_doc       : {KAPPA_DOC} (theory)  κ_sim ≈ {KAPPA_SIM} (production)",
                 f"R residual  : {R:+.6f}  (~1.39% Pythagorean error)",
                 f"κ*          : {k_star:.5f}  (0.16% from κ_doc)",
                 "Pipeline    : φ-e-π triangle → B(κ) scaling → figures",
@@ -8637,7 +8638,7 @@ _GRAVITY_PARAM_CATALOG: tuple[dict[str, object], ...] = (
         "min": 0.70,
         "max": 0.95,
         "default": KAPPA_DOC,
-        "desc": f"κ_doc = {KAPPA_DOC} · κ* nulls B(κ)−R",
+        "desc": f"κ_doc = {KAPPA_DOC} · κ_sim ≈ {KAPPA_SIM} · κ* nulls B(κ)−R",
     },
     {
         "id": "06",
@@ -12632,6 +12633,7 @@ def build_app() -> gr.Blocks:
                                     value=KAPPA_DOC,
                                     step=0.001,
                                     label="05 · κ (holonomy-gap parameter)",
+                                    info=f"κ_doc = {KAPPA_DOC} · κ_sim ≈ {KAPPA_SIM} · κ* nulls B(κ)−R",
                                     elem_classes=["vqc-optics-dial-wrap"],
                                     interactive=True,
                                 )
@@ -12793,7 +12795,7 @@ def build_app() -> gr.Blocks:
                             value=KAPPA_DOC,
                             step=0.001,
                             label="κ (holonomy-gap parameter)",
-                            info=f"κ_doc = {KAPPA_DOC} · κ* nulls B(κ)−R",
+                            info=f"κ_doc = {KAPPA_DOC} · κ_sim ≈ {KAPPA_SIM} · κ* nulls B(κ)−R",
                             elem_classes=["vqc-optics-dial-wrap"],
                             interactive=False,
                         )

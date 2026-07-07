@@ -20,7 +20,7 @@ Quantified research notebook exploring the near-Pythagorean triangle formed by �
 | Probe | Key finding |
 |-------|-------------|
 | `phi_e_pi_analysis` | R = **+0.137486** (1.39% error); angles **31.0° / 59.9° / 89.1°** |
-| `hopf_constant_bridge` | W_g = **111.408**; κ = **0.85** vs e/π **0.865** (Δ 1.76%); Θ_link ≈ π, θ_crit ≈ **5.81** |
+| `hopf_constant_bridge` | W_g = **111.408**; **κ_doc = 0.85** vs e/π **0.865** (Δ 1.76%); **κ_sim ≈ 0.89** (production); Θ_link ≈ π, θ_crit ≈ **5.81** |
 | `vortex_369_clock` | Angles ÷10° → **3.10 / 5.99 / 8.91** (nearest 3/6/9) |
 | `residual_bound_probe` | Best near-miss: **π²(e/π−κ) ≈ 0.151** (9.5% from R) |
 | `residual_kappa_sweep` | **κ* = e/π − R/π² ≈ 0.8513** — only **0.15%** from κ_doc |
@@ -31,6 +31,18 @@ Quantified research notebook exploring the near-Pythagorean triangle formed by �
 | `rodin_hopf_fiber_map` | Doubling cycle **1-2-4-8-7-5** mapped to S¹ phase increments |
 
 Full table: [`docs/RESULTS.md`](docs/RESULTS.md) · Scaling note: [`notes/residual_scaling.md`](notes/residual_scaling.md)
+
+### Dual-role κ
+
+The model exhibits a mild but consistent preference: while the documented gauge value is **κ_doc = 0.85**, systematic tuning and survival alignment at λt = 2 converge near **κ_sim ≈ 0.89**. We maintain both with clearly separated roles.
+
+| Symbol | Value | Role |
+|--------|-------|------|
+| **κ_doc** | 0.85 | Documentation / theory (θ_crit, B(κ), residual framing) |
+| **κ_sim** | ≈ 0.89 | Simulation / production (Stage 6 dual-analog optimum) |
+| **κ\*** | ≈ 0.8513 | Exact null e/π − R/π² |
+
+Production runs use κ_sim; formulas and the HF κ slider default retain κ_doc. Details: [`docs/RESULTS.md`](docs/RESULTS.md) · [`notes/stage6_analog_tuning.md`](notes/stage6_analog_tuning.md).
 
 ---
 
@@ -69,7 +81,7 @@ This analog addresses **how** residual structure may persist in angular packing 
 
 **Dynamical meaning:** In any memoryless constant-rate process `f(t) = f₀·e^(−λt)`, the universal **survival fraction** after exactly two characteristic times (λt = 2) is e⁻². This is the broadest "residual after normalized dynamics" — theory-agnostic and already tied to the e² term inside R.
 
-In the TOE twist-PDE and conduit gauge dynamics, the mean-field restoring torque `−κθ̄` identifies an effective rate λ ≈ κ (locked **κ ≈ 0.85**). Normalizing simulation time to λt = 2 therefore tests whether measured survival fractions (mean twist, fluctuation energy, braiding phase residuals, identity persistence) track e⁻² or the observed R.
+In the TOE twist-PDE and conduit gauge dynamics, the mean-field restoring torque `−κθ̄` identifies an effective rate λ ≈ κ. Documentation uses **κ_doc = 0.85**; tuned production runs converge to **κ_sim ≈ 0.89**. Normalizing simulation time to λt = 2 therefore tests whether measured survival fractions (mean twist, fluctuation energy, braiding phase residuals, identity persistence) track e⁻² or the observed R.
 
 **Connections to existing probes:**
 
@@ -79,7 +91,7 @@ In the TOE twist-PDE and conduit gauge dynamics, the mean-field restoring torque
 | `RubikConeConduit` gauge damping | Global pointer \(\kappa\); \(W_g \approx 111.408\); braiding \(\approx 0.814\) |
 | `hopf_constant_bridge` | Holonomy gap e/π − κ; B(κ) = π²(e/π − κ) scaling |
 | `conduit_angular_probe` | Angular distributions near 30°/60°/90° (modest, not forced) |
-| Attractors / meta_optimize | κ locks at 0.85; transcendentals are not optima — residual is emergent |
+| Attractors / meta_optimize | κ_doc = 0.85 (docs); κ_sim ≈ 0.89 (production); transcendentals are not optima |
 
 **Complementarity:** Golden angle → **rotational packing efficiency**; e⁻² → **temporal persistence after scaled relaxation**. Together they strengthen the reading of R as a **compatible emergent signature** in a geometric-dynamical system with both twist and decay — not as a fitting error.
 
@@ -111,7 +123,7 @@ Four probes move this project from exploratory numerology into a **well-quantifi
 | Probe | Result |
 |-------|--------|
 | **Residual** | R = φ²+e²−π² = **+0.137486** (stable, drift &lt; 1e−10) |
-| **Meta-optimizer** | κ = **0.8500** exactly; W_g ≈ **111.89**; φ_b ≈ **0.754** — transcendentals are **not** attractors |
+| **Meta-optimizer** | κ_doc = **0.85**; κ_sim ≈ **0.89** (dual-analog); W_g ≈ **111.41**; φ_b ≈ **0.754** — transcendentals are **not** attractors |
 | **PDE relaxation** | Uniform low-twist minimum; DC-dominated FFT — **expected**, not a failure |
 | **Conduit angular** | ~8% near 30° / ~6% near 60° / ~4% near 90° — modest, not a 3-6-9 lock |
 

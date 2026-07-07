@@ -16,6 +16,7 @@
 | 0 | Triangle angle derivation | **Documented** — [angle_derivation.md](angle_derivation.md); 3-6-9 mapping still interpretive |
 | 1 | Closed form for φ, e, π | Best near-miss: π²(e/π−κ) ≈ 0.151 vs R ≈ 0.137 (9.5% off) |
 | 4 | κ vs e/π | **Dual-role κ:** κ_doc = 0.85 (theory anchor); κ_sim ≈ 0.89 (island+survival optimum); κ* ≈ 0.8513 (exact null). e/π is independent ~1.8% near-miss |
+| 9 | Why κ_sim ≈ 0.89 vs κ_doc = 0.85? | **Open** — ~4% shift from island+Hopf + survival at λt=2; vortex_369 shifts κ_proxy to κ_sim; not resolved by κ prior (w_κ≤500). Physical meaning in Hopf lattice TBD |
 | 7 | φ_b | Meta best ≈ 0.754 (3/4 anyonic); not φ⁻¹ |
 | 8 | Conduit 369 flags | ~8% near 30°; modest, not locked |
 
