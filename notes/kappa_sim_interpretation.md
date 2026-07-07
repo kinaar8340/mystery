@@ -1,8 +1,8 @@
-# Physical Interpretation — κ_sim vs κ_doc (Open Question #9)
+# Physical Interpretation — κ_sim vs κ_doc (Q#9 closed)
 
-Working answer for July 2026. Complements [`kappa_star_variational.md`](kappa_star_variational.md), [`residual_scaling.md`](residual_scaling.md), and Stage 6–8 results in [`docs/RESULTS.md`](../docs/RESULTS.md).
+July 2026. Complements [`kappa_star_variational.md`](kappa_star_variational.md), [`residual_scaling.md`](residual_scaling.md), and Stage 6–8 results in [`docs/RESULTS.md`](../docs/RESULTS.md) (canonical summary in **§ Physical interpretation — κ_sim vs κ_doc**).
 
-**Status:** Partially resolved — a coherent physical story is available; full derivation from the Lagrangian remains open.
+**Status:** Closed — physical roles of κ_doc / κ\* / κ_sim are defined and evidence-backed. Remaining work: formal Skyrme derivation of π² prefactor and PDE eigenstructure proof for survival minimum at κ ≈ 0.891 (tracked in open_questions §2).
 
 ---
 

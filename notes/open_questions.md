@@ -8,6 +8,7 @@
 | 3 | High-precision residual | R stable; drift &lt; 1e−10 |
 | 5 | θ_crit dual definitions | Θ_link ≈ π; θ_crit = π(1+κ) ≈ 5.8 — see `theta_crit_reconciliation.md` |
 | 6 | PDE uniform relaxation | No φ/e/π FFT signature — expected for this IC class |
+| 9 | Why κ_sim ≈ 0.89 vs κ_doc = 0.85? | **Closed** — static κ_doc (θ_crit, B(κ), training seed) vs dynamic κ_sim (λ≈κ survival optimum @ λt=2 ≈0.891; holonomy-gap regime crossing κ > e/π; 369 κ_proxy→κ_sim). See [`docs/RESULTS.md`](../docs/RESULTS.md) § Physical interpretation · [`kappa_sim_interpretation.md`](kappa_sim_interpretation.md) |
 
 ## Active (partially answered)
 
@@ -16,7 +17,6 @@
 | 0 | Triangle angle derivation | **Documented** — [angle_derivation.md](angle_derivation.md); 3-6-9 mapping still interpretive |
 | 1 | Closed form for φ, e, π | Best near-miss: π²(e/π−κ) ≈ 0.151 vs R ≈ 0.137 (9.5% off) |
 | 4 | κ vs e/π | **Dual-role κ:** κ_doc = 0.85 (theory anchor); κ_sim ≈ 0.89 (island+survival optimum); κ* ≈ 0.8513 (exact null). e/π is independent ~1.8% near-miss |
-| 9 | Why κ_sim ≈ 0.89 vs κ_doc = 0.85? | **Partially answered** — κ_doc = static anchor (θ_crit, B(κ) framing, training seed); κ_sim = dynamic dissipative optimum (λ≈κ survival min @ λt=2 ≈0.891). Island loss nearly κ-flat; survival + conduit alignment primary pull; 369 shifts κ_proxy→κ_sim. See [`kappa_sim_interpretation.md`](kappa_sim_interpretation.md) |
 | 7 | φ_b | Meta best ≈ 0.754 (3/4 anyonic); not φ⁻¹ |
 | 8 | Conduit 369 flags | ~8% near 30°; modest, not locked |
 

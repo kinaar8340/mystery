@@ -40,7 +40,53 @@ The model exhibits a mild but consistent preference: while the documented gauge 
 
 Paired sweep (Stage 7): κ_sim wins best Δ% vs R (0.121% vs 0.166%) and island+Hopf loss; κ_doc marginally wins uniform PDE hybrid. See Stage 7 section below.
 
-**Physical interpretation (Q#9):** κ_doc is the static design anchor (θ_crit, B(κ) framing); κ_sim is the dynamic dissipative optimum where λ≈κ survival at λt=2 best tracks R (minimum Δ% near κ≈0.891). The shift crosses the holonomy gap sign (κ_sim > e/π). Full write-up: [`notes/kappa_sim_interpretation.md`](../notes/kappa_sim_interpretation.md).
+## Physical interpretation — κ_sim vs κ_doc (Q#9 closed)
+
+The ~4% gap |κ_sim − κ_doc| ≈ 0.04 is **not a contradiction**. κ enters the gauged Hopf lattice in two distinct physical senses:
+
+| Sense | Symbol | Value | Question it answers |
+|-------|--------|-------|---------------------|
+| **Static** | κ_doc | 0.85 | What κ defines θ_crit, B(κ) framing, and training seeds? |
+| **Algebraic** | κ\* | ≈ 0.8513 | What κ nulls B(κ) = π²(e/π−κ) = R exactly? |
+| **Dynamic** | κ_sim | ≈ 0.89 | What κ minimizes survival misalignment at λt = 2 under tuned dynamics? |
+
+### κ as a dissipation rate
+
+In the mean-field twist-PDE reduction, gauge torque **−κθ̄** identifies effective rate **λ ≈ κ**. At normalized time λt = 2, step count is n = (λt/κ)/dt — higher κ means stronger per-step damping and a different mean survival fraction.
+
+κ-survival sweep (uniform IC, λt = 2):
+
+| κ | mean_survival | Δ% vs R |
+|---|---------------|---------|
+| 0.8500 (κ_doc) | 0.137606 | 0.088% |
+| 0.8513 (κ\*) | ≈ 0.1375 | ≈ 0.05% |
+| 0.8900 (κ_sim) | 0.137652 | 0.121% |
+| **0.8909** (sweep best) | **0.137506** | **0.015%** |
+
+**Primary pull toward κ_sim:** survival alignment at λt = 2 peaks near κ ≈ 0.891, not κ_doc. Stage 7 conduit Δ% improves **0.166% → 0.121%**; 70-run robust grid holds conduit metrics identical across twist 8–17.5 and step modes.
+
+**Secondary:** island+Hopf+braiding base loss is nearly κ-flat (~0.05 spread over κ ∈ [0.8, 0.9]); κ prior w_κ ≤ 500 cannot pull κ back to 0.85.
+
+### Holonomy-gap regime crossing
+
+| κ | e/π − κ | B(κ) = π²(e/π−κ) | Regime |
+|---|---------|-------------------|--------|
+| κ_doc 0.85 | +0.0153 | +0.1506 (9.5% above R) | Positive gap — drive > damping |
+| κ\* 0.8513 | +0.0139 | ≈ R (exact null) | Algebraic null |
+| e/π 0.8653 | 0 | 0 | Crossover |
+| **κ_sim 0.89** | **−0.0247** | negative | **Damping-dominated** (κ > e/π) |
+
+κ_sim does **not** null B(κ) = R — that is κ\*. It optimizes **dynamic** survival. θ_crit rises from **5.81 rad** @ κ_doc to **~5.94 rad** @ κ_sim (~2% more burst headroom).
+
+### Topology readout (Stage 8)
+
+**vortex_math_369** shifts holonomy **κ_proxy** from ~0.854 → **~0.885** (κ_sim neighborhood) without forcing adaptive **κ_final** there under gentle braid gain (magic-island κ_final ≈ 0.849 @ gain 0.002). Interpretation: trained pointer anchors near κ_doc; active vortex sector **measures** emergent holonomy consistent with κ_sim.
+
+### Synthesis
+
+κ_doc = 0.85 is the **static** global pointer constant (θ_crit, B(κ) framing, training seed, 0.16% from κ\*). κ_sim ≈ 0.89 is the **dynamic** dissipative optimum where λ ≈ κ survival at λt = 2 best tracks R. The shift is not toward e/π (0.865) — it crosses into a damping-dominated holonomy regime. Production uses κ_sim; documentation retains κ_doc.
+
+Extended note: [`notes/kappa_sim_interpretation.md`](../notes/kappa_sim_interpretation.md). Remaining derivations (π² prefactor from Skyrme reduction, PDE eigenstructure proof for κ ≈ 0.891) stay in open_questions §2.
 
 ## Residual scaling
 
@@ -329,4 +375,4 @@ JSON (60 facts): `toe/outputs/magic_island/island_topology_grid_z129_20260707_01
 
 ## Framing
 
-**Compatible emergent signature** — not an exact identity, not forced by invariants, not contradicted by simulation. κ_doc (0.85) and κ_sim (≈0.89) coexist as documentation anchor vs simulation optimum; neither is claimed as a unique physical constant.
+**Compatible emergent signature** — not an exact identity, not forced by invariants, not contradicted by simulation. κ_doc (0.85) and κ_sim (≈0.89) coexist as static documentation anchor vs dynamic simulation optimum (Q#9 closed); neither is claimed as a unique physical constant.

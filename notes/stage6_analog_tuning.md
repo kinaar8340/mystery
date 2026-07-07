@@ -195,6 +195,7 @@ python scripts/meta_optimize_phi_probe.py \
 |----------|-------------------|
 | Pull κ toward 0.85? | **Closed** — squared prior (w_κ≤500) and paired sweep confirm κ_sim ≈ 0.89; retain κ_doc=0.85 for docs |
 | Is κ ≈ 0.89 preferred over κ_doc? | **Yes for simulation** — best Δ% vs R, island+Hopf minimum; κ_doc marginally better on uniform hybrid |
+| Why κ_sim vs κ_doc? (Q#9) | **Closed** — see [`kappa_sim_interpretation.md`](kappa_sim_interpretation.md) and [`docs/RESULTS.md`](../docs/RESULTS.md) § Physical interpretation |
 | golden_reward_weight sensitivity | Grid w_s × golden_reward_weight at fixed 30+ trials |
 | 100+ trials | Diminishing returns given convergence by trial ~22 |
 
