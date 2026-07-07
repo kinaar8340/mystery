@@ -1180,17 +1180,17 @@ def brackish_dashboard_to_data_uri(**kwargs: Any) -> str:
 
 
 def brackish_dashboard_viewport_html(**kwargs: Any) -> str:
-    """HF-safe viewport HTML for interactive Demo J preview — resonator only."""
+    """HF-safe viewport HTML for interactive Demo C preview — resonator only."""
     render = _render_kwargs(**kwargs)
     uri = brackish_resonator_to_data_uri(**render)
-    title = "Demo J — 2×2 Platonic Resonator"
+    title = "Demo C — 2×2 Platonic Resonator"
     subtitle = (
         f"wind base={kwargs.get('base', 1.0):.2f} · "
         f"amp={kwargs.get('amplitude', 0.4):.2f} · "
         f"sep={kwargs.get('visual_separation', DEFAULT_BRACKISH_PARAMS['visual_separation']):.2f}"
     )
     return (
-        f'<div class="myst-gravity-viewport-inner myst-gravity-demo-j">'
+        f'<div class="myst-gravity-viewport-inner myst-gravity-demo-c">'
         f'<div class="myst-gravity-viewport-title">{title}</div>'
         f'<div class="myst-gravity-viewport-sub">{subtitle}</div>'
         f'<img class="myst-brackish-dashboard-img" src="{uri}" '

@@ -945,9 +945,9 @@ _SHAPE_NAV_IDS: tuple[str, ...] = ("D4", "D6", "D8", "D12", "D20")
 _DEFAULT_ACTIVE_SHAPE = "D6"
 _NO_ACTIVE_SHAPE = ""
 _NO_ACTIVE_DEMO_LETTER = ""
-# Demo B–J flip-flop with platonic D* (Demo A is outside this group).
+# Demo B–I flip-flop with platonic D* (Demo A is outside this group).
 _DEMO_PLATONIC_FLIP_LETTERS: frozenset[str] = frozenset(
-    letter for letter in tuple(chr(ord("A") + i) for i in range(10)) if letter != "A"
+    letter for letter in tuple(chr(ord("A") + i) for i in range(9)) if letter != "A"
 )
 
 
@@ -3146,7 +3146,7 @@ footer {{
     display: block !important;
     pointer-events: none !important;
 }}
-/* Demo J — brackish controls + dashboard preview */
+/* Demo C — brackish controls + dashboard preview */
 .gradio-container .myst-brackish-controls {{
     margin: 0.5rem 0 0.75rem !important;
     padding: 0.75rem 1rem !important;
@@ -3166,7 +3166,7 @@ footer {{
 .gradio-container .myst-brackish-dashboard-img {{
     background: #0a0a0f !important;
 }}
-/* Demo J — 2×2 quad fits available viewport (no browser zoom required) */
+/* Demo C — 2×2 quad fits available viewport (no browser zoom required) */
 .gradio-container .myst-gravity-page .myst-brackish-quad-viewport#myst-gravity-viewport-wrapper,
 .gradio-container .myst-gravity-page .myst-brackish-quad-viewport.myst-gravity-single-viewport {{
     --myst-brackish-viewport-height: clamp(470px, calc(100dvh - 15.5rem), 545px) !important;
@@ -3359,7 +3359,7 @@ footer {{
     position: relative !important;
     overflow: hidden !important;
 }}
-.gradio-container .myst-gravity-page .myst-demo-viewport-loading-j {{
+.gradio-container .myst-gravity-page .myst-demo-viewport-loading-c {{
     background: #0a0a0f !important;
 }}
 .gradio-container .myst-gravity-page .myst-demo-viewport-loading-preview {{
@@ -3373,7 +3373,7 @@ footer {{
     pointer-events: none !important;
     z-index: 1 !important;
 }}
-.gradio-container .myst-gravity-page .myst-demo-viewport-loading-j .myst-demo-viewport-loading-card {{
+.gradio-container .myst-gravity-page .myst-demo-viewport-loading-c .myst-demo-viewport-loading-card {{
     position: relative !important;
     z-index: 2 !important;
     background: rgba(10, 10, 15, 0.82) !important;
@@ -8636,11 +8636,11 @@ _RENDER_DETAIL_IMAGE_DPI = 120
 # Index of unit_cell_image within gravity_preset_outputs
 # (16 keypad + 1 legacy back skip + 9 child nav + 2 edit btns + 20 sliders + …).
 _GRAVITY_PRESET_IMAGE_OUT_INDEX = 51
-_GRAVITY_CHILD_NAV_LETTERS: tuple[str, ...] = tuple(chr(ord("A") + i) for i in range(10))
-# Demo B — E→F→G→H→I pipeline; C/D — D6 preset convex; E/G/H/I — platonic deform; F — breathing; J — brackish.
+_GRAVITY_CHILD_NAV_LETTERS: tuple[str, ...] = tuple(chr(ord("A") + i) for i in range(9))
+# Demo B — E→F→G→H→I pipeline; C — brackish 2×2; D — D6 preset convex; E/G/H/I — platonic deform; F — breathing.
 _PIPELINE_DEMO_LETTERS: frozenset[str] = frozenset({"B"})
-_PRESET_DEMO_LETTERS: frozenset[str] = frozenset({"C", "D"})
-_PRESET_DEMO_PRESSURE_BY_LETTER: dict[str, float] = {"C": 0.50, "D": 0.25}
+_PRESET_DEMO_LETTERS: frozenset[str] = frozenset({"D"})
+_PRESET_DEMO_PRESSURE_BY_LETTER: dict[str, float] = {"D": 0.25}
 _DEFORM_DEMO_LETTERS: frozenset[str] = frozenset({"E", "G", "H", "I"})
 _DEFORM_DEMO_SHAPE_BY_LETTER: dict[str, str] = {
     "E": "D4",
@@ -8654,17 +8654,16 @@ _PLATONIC_SHAPE_TO_DEFORM_LETTER: dict[str, str] = {
 _DEMO_VIEWPORT_OVERLAY_BY_LETTER: dict[str, tuple[str, str]] = {
     "A": ("Demo A", "Startup landing · select a demo tab"),
     "B": ("Demo B", "E→F→G→H→I pipeline stitch loop"),
-    "C": ("Demo C", "D6 · Cube · moderate convex preset"),
+    "C": ("Demo C", "2×2 resonator · exterior · interior · central"),
     "D": ("Demo D", "D6 · Cube · mild convex preset"),
     "E": ("Demo E", "D4 · Tetrahedron · breathing deformation"),
     "F": ("Demo F", "D6 · Cube · full breathing cycle"),
     "G": ("Demo G", "D8 · Octahedron · breathing deformation"),
     "H": ("Demo H", "D12 · Dodecahedron · breathing deformation"),
     "I": ("Demo I", "D20 · Icosahedron · breathing deformation"),
-    "J": ("Demo J", "2×2 resonator · exterior · interior · interior · central"),
 }
 _BREATHING_DEMO_LETTERS: frozenset[str] = frozenset({"F"})
-_BRACKISH_DEMO_LETTERS: frozenset[str] = frozenset({"J"})
+_BRACKISH_DEMO_LETTERS: frozenset[str] = frozenset({"C"})
 _GRAVITY_HOME_DIALS = {
     "phi": 1.0,
     "e": 1.0,
@@ -9447,7 +9446,7 @@ def _gravity_viewport_wrapper_classes(
     letter = str(active_letter or "A").strip().upper()
     if letter in _GRAVITY_CHILD_NAV_LETTERS:
         classes.append("myst-demo-viewport")
-    if letter == "J":
+    if letter == "C":
         classes.append("myst-brackish-quad-viewport")
     elif _is_active_shape(active_shape):
         classes.append("myst-demo-viewport")
@@ -9530,7 +9529,6 @@ _BRACKISH_DEMO_VIDEO_CACHE: dict[str, str] = {}
 _APP_DIR = os.path.dirname(os.path.abspath(__file__))
 _BUNDLED_PIPELINE_VIDEO = os.path.join(_APP_DIR, "assets", "demo_b_pipeline_efghi.mp4")
 _BUNDLED_PRESET_DEMO_VIDEOS: dict[str, str] = {
-    "C": os.path.join(_APP_DIR, "assets", "demo_c_d6_moderate_convex.mp4"),
     "D": os.path.join(_APP_DIR, "assets", "demo_d_d6_mild_convex.mp4"),
 }
 _BUNDLED_DEMO_DEFORM_VIDEOS: dict[str, str] = {
@@ -9670,9 +9668,9 @@ def _get_deform_demo_video_path(letter: str) -> str:
 
 def _get_preset_demo_video_path(letter: str) -> str:
     """Gradio-served path to D6 preset convex loop MP4 (bundled asset preferred)."""
-    active = str(letter or "C").strip().upper()
+    active = str(letter or "D").strip().upper()
     if active not in _PRESET_DEMO_LETTERS:
-        active = "C"
+        active = "D"
     if active not in _DEMO_PRESET_VIDEO_CACHE:
         bundled = _BUNDLED_PRESET_DEMO_VIDEOS.get(active, "")
         if bundled and os.path.isfile(bundled):
@@ -9752,9 +9750,9 @@ def _get_brackish_demo_video_path(
         default_key = brackish_params_key(**DEFAULT_BRACKISH_PARAMS)
         if cache_key == default_key and os.path.isfile(_BUNDLED_BRACKISH_VIDEO):
             raw_path = _BUNDLED_BRACKISH_VIDEO
-            print(f"[demo-j] using bundled asset: {raw_path}", flush=True)
+            print(f"[demo-c] using bundled asset: {raw_path}", flush=True)
         else:
-            print(f"[demo-j] encoding brackish loop (params={cache_key})", flush=True)
+            print(f"[demo-c] encoding brackish loop (params={cache_key})", flush=True)
             raw_path = render_brackish_clock_video(duration=6.0, fps=6, dpi=72, **params)
         _BRACKISH_DEMO_VIDEO_CACHE[cache_key] = _cache_media_for_gradio(raw_path)
     return _BRACKISH_DEMO_VIDEO_CACHE[cache_key]
@@ -9914,13 +9912,13 @@ def _demo_viewport_show_brackish_preview(
     stable_mode: bool = DEFAULT_BRACKISH_PARAMS["stable_mode"],
     visual_separation: float = DEFAULT_BRACKISH_PARAMS["visual_separation"],
 ) -> tuple:
-    """Interactive Demo J — live resonator preview."""
+    """Interactive Demo C — live resonator preview."""
     html = _brackish_preview_html(
         base=base, amplitude=amplitude, freq=freq,
         residual_weight=residual_weight, stable_mode=stable_mode,
         visual_separation=visual_separation,
     )
-    title, subtitle = _demo_letter_overlay_copy("J")
+    title, subtitle = _demo_letter_overlay_copy("C")
     return (
         gr.update(value=None, visible=False),
         gr.update(value=None, visible=False),
@@ -9944,7 +9942,7 @@ def _demo_viewport_show_brackish_video(
         residual_weight=residual_weight, stable_mode=stable_mode,
         visual_separation=visual_separation,
     )
-    title, subtitle = _demo_letter_overlay_copy("J")
+    title, subtitle = _demo_letter_overlay_copy("C")
     return (
         gr.update(value=None, visible=False),
         gr.update(value=video_path, visible=True, autoplay=True, loop=True),
@@ -9991,8 +9989,8 @@ def _demo_viewport_loading_html(letter: str) -> str:
     safe_sub = html.escape(subtitle)
     preview_html = ""
     loading_class = "myst-demo-viewport-loading"
-    if active == "J":
-        loading_class += " myst-demo-viewport-loading-j"
+    if active == "C":
+        loading_class += " myst-demo-viewport-loading-c"
         try:
             preview_uri = brackish_resonator_to_data_uri(t=6.0, dpi=72, **DEFAULT_BRACKISH_PARAMS)
             preview_html = (
@@ -10003,7 +10001,7 @@ def _demo_viewport_loading_html(letter: str) -> str:
             logger.exception("brackish loading preview failed")
     hint = (
         "Encoding 2×2 resonator loop — preview shown while the loop builds."
-        if active == "J"
+        if active == "C"
         else "Encoding deformation loop — this may take up to two minutes on first load."
     )
     return (
@@ -10126,10 +10124,10 @@ def _demo_pipeline_viewport_only() -> tuple:
 
 
 def _demo_preset_viewport_only(letter: str) -> tuple:
-    """Demo C/D viewport — D6 preset convex MP4 after tab latch."""
-    active = str(letter or "C").strip().upper()
+    """Demo D viewport — D6 preset convex MP4 after tab latch."""
+    active = str(letter or "D").strip().upper()
     if active not in _PRESET_DEMO_LETTERS:
-        active = "C"
+        active = "D"
     try:
         return _demo_viewport_show_preset_video(active)
     except Exception:
@@ -10167,7 +10165,7 @@ def _demo_brackish_viewport_only(
     stable_mode: bool = DEFAULT_BRACKISH_PARAMS["stable_mode"],
     visual_separation: float = DEFAULT_BRACKISH_PARAMS["visual_separation"],
 ) -> tuple:
-    """Demo J viewport — looping heartbeat MP4 (bundled default, encode on param change)."""
+    """Demo C viewport — looping heartbeat MP4 (bundled default, encode on param change)."""
     try:
         return _demo_viewport_show_brackish_video(
             base=base, amplitude=amplitude, freq=freq,
@@ -10175,7 +10173,7 @@ def _demo_brackish_viewport_only(
             visual_separation=visual_separation,
         )
     except Exception:
-        logger.exception("brackish demo video failed for Demo J")
+        logger.exception("brackish demo video failed for Demo C")
         return _demo_viewport_show_brackish_preview(
             base=base, amplitude=amplitude, freq=freq,
             residual_weight=residual_weight, stable_mode=stable_mode,
@@ -10185,7 +10183,7 @@ def _demo_brackish_viewport_only(
 
 def _brackish_controls_visible(letter: str) -> gr.Update:
     active = str(letter or "").strip().upper()
-    return gr.update(visible=active == "J")
+    return gr.update(visible=active == "C")
 
 
 def _brackish_animate_loop(
@@ -10216,7 +10214,7 @@ def _brackish_animate_loop(
             gr.update(value=None, visible=False),
             gr.update(value=None, visible=False),
             gr.update(value=html, visible=True),
-            _demo_viewport_overlay_update(title="Demo J", subtitle="preview fallback"),
+            _demo_viewport_overlay_update(title="Demo C", subtitle="preview fallback"),
         )
 
 
@@ -10247,10 +10245,10 @@ def _demo_startup_viewport_only() -> tuple:
 
 
 def _launch_preset_demo(letter: str) -> tuple:
-    """Demo C/D — latch + D6 preset convex loop (single-shot fallback for programmatic calls)."""
-    active = str(letter or "C").strip().upper()
+    """Demo D — latch + D6 preset convex loop (single-shot fallback for programmatic calls)."""
+    active = str(letter or "D").strip().upper()
     if active not in _PRESET_DEMO_LETTERS:
-        active = "C"
+        active = "D"
     return (*_demo_preset_viewport_only(active), *_demo_tab_latch_immediate(active))
 
 
@@ -10279,10 +10277,10 @@ def _launch_breathing_demo(letter: str) -> tuple:
 
 
 def _launch_brackish_demo(letter: str) -> tuple:
-    """Demo J — latch + brackish heartbeat (single-shot fallback for programmatic calls)."""
-    active = str(letter or "J").strip().upper()
+    """Demo C — latch + brackish heartbeat (single-shot fallback for programmatic calls)."""
+    active = str(letter or "C").strip().upper()
     if active not in _BRACKISH_DEMO_LETTERS:
-        active = "J"
+        active = "C"
     return (*_demo_brackish_viewport_only(), *_demo_tab_latch_immediate(active))
 
 
@@ -13022,7 +13020,7 @@ def build_app() -> gr.Blocks:
                 visible=False,
                 elem_classes=["myst-brackish-controls", "vqc-optics-panel"],
             ) as brackish_controls_col:
-                gr.Markdown("### Brackish dynamics · Demo J")
+                gr.Markdown("### Brackish dynamics · Demo C")
                 with gr.Row(elem_classes=["myst-brackish-preset-row"]):
                     brackish_preset_calm = gr.Button("Calm Sea", size="sm", variant="secondary")
                     brackish_preset_storm = gr.Button("Building Storm", size="sm", variant="secondary")
@@ -13761,14 +13759,13 @@ def build_app() -> gr.Blocks:
                 f"Geodesic faces       : {face_count}  ({platonic_hint})\n"
                 f"Mode                 : {d6_config.get('description', '')}\n"
                 f"Demo B               : E→F→G→H→I pipeline stitch loop\n"
-                f"Demo C               : D6 moderate convex preset loop\n"
+                f"Demo C               : 2×2 resonator · exterior · interior · central\n"
                 f"Demo D               : D6 mild convex preset loop\n"
                 f"Demo E               : D4 tetrahedron deformation loop\n"
                 f"Demo F               : breathing unit-cell loop\n"
                 f"Demo G               : D8 octahedron deformation loop\n"
                 f"Demo H               : D12 dodecahedron deformation loop\n"
-                f"Demo I               : D20 icosahedron deformation loop\n"
-                f"Demo J               : 2×2 resonator · exterior · interior · interior · central"
+                f"Demo I               : D20 icosahedron deformation loop"
             )
             header = build_unit_cell_viewport_header_html(pressure=float(dials["pressure"]))
             control_levels = _format_gravity_control_panel_html(dials, 0)
