@@ -248,7 +248,7 @@ def main() -> int:
         print(f"{name:16s}  θ̄₀={data['theta0_mean']:.4f}  σ₀={data['theta0_std']:.4f}  "
               f"κ*={b['kappa']:.4f}  S={b['mean_survival']:.6f}  Δ%={b['delta_pct_vs_R']:.3f}%")
     print()
-    print(f"Structured κ* range: [{min(structured_bests):.4f}, {max(structured_bests):.4f}]  "
+    print(f"Structured κ* range: [{min(struct_kappas):.4f}, {max(struct_kappas):.4f}]  "
           f"spread={max_spread:.4f}")
     print(f"Max |κ* − κ_sim| (structured): {max_dev_from_sim:.4f}")
     print(f"Uniform robust: {'YES' if payload['uniform_robust'] else 'NO'}  "
