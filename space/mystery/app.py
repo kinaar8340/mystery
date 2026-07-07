@@ -1066,10 +1066,11 @@ def _nav_theme_gradio_css_vars() -> str:
     --nav-demo-active-glow-outer: {demo_active["glow_outer"]};
     --myst-panel-bg: #1a1a1a;
     --myst-border-color: #333333;
+    --myst-page-fill-height: 100%;
     --myst-status-chrome-height: {chrome};
-    --myst-status-content-max-height: calc(100dvh - {mc["status_viewport_offset"]});
+    --myst-status-content-max-height: var(--myst-page-fill-height, calc(100dvh - {mc["status_viewport_offset"]}));
     --myst-render-detail-chrome-height: {detail_chrome};
-    --myst-render-detail-max-height: calc(100dvh - {detail_chrome});
+    --myst-render-detail-max-height: var(--myst-page-fill-height, calc(100dvh - {detail_chrome}));
     --myst-preset-grid-gap: {pg["grid_gap"]};
     --myst-preset-grid-columns: {pg["columns"]};
     --myst-preset-grid-rows: {pg["rows"]};
@@ -2122,7 +2123,7 @@ WALLPAPER_HEAD = f"""
         }}
         var rect = wrap.getBoundingClientRect();
         if (rect.width <= 0 || rect.top >= window.innerHeight) return;
-        var h = Math.max(360, Math.round(window.innerHeight - rect.top - 8));
+        var h = Math.max(360, Math.round(window.innerHeight - rect.top - 2));
         mystApplyGravityViewportHeight(wrap, h);
     }}
     function mystSyncVisorHeight() {{
@@ -2175,6 +2176,61 @@ WALLPAPER_HEAD = f"""
         video.style.setProperty('visibility', 'visible', 'important');
         video.style.setProperty('opacity', '1', 'important');
     }}
+    function mystActivePageEl() {{
+        var sels = ['.myst-gravity-page', '.myst-readme-page', '.myst-render-page', '.myst-status-page'];
+        for (var i = 0; i < sels.length; i++) {{
+            if (mystPageVisible(sels[i])) return document.querySelector(sels[i]);
+        }}
+        return null;
+    }}
+    function mystClearActivePageFill(page) {{
+        page = page || mystActivePageEl();
+        if (!page) {{
+            document.documentElement.style.removeProperty('--myst-page-fill-height');
+            delete document.documentElement.dataset.mystPageFillH;
+            return;
+        }}
+        delete page.dataset.mystPageFillH;
+        page.style.removeProperty('min-height');
+        page.style.removeProperty('height');
+        page.style.removeProperty('max-height');
+        var readmeScroll = page.querySelector('#readme-scroll-container');
+        if (readmeScroll) {{
+            readmeScroll.style.removeProperty('height');
+            readmeScroll.style.removeProperty('max-height');
+            readmeScroll.style.removeProperty('flex');
+        }}
+    }}
+    function mystSyncActivePageFill() {{
+        var page = mystActivePageEl();
+        if (!page) {{
+            mystClearActivePageFill();
+            return;
+        }}
+        var rect = page.getBoundingClientRect();
+        if (rect.width <= 0 || rect.top >= window.innerHeight) return;
+        var h = Math.max(120, Math.round(window.innerHeight - rect.top - 2));
+        var last = parseInt(page.dataset.mystPageFillH || '-1', 10);
+        if (last === h) return;
+        page.dataset.mystPageFillH = String(h);
+        window.__mystViewportSyncing = true;
+        try {{
+            document.documentElement.style.setProperty('--myst-page-fill-height', h + 'px');
+            page.style.setProperty('flex', '1 1 0', 'important');
+            page.style.setProperty('min-height', h + 'px', 'important');
+            page.style.setProperty('height', h + 'px', 'important');
+            page.style.setProperty('max-height', h + 'px', 'important');
+            var readmeScroll = page.querySelector('#readme-scroll-container');
+            if (readmeScroll) {{
+                readmeScroll.style.setProperty('flex', '1 1 0', 'important');
+                readmeScroll.style.setProperty('min-height', '0', 'important');
+                readmeScroll.style.setProperty('height', '100%', 'important');
+                readmeScroll.style.setProperty('max-height', '100%', 'important');
+            }}
+        }} finally {{
+            window.__mystViewportSyncing = false;
+        }}
+    }}
     function mystLockGravityScroll() {{
         if (!mystGravityPageActive()) return;
         if (window.scrollY > 0) window.scrollTo(0, 0);
@@ -2182,6 +2238,7 @@ WALLPAPER_HEAD = f"""
         if (document.body.scrollTop > 0) document.body.scrollTop = 0;
     }}
     function mystReflowViewport() {{
+        mystSyncActivePageFill();
         if (!mystGravityPageActive()) {{
             mystClearGravityViewportInlineSize();
             return;
@@ -2230,6 +2287,7 @@ WALLPAPER_HEAD = f"""
             requestAnimationFrame(mystReflowViewport);
         }}, true);
     }}
+    window.mystSyncActivePageFill = mystSyncActivePageFill;
     if (document.body) bootViewportReflow();
     document.addEventListener('DOMContentLoaded', bootViewportReflow);
     window.addEventListener('load', bootViewportReflow);
@@ -2392,6 +2450,7 @@ WALLPAPER_HEAD = f"""
     }}
     function bootRenderGridClicks() {{
         mystBindRenderGridClicks();
+        if (window.mystSyncActivePageFill) window.mystSyncActivePageFill();
         mystSyncRenderGridHeight();
         if (window.__mystRenderGridObs) return;
         window.__mystRenderGridObs = new MutationObserver(function(mutations) {{
@@ -2440,6 +2499,7 @@ WALLPAPER_HEAD = f"""
         }}
         window.addEventListener('resize', function() {{
             requestAnimationFrame(function() {{
+                if (window.mystSyncActivePageFill) window.mystSyncActivePageFill();
                 mystSyncRenderGridHeight();
                 mystResizeRenderDetailPlot();
             }});
@@ -2711,10 +2771,24 @@ html {{
 }}
 html:has(.gradio-container .myst-gravity-page:not(.hide):not(.hidden)),
 html:has(.gradio-container .myst-readme-page:not(.hide):not(.hidden)),
-html:has(.gradio-container .myst-render-page:not(.hide):not(.hidden)) {{
+html:has(.gradio-container .myst-render-page:not(.hide):not(.hidden)),
+html:has(.gradio-container .myst-status-page:not(.hide):not(.hidden)) {{
     overflow: hidden !important;
     max-height: 100dvh !important;
     height: 100dvh !important;
+}}
+#root:has(.gradio-container .myst-gravity-page:not(.hide):not(.hidden)),
+#root:has(.gradio-container .myst-readme-page:not(.hide):not(.hidden)),
+#root:has(.gradio-container .myst-render-page:not(.hide):not(.hidden)),
+#root:has(.gradio-container .myst-status-page:not(.hide):not(.hidden)),
+.app:has(.gradio-container .myst-gravity-page:not(.hide):not(.hidden)),
+.app:has(.gradio-container .myst-readme-page:not(.hide):not(.hidden)),
+.app:has(.gradio-container .myst-render-page:not(.hide):not(.hidden)),
+.app:has(.gradio-container .myst-status-page:not(.hide):not(.hidden)) {{
+    height: 100% !important;
+    min-height: 100% !important;
+    max-height: 100dvh !important;
+    overflow: hidden !important;
 }}
 body {{
     background: transparent !important;
@@ -2727,7 +2801,8 @@ body {{
 }}
 body:has(.gradio-container .myst-readme-page:not(.hide):not(.hidden)),
 body:has(.gradio-container .myst-gravity-page:not(.hide):not(.hidden)),
-body:has(.gradio-container .myst-render-page:not(.hide):not(.hidden)) {{
+body:has(.gradio-container .myst-render-page:not(.hide):not(.hidden)),
+body:has(.gradio-container .myst-status-page:not(.hide):not(.hidden)) {{
     overflow: hidden !important;
     max-height: 100dvh !important;
     height: 100dvh !important;
@@ -5131,13 +5206,15 @@ footer {{ visibility: hidden; }}
 }}
 .gradio-container:has(.myst-gravity-page:not(.hide):not(.hidden)),
 .gradio-container:has(.myst-readme-page:not(.hide):not(.hidden)),
-.gradio-container:has(.myst-render-page:not(.hide):not(.hidden)) {{
+.gradio-container:has(.myst-render-page:not(.hide):not(.hidden)),
+.gradio-container:has(.myst-status-page:not(.hide):not(.hidden)) {{
     overflow: hidden !important;
+    height: 100dvh !important;
+    min-height: 100dvh !important;
     max-height: 100dvh !important;
     padding: 0.15rem 0.5rem 0 !important;
     display: flex !important;
     flex-direction: column !important;
-    min-height: calc(100dvh - 3.5rem) !important;
     box-sizing: border-box !important;
 }}
 .gradio-container:has(.myst-gravity-page:not(.hide):not(.hidden)) .main,
@@ -5148,18 +5225,39 @@ footer {{ visibility: hidden; }}
 .gradio-container:has(.myst-readme-page:not(.hide):not(.hidden)) .contain,
 .gradio-container:has(.myst-render-page:not(.hide):not(.hidden)) .main,
 .gradio-container:has(.myst-render-page:not(.hide):not(.hidden)) .main > .wrap,
-.gradio-container:has(.myst-render-page:not(.hide):not(.hidden)) .contain {{
+.gradio-container:has(.myst-render-page:not(.hide):not(.hidden)) .contain,
+.gradio-container:has(.myst-status-page:not(.hide):not(.hidden)) .main,
+.gradio-container:has(.myst-status-page:not(.hide):not(.hidden)) .main > .wrap,
+.gradio-container:has(.myst-status-page:not(.hide):not(.hidden)) .contain {{
     flex: 1 1 0 !important;
     min-height: 0 !important;
     height: 100% !important;
-    max-height: 100dvh !important;
+    max-height: 100% !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+}}
+.gradio-container:has(.myst-gravity-page:not(.hide):not(.hidden)) .myst-unified-nav-host,
+.gradio-container:has(.myst-readme-page:not(.hide):not(.hidden)) .myst-unified-nav-host,
+.gradio-container:has(.myst-render-page:not(.hide):not(.hidden)) .myst-unified-nav-host,
+.gradio-container:has(.myst-status-page:not(.hide):not(.hidden)) .myst-unified-nav-host {{
+    flex: 0 0 auto !important;
+}}
+.gradio-container .myst-gravity-page:not(.hide):not(.hidden),
+.gradio-container .myst-readme-page:not(.hide):not(.hidden),
+.gradio-container .myst-render-page:not(.hide):not(.hidden),
+.gradio-container .myst-status-page:not(.hide):not(.hidden) {{
+    flex: 1 1 0 !important;
+    min-height: 0 !important;
+    height: var(--myst-page-fill-height, 100%) !important;
+    max-height: var(--myst-page-fill-height, 100%) !important;
     overflow: hidden !important;
     display: flex !important;
     flex-direction: column !important;
 }}
 
 .gradio-container .myst-gravity-page {{
-    --myst-gravity-viewport-height: calc(100dvh - 11.5rem);
+    --myst-gravity-viewport-height: var(--myst-page-fill-height, calc(100dvh - 11.5rem));
     --myst-gravity-ui-scale: 1.33;
     --myst-gravity-control-bar-height: calc(1.54rem * var(--myst-gravity-ui-scale));
     --myst-gravity-keypad-height: calc(2.39rem * var(--myst-gravity-ui-scale));
@@ -5176,9 +5274,9 @@ footer {{ visibility: hidden; }}
     max-width: none !important;
     padding: 0 0.25rem 0 !important;
     flex: 1 1 0 !important;
-    height: 100% !important;
-    min-height: calc(100dvh - 4.25rem) !important;
-    max-height: none !important;
+    height: var(--myst-page-fill-height, 100%) !important;
+    min-height: 0 !important;
+    max-height: var(--myst-page-fill-height, 100%) !important;
     overflow: hidden !important;
     box-sizing: border-box !important;
     gap: 0 !important;
@@ -6664,9 +6762,10 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-readme-page {{
     width: 100% !important;
     max-width: none !important;
-    height: calc(100dvh - 3.5rem) !important;
-    max-height: calc(100dvh - 3.5rem) !important;
+    height: var(--myst-page-fill-height, 100%) !important;
+    max-height: var(--myst-page-fill-height, 100%) !important;
     min-height: 0 !important;
+    flex: 1 1 0 !important;
     background: transparent !important;
     padding: 0 !important;
     margin: 0 !important;
@@ -6687,8 +6786,9 @@ footer {{ visibility: hidden; }}
 }}
 .gradio-container .myst-scrollable-panel,
 .gradio-container .myst-readme-scrollable-content {{
-    max-height: calc(100dvh - 10rem) !important;
+    max-height: 100% !important;
     min-height: 0 !important;
+    flex: 1 1 0 !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
     padding-right: 12px !important;
@@ -6716,10 +6816,11 @@ footer {{ visibility: hidden; }}
 }}
 .gradio-container .myst-readme-page .myst-readme-body,
 .gradio-container .myst-readme-page #readme-scroll-container {{
-    flex: 1 1 auto !important;
+    flex: 1 1 0 !important;
     width: 100% !important;
     min-height: 0 !important;
-    max-height: calc(100dvh - 10rem) !important;
+    height: 100% !important;
+    max-height: 100% !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
     background: rgba(0, 0, 0, {_MYST_README_PANEL_ALPHA}) !important;
@@ -7009,7 +7110,7 @@ footer {{ visibility: hidden; }}
 
 .gradio-container .myst-render-page {{
     --myst-render-grid-gap: 0.14rem;
-    --myst-render-grid-height: calc(100dvh - 12.5rem);
+    --myst-render-grid-height: var(--myst-page-fill-height, calc(100dvh - 12.5rem));
     --myst-render-grid-bottom-frame: 0;
     --myst-render-chrome-height: 8.75rem;
     --myst-render-detail-chrome-height: 11.5rem;
@@ -7034,43 +7135,7 @@ footer {{ visibility: hidden; }}
 .gradio-container:has(.myst-render-page #myst-render-detail-wrapper:not(.hide):not(.hidden)) .myst-render-page:not(.hide):not(.hidden) {{
     overflow: hidden !important;
 }}
-.gradio-container:has(.myst-render-page:not(.hide):not(.hidden)) .main,
-.gradio-container:has(.myst-render-page:not(.hide):not(.hidden)) .main > .wrap,
-.gradio-container:has(.myst-render-page:not(.hide):not(.hidden)) .contain {{
-    display: flex !important;
-    flex-direction: column !important;
-    min-height: calc(100dvh - 3.5rem) !important;
-    height: 100% !important;
-}}
-.gradio-container:has(.myst-render-page:not(.hide):not(.hidden)) .myst-unified-nav-host {{
-    flex: 0 0 auto !important;
-}}
-.gradio-container:has(.myst-render-page:not(.hide):not(.hidden)) .myst-render-page:not(.hide):not(.hidden) {{
-    flex: 1 1 0 !important;
-    min-height: 0 !important;
-    height: 100% !important;
-    max-height: 100% !important;
-    overflow: hidden !important;
-}}
-.gradio-container:has(.myst-status-page:not(.hide):not(.hidden)) .main,
-.gradio-container:has(.myst-status-page:not(.hide):not(.hidden)) .main > .wrap,
-.gradio-container:has(.myst-status-page:not(.hide):not(.hidden)) .contain {{
-    display: flex !important;
-    flex-direction: column !important;
-    min-height: 0 !important;
-    height: auto !important;
-    overflow: visible !important;
-}}
-.gradio-container:has(.myst-status-page:not(.hide):not(.hidden)) .myst-unified-nav-host {{
-    flex: 0 0 auto !important;
-}}
-.gradio-container:has(.myst-status-page:not(.hide):not(.hidden)) .myst-status-page:not(.hide):not(.hidden) {{
-    flex: 0 0 auto !important;
-    min-height: 0 !important;
-    height: auto !important;
-    max-height: none !important;
-    overflow: visible !important;
-}}
+
 .gradio-container .myst-status-page .myst-status-gap-row,
 .gradio-container .myst-status-page .myst-default-gap-row,
 .gradio-container .myst-status-page .myst-status-zoom-edit-col > .row.myst-status-gap-row,
