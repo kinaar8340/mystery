@@ -18,9 +18,9 @@ short_description: φ²+e²≈π² — Gravity unit-cell presets & figures
   <img src="https://raw.githubusercontent.com/kinaar8340/mystery/main/bg1_mystery.png" alt="Mystery cover" width="100%" style="max-width: 720px; border-radius: 12px;" />
 </p>
 
-**Interactive computational laboratory** for dynamical emergence in gauged Hopf lattice systems — near-Pythagorean triangle φ²+e²≈π², Analog Objective tuning, holonomy-gap scaling B(κ), unit-cell deformation, and 30-60-90 / 3-6-9 comparisons.
+**Browser demo** of the Mystery research notebook: near-Pythagorean triangle φ²+e²≈π², holonomy-gap scaling B(κ), unit-cell deformation, and 30-60-90 / 3-6-9 comparisons.
 
-Opens on the **Gravity** tab — two-column preset explorer with live TUI metrics and optional deformation animation. **README** tab includes **About this Project** (dual-role κ: κ_doc / κ_sim / κ*). **Figures** tab shows reference plots from the probe suite.
+Opens on the **Gravity** tab — two-column preset explorer with live TUI metrics and optional deformation animation. **Figures** tab shows reference plots from the probe suite; UI styling follows [orbital-braille-vqc](https://huggingface.co/spaces/kinaar111/orbital-braille-vqc).
 
 > Full 11-probe suite runs locally: [`run_all.py`](https://github.com/kinaar8340/mystery)
 
