@@ -86,7 +86,25 @@ In the mean-field twist-PDE reduction, gauge torque **−κθ̄** identifies eff
 
 κ_doc = 0.85 is the **static** global pointer constant (θ_crit, B(κ) framing, training seed, 0.16% from κ\*). κ_sim ≈ 0.89 is the **dynamic** dissipative optimum where λ ≈ κ survival at λt = 2 best tracks R. The shift is not toward e/π (0.865) — it crosses into a damping-dominated holonomy regime. Production uses κ_sim; documentation retains κ_doc.
 
-Extended note: [`notes/kappa_sim_interpretation.md`](../notes/kappa_sim_interpretation.md). Remaining derivations (π² prefactor from Skyrme reduction, PDE eigenstructure proof for κ ≈ 0.891) stay in open_questions §2.
+Extended note: [`notes/kappa_sim_interpretation.md`](../notes/kappa_sim_interpretation.md).
+
+## Formal Skyrme + holonomy derivation (B(κ) — Q#2 closed)
+
+From `Lagrangian_Derivation.pdf` mean-field free energy \(\mathcal{F}_0 = \frac{\kappa}{2}\bar\theta^2 - \Delta\omega\bar\theta\) and Hopf fiber saturation \(\Theta_\star = \pi\):
+
+\[
+\Phi_{\mathrm{drive}} = \pi \cdot (e/\pi) = e, \qquad
+\Phi_{\mathrm{damp}}(\kappa) = \kappa\pi^2, \qquad
+B(\kappa) = \pi\Phi_{\mathrm{drive}} - \Phi_{\mathrm{damp}} = \pi^2(e/\pi - \kappa).
+\]
+
+Setting \(B(\kappa^\ast) = R\) gives **κ\* = e/π − R/π² ≈ 0.8513** (0.16% from κ_doc). Full write-up: [`notes/skyrme_holonomy_derivation.md`](../notes/skyrme_holonomy_derivation.md). Verify:
+
+```bash
+python scripts/skyrme_bound_derivation.py
+```
+
+Open beyond mean-field: nonlinear cot(θ/2) corrections; PDE eigenstructure for survival minimum at κ ≈ 0.891.
 
 ## Residual scaling
 

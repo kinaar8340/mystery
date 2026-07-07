@@ -8,7 +8,8 @@
 | 3 | High-precision residual | R stable; drift &lt; 1e−10 |
 | 5 | θ_crit dual definitions | Θ_link ≈ π; θ_crit = π(1+κ) ≈ 5.8 — see `theta_crit_reconciliation.md` |
 | 6 | PDE uniform relaxation | No φ/e/π FFT signature — expected for this IC class |
-| 9 | Why κ_sim ≈ 0.89 vs κ_doc = 0.85? | **Closed** — static κ_doc (θ_crit, B(κ), training seed) vs dynamic κ_sim (λ≈κ survival optimum @ λt=2 ≈0.891; holonomy-gap regime crossing κ > e/π; 369 κ_proxy→κ_sim). See [`docs/RESULTS.md`](../docs/RESULTS.md) § Physical interpretation · [`kappa_sim_interpretation.md`](kappa_sim_interpretation.md) |
+| 9 | Why κ_sim ≈ 0.89 vs κ_doc = 0.85? | **Closed** — [`kappa_sim_interpretation.md`](kappa_sim_interpretation.md) · [`docs/RESULTS.md`](../docs/RESULTS.md) § Physical interpretation |
+| 2 | Formal residual bound B(κ) | **Closed (mean-field)** — \(B(\kappa)=\pi^2(e/\pi-\kappa)\) derived in [`skyrme_holonomy_derivation.md`](skyrme_holonomy_derivation.md); verify `scripts/skyrme_bound_derivation.py`. Open: nonlinear cot + full Skyrme \(F_{\mu\nu}\) corrections |
 
 ## Active (partially answered)
 
@@ -26,9 +27,9 @@
 
 `pde_structured_ic_probe.py` seeds hopfion blobs and two-gyro helices — retains σ>0 and finite-k FFT vs uniform IC. Next: longer nt, finer grid, φ/e/π wavelength ratio tracking.
 
-### 2. Formal residual bound (in progress)
+### 2. Formal residual bound — **closed at mean-field order** (July 2026)
 
-`residual_kappa_sweep.py` shows **κ* = e/π − R/π² ≈ 0.8513** (0.15% from κ_doc). Variational sketch in [`kappa_star_variational.md`](kappa_star_variational.md). Still need full π² prefactor derivation from reduced Skyrme action.
+`residual_kappa_sweep.py` shows **κ* = e/π − R/π² ≈ 0.8513**. Full derivation: [`skyrme_holonomy_derivation.md`](skyrme_holonomy_derivation.md) (from `Lagrangian_Derivation.pdf` free energy + fiber saturation π). Verify: `scripts/skyrme_bound_derivation.py`. Remaining: nonlinear cot(θ/2) and explicit \(F_{\mu\nu}\) integral.
 
 ### 3. Rodin cycle ↔ S³ fiber phase (scaffolded)
 

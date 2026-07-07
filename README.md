@@ -46,6 +46,7 @@ While the broader physical implications remain speculative, the project offers a
 | `vortex_369_clock` | Angles ÷10° → **3.10 / 5.99 / 8.91** (nearest 3/6/9) |
 | `residual_bound_probe` | Best near-miss: **π²(e/π−κ) ≈ 0.151** (9.5% from R) |
 | `residual_kappa_sweep` | **κ* = e/π − R/π² ≈ 0.8513** — only **0.15%** from κ_doc |
+| `skyrme_bound_derivation` | Formal **B(κ) = π²(e/π−κ)** from reduced Skyrme+holonomy (`notes/skyrme_holonomy_derivation.md`) |
 | `pde_relaxation_probe` | Uniform IC → ⟨θ⟩≈0.084, **σ=0** (expected dissipative minimum) |
 | `pde_structured_ic_probe` | Hopfion/helical seeds retain **σ>0** and finite-k FFT structure |
 | `conduit_angular_probe` | **~8% / ~6% / ~4%** within 5° of 30°/60°/90° (not forced) |
@@ -221,6 +222,7 @@ cd ../mystery && .venv/bin/python run_all.py
 | `conduit_probe.py` | TOE conduit invariant smoke test |
 | `meta_optimize_phi_probe.py` | Meta-optimizer + optional survival/golden objective (Stage 6) |
 | `residual_kappa_sweep.py` | R vs π²(e/π−κ) sweep; κ* null point |
+| `skyrme_bound_derivation.py` | Verify formal B(κ) derivation + κ* null |
 | `pde_structured_ic_probe.py` | Hopfion + two-gyro helical PDE seeds |
 | `exponential_survival_probe.py` | λt = 2 normalization; survival vs e⁻², R, golden angle |
 | `kappa_survival_sweep.py` | κ ∈ [0.80, 0.90] mean_survival @ λt=2 |

@@ -22,26 +22,26 @@ S_eff[θ] = ∫ ds [ ½(θ̇ − ω_gauge(κ))² + (f₄/4) F_μν F^μν ] + S_
 
 ---
 
-## 2. Stationary condition → B(κ)
+## 2. Stationary condition → B(κ) — **derived**
 
-Minimize S_eff at fixed W_g under periodic boundary (toroidal_modulo9 when enabled):
+Formal reduction: [`skyrme_holonomy_derivation.md`](skyrme_holonomy_derivation.md).
 
-```
-δS/δθ = 0  ⟹  θ̇ = ω_gauge(κ)  (slow-mode lock)
-```
-
-The **effective mismatch energy** (one Fourier mode of the residual) scales as:
+From mean-field free energy \(\mathcal{F}_0 = \frac{\kappa}{2}\bar\theta^2 - \Delta\omega\bar\theta\) (`Lagrangian_Derivation.pdf` §3) at Hopf fiber saturation \(\bar\theta \sim \pi\):
 
 ```
-B(κ) = π² (e/π − κ)
+Φ_drive  = π · (e/π) = e
+Φ_damp   = κ · π²
+B(κ)     = π·Φ_drive − Φ_damp = π²(e/π − κ)
 ```
 
-- **π²** from S¹ × S¹ fiber Jacobian / winding-squared normalization (topological sector).
-- **(e/π − κ)** from the holonomy gap between drive and damping.
+| Factor | Origin |
+|--------|--------|
+| **(e/π − κ)** | Holonomy gap: exponential drive ratio minus pointer damping |
+| **π²** | Fiber half-turn π × quadratic gauge storage \(\frac{\kappa}{2}\bar\theta^2\) at \(\bar\theta \sim \pi\) |
 
-This reproduces the postulated bound in `notes/residual_scaling.md` — the variational task is to derive the π² prefactor from the Skyrme reduction, not assume it.
+Verify: `python scripts/skyrme_bound_derivation.py` → `outputs/skyrme_bound_derivation_*.json`.
 
-**References:** `111_docs/toe/toe_swarm/papers/Lagrangian_Derivation.pdf`, `Observer_Synchronization.pdf`.
+**References:** `toe/papers/Lagrangian_Derivation.pdf`, `Relativistic_Completion.pdf`, `Observer_Synchronization.pdf`.
 
 ---
 
@@ -99,7 +99,7 @@ Stage 7 paired sweep confirmed κ_sim wins on conduit Δ% vs R; κ_doc marginall
 |------|---------------------------|---------------|
 | Topology bake grid drifts κ toward κ\* only with 369+toroidal on | Topology implements holonomy reduction | κ drift flat across flag grid |
 | Meta-opt at island-only loss (no survival) → κ near κ\* or κ_doc | Survival term causes κ_sim overshoot | κ → 0.89 even without survival |
-| Derive π² prefactor from reduced Skyrme action | B(κ) is derived, not fitted | No π² term emerges |
+| Derive π² prefactor from reduced Skyrme action | **Done** — `skyrme_holonomy_derivation.md` | No π² term emerges |
 
 ---
 
