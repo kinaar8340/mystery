@@ -216,6 +216,9 @@ NAV_THEME: dict = {
     },
 }
 
+# Global UI scale — matches the layout density of ~70% browser zoom at 100% zoom.
+_MYST_UI_SCALE = 0.7
+
 # Legacy aliases — prefer NAV_THEME for new code.
 DEFAULT_BUTTON_BORDER_COLOR = NAV_THEME["nav_button"]["border_color"]
 DEFAULT_BUTTON_BODY_HEIGHT = NAV_THEME["nav_button"]["height"]
@@ -1028,6 +1031,7 @@ def _nav_theme_gradio_css_vars() -> str:
     chrome = pg["chrome_height"]
     detail_chrome = rd["chrome_height"]
     return f"""
+    --myst-ui-scale: {_MYST_UI_SCALE};
     --myst-default-gap-height: {gap}rem;
     --myst-half-gap-height: calc({gap}rem * 0.5);
     --nav-label-font-size: {nl["font_size"]};
@@ -2666,8 +2670,18 @@ HFB_CSS = f"""
     overflow: hidden !important;
 }}
 html {{
+    --myst-ui-scale: {_MYST_UI_SCALE};
+    zoom: var(--myst-ui-scale);
     background-color: #0a0818 !important;
     min-height: 100% !important;
+}}
+@supports not (zoom: 1) {{
+    html {{
+        transform: scale(var(--myst-ui-scale));
+        transform-origin: top left;
+        width: calc(100% / var(--myst-ui-scale));
+        min-height: calc(100% / var(--myst-ui-scale));
+    }}
 }}
 body {{
     background: transparent !important;
