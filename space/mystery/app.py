@@ -9299,6 +9299,9 @@ def _gravity_viewport_wrapper_classes(
         classes.append("myst-demo-viewport")
         classes.append("myst-platonic-viewport")
     layer = viewport_layer or _viewport_layer_for_letter(letter)
+    # Latched D* shows platonic MP4 even when Demo A stays selected (platonic interrupt).
+    if _is_active_shape(active_shape) and not loading:
+        layer = "video"
     if loading and layer == "video":
         layer = "startup"
     classes.append(f"myst-viewport-layer-{layer}")
