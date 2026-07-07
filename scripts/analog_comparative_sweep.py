@@ -63,11 +63,38 @@ def _ic_helical(nx: int, kappa: float = KAPPA) -> np.ndarray:
     return np.clip(0.3 + cw + ccw, 0.1, theta_crit - 0.1)
 
 
+def _ic_hopfion_blob(nx: int, kappa: float = KAPPA) -> np.ndarray:
+    lin = np.linspace(0, 2 * PI, nx, endpoint=False)
+    x, y, z = np.meshgrid(lin, lin, lin, indexing="ij")
+    r2 = (x - PI) ** 2 + (y - PI) ** 2 + (z - PI) ** 2
+    theta_crit = PI * (1 + kappa)
+    return np.clip(0.2 + 2.5 * np.exp(-r2 / (2 * 0.35**2)), 0.1, theta_crit - 0.05)
+
+
+def _ic_two_gyro(nx: int, kappa: float = KAPPA) -> np.ndarray:
+    lin = np.linspace(0, 2 * PI, nx, endpoint=False)
+    x, y, z = np.meshgrid(lin, lin, lin, indexing="ij")
+    cw = 1.2 * np.sin(2.0 * x + 0.5 * z)
+    ccw = 1.2 * np.sin(2.0 * x - 0.5 * z)
+    theta_crit = PI * (1 + kappa)
+    return np.clip(0.3 + cw + ccw, 0.1, theta_crit - 0.1)
+
+
+def _ic_combined(nx: int, kappa: float = KAPPA) -> np.ndarray:
+    blob = _ic_hopfion_blob(nx, kappa=kappa)
+    gyro = _ic_two_gyro(nx, kappa=kappa)
+    theta_crit = PI * (1 + kappa)
+    return np.clip(blob + 0.4 * (gyro - 0.3), 0.1, theta_crit - 0.05)
+
+
 def _ic_builders(kappa: float) -> dict[str, Callable[[int, int], np.ndarray]]:
     return {
         "uniform": lambda nx, seed: _ic_uniform(nx, seed),
         "hopfion": lambda nx, seed: _ic_hopfion(nx),
         "helical": lambda nx, seed: _ic_helical(nx, kappa=kappa),
+        "hopfion_blob": lambda nx, seed: _ic_hopfion_blob(nx, kappa=kappa),
+        "two_gyro": lambda nx, seed: _ic_two_gyro(nx, kappa=kappa),
+        "combined": lambda nx, seed: _ic_combined(nx, kappa=kappa),
     }
 
 
@@ -112,6 +139,7 @@ def simulate_pde_case(
         "wg_base": wg_base,
         "W_g": wg_base / PI,
         "ic_type": ic_type,
+        "seed": seed,
         "normalize_to_lambda_t": normalize_to_lambda_t,
         "n_steps": nt,
         "mean_survival": mean_survival,
@@ -242,15 +270,29 @@ def run_grid(
     ic_types: tuple[str, ...] = ("uniform", "hopfion", "helical"),
     lambda_t_values: tuple[float | None, ...] = (None, 2.0),
     step_modes: tuple[str, ...] = ("linear", "golden"),
+    seeds: tuple[int, ...] = (42,),
     fast: bool = False,
+    robust: bool = False,
 ) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
 
+    if robust:
+        ic_types = ("uniform", "hopfion", "helical", "hopfion_blob", "two_gyro", "combined")
+        lambda_t_values = (None, 1.5, 2.0, 2.5)
+        twist_rates = (8.0, 10.0, 12.5, 15.0, 17.5)
+        seeds = (42, 7, 123, 99, 2026)
+
     for ic_type, lambda_t in itertools.product(ic_types, lambda_t_values):
-        rows.append(simulate_pde_case(ic_type, lambda_t, kappa=kappa, wg_base=wg_base))
+        ic_seeds = seeds if ic_type == "uniform" else (42,)
+        for seed in ic_seeds:
+            rows.append(
+                simulate_pde_case(
+                    ic_type, lambda_t, kappa=kappa, wg_base=wg_base, seed=seed
+                )
+            )
 
     conduit_rates = (12.5,) if fast else twist_rates
-    conduit_lts = (2.0,) if fast else lambda_t_values
+    conduit_lts = (2.0,) if fast else (lt for lt in lambda_t_values if lt is not None)
     conduit_modes = step_modes
 
     for twist_rate, lambda_t, mode in itertools.product(
@@ -263,6 +305,43 @@ def run_grid(
         )
 
     return rows
+
+
+def summarize_robustness(rows: list[dict[str, Any]]) -> dict[str, Any]:
+    """Aggregate Δ% vs R and hybrid across λt=2 runs."""
+    lt2 = [r for r in rows if r.get("normalize_to_lambda_t") == 2.0]
+    pde_lt2 = [r for r in lt2 if r.get("subsystem") == "pde"]
+    conduit_lt2 = [r for r in lt2 if r.get("subsystem") == "conduit"]
+
+    def _stats(group: list[dict]) -> dict[str, float]:
+        if not group:
+            return {}
+        deltas = [r["delta_pct_vs_R"] for r in group if r.get("delta_pct_vs_R") is not None]
+        hybrids = [r["hybrid_score"] for r in group if r.get("hybrid_score") is not None]
+        survs = [r["mean_survival"] for r in group if r.get("mean_survival") is not None]
+        return {
+            "n": len(group),
+            "delta_pct_min": float(min(deltas)),
+            "delta_pct_max": float(max(deltas)),
+            "delta_pct_mean": float(np.mean(deltas)),
+            "delta_pct_std": float(np.std(deltas)),
+            "hybrid_min": float(min(hybrids)),
+            "hybrid_max": float(max(hybrids)),
+            "hybrid_mean": float(np.mean(hybrids)),
+            "mean_survival_min": float(min(survs)),
+            "mean_survival_max": float(max(survs)),
+            "mean_survival_mean": float(np.mean(survs)),
+        }
+
+    best = min(lt2, key=lambda r: r.get("delta_pct_vs_R", 999), default={})
+    return {
+        "lambda_t_2": {
+            "all": _stats(lt2),
+            "pde": _stats(pde_lt2),
+            "conduit": _stats(conduit_lt2),
+        },
+        "best_at_lambda_t_2": best,
+    }
 
 
 def rank_synergy(rows: list[dict]) -> list[dict]:
@@ -284,6 +363,11 @@ def main() -> int:
 
     parser = argparse.ArgumentParser(description="Analog comparative sweep")
     parser.add_argument("--fast", action="store_true", help="Reduced grid for quick test")
+    parser.add_argument(
+        "--robust",
+        action="store_true",
+        help="Expanded grid: 6 IC types, 5 uniform seeds, λt∈{1.5,2,2.5}, twist 8–17.5",
+    )
     parser.add_argument("--kappa", type=float, default=KAPPA, help="κ for PDE/conduit runs")
     parser.add_argument(
         "--wg-base",
@@ -293,27 +377,34 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    rows = run_grid(kappa=args.kappa, wg_base=args.wg_base, fast=args.fast)
+    rows = run_grid(
+        kappa=args.kappa, wg_base=args.wg_base, fast=args.fast, robust=args.robust
+    )
     synergy = rank_synergy(rows)
     best_overall = min(
         [r for r in rows if r.get("mean_survival") is not None],
         key=lambda r: r.get("delta_pct_vs_R", 999),
         default={},
     )
+    robustness = summarize_robustness(rows) if args.robust else None
 
     result = {
         "reference": {"R": R_RESIDUAL, "e_inv2": E_INV2, "golden_fraction": GOLDEN_FRACTION},
         "kappa": args.kappa,
         "wg_base": args.wg_base,
         "W_g": args.wg_base / PI,
+        "robust_mode": args.robust,
         "n_runs": len(rows),
         "sweep": rows,
         "synergy_ranked": synergy[:10],
         "best_delta_vs_R": best_overall,
     }
+    if robustness is not None:
+        result["robustness_summary"] = robustness
     report_path = save_report("analog_comparative_sweep", result)
 
     print("=== Analog Comparative Sweep ===")
+    print(f"Mode: {'robust' if args.robust else 'standard'}{' (fast)' if args.fast else ''}")
     print(f"Runs: {len(rows)}")
     if best_overall:
         print(f"Best vs R: {best_overall.get('subsystem')} "
@@ -326,6 +417,22 @@ def main() -> int:
         print(f"Top synergy (golden+λt=2): subsystem={top.get('subsystem')} "
               f"twist_rate={top.get('twist_rate')} ic={top.get('ic_type')} "
               f"packing={packing_s} hybrid={top.get('hybrid_score', 0):.4f}")
+    if robustness:
+        all_s = robustness["lambda_t_2"]["all"]
+        if all_s:
+            print(
+                f"λt=2 robustness: Δ% vs R {all_s['delta_pct_min']:.3f}–"
+                f"{all_s['delta_pct_max']:.3f}% (mean {all_s['delta_pct_mean']:.3f}%), "
+                f"hybrid {all_s['hybrid_min']:.4f}–{all_s['hybrid_max']:.4f}"
+            )
+        best_lt2 = robustness.get("best_at_lambda_t_2") or {}
+        if best_lt2:
+            print(
+                f"Best @ λt=2: {best_lt2.get('subsystem')} "
+                f"ic={best_lt2.get('ic_type')} twist={best_lt2.get('twist_rate')} "
+                f"Δ%={best_lt2.get('delta_pct_vs_R', 0):.3f}% "
+                f"hybrid={best_lt2.get('hybrid_score', 0):.4f}"
+            )
     print(f"Report: {report_path}")
     return 0
 

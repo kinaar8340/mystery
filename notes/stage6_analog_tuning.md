@@ -38,7 +38,8 @@ Three comparison modes with `--compare-baseline`:
 | 30-trial | 30 | 5 | **56.98** | 0.89 | 0.121% | 0.9990 | Big improvement |
 | 50-trial | 50 | 5 | **56.98** | 0.89 | 0.121% | 0.9990 | Identical to 30-trial |
 | w_s sweep | 25 | 5–12 | **56.98** @ w_s=5 | 0.89 | 0.121% | 0.9990 | Stable; w_s=5 best loss |
-| Robustness | 18 grid | — | — | 0.89 | 0.121% | 0.9990 | IC/twist/λt/step modes |
+| Robustness (std) | 18 grid | — | — | 0.89 | 0.121% | 0.9990 | IC/twist/λt/step modes |
+| Robustness (expanded) | 70 grid | — | — | 0.89 | 0.121% | 0.9990 | 6 IC, 5 seeds, λt 1.5–2.5, twist 8–17.5 |
 | κ prior w_κ=500 | 30 | 5 | 57.78 | 0.89 | 0.121% | 0.9990 | κ unchanged; dual > baseline |
 
 **50-trial mode comparison (w_s = 5, no κ prior):**
@@ -155,8 +156,11 @@ toe/venv/bin/python scripts/meta_optimize_phi_probe.py \
 # w_s sensitivity
 toe/venv/bin/python scripts/w_s_sweep.py --weights 8 10 12 --trials 25
 
-# Robustness at best point
+# Robustness at best point (standard 18-run grid)
 toe/venv/bin/python scripts/analog_comparative_sweep.py --kappa 0.89 --wg-base 350.0
+
+# Expanded robust grid (70 runs: 6 IC, 5 seeds, broader λt/twist)
+toe/venv/bin/python scripts/analog_comparative_sweep.py --robust --kappa 0.89 --wg-base 350.0
 
 # κ prior (optional — tested w_κ=500, does not shift κ)
 python scripts/meta_optimize_phi_probe.py \
@@ -171,7 +175,8 @@ python scripts/meta_optimize_phi_probe.py \
 | 30-trial JSON | `outputs/meta_optimize_phi_probe_20260706_231311.json` |
 | 50-trial JSON | `outputs/meta_optimize_phi_probe_20260706_233925.json` |
 | w_s sweep JSON | `outputs/w_s_sweep_20260706_233453.json` |
-| Robustness JSON | `outputs/analog_comparative_sweep_20260706_233723.json` |
+| Robustness JSON (18-run) | `outputs/analog_comparative_sweep_20260706_233723.json` |
+| Robustness JSON (70-run) | `outputs/analog_comparative_sweep_20260707_012224.json` |
 | κ prior w_κ=500 | `outputs/meta_optimize_phi_probe_20260707_003333.json` |
 
 ---

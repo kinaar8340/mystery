@@ -128,7 +128,8 @@ Command: `meta_optimize_phi_probe.py --compare-baseline --trials 50 … --surviv
 
 ### Stage 6 — robustness sweep at meta-opt best point (κ=0.89, W_g=111.41)
 
-Command: `analog_comparative_sweep.py --kappa 0.89 --wg-base 350.0` (18 runs: 3 IC × 2 λt + 3 twist × 2 λt × 2 step modes).
+**Standard grid** (18 runs): `analog_comparative_sweep.py --kappa 0.89 --wg-base 350.0`  
+3 IC × 2 λt + 3 twist × 2 λt × 2 step modes.
 
 | Metric | Value |
 |--------|-------|
@@ -137,7 +138,20 @@ Command: `analog_comparative_sweep.py --kappa 0.89 --wg-base 350.0` (18 runs: 3 
 | mean_survival @ λt=2 | **0.137651** (matches meta-opt) |
 | Top synergy (golden+λt=2) | hybrid **0.9990**, packing ≈ 0.78 |
 
-Alignment holds across IC types, twist rates, and step modes at the converged κ/W_g point. JSON: `outputs/analog_comparative_sweep_20260706_233723.json`.
+JSON: `outputs/analog_comparative_sweep_20260706_233723.json`.
+
+**Expanded robust grid** (70 runs): `--robust --kappa 0.89 --wg-base 350.0`  
+6 IC types, 5 uniform seeds, λt ∈ {None, 1.5, 2.0, 2.5}, twist rates 8–17.5, linear + golden conduit steps.
+
+| Subsystem @ λt=2 | n | Δ% vs R (min–max) | hybrid (min–max) | mean_survival |
+|------------------|---|-------------------|------------------|---------------|
+| **All** | 20 | **0.121%** – 5.20% (mean 0.81%) | 0.9921 – **0.9991** | 0.137 – 0.145 |
+| PDE | 10 | 0.28% – 5.20% | 0.9921 – 0.9991 | 0.137 – 0.145 |
+| **Conduit** | 10 | **0.121%** (identical) | **0.9990** (identical) | **0.137651** |
+
+**Finding:** Conduit survival alignment is **perfectly stable** across twist rates 8–17.5 and step modes at κ_sim = 0.89. PDE structured ICs (hopfion @ λt=2) show higher Δ% (~5%) as expected; uniform IC across 5 seeds is stable (Δ% ≈ 0.28%). Best @ λt=2: conduit linear twist=8, Δ% = **0.121%**.
+
+JSON: `outputs/analog_comparative_sweep_20260707_012224.json`.
 
 ### Stage 6 — κ prior experiment (w_κ ∈ {50, 500}, w_s=5, 30 trials)
 

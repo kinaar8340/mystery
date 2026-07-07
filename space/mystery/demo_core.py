@@ -337,6 +337,35 @@ SIMULATION_BANNER_MD = """
 > [github.com/kinaar8340/mystery](https://github.com/kinaar8340/mystery) (`run_all.py` locally).
 """
 
+ABOUT_PROJECT_MD = """
+### About this Project
+
+Mystery is an interactive computational laboratory exploring **dynamical emergence** in geometric
+systems. Rather than treating mathematical relations as static numerical facts, it investigates
+whether a tunable dynamical model can self-organize toward stable configurations that align with them.
+
+The model is built on a **gauged Hopf lattice** with twisting dynamics and dissipative relaxation.
+Using a multi-stage optimization process called the **Analog Objective**, the system consistently
+discovers robust attractor states that align closely with the near-Pythagorean relation involving
+φ, e, and π.
+
+A key feature of the work is the distinction between different roles of the gauge parameter κ:
+
+| Symbol | Value | Role |
+|--------|-------|------|
+| **κ_doc** | 0.85 | Documented theoretical value — framing and residual scaling |
+| **κ_sim** | ≈ 0.89 | Simulation optimum — survival alignment and stability |
+| **κ\*** | ≈ 0.8513 | Exact point that nulls the residual in the scaling relation |
+
+The project demonstrates that the model can reliably find high-performing, stable states
+(hybrid scores reaching **~0.9990**) while remaining robust across parameter variations.
+The interactive interface lets you explore these emergent behaviors directly.
+
+While the physical interpretation remains speculative, Mystery provides a concrete example of how
+complex topological systems can be tuned to reveal stable, mathematically coherent configurations
+through their own dynamics.
+"""
+
 ONBOARDING_MD = """
 ### φ, e, π — emergent signature, not forced identity
 The near-Pythagorean residual **R = φ²+e²−π² ≈ +0.137** (~1.4% relative error) defines a
@@ -493,7 +522,35 @@ def build_readme_full_page_html() -> str:
         f'<figcaption>{html.escape(label)}</figcaption></figure>'
         for url, label in zip(FIGURE_URLS, fig_labels, strict=True)
     )
+    k_star = kappa_star()
     return f"""<article class="myst-readme-fullpage" id="myst-readme-fullpage">
+<section class="myst-readme-card myst-about-project" id="myst-about-project">
+<h2>About this Project</h2>
+<p>Mystery is an interactive computational laboratory exploring <strong>dynamical emergence</strong>
+in geometric systems. Rather than treating mathematical relations as static numerical facts, it
+investigates whether a tunable dynamical model can self-organize toward stable configurations
+that align with them.</p>
+<p>The model is built on a <strong>gauged Hopf lattice</strong> with twisting dynamics and
+dissipative relaxation. Using a multi-stage optimization process called the
+<strong>Analog Objective</strong>, the system consistently discovers robust attractor states that
+align closely with the near-Pythagorean relation involving φ, e, and π.</p>
+<p>A key feature of the work is the distinction between different roles of the gauge parameter κ:</p>
+<table class="myst-readme-table">
+<thead><tr><th>Symbol</th><th>Value</th><th>Role</th></tr></thead>
+<tbody>
+<tr><td>κ<sub>doc</sub></td><td>{KAPPA_DOC}</td><td>Documented theoretical value — framing and residual scaling</td></tr>
+<tr><td>κ<sub>sim</sub></td><td>≈ {KAPPA_SIM}</td><td>Simulation optimum — survival alignment and stability</td></tr>
+<tr><td>κ*</td><td>≈ {k_star:.4f}</td><td>Exact point that nulls the residual in the scaling relation</td></tr>
+</tbody>
+</table>
+<p>The project demonstrates that the model can reliably find high-performing, stable states
+(hybrid scores reaching <strong>~0.9990</strong>) while remaining robust across parameter variations.
+The interactive interface lets you explore these emergent behaviors directly.</p>
+<p class="myst-readme-muted">While the physical interpretation remains speculative, Mystery provides
+a concrete example of how complex topological systems can be tuned to reveal stable, mathematically
+coherent configurations through their own dynamics.</p>
+</section>
+
 {build_stage6_results_html()}
 
 <section class="myst-readme-exec myst-readme-card">
@@ -4659,14 +4716,15 @@ STAGE6_MODES = {
 }
 
 STAGE6_ROBUSTNESS = {
-    "n_runs": 18,
+    "n_runs": 70,
     "kappa": 0.89,
     "W_g": 111.41,
     "best_delta_pct_vs_R": 0.121,
     "best_hybrid": 0.9990,
     "mean_survival_at_lambda_t2": 0.137651,
     "golden_packing": 0.78,
-    "json": "analog_comparative_sweep_20260706_233723.json",
+    "conduit_delta_stable": True,
+    "json": "analog_comparative_sweep_20260707_012224.json",
 }
 
 
@@ -4679,7 +4737,7 @@ def stage6_results_explorer_footer() -> str:
         f"mean_survival  : {b['mean_survival']:.6f}  (Δ% vs R {b['delta_pct_vs_R']:.3f}%)",
         f"hybrid score   : {b['hybrid']:.4f}",
         f"dual_analog    : loss {b['dual_analog_loss']:.2f}  golden_reward {b['golden_reward']:.3f}",
-        f"Robustness     : {STAGE6_ROBUSTNESS['n_runs']} grid pts @ κ=0.89 — stable",
+        f"Robustness     : {STAGE6_ROBUSTNESS['n_runs']} grid pts @ κ_sim=0.89 — conduit stable",
         f"Full docs      : {RESULTS_MD_URL}",
     ])
 
@@ -4733,8 +4791,8 @@ def build_stage6_results_html(*, compact: bool = False) -> str:
             f'Δ% vs R <strong>{b["delta_pct_vs_R"]:.3f}%</strong> · '
             f'hybrid <strong>{b["hybrid"]:.4f}</strong></p>'
             f'<p class="myst-stage6-robust">'
-            f'Robustness: <strong>{rob["n_runs"]}</strong> grid points @ κ=0.89 — '
-            f'Δ% and hybrid stable across IC/twist/λt/step modes.'
+            f'Robustness: <strong>{rob["n_runs"]}</strong> grid points @ κ<sub>sim</sub>=0.89 — '
+            f'conduit Δ% stable; expanded IC/seed/twist grid.'
             f'</p>'
             f'<p><a href="{link}" target="_blank" rel="noopener">Full RESULTS.md on GitHub →</a></p>'
             f"</div>"

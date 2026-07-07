@@ -11,7 +11,29 @@ Quantified research notebook exploring the near-Pythagorean triangle formed by �
 
 **Status:** Compatible emergent signature — not an exact identity, not forced by invariants, not contradicted by simulation.
 
-**Project stage:** Early research notebook (June 2026) — low visibility so far. The [Hugging Face Space](https://huggingface.co/spaces/kinaar111/mystery) opens on the **Gravity** tab (unit-cell presets, deformation animation, preset TUI) with **Presets**, **README**, and **Figures** tabs for the preset grid, in-app summary, and reference plots. Full probe depth, derivations, and JSON outputs live in this repo.
+**Project stage:** Early research notebook (June 2026). The [Hugging Face Space](https://huggingface.co/spaces/kinaar111/mystery) opens on the **Gravity** tab with **Presets**, **README**, and **Figures** tabs. Full probe depth, derivations, and JSON outputs live in this repo.
+
+## Overview
+
+Mystery is a computational framework for studying **dynamical emergence** in gauged Hopf lattice systems. It explores whether a topological model with twisting and relaxation dynamics can evolve toward stable states that align with specific mathematical relations, particularly the near-Pythagorean relation φ² + e² ≈ π².
+
+The framework implements a multi-stage optimization method (the **Analog Objective**) that guides the system toward high-performing configurations. Key results include:
+
+- Consistent convergence to robust attractor states with high hybrid scores (~0.9990)
+- Clear separation between documented and simulation-optimized parameters
+- Strong robustness of survival alignment under parameter variation and different initial conditions
+
+A notable aspect of the work is the **dual role** assigned to the gauge parameter κ:
+
+| Symbol | Value | Role |
+|--------|-------|------|
+| **κ_doc** | 0.85 | Theoretical anchor for documentation and residual scaling relations |
+| **κ_sim** | ≈ 0.89 | Practical optimum for meta-optimization and dynamical alignment at λt = 2 |
+| **κ\*** | ≈ 0.8513 | Exact value that nulls the residual in the scaling expression |
+
+An interactive visualization layer is available on [Hugging Face Spaces](https://huggingface.co/spaces/kinaar111/mystery), allowing direct exploration of the model's behavior and tuning process.
+
+While the broader physical implications remain speculative, the project offers a reproducible methodology for investigating how mathematical signatures can arise from the dynamics of complex geometric systems.
 
 ---
 
