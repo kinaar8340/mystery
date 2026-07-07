@@ -237,8 +237,25 @@ Checks: \(\kappa_0\) formula, Laplacian spectrum, model hierarchy (zero-mode < s
 | Item | Status |
 |------|--------|
 | Closed-form κ_sim from fully coupled cot nonlinearity | Open (transcendental; numeric optimum ≈ 0.891) |
-| Structured-IC robustness of κ_sim | Recommended (`pde_structured_ic_probe.py`) |
+| Structured-IC robustness of κ_sim | **Tested (July 2026)** — uniform **yes**; hopfion/helical **no** (see §11) |
 | Full nonlinear cot correction to \(B(\kappa)\) | Open (Skyrme note §10) |
+
+---
+
+## 11. Structured-IC falsification (July 2026)
+
+`scripts/pde_structured_ic_kappa_robustness.py` sweeps κ at λt = 2 for four IC classes (nx = 20):
+
+| IC class | \(\bar\theta_0\) | best κ\* | Δ% vs R |
+|----------|------------------|----------|---------|
+| **uniform** (seed 42) | 1.042 | **0.909** | **0.005%** |
+| hopfion_blob | 0.207 | 0.920+ | ~5.2% |
+| two_gyro_helix | 0.693 | 0.920+ | ~4.3% |
+| combined | 0.484 | 0.920 | ~2.1% |
+
+Extended search to κ = 1.05 does **not** bring hopfion/helical within 1% of R — survival stays ≈ 0.143 vs R ≈ 0.137.
+
+**Conclusion:** κ_sim ≈ 0.89 is **robust for the uniform-IC PDE probe** used in Stage 6 survival penalty, but **not universal** across structured seeds. Low \(\bar\theta_0\) and persistent spatial structure raise mean survival; κ tuning alone cannot null against R on hopfion/helical ICs at λt = 2. Production κ_sim remains justified by the uniform-IC objective, not as a claim about all IC classes.
 
 ---
 

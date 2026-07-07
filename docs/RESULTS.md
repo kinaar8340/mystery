@@ -110,6 +110,8 @@ python scripts/skyrme_bound_derivation.py
 python scripts/pde_survival_eigenstructure.py
 ```
 
+**Structured-IC κ-robustness (July 2026):** uniform IC → κ\* ≈ 0.91, Δ% ≈ 0.005%; hopfion/helical → κ\* ≥ 0.92, Δ% ≈ 2–5% (not R-nullable by κ alone). Verify: `python scripts/pde_structured_ic_kappa_robustness.py`. See eigenstructure note §11.
+
 Open beyond mean-field: nonlinear cot(θ/2) corrections to \(B(\kappa)\); closed-form κ_sim from fully coupled cot.
 
 ## Residual scaling

@@ -158,6 +158,7 @@ So 369 topology does not *force* κ_final to 0.89; it **measures** an emergent h
 |------------|---------|----------|
 | Survival-off meta-opt → κ spreads or moves toward κ_doc/\* | κ_sim is survival-driven | κ_sim is fundamental attractor |
 | PDE survival minimum stays at ~0.89 with structured ICs | Robust dissipative picture | κ_sim is uniform-IC artifact |
+| **Result (July 2026):** uniform IC → κ\* ≈ 0.91, Δ% ≈ 0.005%; hopfion/helical → κ\* ≥ 0.92, Δ% ≈ 2–5% | κ_sim valid for production uniform probe | IC-universal claim falsified |
 | 369-off κ_proxy returns to κ_doc neighborhood | 369 implements κ_sim readout mechanism | κ_proxy shift is incidental |
 
 ---

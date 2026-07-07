@@ -24,9 +24,9 @@
 
 ## Prioritized next moves
 
-### 1. Extend structured PDE (in progress)
+### 1. Structured IC κ-robustness — **tested** (July 2026)
 
-`pde_structured_ic_probe.py` seeds hopfion blobs and two-gyro helices — retains σ>0 and finite-k FFT vs uniform IC. Next: longer nt, finer grid, φ/e/π wavelength ratio tracking.
+`pde_structured_ic_kappa_robustness.py`: uniform IC → κ\* ≈ 0.91, Δ% ≈ 0.005% (**robust**). Hopfion/helical → κ\* ≥ 0.92, Δ% ≈ 2–5% (**not** R-nullable by κ alone). See [`pde_survival_eigenstructure.md`](pde_survival_eigenstructure.md) §11. Remaining: early-time structured FFT φ/e/π tracking (`pde_structured_ic_probe.py`).
 
 ### 2. Formal residual bound — **closed at mean-field order** (July 2026)
 
