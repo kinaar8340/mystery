@@ -288,6 +288,19 @@ Extended search to κ = 1.05 does **not** bring hopfion/helical within 1% of R �
 
 **Conclusion:** κ_sim ≈ 0.89 is **robust for the uniform-IC PDE probe** used in Stage 6 survival penalty, but **not universal** across structured seeds. Low \(\bar\theta_0\) and persistent spatial structure raise mean survival; κ tuning alone cannot null against R on hopfion/helical ICs at λt = 2. Production κ_sim remains justified by the uniform-IC objective, not as a claim about all IC classes.
 
+### 12.1 nx = 32 replication (July 2026)
+
+`python scripts/pde_structured_ic_kappa_robustness.py --nx 32` — κ ∈ [0.78, 0.92], 37 points:
+
+| IC class | \(\bar\theta_0\) | best κ\* | Δ% vs R |
+|----------|------------------|----------|---------|
+| **uniform** | 1.051 | **0.823** | **0.009%** |
+| hopfion_blob | 0.207 | 0.920 | ~5.1% |
+| two_gyro_helix | 0.696 | 0.920 | ~3.2% |
+| combined | 0.485 | 0.920 | ~1.8% |
+
+Uniform optimum **κ\* ≈ 0.823** matches the nx = 32 κ-survival sweep (§7.2) — finer grid pulls uniform readout toward **κ_doc**. Structured ICs still peg at κ ≥ 0.92 with Δ% ≈ 2–5%; IC-dependence is **grid-stable**, not an nx = 20 artifact.
+
 ---
 
 ## References

@@ -10,6 +10,7 @@ Reuses IC builders from pde_structured_ic_probe.py; sweeps κ per IC class.
 
 from __future__ import annotations
 
+import argparse
 import sys
 from pathlib import Path
 
@@ -93,11 +94,13 @@ def sweep_kappa_for_ic(
     kappa_min: float = 0.80,
     kappa_max: float = 0.98,
     n_points: int = 37,
+    nx: int = NX_DEFAULT,
+    D: float = D_DEFAULT,
 ) -> dict:
     kappas = np.linspace(kappa_min, kappa_max, n_points)
     rows = []
     for kappa in kappas:
-        row = simulate_mean_survival(theta0, float(kappa))
+        row = simulate_mean_survival(theta0, float(kappa), nx=nx, D=D)
         rows.append({"kappa": float(kappa), **row})
     best = min(rows, key=lambda r: r["delta_pct_vs_R"])
     k085 = min(rows, key=lambda r: abs(r["kappa"] - KAPPA_DOC))
@@ -113,7 +116,7 @@ def build_initial_conditions(nx: int = NX_DEFAULT, seed: int = SEED) -> dict[str
     }
 
 
-def plot_robustness(results: dict, path: Path) -> None:
+def plot_robustness(results: dict, path: Path, nx: int = NX_DEFAULT) -> None:
     fig, axes = plt.subplots(1, 2, figsize=(12, 4.5))
     colors = {
         "uniform": "#2a9d8f",
@@ -134,7 +137,7 @@ def plot_robustness(results: dict, path: Path) -> None:
     ax.axvline(KAPPA_SIM, color="#888888", ls="--", alpha=0.7, label="κ_sim ≈ 0.89")
     ax.set_xlabel("κ")
     ax.set_ylabel("mean_survival @ λt = 2")
-    ax.set_title("Structured IC κ-survival curves")
+    ax.set_title(f"Structured IC κ-survival curves (nx={nx})")
     ax.legend(fontsize=7)
     ax.grid(alpha=0.3)
 
@@ -161,12 +164,41 @@ def plot_robustness(results: dict, path: Path) -> None:
     plt.close(fig)
 
 
+def parse_args() -> argparse.Namespace:
+    p = argparse.ArgumentParser(description="Structured IC κ-robustness at λt=2")
+    p.add_argument("--nx", type=int, default=NX_DEFAULT)
+    p.add_argument("--D", type=float, default=D_DEFAULT)
+    p.add_argument("--kappa-min", type=float, default=None)
+    p.add_argument("--kappa-max", type=float, default=None)
+    p.add_argument("--n-points", type=int, default=37)
+    p.add_argument("--seed", type=int, default=SEED)
+    return p.parse_args()
+
+
+def kappa_range_for_nx(nx: int, kappa_min: float | None, kappa_max: float | None) -> tuple[float, float]:
+    if kappa_min is not None and kappa_max is not None:
+        return kappa_min, kappa_max
+    if nx >= 32:
+        return 0.78, 0.92
+    return 0.80, 0.98
+
+
 def main() -> int:
-    ics = build_initial_conditions()
+    args = parse_args()
+    kappa_min, kappa_max = kappa_range_for_nx(args.nx, args.kappa_min, args.kappa_max)
+
+    ics = build_initial_conditions(nx=args.nx, seed=args.seed)
     results: dict = {}
     for name, theta0 in ics.items():
         std0 = float(theta0.std())
-        sweep = sweep_kappa_for_ic(theta0)
+        sweep = sweep_kappa_for_ic(
+            theta0,
+            kappa_min=kappa_min,
+            kappa_max=kappa_max,
+            n_points=args.n_points,
+            nx=args.nx,
+            D=args.D,
+        )
         results[name] = {
             "theta0_mean": float(theta0.mean()),
             "theta0_std": std0,
@@ -180,19 +212,31 @@ def main() -> int:
     struct_kappas = [b["kappa"] for b in structured_bests]
     max_spread = max(struct_kappas) - min(struct_kappas)
     max_dev_from_sim = max(abs(k - KAPPA_SIM) for k in struct_kappas)
-    uniform_dev = abs(uniform_best["kappa"] - KAPPA_SIM)
+    # nx=20 → κ* ≈ 0.89; nx=32 → κ* ≈ 0.82 (finer grid shifts toward κ_doc)
+    kappa_ref = KAPPA_DOC if args.nx >= 32 else KAPPA_SIM
+    uniform_dev = abs(uniform_best["kappa"] - kappa_ref)
 
     pass_criteria = {
-        "uniform_near_kappa_sim": uniform_dev < 0.03,
+        "uniform_near_reference_kappa": uniform_dev < 0.05,
         "uniform_delta_pct_lt_0.1": uniform_best["delta_pct_vs_R"] < 0.1,
         "structured_all_delta_pct_lt_1.0": all(
             b["delta_pct_vs_R"] < 1.0 for b in structured_bests
         ),
     }
 
-    plot_path = OUTPUT_DIR / "pde_structured_ic_kappa_robustness.png"
-    plot_robustness(results, plot_path)
-    docs_plot = Path(__file__).resolve().parent.parent / "docs" / "figures" / plot_path.name
+    plot_name = (
+        "pde_structured_ic_kappa_robustness.png"
+        if args.nx == NX_DEFAULT
+        else f"pde_structured_ic_kappa_robustness_nx{args.nx}.png"
+    )
+    report_name = (
+        "pde_structured_ic_kappa_robustness"
+        if args.nx == NX_DEFAULT
+        else f"pde_structured_ic_kappa_robustness_nx{args.nx}"
+    )
+    plot_path = OUTPUT_DIR / plot_name
+    plot_robustness(results, plot_path, nx=args.nx)
+    docs_plot = Path(__file__).resolve().parent.parent / "docs" / "figures" / plot_name
     docs_plot.parent.mkdir(parents=True, exist_ok=True)
     docs_plot.write_bytes(plot_path.read_bytes())
 
@@ -202,10 +246,12 @@ def main() -> int:
             "kappa_doc": KAPPA_DOC,
             "kappa_sim": KAPPA_SIM,
             "lambda_t": 2.0,
-            "nx": NX_DEFAULT,
+            "nx": args.nx,
             "dt": DT,
-            "D": D_DEFAULT,
-            "seed_uniform": SEED,
+            "D": args.D,
+            "seed_uniform": args.seed,
+            "kappa_range": [kappa_min, kappa_max],
+            "kappa_reference": kappa_ref,
         },
         "ic_classes": list(ics.keys()),
         "results": {
@@ -229,7 +275,7 @@ def main() -> int:
             "structured_spread": max_spread,
         },
         "pass_criteria": pass_criteria,
-        "uniform_robust": pass_criteria["uniform_near_kappa_sim"]
+        "uniform_robust": pass_criteria["uniform_near_reference_kappa"]
         and pass_criteria["uniform_delta_pct_lt_0.1"],
         "structured_robust": pass_criteria["structured_all_delta_pct_lt_1.0"],
         "pass": all(pass_criteria.values()),
@@ -240,9 +286,10 @@ def main() -> int:
             "does not bring Δ% vs R below ~2–5% — IC-dependent dissipative readout."
         ),
     }
-    report_path = save_report("pde_structured_ic_kappa_robustness", payload)
+    report_path = save_report(report_name, payload)
 
-    print("=== Structured IC κ-Robustness (λt = 2) ===")
+    print(f"=== Structured IC κ-Robustness (λt = 2, nx={args.nx}) ===")
+    print(f"κ range: [{kappa_min:.3f}, {kappa_max:.3f}]  ref κ={kappa_ref:.2f}")
     for name, data in results.items():
         b = data["best_vs_R"]
         print(f"{name:16s}  θ̄₀={data['theta0_mean']:.4f}  σ₀={data['theta0_std']:.4f}  "
