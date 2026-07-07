@@ -218,22 +218,56 @@ JSON: `outputs/topology_kappa_bake_grid_20260707_005300.json`
 
 JSON: `outputs/topology_kappa_braid_sweep_20260707_005540.json`
 
-### Stage 8b — magic island topology grid (Z=129, quick bake)
+### Stage 8b — magic island braid-gain × topology grid (Z=129)
 
-Command: `toe/venv/bin/python scripts/magic_island_sweep.py --topology-grid --island-z 129 --quick --braid-gains 0.002 0.005 0.01`
+Command:
 
-Island preset: layers=4, pol=9, facts=12 (quick), gauge=0.85 — magic island pseudo_Z=129.
+```bash
+toe/venv/bin/python scripts/magic_island_sweep.py \
+  --topology-grid --island-z 129 --quick \
+  --braid-gains 0.002 0.005 0.01
+```
 
-| braid_gain | topology | κ_final | κ_drift | κ_proxy | stability |
-|------------|----------|---------|---------|---------|-----------|
-| **0.002** | baseline / toroidal | **0.849** | **−0.0015** | 0.854 | **8.0** |
-| **0.002** | vortex369 / full | **0.849** | **−0.0015** | **0.885** | **8.0** |
-| 0.005 | all | 0.846 | −0.0037 | 0.854 / 0.885 | 8.0 |
-| 0.01 | all | 0.843 | −0.0075 | 0.854 / 0.885 | 8.0 |
+Mystery wrapper: `scripts/magic_island_topology_grid.py`
 
-**Finding:** Magic-island training **anchors κ_final near κ_doc/κ\*** (|drift| &lt; 0.002 at gain=0.002) while **vortex_math_369** still shifts κ_proxy toward **κ_sim**. Bare epoch bake over-corrected κ to 0.716; island bake fixes this. **Production braid_feedback_gain = 0.002.**
+**Island preset (magic Z=129):** layers=4, pol=9, max_facts=12 (quick), gauge=0.85, ω_R=0.0225, κ_seed=κ_doc=0.85, W_g=111.41.  
+Grid: **3 braid gains × 4 topology configs** = 12 runs; adaptive κ feedback every 5 facts.
 
-JSON: `outputs/magic_island_topology_grid_z129_20260707_005606.json`
+**Full 12-run table:**
+
+| Config | toroidal | vortex_369 | braid_gain | κ_final | κ_drift | κ_proxy | |κ−κ_doc| | |κ−κ\*| | stability |
+|--------|----------|------------|------------|---------|---------|---------|---------|---------|-----------|
+| baseline | off | off | 0.002 | **0.849** | **−0.0015** | 0.854 | 0.0015 | 0.0028 | **8.0** |
+| toroidal_only | on | off | 0.002 | **0.849** | **−0.0015** | 0.854 | 0.0015 | 0.0028 | **8.0** |
+| vortex369_only | off | on | 0.002 | **0.849** | **−0.0015** | **0.885** | 0.0015 | 0.0028 | **8.0** |
+| full_topology | on | on | 0.002 | **0.849** | **−0.0015** | **0.885** | 0.0015 | 0.0028 | **8.0** |
+| baseline | off | off | 0.005 | 0.846 | −0.0037 | 0.854 | 0.0037 | 0.0051 | 8.0 |
+| toroidal_only | on | off | 0.005 | 0.846 | −0.0037 | 0.854 | 0.0037 | 0.0051 | 8.0 |
+| vortex369_only | off | on | 0.005 | 0.846 | −0.0037 | **0.885** | 0.0037 | 0.0051 | 8.0 |
+| full_topology | on | on | 0.005 | 0.846 | −0.0037 | **0.885** | 0.0037 | 0.0051 | 8.0 |
+| baseline | off | off | 0.01 | 0.843 | −0.0075 | 0.854 | 0.0075 | 0.0088 | 8.0 |
+| toroidal_only | on | off | 0.01 | 0.843 | −0.0075 | 0.854 | 0.0075 | 0.0088 | 8.0 |
+| vortex369_only | off | on | 0.01 | 0.843 | −0.0075 | **0.885** | 0.0075 | 0.0088 | 8.0 |
+| full_topology | on | on | 0.01 | 0.843 | −0.0075 | **0.885** | 0.0075 | 0.0088 | 8.0 |
+
+**Braid-gain summary (all topologies identical on κ_final):**
+
+| braid_gain | κ_final | κ_drift | |κ−κ_doc| | |κ−κ\*| | κ_proxy (369 off) | κ_proxy (369 on) |
+|------------|---------|---------|---------|---------|-------------------|-------------------|
+| **0.002** | **0.849** | **−0.0015** | **0.0015** | **0.0028** | 0.854 | **0.885** |
+| 0.005 | 0.846 | −0.0037 | 0.0037 | 0.0051 | 0.854 | 0.885 |
+| 0.01 | 0.843 | −0.0075 | 0.0075 | 0.0088 | 0.854 | 0.885 |
+
+**Findings:**
+
+1. **Magic-island bake anchors κ_final near κ_doc and κ\*** — at gain=0.002, |κ_final − κ_doc| = 0.0015 and |κ_final − κ\*| = 0.0028 (vs bare epoch bake drifting to 0.716).
+2. **vortex_math_369 shifts κ_proxy to κ_sim** — 0.854 without 369 → **0.885** with 369 (|proxy − κ_sim| = 0.005); toroidal alone unchanged.
+3. **Topology does not differentiate κ_final** — all four configs share identical κ_final per braid gain; island stability_score = **8.0** throughout.
+4. **Production braid_feedback_gain = 0.002** — tuned down from 0.02; higher gains monotonically pull κ_final below κ_doc.
+
+**vs bare epoch bake (Stage 8):** island training prevents κ over-correction; κ_proxy behavior (369 → κ_sim) is consistent across both engines.
+
+JSON (toe): `toe/outputs/magic_island/island_topology_grid_z129_20260707_005606.json`
 
 ## Analog sweeps (Stages 4–5)
 
