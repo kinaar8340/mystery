@@ -40,6 +40,8 @@ The model exhibits a mild but consistent preference: while the documented gauge 
 
 Paired sweep (Stage 7): κ_sim wins best Δ% vs R (0.121% vs 0.166%) and island+Hopf loss; κ_doc marginally wins uniform PDE hybrid. See Stage 7 section below.
 
+**Physical interpretation (Q#9):** κ_doc is the static design anchor (θ_crit, B(κ) framing); κ_sim is the dynamic dissipative optimum where λ≈κ survival at λt=2 best tracks R (minimum Δ% near κ≈0.891). The shift crosses the holonomy gap sign (κ_sim > e/π). Full write-up: [`notes/kappa_sim_interpretation.md`](../notes/kappa_sim_interpretation.md).
+
 ## Residual scaling
 
 | Quantity | Value |

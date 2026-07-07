@@ -64,7 +64,7 @@ The model exhibits a mild but consistent preference: while the documented gauge 
 | **κ_sim** | ≈ 0.89 | Simulation / production (Stage 6 dual-analog optimum) |
 | **κ\*** | ≈ 0.8513 | Exact null e/π − R/π² |
 
-Production runs use κ_sim; formulas and the HF κ slider default retain κ_doc. Details: [`docs/RESULTS.md`](docs/RESULTS.md) · [`notes/stage6_analog_tuning.md`](notes/stage6_analog_tuning.md).
+Production runs use κ_sim; formulas and the HF κ slider default retain κ_doc. Physical interpretation of the ~4% shift: [`notes/kappa_sim_interpretation.md`](notes/kappa_sim_interpretation.md). Details: [`docs/RESULTS.md`](docs/RESULTS.md) · [`notes/stage6_analog_tuning.md`](notes/stage6_analog_tuning.md).
 
 ---
 

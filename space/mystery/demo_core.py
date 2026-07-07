@@ -364,6 +364,10 @@ The interactive interface lets you explore these emergent behaviors directly.
 While the physical interpretation remains speculative, Mystery provides a concrete example of how
 complex topological systems can be tuned to reveal stable, mathematically coherent configurations
 through their own dynamics.
+
+**Why κ_doc ≠ κ_sim?** κ_doc is the static design anchor (burst threshold, scaling framing);
+κ_sim is the dynamic dissipative optimum where survival at λt = 2 best tracks R. Not a
+contradiction — different roles. [Full interpretation](https://github.com/kinaar8340/mystery/blob/main/notes/kappa_sim_interpretation.md)
 """
 
 ONBOARDING_MD = """

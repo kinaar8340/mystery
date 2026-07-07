@@ -71,18 +71,22 @@ The meta-optimizer minimizes **island + Hopf + braiding + survival**, not |B(κ)
 L_total = L_island(κ) + 3·|W_g − wg_base/π| + 0.8·|braiding − target| + w_s·survival_term − golden_reward
 ```
 
-**Prediction:** ∂|B(κ) − R|/∂κ = 0 at κ\* under W_g constraint, but ∂L_total/∂κ = 0 shifts to κ_sim when:
+**Updated interpretation (July 2026):** see [`kappa_sim_interpretation.md`](kappa_sim_interpretation.md).
 
-1. Island loss has a secondary minimum near κ ≈ 0.89 (noble-gas stability targets).
-2. PDE survival at λt=2 is best near κ ≈ 0.891 (κ survival sweep).
-3. Golden-angle reward favors dual_analog without pulling κ back to κ_doc.
+| Mechanism | Role in κ_sim selection |
+|-----------|-------------------------|
+| PDE survival @ λt=2 | **Primary** — Δ% vs R minimum near κ ≈ 0.891 |
+| Conduit comparative sweep | Confirms κ_sim best Δ% (0.121% vs 0.166% @ κ_doc) |
+| Island+Hopf base loss | **Nearly κ-flat** (~0.05 spread); weak braid_target co-tuning |
+| vortex_369 κ_proxy | Readout shifts to ~0.885; κ_final stays near κ_doc under gentle braid gain |
+| Holonomy-gap sign | κ_sim > e/π → damping-dominated regime (not B(κ) null) |
 
 So κ_doc / κ\* / κ_sim form a **testable hierarchy**:
 
 ```
-κ_doc  — documentation anchor (θ_crit, framing)
-κ*     — variational null of B(κ) = R
-κ_sim  — combined dynamics + survival optimum
+κ_doc  — static anchor (θ_crit, B(κ) framing, training seed)
+κ*     — algebraic null B(κ) = R
+κ_sim  — dynamic dissipative optimum (λ ≈ κ survival alignment)
 ```
 
 Stage 7 paired sweep confirmed κ_sim wins on conduit Δ% vs R; κ_doc marginally wins on uniform PDE hybrid.
