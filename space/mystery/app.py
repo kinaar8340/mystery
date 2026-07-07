@@ -5251,9 +5251,43 @@ footer {{ visibility: hidden; }}
     min-height: 0 !important;
     height: var(--myst-page-fill-height, 100%) !important;
     max-height: var(--myst-page-fill-height, 100%) !important;
-    overflow: hidden !important;
     display: flex !important;
     flex-direction: column !important;
+}}
+.gradio-container .myst-gravity-page:not(.hide):not(.hidden),
+.gradio-container .myst-readme-page:not(.hide):not(.hidden),
+.gradio-container .myst-render-page:not(.hide):not(.hidden) {{
+    overflow: hidden !important;
+}}
+.gradio-container .myst-status-page:not(.hide):not(.hidden) {{
+    overflow: hidden !important;
+}}
+.gradio-container .myst-status-page:not(.hide):not(.hidden) > .block:has(.myst-status-stack),
+.gradio-container .myst-status-page:not(.hide):not(.hidden) > .form:has(.myst-status-stack),
+.gradio-container .myst-status-page:not(.hide):not(.hidden) > .column.myst-status-stack,
+.gradio-container .myst-status-page:not(.hide):not(.hidden) .myst-status-stack {{
+    flex: 1 1 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    max-height: 100% !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: thin !important;
+    scrollbar-color: #c9a227 #2a1f08 !important;
+}}
+.gradio-container .myst-status-page:not(.hide):not(.hidden) .myst-status-stack::-webkit-scrollbar {{
+    width: 10px !important;
+}}
+.gradio-container .myst-status-page:not(.hide):not(.hidden) .myst-status-stack::-webkit-scrollbar-track {{
+    background: #2a1f08 !important;
+}}
+.gradio-container .myst-status-page:not(.hide):not(.hidden) .myst-status-stack::-webkit-scrollbar-thumb {{
+    background: #c9a227 !important;
+    border-radius: 5px !important;
+    border: 2px solid #2a1f08 !important;
 }}
 
 .gradio-container .myst-gravity-page {{
@@ -7217,11 +7251,6 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-status-page > .block:has(.myst-status-stack),
 .gradio-container .myst-status-page > .form:has(.myst-status-stack),
 .gradio-container .myst-status-page > .column.myst-status-stack {{
-    flex: 0 0 auto !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    height: auto !important;
-    min-height: 0 !important;
     margin-top: 0 !important;
     padding-top: 0 !important;
     padding-left: 0 !important;
@@ -7229,7 +7258,6 @@ footer {{ visibility: hidden; }}
     justify-content: flex-start !important;
     align-content: flex-start !important;
     align-items: stretch !important;
-    overflow: visible !important;
 }}
 .gradio-container .myst-render-page > .block:has(.myst-render-stack),
 .gradio-container .myst-render-page > .form:has(.myst-render-stack),
@@ -7633,9 +7661,6 @@ footer {{ visibility: hidden; }}
 
 .gradio-container .myst-status-page .myst-status-stack {{
     width: 100% !important;
-    height: auto !important;
-    min-height: 0 !important;
-    flex: 0 0 auto !important;
     background: transparent !important;
     display: flex !important;
     flex-direction: column !important;
@@ -7643,8 +7668,7 @@ footer {{ visibility: hidden; }}
     align-items: stretch !important;
     gap: 0 !important;
     margin: 0 !important;
-    padding: 0 !important;
-    overflow: visible !important;
+    padding: 0 0 0.35rem 0 !important;
 }}
 .gradio-container .myst-status-page .myst-status-stack > .block:has(.myst-status-panels-host),
 .gradio-container .myst-status-page .myst-status-stack > .form:has(.myst-status-panels-host),
