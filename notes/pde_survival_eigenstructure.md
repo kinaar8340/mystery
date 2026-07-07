@@ -223,7 +223,10 @@ Uniform IC (seed 42), λt = 2, \(\Delta t = 0.001\), κ swept on **[0.80, 0.92]*
 | 8 | 0.918 | 0.1384 | 0.64% |
 | 12 | 0.918 | 0.1377 | 0.18% |
 | **20** (default) | **0.882** | 0.1375 | **0.001%** |
-| 32 | 0.841 | 0.1375 | 0.003% |
+| 32 (121-pt search) | 0.841 | 0.1375 | 0.003% |
+| **32** (37-pt sweep) | **0.823** | 0.1375 | **0.009%** |
+
+Full nx = 32 sweep: `python scripts/kappa_survival_sweep.py --nx 32` → `outputs/kappa_survival_sweep_nx32_*.json`. At κ_doc: Δ% ≈ 0.028%.
 
 **Finer grids shift κ\* toward κ_doc:** nx = 32 optimum **κ ≈ 0.84** (within 1% of κ_doc), while coarse nx = 8–12 push toward **κ ≈ 0.92**. The production grid **nx = 20** with **D = 0.05** is where the eigenstructure story (cot + diffusion shift above κ₀ ≈ 0.77) is tightest on Δ% vs R. Discretization is not negligible — κ_sim should be read as a **basin** (≈ 0.88–0.91 on nx = 20), not a single sharp root.
 
