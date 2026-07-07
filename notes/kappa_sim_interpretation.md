@@ -2,7 +2,7 @@
 
 July 2026. Complements [`kappa_star_variational.md`](kappa_star_variational.md), [`residual_scaling.md`](residual_scaling.md), and Stage 6–8 results in [`docs/RESULTS.md`](../docs/RESULTS.md) (canonical summary in **§ Physical interpretation — κ_sim vs κ_doc**).
 
-**Status:** Closed — physical roles of κ_doc / κ\* / κ_sim are defined and evidence-backed. Remaining work: formal Skyrme derivation of π² prefactor and PDE eigenstructure proof for survival minimum at κ ≈ 0.891 (tracked in open_questions §2).
+**Status:** Closed — physical roles of κ_doc / κ\* / κ_sim are defined and evidence-backed. PDE eigenstructure for κ_survival ≈ 0.891: [`pde_survival_eigenstructure.md`](pde_survival_eigenstructure.md). Skyrme B(κ) derivation: [`skyrme_holonomy_derivation.md`](skyrme_holonomy_derivation.md).
 
 ---
 
@@ -145,8 +145,8 @@ So 369 topology does not *force* κ_final to 0.89; it **measures** an emergent h
 
 | Item | Status |
 |------|--------|
-| Derive π² prefactor and κ-dependence from reduced Skyrme action | Open |
-| Prove survival minimum at 0.891 from PDE eigenstructure | Open |
+| Derive π² prefactor and κ-dependence from reduced Skyrme action | **Closed** — [`skyrme_holonomy_derivation.md`](skyrme_holonomy_derivation.md) |
+| Prove survival minimum at 0.891 from PDE eigenstructure | **Closed** — [`pde_survival_eigenstructure.md`](pde_survival_eigenstructure.md) |
 | Island-only 100-trial ablation — is κ uniquely 0.89 without survival? | Recommended |
 | Physical units / measurability of κ in experiment | Speculative |
 

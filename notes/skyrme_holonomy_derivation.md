@@ -225,7 +225,7 @@ Checks: free-energy stationarity, \(B(\kappa)\) identity, κ\* null, numeric agr
 |------|--------|
 | Full nonlinear cot\((\theta/2)\) correction to \(B(\kappa)\) | Open |
 | Explicit \(F_{\mu\nu}\) integral reducing to π² at one loop | Open |
-| PDE eigenstructure proof for survival minimum at κ ≈ 0.891 | Open (separate from B(κ)) |
+| PDE eigenstructure proof for survival minimum at κ ≈ 0.891 | **Closed** — [`pde_survival_eigenstructure.md`](pde_survival_eigenstructure.md) |
 
 ---
 

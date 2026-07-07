@@ -104,7 +104,13 @@ Setting \(B(\kappa^\ast) = R\) gives **κ\* = e/π − R/π² ≈ 0.8513** (0.16
 python scripts/skyrme_bound_derivation.py
 ```
 
-Open beyond mean-field: nonlinear cot(θ/2) corrections; PDE eigenstructure for survival minimum at κ ≈ 0.891.
+**PDE eigenstructure (July 2026):** zero-mode null κ₀ ≈ 0.77; cotangent flux + diffusion shift the Δ% vs R minimum to **κ_sim ≈ 0.891**. Full write-up: [`notes/pde_survival_eigenstructure.md`](../notes/pde_survival_eigenstructure.md). Verify:
+
+```bash
+python scripts/pde_survival_eigenstructure.py
+```
+
+Open beyond mean-field: nonlinear cot(θ/2) corrections to \(B(\kappa)\); closed-form κ_sim from fully coupled cot.
 
 ## Residual scaling
 

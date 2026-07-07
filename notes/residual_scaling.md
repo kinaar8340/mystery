@@ -56,7 +56,7 @@ python scripts/residual_kappa_sweep.py      # sweep plot
 ## What remains open
 
 1. Nonlinear cot(θ/2) and full \(F_{\mu\nu}\) corrections to \(B(\kappa)\).
-2. PDE eigenstructure proof for survival minimum at κ ≈ 0.891 (separate from \(B(\kappa)\)).
+2. ~~PDE eigenstructure proof for survival minimum at κ ≈ 0.891~~ **Closed** — [`pde_survival_eigenstructure.md`](pde_survival_eigenstructure.md).
 
 ## Reproduce
 

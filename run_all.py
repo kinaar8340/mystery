@@ -18,6 +18,7 @@ SCRIPTS = [
     ("residual_bound_probe.py", None),
     ("residual_kappa_sweep.py", None),
     ("skyrme_bound_derivation.py", None),
+    ("pde_survival_eigenstructure.py", None),
     ("pde_relaxation_probe.py", None),
     ("exponential_survival_probe.py", TOE_PYTHON),
     ("kappa_survival_sweep.py", None),

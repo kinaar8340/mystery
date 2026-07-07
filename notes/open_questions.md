@@ -10,6 +10,7 @@
 | 6 | PDE uniform relaxation | No φ/e/π FFT signature — expected for this IC class |
 | 9 | Why κ_sim ≈ 0.89 vs κ_doc = 0.85? | **Closed** — [`kappa_sim_interpretation.md`](kappa_sim_interpretation.md) · [`docs/RESULTS.md`](../docs/RESULTS.md) § Physical interpretation |
 | 2 | Formal residual bound B(κ) | **Closed (mean-field)** — \(B(\kappa)=\pi^2(e/\pi-\kappa)\) derived in [`skyrme_holonomy_derivation.md`](skyrme_holonomy_derivation.md); verify `scripts/skyrme_bound_derivation.py`. Open: nonlinear cot + full Skyrme \(F_{\mu\nu}\) corrections |
+| 10 | PDE eigenstructure — κ_survival ≈ 0.891 | **Closed** — [`pde_survival_eigenstructure.md`](pde_survival_eigenstructure.md) · verify `scripts/pde_survival_eigenstructure.py` |
 
 ## Active (partially answered)
 
