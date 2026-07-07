@@ -2052,10 +2052,48 @@ WALLPAPER_HEAD = f"""
     window.addEventListener('load', mountWallpaper);
 }})();
 (function() {{
+    function mystPageVisible(selector) {{
+        var el = document.querySelector(selector);
+        if (!el) return false;
+        if (el.classList.contains('hide') || el.classList.contains('hidden')) return false;
+        var st = window.getComputedStyle(el);
+        return st.display !== 'none' && st.visibility !== 'hidden' && Number(st.opacity) > 0.01;
+    }}
+    function mystGravityPageActive() {{
+        return mystPageVisible('.myst-gravity-page');
+    }}
+    function mystClearGravityViewportInlineSize(wrap) {{
+        wrap = wrap || document.getElementById('myst-gravity-viewport-wrapper');
+        if (!wrap) return;
+        wrap.style.removeProperty('height');
+        wrap.style.removeProperty('min-height');
+        wrap.style.removeProperty('max-height');
+        var host = document.getElementById('myst-gravity-viewport');
+        if (host) {{
+            host.style.removeProperty('height');
+            host.style.removeProperty('min-height');
+            host.style.removeProperty('max-height');
+        }}
+        var vid = wrap.querySelector('video');
+        if (vid) {{
+            vid.style.removeProperty('height');
+            vid.style.removeProperty('min-height');
+            vid.style.removeProperty('max-height');
+        }}
+    }}
     function mystSyncGravityViewportHeight() {{
         var wrap = document.getElementById('myst-gravity-viewport-wrapper');
         if (!wrap) return;
-        var top = wrap.getBoundingClientRect().top;
+        if (!mystGravityPageActive()) {{
+            mystClearGravityViewportInlineSize(wrap);
+            return;
+        }}
+        var rect = wrap.getBoundingClientRect();
+        if (rect.height <= 0 || rect.width <= 0) {{
+            mystClearGravityViewportInlineSize(wrap);
+            return;
+        }}
+        var top = rect.top;
         var h = Math.max(360, Math.round(window.innerHeight - top - 8));
         document.documentElement.style.setProperty('--myst-gravity-viewport-height', h + 'px');
         wrap.style.setProperty('height', h + 'px', 'important');
@@ -2075,14 +2113,22 @@ WALLPAPER_HEAD = f"""
         }}
     }}
     function mystSyncVisorHeight() {{
-        mystSyncGravityViewportHeight();
-        var visor = document.querySelector('.myst-unit-cell-visor')
-            || document.querySelector('.myst-gravity-single-viewport')
-            || document.querySelector('#myst-gravity-viewport');
-        var leftCard = document.querySelector('.myst-gravity-presets-tui-card');
-        var page = document.querySelector('.myst-gravity-page');
+        if (mystGravityPageActive()) {{
+            mystSyncGravityViewportHeight();
+        }} else {{
+            mystClearGravityViewportInlineSize();
+        }}
+        var visor = document.querySelector('.myst-unit-cell-visor');
+        if (!visor && mystGravityPageActive()) {{
+            visor = document.querySelector('.myst-gravity-single-viewport')
+                || document.querySelector('#myst-gravity-viewport');
+        }}
         if (!visor) return;
-        var top = visor.getBoundingClientRect().top;
+        var visorRect = visor.getBoundingClientRect();
+        if (visorRect.height <= 0 || visorRect.width <= 0) return;
+        var top = visorRect.top;
+        var leftCard = document.querySelector('.myst-gravity-presets-tui-card');
+        var page = mystGravityPageActive() ? document.querySelector('.myst-gravity-page') : null;
         var anchorBottom = leftCard
             ? leftCard.getBoundingClientRect().bottom
             : (page ? page.getBoundingClientRect().bottom : window.innerHeight);
@@ -2117,19 +2163,26 @@ WALLPAPER_HEAD = f"""
         video.style.setProperty('opacity', '1', 'important');
     }}
     function mystReflowViewport() {{
+        if (!mystGravityPageActive()) {{
+            mystClearGravityViewportInlineSize();
+            return;
+        }}
         mystSyncVisorHeight();
         mystFixPlatonicViewportLayer();
         var vp = document.getElementById('unit-cell-main-view');
         var visor = document.querySelector('.myst-unit-cell-visor');
         if (vp) void vp.offsetHeight;
         if (visor) void visor.offsetHeight;
-        window.dispatchEvent(new Event('resize'));
     }}
     function bootViewportReflow() {{
         mystReflowViewport();
         requestAnimationFrame(mystReflowViewport);
         if (window.__mystViewportReflowObs) return;
         window.__mystViewportReflowObs = new MutationObserver(function() {{
+            if (!mystGravityPageActive()) {{
+                mystClearGravityViewportInlineSize();
+                return;
+            }}
             requestAnimationFrame(mystReflowViewport);
         }});
         var roots = [
@@ -2285,7 +2338,15 @@ WALLPAPER_HEAD = f"""
             || document.querySelector('#myst-gravity-viewport .plotly-graph-div')
             || document.querySelector('.myst-gravity-viewport-plot-host .plotly-graph-div');
     }}
+    function mystGravityLayoutActive() {{
+        var page = document.querySelector('.myst-gravity-page');
+        if (!page) return false;
+        if (page.classList.contains('hide') || page.classList.contains('hidden')) return false;
+        var st = window.getComputedStyle(page);
+        return st.display !== 'none' && st.visibility !== 'hidden';
+    }}
     function mystResizeGravityPlot() {{
+        if (!mystGravityLayoutActive()) return;
         var host = document.getElementById('myst-gravity-viewport-wrapper')
             || document.getElementById('myst-gravity-viewport');
         var plot = mystBreathingPlotDiv();
@@ -2374,6 +2435,7 @@ WALLPAPER_HEAD = f"""
         setTimeout(startBreathingAnimation, 1200);
         if (window.__mystGravityBreathingObs) return;
         window.__mystGravityBreathingObs = new MutationObserver(function() {{
+            if (!mystGravityLayoutActive()) return;
             var plot = mystBreathingPlotDiv();
             if (plot) {{
                 plot.dataset.mystBreathingPoll = '0';
@@ -2537,6 +2599,12 @@ body {{
     width: 100% !important;
     overflow-x: hidden !important;
     position: relative !important;
+}}
+body:has(.gradio-container .myst-readme-page:not(.hide):not(.hidden)),
+body:has(.gradio-container .myst-gravity-page:not(.hide):not(.hidden)) {{
+    overflow: hidden !important;
+    max-height: 100dvh !important;
+    height: 100dvh !important;
 }}
 body::before {{
     content: "" !important;
@@ -4935,7 +5003,8 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-gravity-page .vqc-plot3d-panel img {{
     background-color: #000000 !important;
 }}
-.gradio-container:has(.myst-gravity-page:not(.hide):not(.hidden)) {{
+.gradio-container:has(.myst-gravity-page:not(.hide):not(.hidden)),
+.gradio-container:has(.myst-readme-page:not(.hide):not(.hidden)) {{
     overflow: hidden !important;
     max-height: 100dvh !important;
     padding: 0.15rem 0.5rem 0 !important;
@@ -4946,10 +5015,15 @@ footer {{ visibility: hidden; }}
 }}
 .gradio-container:has(.myst-gravity-page:not(.hide):not(.hidden)) .main,
 .gradio-container:has(.myst-gravity-page:not(.hide):not(.hidden)) .main > .wrap,
-.gradio-container:has(.myst-gravity-page:not(.hide):not(.hidden)) .contain {{
+.gradio-container:has(.myst-gravity-page:not(.hide):not(.hidden)) .contain,
+.gradio-container:has(.myst-readme-page:not(.hide):not(.hidden)) .main,
+.gradio-container:has(.myst-readme-page:not(.hide):not(.hidden)) .main > .wrap,
+.gradio-container:has(.myst-readme-page:not(.hide):not(.hidden)) .contain {{
     flex: 1 1 0 !important;
     min-height: 0 !important;
     height: 100% !important;
+    max-height: 100dvh !important;
+    overflow: hidden !important;
     display: flex !important;
     flex-direction: column !important;
 }}
@@ -7478,6 +7552,8 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-render-page.hidden,
 .gradio-container .myst-gravity-page.hide,
 .gradio-container .myst-gravity-page.hidden,
+.gradio-container .myst-gravity-page.hide #myst-gravity-viewport-wrapper,
+.gradio-container .myst-gravity-page.hidden #myst-gravity-viewport-wrapper,
 .gradio-container .myst-edit-page.hide,
 .gradio-container .myst-edit-page.hidden,
 .gradio-container .myst-readme-page.hide,
