@@ -201,7 +201,35 @@ This weakly modulates \(S(\kappa)\), **broadening** the Δ% vs R basin around 0.
 
 ---
 
-## 7. Synthesis
+## 7. Diffusion and grid sensitivity (D × nx)
+
+Uniform IC (seed 42), λt = 2, \(\Delta t = 0.001\), κ swept on **[0.80, 0.92]** with **121 points** via `relaxation_survival.simulate_twist_pde_survival`. Best κ minimizes |mean_survival − R|.
+
+### 7.1 Diffusion coefficient D (nx = 20)
+
+| D | best κ\* | mean_survival | Δ% vs R |
+|---|----------|---------------|---------|
+| **0.00** | 0.913 | 0.2428 | **76.6%** |
+| 0.01 | 0.905 | 0.1375 | 0.002% |
+| **0.05** (default) | **0.882** | 0.1375 | **0.001%** |
+| 0.10 | 0.915 | 0.1375 | 0.001% |
+
+**D = 0** removes fluctuation dissipation; cot flux dominates and \(S \approx 0.24\) — far from R. Any **D > 0** in this range lands κ\* in the **0.88–0.92** basin with sub-0.01% Δ% on the fine grid. Production default **D = 0.05** sits at the **low-κ** end of that basin; the 23-point κ-survival sweep (coarser grid in κ) reports **κ ≈ 0.891** — same broad minimum, grid-resolution dependent.
+
+### 7.2 Grid resolution nx (D = 0.05)
+
+| nx | best κ\* | mean_survival | Δ% vs R |
+|----|----------|---------------|---------|
+| 8 | 0.918 | 0.1384 | 0.64% |
+| 12 | 0.918 | 0.1377 | 0.18% |
+| **20** (default) | **0.882** | 0.1375 | **0.001%** |
+| 32 | 0.841 | 0.1375 | 0.003% |
+
+**Finer grids shift κ\* toward κ_doc:** nx = 32 optimum **κ ≈ 0.84** (within 1% of κ_doc), while coarse nx = 8–12 push toward **κ ≈ 0.92**. The production grid **nx = 20** with **D = 0.05** is where the eigenstructure story (cot + diffusion shift above κ₀ ≈ 0.77) is tightest on Δ% vs R. Discretization is not negligible — κ_sim should be read as a **basin** (≈ 0.88–0.91 on nx = 20), not a single sharp root.
+
+---
+
+## 8. Synthesis
 
 At λt = 2 the mean twist \(\bar\theta\) obeys a **drive-shifted zero mode** with eigenvalue \(\lambda_0 = \kappa\), plus a **positive cotangent flux** sourced by diffusing fluctuations on \(T^3\). The pure zero-mode null is **κ₀ ≈ 0.77**. Cotangent coupling and nonlinear spatial feedback raise \(S(\kappa)\) at fixed κ, moving the Δ% vs R minimum to **κ_sim ≈ 0.891** — consistent with κ-survival sweeps and Stage 6–7 production tuning.
 
@@ -209,7 +237,7 @@ This is the **dynamic** counterpart to the static κ\* null: same PDE, different
 
 ---
 
-## 8. Verification
+## 9. Verification
 
 ```bash
 cd mystery && .venv/bin/python scripts/pde_survival_eigenstructure.py
@@ -220,7 +248,7 @@ Checks: \(\kappa_0\) formula, Laplacian spectrum, model hierarchy (zero-mode < s
 
 ---
 
-## 9. Code correspondence
+## 10. Code correspondence
 
 | Theory | Implementation |
 |--------|----------------|
@@ -232,17 +260,17 @@ Checks: \(\kappa_0\) formula, Laplacian spectrum, model hierarchy (zero-mode < s
 
 ---
 
-## 10. What remains beyond this proof
+## 11. What remains beyond this proof
 
 | Item | Status |
 |------|--------|
 | Closed-form κ_sim from fully coupled cot nonlinearity | Open (transcendental; numeric optimum ≈ 0.891) |
-| Structured-IC robustness of κ_sim | **Tested (July 2026)** — uniform **yes**; hopfion/helical **no** (see §11) |
+| Structured-IC robustness of κ_sim | **Tested (July 2026)** — uniform **yes**; hopfion/helical **no** (see §12) |
 | Full nonlinear cot correction to \(B(\kappa)\) | Open (Skyrme note §10) |
 
 ---
 
-## 11. Structured-IC falsification (July 2026)
+## 12. Structured-IC falsification (July 2026)
 
 `scripts/pde_structured_ic_kappa_robustness.py` sweeps κ at λt = 2 for four IC classes (nx = 20):
 
