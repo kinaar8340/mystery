@@ -12,10 +12,16 @@ Optional analog terms (--use-survival-penalty):
 
 With --use-hybrid-objective, survival term uses hybrid_delta_pct / 100 instead.
 
+Optional κ prior (--use-kappa-prior):
+  kappa_prior_term = (κ − κ_target)²   default κ_target = 0.85 (κ_doc)
+
 Usage:
   python meta_optimize_phi_probe.py --trials 12 --compare-baseline
   python meta_optimize_phi_probe.py --trials 20 --use-survival-penalty \\
       --golden-angle-steps --golden-reward-weight 0.3
+
+Requires torch + optuna (toe venv). If run from mystery/.venv, the script
+auto-relaunches via ~/Projects/toe/venv/bin/python when available.
 """
 
 from __future__ import annotations
@@ -23,6 +29,7 @@ from __future__ import annotations
 import argparse
 import importlib.util
 import json
+import os
 import subprocess
 import sys
 from dataclasses import dataclass, field
@@ -43,6 +50,7 @@ E = np.e
 PI = np.pi
 R_RESIDUAL = PHI**2 + E**2 - PI**2
 GOLDEN_FRACTION = 360.0 * (1.0 - 1.0 / PHI) / 1000.0
+KAPPA_DOC = 0.85
 
 REAL_ISLAND_TARGETS = {
     2: {"stability": 8.0, "bursts": 0.05},
@@ -62,8 +70,44 @@ class AnalogObjectiveConfig:
     golden_reward_weight: float = 0.3
     use_hybrid_objective: bool = False
     survival_penalty_weight: float = 1.0
+    use_kappa_prior: bool = False
+    kappa_prior_target: float = KAPPA_DOC
+    kappa_prior_weight: float = 50.0
     lambda_t: float = 2.0
     pde_nx: int = 16
+
+
+def _toe_python() -> Path:
+    return TOE_ROOT / "venv" / "bin" / "python"
+
+
+def _has_torch_optuna() -> bool:
+    try:
+        import torch  # noqa: F401
+        import optuna  # noqa: F401
+        return True
+    except ImportError:
+        return False
+
+
+def _running_under_toe_venv() -> bool:
+    toe_venv = (TOE_ROOT / "venv").resolve()
+    try:
+        return Path(sys.prefix).resolve() == toe_venv
+    except (TypeError, ValueError):
+        return False
+
+
+def _ensure_toe_venv() -> None:
+    """Re-exec with toe venv when torch/optuna are missing from current interpreter."""
+    if _has_torch_optuna():
+        return
+    if _running_under_toe_venv():
+        return
+    toe_py = _toe_python()
+    if toe_py.is_file():
+        print(f"Note: relaunching with toe venv ({toe_py})", file=sys.stderr)
+        os.execv(str(toe_py), [str(toe_py), *sys.argv])
 
 
 def _load_toe_modules():
@@ -71,8 +115,21 @@ def _load_toe_modules():
         if p not in sys.path:
             sys.path.insert(0, p)
 
-    import torch
-    import optuna
+    try:
+        import torch
+        import optuna
+    except ImportError as exc:
+        toe_py = _toe_python()
+        hint = (
+            f"  {toe_py} {Path(__file__).name} ...\n"
+            if toe_py.is_file()
+            else "  Install torch and optuna in the active venv.\n"
+        )
+        raise ImportError(
+            f"{exc}\n"
+            "meta_optimize_phi_probe requires torch + optuna from the toe venv.\n"
+            f"Run:\n{hint}"
+        ) from exc
 
     rs_path = TOE_SRC / "relaxation_survival.py"
     spec = importlib.util.spec_from_file_location("relaxation_survival", rs_path)
@@ -193,6 +250,10 @@ def evaluate_trial(
                 )
 
         survival_term = 0.0
+        kappa_prior_term = 0.0
+        if analog.use_kappa_prior:
+            kappa_prior_term = (kappa - analog.kappa_prior_target) ** 2
+
         if analog.use_survival_penalty:
             if analog.use_hybrid_objective:
                 survival_term = hybrid_delta / 100.0
@@ -201,8 +262,11 @@ def evaluate_trial(
             total = (
                 base_loss
                 + analog.survival_penalty_weight * survival_term
+                + analog.kappa_prior_weight * kappa_prior_term
                 - golden_reward
             )
+        elif analog.use_kappa_prior:
+            total = base_loss + analog.kappa_prior_weight * kappa_prior_term
         else:
             total = base_loss
 
@@ -211,6 +275,8 @@ def evaluate_trial(
             "loss": total,
             "base_loss": base_loss,
             "survival_term": survival_term,
+            "kappa_prior_term": kappa_prior_term,
+            "kappa_prior_target": analog.kappa_prior_target if analog.use_kappa_prior else None,
             "island_loss": island_loss,
             "hopf_penalty": hopf_penalty,
             "braiding_penalty": braiding_penalty,
@@ -252,6 +318,8 @@ def _format_analog_flags(analog: AnalogObjectiveConfig) -> str:
         flags.append("golden-angle-steps")
     if analog.use_hybrid_objective:
         flags.append("use-hybrid-objective")
+    if analog.use_kappa_prior:
+        flags.append("use-kappa-prior")
     if not flags:
         return "(none — island + Hopf + braiding only)"
     extra = []
@@ -259,16 +327,28 @@ def _format_analog_flags(analog: AnalogObjectiveConfig) -> str:
         extra.append(f"survival-penalty-weight={analog.survival_penalty_weight}")
     if analog.golden_angle_steps:
         extra.append(f"golden-reward-weight={analog.golden_reward_weight}")
+    if analog.use_kappa_prior:
+        extra.append(
+            f"kappa-prior-weight={analog.kappa_prior_weight} "
+            f"(target={analog.kappa_prior_target})"
+        )
     return ", ".join(flags) + ("; " + ", ".join(extra) if extra else "")
 
 
 def _objective_formula(analog: AnalogObjectiveConfig) -> str:
-    if not analog.use_survival_penalty:
+    parts = ["loss = base_loss"]
+    if analog.use_survival_penalty:
+        term = "hybrid_delta/100" if analog.use_hybrid_objective else "|mean_survival − R|"
+        parts.append(f"+ {analog.survival_penalty_weight} × {term}")
+    if analog.use_kappa_prior:
+        parts.append(
+            f"+ {analog.kappa_prior_weight} × (κ − {analog.kappa_prior_target})²"
+        )
+    if analog.golden_angle_steps:
+        parts.append("− golden_reward")
+    if len(parts) == 1:
         return "loss = base_loss  (island + Hopf + braiding)"
-    term = "hybrid_delta/100" if analog.use_hybrid_objective else "|mean_survival − R|"
-    w_s = analog.survival_penalty_weight
-    golden = " − golden_reward" if analog.golden_angle_steps else ""
-    return f"loss = base_loss + {w_s} × {term}{golden}"
+    return " ".join(parts)
 
 
 def _print_run_header(label: str, trials: int, analog: AnalogObjectiveConfig) -> None:
@@ -279,6 +359,9 @@ def _print_run_header(label: str, trials: int, analog: AnalogObjectiveConfig) ->
     print(f"  Objective:    {_objective_formula(analog)}")
     if analog.use_survival_penalty:
         print(f"  w_s (--survival-penalty-weight): {analog.survival_penalty_weight}")
+    if analog.use_kappa_prior:
+        print(f"  w_κ (--kappa-prior-weight): {analog.kappa_prior_weight}")
+        print(f"  κ_target (--kappa-prior-target): {analog.kappa_prior_target}")
     print("-" * 72)
 
 
@@ -351,6 +434,7 @@ def run_native_optimize(
     best = study.best_trial
     attrs = dict(best.user_attrs)
     survival_term = attrs.get("survival_term", 0.0)
+    kappa_prior_term = attrs.get("kappa_prior_term", 0.0)
     base_loss = attrs.get("base_loss", best.value)
     golden_reward = attrs.get("golden_reward", 0.0) or 0.0
     return {
@@ -363,6 +447,9 @@ def run_native_optimize(
             "golden_reward_weight": analog.golden_reward_weight,
             "use_hybrid_objective": analog.use_hybrid_objective,
             "survival_penalty_weight": analog.survival_penalty_weight,
+            "use_kappa_prior": analog.use_kappa_prior,
+            "kappa_prior_target": analog.kappa_prior_target,
+            "kappa_prior_weight": analog.kappa_prior_weight,
         },
         "best_loss": best.value,
         "best_params": best.params,
@@ -374,6 +461,12 @@ def run_native_optimize(
             "weighted_survival": analog.survival_penalty_weight * survival_term
             if analog.use_survival_penalty
             else 0.0,
+            "kappa_prior_term": kappa_prior_term,
+            "kappa_prior_weight": analog.kappa_prior_weight,
+            "weighted_kappa_prior": analog.kappa_prior_weight * kappa_prior_term
+            if analog.use_kappa_prior
+            else 0.0,
+            "kappa_prior_target": analog.kappa_prior_target if analog.use_kappa_prior else None,
             "golden_reward": golden_reward,
             "final_loss": best.value,
         },
@@ -619,10 +712,19 @@ def print_recommendations(rows: list[dict[str, Any]], args: argparse.Namespace) 
     avg_dist_085 = np.mean([abs(k - 0.85) for k in k_vals]) if k_vals else None
 
     recs: list[str] = []
-    if avg_dist_085 is not None and avg_dist_085 > 0.05:
+    if (
+        avg_dist_085 is not None
+        and avg_dist_085 > 0.05
+        and not getattr(args, "use_kappa_prior", False)
+    ):
         recs.append(
-            f"κ remains {avg_dist_085:.3f} mean distance from 0.85 — try w_s ∈ [8, 15] "
-            "or add explicit κ prior toward 0.85 in the search space center."
+            f"κ remains {avg_dist_085:.3f} mean distance from 0.85 — try "
+            "--use-kappa-prior or increase --kappa-prior-weight."
+        )
+    elif getattr(args, "use_kappa_prior", False) and avg_dist_085 is not None and avg_dist_085 > 0.03:
+        recs.append(
+            f"κ still {avg_dist_085:.3f} from target — sweep --kappa-prior-weight "
+            f"(current {args.kappa_prior_weight})."
         )
     if args.trials < 50:
         recs.append(
@@ -655,10 +757,43 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--golden-reward-weight", type=float, default=0.3)
     p.add_argument("--use-hybrid-objective", action="store_true")
     p.add_argument("--survival-penalty-weight", type=float, default=1.0)
+    p.add_argument(
+        "--use-kappa-prior",
+        action="store_true",
+        help="Penalize (κ − κ_target)² toward documented κ_doc (default 0.85)",
+    )
+    p.add_argument(
+        "--kappa-prior-target",
+        type=float,
+        default=KAPPA_DOC,
+        help="κ prior center (default 0.85)",
+    )
+    p.add_argument(
+        "--kappa-prior-weight",
+        type=float,
+        default=50.0,
+        help="Weight on (κ − κ_target)² (default 50)",
+    )
     return p.parse_args()
 
 
+def _analog_from_args(args: argparse.Namespace, **overrides: Any) -> AnalogObjectiveConfig:
+    base = {
+        "use_survival_penalty": args.use_survival_penalty,
+        "golden_angle_steps": args.golden_angle_steps,
+        "golden_reward_weight": args.golden_reward_weight,
+        "use_hybrid_objective": args.use_hybrid_objective,
+        "survival_penalty_weight": args.survival_penalty_weight,
+        "use_kappa_prior": args.use_kappa_prior,
+        "kappa_prior_target": args.kappa_prior_target,
+        "kappa_prior_weight": args.kappa_prior_weight,
+    }
+    base.update(overrides)
+    return AnalogObjectiveConfig(**base)
+
+
 def main() -> int:
+    _ensure_toe_venv()
     args = parse_args()
     runs: list[dict] = []
 
@@ -667,18 +802,19 @@ def main() -> int:
     print("#" * 72)
     print(f"  Trials per mode: {args.trials}")
     print(f"  Compare baseline: {args.compare_baseline}")
-    if args.compare_baseline or args.use_survival_penalty:
-        analog_preview = AnalogObjectiveConfig(
+    if args.compare_baseline or args.use_survival_penalty or args.use_kappa_prior:
+        analog_preview = _analog_from_args(
+            args,
             use_survival_penalty=args.use_survival_penalty or args.compare_baseline,
-            golden_angle_steps=args.golden_angle_steps,
-            golden_reward_weight=args.golden_reward_weight,
-            use_hybrid_objective=args.use_hybrid_objective,
-            survival_penalty_weight=args.survival_penalty_weight,
         )
         print(f"  Active flags (dual/survival): {_format_analog_flags(analog_preview)}")
-        if analog_preview.use_survival_penalty:
+        if analog_preview.use_survival_penalty or analog_preview.use_kappa_prior:
             print(f"  Objective formula: {_objective_formula(analog_preview)}")
+        if analog_preview.use_survival_penalty:
             print(f"  --survival-penalty-weight: {args.survival_penalty_weight}")
+        if analog_preview.use_kappa_prior:
+            print(f"  --kappa-prior-weight: {args.kappa_prior_weight}")
+            print(f"  --kappa-prior-target: {args.kappa_prior_target}")
     print(f"  R = φ² + e² − π² = {R_RESIDUAL:.6f}")
     print("#" * 72)
 
@@ -688,10 +824,10 @@ def main() -> int:
         runs.append(run_native_optimize(
             args.trials, AnalogObjectiveConfig(), label="baseline",
         ))
-        survival_analog = AnalogObjectiveConfig(
+        survival_analog = _analog_from_args(
+            args,
             use_survival_penalty=True,
-            use_hybrid_objective=args.use_hybrid_objective,
-            survival_penalty_weight=args.survival_penalty_weight,
+            golden_angle_steps=False,
         )
         runs.append(run_native_optimize(
             args.trials,
@@ -700,24 +836,17 @@ def main() -> int:
         ))
         runs.append(run_native_optimize(
             args.trials,
-            AnalogObjectiveConfig(
+            _analog_from_args(
+                args,
                 use_survival_penalty=True,
-                golden_angle_steps=True,
-                golden_reward_weight=args.golden_reward_weight,
-                use_hybrid_objective=args.use_hybrid_objective,
-                survival_penalty_weight=args.survival_penalty_weight,
+                golden_angle_steps=args.golden_angle_steps,
             ),
             label="dual_analog",
         ))
     else:
-        analog = AnalogObjectiveConfig(
-            use_survival_penalty=args.use_survival_penalty,
-            golden_angle_steps=args.golden_angle_steps,
-            golden_reward_weight=args.golden_reward_weight,
-            use_hybrid_objective=args.use_hybrid_objective,
-            survival_penalty_weight=args.survival_penalty_weight,
-        )
-        runs.append(run_native_optimize(args.trials, analog, label="custom"))
+        runs.append(run_native_optimize(
+            args.trials, _analog_from_args(args), label="custom",
+        ))
 
     analyses = [analyze_clustering(r) for r in runs]
     baseline_loss = next(
@@ -740,17 +869,18 @@ def main() -> int:
             "golden_reward_weight": args.golden_reward_weight,
             "use_hybrid_objective": args.use_hybrid_objective,
             "survival_penalty_weight": args.survival_penalty_weight,
+            "use_kappa_prior": args.use_kappa_prior,
+            "kappa_prior_target": args.kappa_prior_target,
+            "kappa_prior_weight": args.kappa_prior_weight,
         },
         "pilot_reference": PILOT_REFERENCE,
         "runs": runs,
         "comparison_table": table_rows,
         "phi_e_pi_clustering": analyses,
         "objective_formula": _objective_formula(
-            AnalogObjectiveConfig(
+            _analog_from_args(
+                args,
                 use_survival_penalty=args.use_survival_penalty or args.compare_baseline,
-                use_hybrid_objective=args.use_hybrid_objective,
-                survival_penalty_weight=args.survival_penalty_weight,
-                golden_angle_steps=args.golden_angle_steps,
             )
         ),
     }
@@ -780,10 +910,16 @@ def main() -> int:
             continue
         bd = run.get("loss_breakdown", {})
         if bd:
+            kappa_part = ""
+            if bd.get("weighted_kappa_prior"):
+                kappa_part = (
+                    f"  κ_prior={bd.get('kappa_prior_term', 0):.6f}  "
+                    f"w_κ×term={bd.get('weighted_kappa_prior', 0):.4f}"
+                )
             print(f"\n[{label}] loss breakdown: base={bd.get('base_loss', 0):.4f}  "
                   f"survival_term={bd.get('survival_term', 0):.6f}  "
                   f"w_s×term={bd.get('weighted_survival', 0):.4f}  "
-                  f"golden_reward={bd.get('golden_reward', 0):.4f}")
+                  f"golden_reward={bd.get('golden_reward', 0):.4f}{kappa_part}")
 
     return 0 if all(r.get("status") == "ok" for r in runs) else 1
 

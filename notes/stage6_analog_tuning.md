@@ -9,13 +9,14 @@ Close-out note for the meta-optimizer analog objective: survival penalty at λt 
 Base loss (island + Hopf + braiding) from `meta_optimize_invariants.py`, extended in `meta_optimize_phi_probe.py`:
 
 ```
-loss = base_loss + w_s × survival_term − golden_reward
+loss = base_loss + w_s × survival_term + w_κ × (κ − κ_target)² − golden_reward
 ```
 
 | Term | Definition |
 |------|------------|
 | `survival_term` | `hybrid_delta_pct / 100` when `--use-hybrid-objective`, else `\|mean_survival − R\|` |
-| `golden_reward` | `weight × (0.5×golden_closeness + 0.5×S¹ packing)` when `--golden-angle-steps` |
+| `kappa_prior_term` | `(κ − κ_target)²` when `--use-kappa-prior` (default κ_target = 0.85) |
+| `golden_reward` | `weight × (0.5×golden_closeness + 0.5×S¹ packing)` when `--golden-angle-steps` (dual_analog only) |
 | `R` | φ² + e² − π² ≈ **+0.137486** |
 
 Three comparison modes with `--compare-baseline`:
@@ -23,8 +24,9 @@ Three comparison modes with `--compare-baseline`:
 | Mode | Flags |
 |------|-------|
 | **baseline** | Island + Hopf only |
-| **survival_penalty** | `+ --use-survival-penalty --use-hybrid-objective` |
+| **survival_penalty** | `+ --use-survival-penalty --use-hybrid-objective` (no golden steps) |
 | **dual_analog** | `+ --golden-angle-steps --golden-reward-weight 0.3` |
+| **κ prior** (optional) | `--use-kappa-prior --kappa-prior-target 0.85 --kappa-prior-weight W` on survival/dual modes |
 
 ---
 
@@ -37,8 +39,9 @@ Three comparison modes with `--compare-baseline`:
 | 50-trial | 50 | 5 | **56.98** | 0.89 | 0.121% | 0.9990 | Identical to 30-trial |
 | w_s sweep | 25 | 5–12 | **56.98** @ w_s=5 | 0.89 | 0.121% | 0.9990 | Stable; w_s=5 best loss |
 | Robustness | 18 grid | — | — | 0.89 | 0.121% | 0.9990 | IC/twist/λt/step modes |
+| κ prior w_κ=500 | 30 | 5 | 57.78 | 0.89 | 0.121% | 0.9990 | κ unchanged; dual > baseline |
 
-**50-trial mode comparison (w_s = 5):**
+**50-trial mode comparison (w_s = 5, no κ prior):**
 
 | Mode | Loss | κ | mean_survival | Δ% vs R | hybrid | golden_reward |
 |------|------|---|---------------|---------|--------|---------------|
@@ -88,6 +91,48 @@ Loss breakdown (best dual-analog trial):
 
 6. **Robustness is strong:** at fixed κ = 0.89, W_g = 111.41, mean_survival = 0.137651 and Δ% = 0.121% hold across 18 comparative-sweep configurations (uniform/hopfion/helical ICs; twist rates 10/12.5/15; linear vs golden steps; λt = 2).
 
+7. **κ prior does not shift the optimum (Stage 7):** squared prior `(κ − 0.85)²` at w_κ ∈ {50, 500} leaves κ at **0.890**. Island+Hopf base_loss strongly prefers κ ≈ 0.89 (trial κ=0.85 → loss 58.62 vs κ=0.89 → 57.22 in baseline). Survival alignment is also best near κ ≈ 0.89. The prior only adds overhead: +0.80 to loss at w_κ=500 without moving κ.
+
+---
+
+## κ prior experiment (July 2026)
+
+Attempt to pull κ toward documented κ_doc = 0.85 while keeping survival alignment.
+
+```bash
+python scripts/meta_optimize_phi_probe.py \
+  --compare-baseline --trials 30 \
+  --use-survival-penalty --use-hybrid-objective --survival-penalty-weight 5 \
+  --golden-angle-steps --golden-reward-weight 0.3 \
+  --use-kappa-prior --kappa-prior-target 0.85 --kappa-prior-weight 500
+```
+
+| w_κ | Mode | Loss | κ | w_κ×term | golden | Notes |
+|-----|------|------|---|----------|--------|-------|
+| 50 | survival/dual† | 57.06 | 0.89 | 0.08 | 0.275 | †bug: golden leaked to survival_penalty (fixed) |
+| 500 | survival_penalty | **58.06** | 0.89 | 0.80 | — | 57.22 + 0.037 + 0.80 |
+| 500 | dual_analog | **57.78** | 0.89 | 0.80 | 0.275 | no longer beats baseline (57.22) |
+| — | dual (no prior) | **56.98** | 0.89 | — | 0.275 | **production best** |
+
+**Why κ stays at 0.89:** three aligned pressures — (1) island+Hopf minimum at κ≈0.89, (2) PDE survival sweet spot at κ≈0.891 per κ-sweep, (3) κ_doc = 0.85 is only 4% away and not competitive on combined loss. Saving w_κ×term at κ=0.85 (~0.80) does not compensate for higher base_loss at κ=0.85.
+
+**Bug fix:** `compare-baseline` now forces `golden_angle_steps=False` on survival_penalty so `--golden-angle-steps` applies only to dual_analog.
+
+Loss breakdown (best dual-analog trial, w_κ=500):
+
+| Component | Value |
+|-----------|-------|
+| base_loss | 57.221 |
+| w_s × survival_term | 0.037 |
+| w_κ × (κ − 0.85)² | 0.80 |
+| golden_reward | 0.275 |
+| final_loss | **57.78** |
+
+| Artifact | Path |
+|----------|------|
+| w_κ=50 (bugged) | `outputs/meta_optimize_phi_probe_20260707_003033.json` |
+| w_κ=500 (valid) | `outputs/meta_optimize_phi_probe_20260707_003333.json` |
+
 ---
 
 ## Commands & artifacts
@@ -112,6 +157,13 @@ toe/venv/bin/python scripts/w_s_sweep.py --weights 8 10 12 --trials 25
 
 # Robustness at best point
 toe/venv/bin/python scripts/analog_comparative_sweep.py --kappa 0.89 --wg-base 350.0
+
+# κ prior (optional — tested w_κ=500, does not shift κ)
+python scripts/meta_optimize_phi_probe.py \
+  --compare-baseline --trials 30 \
+  --use-survival-penalty --use-hybrid-objective --survival-penalty-weight 5 \
+  --golden-angle-steps --golden-reward-weight 0.3 \
+  --use-kappa-prior --kappa-prior-target 0.85 --kappa-prior-weight 500
 ```
 
 | Artifact | Path |
@@ -120,6 +172,7 @@ toe/venv/bin/python scripts/analog_comparative_sweep.py --kappa 0.89 --wg-base 3
 | 50-trial JSON | `outputs/meta_optimize_phi_probe_20260706_233925.json` |
 | w_s sweep JSON | `outputs/w_s_sweep_20260706_233453.json` |
 | Robustness JSON | `outputs/analog_comparative_sweep_20260706_233723.json` |
+| κ prior w_κ=500 | `outputs/meta_optimize_phi_probe_20260707_003333.json` |
 
 ---
 
@@ -127,16 +180,16 @@ toe/venv/bin/python scripts/analog_comparative_sweep.py --kappa 0.89 --wg-base 3
 
 **Compatible emergent signature** — the analog objective does not force an exact identity. It trades a small island-loss increase (+0.04 via survival term) for measurably better alignment with R at λt = 2. The converged κ ≈ 0.89 is consistent with the earlier κ-survival sweep (best Δ% vs R near κ ≈ 0.891), suggesting the model prefers the value that best balances PDE survival with Hopf/island constraints rather than the documented κ_doc = 0.85 alone.
 
-**Production recommendation:** use **dual-analog** objective with **w_s = 5**, **golden_reward_weight = 0.3**, **hybrid survival term**, at the converged point κ ≈ 0.89, W_g ≈ 111.41.
+**Production recommendation:** use **dual-analog** objective with **w_s = 5**, **golden_reward_weight = 0.3**, **hybrid survival term**, **no κ prior**, at κ ≈ 0.89, W_g ≈ 111.41 (loss **56.98**).
 
 ---
 
 ## Open questions (Stage 7+)
 
-| Question | Suggested approach |
+| Question | Status / next step |
 |----------|-------------------|
-| Can κ be pulled closer to 0.85 without losing survival gain? | Add explicit κ prior `(κ − 0.85)²` or narrow search window; w_s alone is insufficient |
-| Is κ ≈ 0.89 physically preferred over κ_doc? | Cross-check against κ-survival sweep and conduit PDE at both values |
+| Pull κ toward 0.85? | **Squared prior tested** (w_κ=50, 500) — κ stays 0.89. Try linear prior, narrowed search, or accept κ≈0.89 |
+| Is κ ≈ 0.89 preferred over κ_doc? | **Likely yes** — aligned with κ-survival sweep and island+Hopf minimum |
 | golden_reward_weight sensitivity | Grid w_s × golden_reward_weight at fixed 30+ trials |
 | 100+ trials | Diminishing returns given convergence by trial ~22 |
 
