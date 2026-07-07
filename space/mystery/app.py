@@ -216,8 +216,8 @@ NAV_THEME: dict = {
     },
 }
 
-# Global UI scale — matches the layout density of ~70% browser zoom at 100% zoom.
-_MYST_UI_SCALE = 0.7
+# Global UI scale applied via html zoom (1.0 = native browser sizing).
+_MYST_UI_SCALE = 1.3
 
 # Legacy aliases — prefer NAV_THEME for new code.
 DEFAULT_BUTTON_BORDER_COLOR = NAV_THEME["nav_button"]["border_color"]
