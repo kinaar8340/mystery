@@ -2052,7 +2052,30 @@ WALLPAPER_HEAD = f"""
     window.addEventListener('load', mountWallpaper);
 }})();
 (function() {{
+    function mystSyncGravityViewportHeight() {{
+        var wrap = document.getElementById('myst-gravity-viewport-wrapper');
+        if (!wrap) return;
+        var top = wrap.getBoundingClientRect().top;
+        var h = Math.max(360, Math.round(window.innerHeight - top - 8));
+        document.documentElement.style.setProperty('--myst-gravity-viewport-height', h + 'px');
+        wrap.style.setProperty('height', h + 'px', 'important');
+        wrap.style.setProperty('min-height', h + 'px', 'important');
+        wrap.style.setProperty('max-height', h + 'px', 'important');
+        var host = document.getElementById('myst-gravity-viewport');
+        if (host) {{
+            host.style.setProperty('height', '100%', 'important');
+            host.style.setProperty('min-height', '0', 'important');
+            host.style.setProperty('max-height', '100%', 'important');
+        }}
+        var vid = wrap.querySelector('video');
+        if (vid) {{
+            vid.style.setProperty('height', '100%', 'important');
+            vid.style.setProperty('min-height', '0', 'important');
+            vid.style.setProperty('max-height', '100%', 'important');
+        }}
+    }}
     function mystSyncVisorHeight() {{
+        mystSyncGravityViewportHeight();
         var visor = document.querySelector('.myst-unit-cell-visor')
             || document.querySelector('.myst-gravity-single-viewport')
             || document.querySelector('#myst-gravity-viewport');
@@ -3048,9 +3071,10 @@ footer {{
 #myst-gravity-viewport-wrapper,
 .gradio-container .myst-gravity-page .myst-gravity-single-viewport {{
     position: relative !important;
-    min-height: 620px !important;
-    height: 620px !important;
-    flex: 1 1 auto !important;
+    min-height: var(--myst-gravity-viewport-height, calc(100dvh - 11.5rem)) !important;
+    height: var(--myst-gravity-viewport-height, calc(100dvh - 11.5rem)) !important;
+    max-height: var(--myst-gravity-viewport-height, calc(100dvh - 11.5rem)) !important;
+    flex: 1 1 0 !important;
     width: 100% !important;
     display: flex !important;
     flex-direction: column !important;
@@ -3067,7 +3091,7 @@ footer {{
     inset: 0 !important;
     width: 100% !important;
     height: 100% !important;
-    max-height: 620px !important;
+    max-height: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
     overflow: hidden !important;
@@ -3085,7 +3109,7 @@ footer {{
 .gradio-container .myst-gravity-page .myst-gravity-viewport-anim .prose {{
     width: 100% !important;
     height: 100% !important;
-    min-height: 580px !important;
+    min-height: 0 !important;
     padding: 0 !important;
     margin: 0 !important;
     overflow: visible !important;
@@ -3098,8 +3122,8 @@ footer {{
 .gradio-container .myst-gravity-page .myst-gravity-demo-video video {{
     width: 100% !important;
     height: 100% !important;
-    min-height: 580px !important;
-    max-height: 620px !important;
+    min-height: 0 !important;
+    max-height: 100% !important;
     object-fit: contain !important;
     background: #0a0a0f !important;
     display: block !important;
@@ -3110,8 +3134,8 @@ footer {{
 .gradio-container .myst-gravity-page .myst-gravity-viewport-startup {{
     flex: 1 1 auto !important;
     width: 100% !important;
-    min-height: 580px !important;
-    max-height: 620px !important;
+    min-height: 0 !important;
+    max-height: 100% !important;
     overflow: hidden !important;
 }}
 .gradio-container .myst-gravity-page #myst-gravity-viewport-startup,
@@ -3121,8 +3145,8 @@ footer {{
 .gradio-container .myst-gravity-page .myst-gravity-viewport-startup .html-container {{
     width: 100% !important;
     height: 100% !important;
-    min-height: 580px !important;
-    max-height: 620px !important;
+    min-height: 0 !important;
+    max-height: 100% !important;
     padding: 0 !important;
     margin: 0 !important;
     overflow: hidden !important;
@@ -3139,8 +3163,8 @@ footer {{
 .gradio-container .myst-gravity-page .myst-gravity-startup-img {{
     width: 100% !important;
     height: 100% !important;
-    min-height: 580px !important;
-    max-height: 620px !important;
+    min-height: 0 !important;
+    max-height: 100% !important;
     object-fit: contain !important;
     background: #0a0a0f !important;
     display: block !important;
@@ -3166,13 +3190,12 @@ footer {{
 .gradio-container .myst-brackish-dashboard-img {{
     background: #0a0a0f !important;
 }}
-/* Demo C — 2×2 quad fits available viewport (no browser zoom required) */
+/* Demo C — 2×2 quad fills the synced gravity viewport height */
 .gradio-container .myst-gravity-page .myst-brackish-quad-viewport#myst-gravity-viewport-wrapper,
 .gradio-container .myst-gravity-page .myst-brackish-quad-viewport.myst-gravity-single-viewport {{
-    --myst-brackish-viewport-height: clamp(470px, calc(100dvh - 15.5rem), 545px) !important;
-    min-height: var(--myst-brackish-viewport-height) !important;
-    height: var(--myst-brackish-viewport-height) !important;
-    max-height: var(--myst-brackish-viewport-height) !important;
+    min-height: var(--myst-gravity-viewport-height, calc(100dvh - 11.5rem)) !important;
+    height: var(--myst-gravity-viewport-height, calc(100dvh - 11.5rem)) !important;
+    max-height: var(--myst-gravity-viewport-height, calc(100dvh - 11.5rem)) !important;
 }}
 .gradio-container .myst-gravity-page .myst-brackish-quad-viewport.myst-gravity-single-viewport > .block,
 .gradio-container .myst-gravity-page .myst-brackish-quad-viewport.myst-gravity-single-viewport > .form {{
@@ -3300,7 +3323,7 @@ footer {{
 .gradio-container .myst-gravity-page .myst-gravity-startup-wrap {{
     width: 100% !important;
     height: 100% !important;
-    min-height: 580px !important;
+    min-height: 0 !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -3312,7 +3335,7 @@ footer {{
     width: 100% !important;
     height: 100% !important;
     max-width: 100% !important;
-    max-height: 620px !important;
+    max-height: 100% !important;
     object-fit: contain !important;
     object-position: center center !important;
     image-rendering: auto !important;
@@ -3338,14 +3361,14 @@ footer {{
 .gradio-container .myst-gravity-page #myst-gravity-viewport-startup .prose .myst-demo-viewport-loading,
 .gradio-container .myst-gravity-page #myst-gravity-viewport-startup .html-container .myst-demo-viewport-loading,
 .gradio-container .myst-gravity-page .myst-brackish-quad-viewport.myst-demo-loading-active #myst-gravity-viewport-startup .myst-demo-viewport-loading {{
-    min-height: var(--myst-brackish-viewport-height, clamp(470px, calc(100dvh - 15.5rem), 545px)) !important;
-    max-height: var(--myst-brackish-viewport-height, clamp(470px, calc(100dvh - 15.5rem), 545px)) !important;
+    min-height: var(--myst-gravity-viewport-height, calc(100dvh - 11.5rem)) !important;
+    max-height: var(--myst-gravity-viewport-height, calc(100dvh - 11.5rem)) !important;
 }}
 .gradio-container .myst-gravity-page .myst-demo-viewport-loading {{
     width: 100% !important;
     height: 100% !important;
-    min-height: clamp(470px, calc(100dvh - 15.5rem), 545px) !important;
-    max-height: clamp(470px, calc(100dvh - 15.5rem), 545px) !important;
+    min-height: var(--myst-gravity-viewport-height, calc(100dvh - 11.5rem)) !important;
+    max-height: var(--myst-gravity-viewport-height, calc(100dvh - 11.5rem)) !important;
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
@@ -4932,6 +4955,7 @@ footer {{ visibility: hidden; }}
 }}
 
 .gradio-container .myst-gravity-page {{
+    --myst-gravity-viewport-height: calc(100dvh - 11.5rem);
     --myst-gravity-ui-scale: 1.33;
     --myst-gravity-control-bar-height: calc(1.54rem * var(--myst-gravity-ui-scale));
     --myst-gravity-keypad-height: calc(2.39rem * var(--myst-gravity-ui-scale));
@@ -4977,7 +5001,15 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-gravity-page .myst-cube-viewport-tag {{
     font-size: var(--myst-gravity-header-sub-font) !important;
 }}
+.gradio-container .myst-gravity-page > .block:has(.myst-brackish-controls),
+.gradio-container .myst-gravity-page > .form:has(.myst-brackish-controls) {{
+    flex: 0 0 auto !important;
+    min-height: 0 !important;
+}}
 .gradio-container .myst-gravity-page > .block:has(.myst-gravity-single-viewport),
+.gradio-container .myst-gravity-page > .form:has(.myst-gravity-single-viewport),
+.gradio-container .myst-gravity-page > .block:has(#myst-gravity-viewport-wrapper),
+.gradio-container .myst-gravity-page > .form:has(#myst-gravity-viewport-wrapper),
 .gradio-container .myst-gravity-page > .block:has(.myst-gravity-split),
 .gradio-container .myst-gravity-page > .block:has(.vqc-animations-nav-row) + .block {{
     flex: 1 1 0 !important;
@@ -13089,7 +13121,6 @@ def build_app() -> gr.Blocks:
                     visible=False,
                     autoplay=True,
                     loop=True,
-                    height=620,
                     elem_id="myst-gravity-viewport",
                     elem_classes=["myst-gravity-viewport", "myst-gravity-demo-video"],
                     container=True,
