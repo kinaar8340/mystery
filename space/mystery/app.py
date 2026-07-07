@@ -2281,6 +2281,61 @@ WALLPAPER_HEAD = f"""
         }});
         mystPinRenderDetailModebar();
     }}
+    function mystRenderPageActive() {{
+        var page = document.querySelector('.myst-render-page');
+        if (!page) return false;
+        if (page.classList.contains('hide') || page.classList.contains('hidden')) return false;
+        var st = window.getComputedStyle(page);
+        return st.display !== 'none' && st.visibility !== 'hidden' && Number(st.opacity) > 0.01;
+    }}
+    function mystRenderGridVisible() {{
+        if (!mystRenderPageActive()) return false;
+        var catalog = document.querySelector('.myst-render-catalog-host:not(.hide):not(.hidden)');
+        if (!catalog) return false;
+        var st = window.getComputedStyle(catalog);
+        return st.display !== 'none' && st.visibility !== 'hidden' && Number(st.opacity) > 0.01;
+    }}
+    function mystClearRenderGridInlineSize() {{
+        document.documentElement.style.removeProperty('--myst-render-grid-height');
+        ['.myst-render-catalog-host', '#myst-render-grid-host', '.myst-render-grid-wrap', '.myst-render-grid'].forEach(function(sel) {{
+            document.querySelectorAll(sel).forEach(function(el) {{
+                el.style.removeProperty('height');
+                el.style.removeProperty('min-height');
+                el.style.removeProperty('max-height');
+            }});
+        }});
+    }}
+    function mystSyncRenderGridHeight() {{
+        if (!mystRenderGridVisible()) {{
+            mystClearRenderGridInlineSize();
+            return;
+        }}
+        var catalog = document.querySelector('.myst-render-catalog-host:not(.hide):not(.hidden)');
+        if (!catalog) return;
+        var top;
+        var actionRow = document.querySelector('.myst-render-action-row');
+        if (actionRow) {{
+            var aRect = actionRow.getBoundingClientRect();
+            if (aRect.height > 0 && aRect.bottom > 0) {{
+                top = aRect.bottom;
+            }}
+        }}
+        if (top === undefined) {{
+            var rect = catalog.getBoundingClientRect();
+            if (rect.width <= 0 || rect.top >= window.innerHeight) return;
+            top = rect.top;
+        }}
+        var h = Math.max(240, Math.round(window.innerHeight - top - 6));
+        document.documentElement.style.setProperty('--myst-render-grid-height', h + 'px');
+        [catalog, document.getElementById('myst-render-grid-host'),
+            document.querySelector('.myst-render-grid-wrap'),
+            document.querySelector('.myst-render-grid')].forEach(function(el) {{
+            if (!el) return;
+            el.style.setProperty('height', h + 'px', 'important');
+            el.style.setProperty('min-height', h + 'px', 'important');
+            el.style.setProperty('max-height', h + 'px', 'important');
+        }});
+    }}
     function mystBindRenderGridClicks() {{
         document.querySelectorAll('.myst-render-cell-clickable[data-slot]').forEach(function(cell) {{
             if (cell.dataset.mystBound === '1') return;
@@ -2300,32 +2355,55 @@ WALLPAPER_HEAD = f"""
                 mystResizeRenderDetailPlot();
                 requestAnimationFrame(mystResizeRenderDetailPlot);
             }});
+        }} else {{
+            requestAnimationFrame(mystSyncRenderGridHeight);
         }}
     }}
     function bootRenderGridClicks() {{
         mystBindRenderGridClicks();
+        mystSyncRenderGridHeight();
         if (window.__mystRenderGridObs) return;
         window.__mystRenderGridObs = new MutationObserver(function() {{
             requestAnimationFrame(function() {{
                 mystBindRenderGridClicks();
-                mystResizeRenderDetailPlot();
+                if (mystRenderGridVisible()) {{
+                    mystSyncRenderGridHeight();
+                }} else {{
+                    mystClearRenderGridInlineSize();
+                    mystResizeRenderDetailPlot();
+                }}
             }});
         }});
         var host = document.getElementById('myst-render-grid-host');
         if (host) {{
             window.__mystRenderGridObs.observe(host, {{
-                subtree: true, childList: true
+                subtree: true, childList: true, attributes: true, attributeFilter: ['class', 'style']
+            }});
+        }}
+        var catalog = document.querySelector('.myst-render-catalog-host');
+        if (catalog) {{
+            window.__mystRenderGridObs.observe(catalog, {{
+                attributes: true, attributeFilter: ['class', 'style']
+            }});
+        }}
+        var renderPage = document.querySelector('.myst-render-page');
+        if (renderPage) {{
+            window.__mystRenderGridObs.observe(renderPage, {{
+                subtree: true, childList: true, attributes: true, attributeFilter: ['class', 'style']
             }});
         }}
         var detailHost = document.getElementById('myst-render-detail-wrapper')
             || document.querySelector('.myst-render-detail-view');
         if (detailHost) {{
             window.__mystRenderGridObs.observe(detailHost, {{
-                subtree: true, childList: true
+                subtree: true, childList: true, attributes: true, attributeFilter: ['class', 'style']
             }});
         }}
         window.addEventListener('resize', function() {{
-            requestAnimationFrame(mystResizeRenderDetailPlot);
+            requestAnimationFrame(function() {{
+                mystSyncRenderGridHeight();
+                mystResizeRenderDetailPlot();
+            }});
         }});
     }}
     if (document.body) bootRenderGridClicks();
@@ -2601,7 +2679,8 @@ body {{
     position: relative !important;
 }}
 body:has(.gradio-container .myst-readme-page:not(.hide):not(.hidden)),
-body:has(.gradio-container .myst-gravity-page:not(.hide):not(.hidden)) {{
+body:has(.gradio-container .myst-gravity-page:not(.hide):not(.hidden)),
+body:has(.gradio-container .myst-render-page:not(.hide):not(.hidden)) {{
     overflow: hidden !important;
     max-height: 100dvh !important;
     height: 100dvh !important;
@@ -5004,7 +5083,8 @@ footer {{ visibility: hidden; }}
     background-color: #000000 !important;
 }}
 .gradio-container:has(.myst-gravity-page:not(.hide):not(.hidden)),
-.gradio-container:has(.myst-readme-page:not(.hide):not(.hidden)) {{
+.gradio-container:has(.myst-readme-page:not(.hide):not(.hidden)),
+.gradio-container:has(.myst-render-page:not(.hide):not(.hidden)) {{
     overflow: hidden !important;
     max-height: 100dvh !important;
     padding: 0.15rem 0.5rem 0 !important;
@@ -5018,7 +5098,10 @@ footer {{ visibility: hidden; }}
 .gradio-container:has(.myst-gravity-page:not(.hide):not(.hidden)) .contain,
 .gradio-container:has(.myst-readme-page:not(.hide):not(.hidden)) .main,
 .gradio-container:has(.myst-readme-page:not(.hide):not(.hidden)) .main > .wrap,
-.gradio-container:has(.myst-readme-page:not(.hide):not(.hidden)) .contain {{
+.gradio-container:has(.myst-readme-page:not(.hide):not(.hidden)) .contain,
+.gradio-container:has(.myst-render-page:not(.hide):not(.hidden)) .main,
+.gradio-container:has(.myst-render-page:not(.hide):not(.hidden)) .main > .wrap,
+.gradio-container:has(.myst-render-page:not(.hide):not(.hidden)) .contain {{
     flex: 1 1 0 !important;
     min-height: 0 !important;
     height: 100% !important;
@@ -6878,11 +6961,17 @@ footer {{ visibility: hidden; }}
 }}
 
 .gradio-container .myst-render-page {{
-    --myst-render-grid-gap: 0.18rem;
+    --myst-render-grid-gap: 0.14rem;
+    --myst-render-grid-height: calc(100dvh - 12.5rem);
     --myst-render-grid-bottom-frame: 0;
     --myst-render-chrome-height: 8.75rem;
     --myst-render-detail-chrome-height: 11.5rem;
     --myst-render-detail-max-height: calc(100dvh - 11.5rem);
+    flex: 1 1 0 !important;
+    min-height: 0 !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    overflow: hidden !important;
     padding: 0 !important;
 }}
 .gradio-container:has(.myst-render-page .myst-render-detail-view:not(.hide):not(.hidden)) .main,
@@ -6910,10 +6999,11 @@ footer {{ visibility: hidden; }}
     flex: 0 0 auto !important;
 }}
 .gradio-container:has(.myst-render-page:not(.hide):not(.hidden)) .myst-render-page:not(.hide):not(.hidden) {{
-    flex: 1 1 auto !important;
+    flex: 1 1 0 !important;
     min-height: 0 !important;
-    height: auto !important;
-    max-height: none !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    overflow: hidden !important;
 }}
 .gradio-container:has(.myst-status-page:not(.hide):not(.hidden)) .main,
 .gradio-container:has(.myst-status-page:not(.hide):not(.hidden)) .main > .wrap,
@@ -7849,11 +7939,17 @@ footer {{ visibility: hidden; }}
     overflow: hidden !important;
     box-sizing: border-box !important;
 }}
+.gradio-container .myst-render-page .myst-render-catalog-host:not(.hide):not(.hidden),
+.gradio-container .myst-render-page #myst-render-grid-host:not(.hide):not(.hidden),
 .gradio-container .myst-render-page .myst-render-grid-wrap {{
     width: 100% !important;
-    height: 100% !important;
+    height: var(--myst-render-grid-height, calc(100dvh - 12.5rem)) !important;
+    min-height: var(--myst-render-grid-height, calc(100dvh - 12.5rem)) !important;
+    max-height: var(--myst-render-grid-height, calc(100dvh - 12.5rem)) !important;
+}}
+.gradio-container .myst-render-page .myst-render-grid-wrap {{
+    width: 100% !important;
     min-height: 0 !important;
-    max-height: none !important;
     flex: 1 1 auto !important;
     display: flex !important;
     flex-direction: column !important;
@@ -7870,10 +7966,11 @@ footer {{ visibility: hidden; }}
     display: grid !important;
     grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
     grid-template-rows: repeat(3, minmax(0, 1fr)) !important;
-    gap: var(--myst-render-grid-gap, 0.18rem) !important;
+    gap: var(--myst-render-grid-gap, 0.14rem) !important;
     width: 100% !important;
     height: 100% !important;
     min-height: 0 !important;
+    max-height: 100% !important;
     flex: 1 1 auto !important;
     margin: 0 !important;
     padding: 0 !important;
@@ -7899,10 +7996,10 @@ footer {{ visibility: hidden; }}
         inset 0 0 10px rgba(212, 175, 55, 0.12) !important;
 }}
 .gradio-container .myst-render-page .myst-render-catalog-host:not(.hide):not(.hidden) {{
-    flex: 1 1 auto !important;
+    flex: 1 1 0 !important;
     min-height: 0 !important;
-    max-height: none !important;
-    height: 100% !important;
+    max-height: var(--myst-render-grid-height, calc(100dvh - 12.5rem)) !important;
+    height: var(--myst-render-grid-height, calc(100dvh - 12.5rem)) !important;
     display: flex !important;
     flex-direction: column !important;
     padding: 0 !important;
@@ -8422,7 +8519,7 @@ footer {{ visibility: hidden; }}
 .gradio-container .myst-render-page .myst-render-plot-host img {{
     width: 100% !important;
     height: 100% !important;
-    min-height: 8rem !important;
+    min-height: 0 !important;
     max-width: 100% !important;
     max-height: 100% !important;
     object-fit: contain !important;
@@ -8432,7 +8529,7 @@ footer {{ visibility: hidden; }}
 }}
 .gradio-container .myst-render-page .myst-render-plot-placeholder {{
     flex: 1 1 auto !important;
-    min-height: 9rem !important;
+    min-height: 0 !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
