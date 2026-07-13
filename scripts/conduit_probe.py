@@ -6,48 +6,15 @@ Gracefully skips if torch or toe dependencies are unavailable.
 
 from __future__ import annotations
 
-import importlib.util
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _common import E, PI, save_report
-
-TOE_ROOT = Path.home() / "Projects" / "toe"
-
-
-def try_import_conduit():
-    """Import RubikConeConduit from local toe checkout."""
-    conduit_path = TOE_ROOT / "src" / "conduit.py"
-    if not conduit_path.is_file():
-        return None, f"Missing {conduit_path}"
-
-    toe_src = str(TOE_ROOT / "src")
-    toe_root = str(TOE_ROOT)
-    for p in (toe_src, toe_root):
-        if p not in sys.path:
-            sys.path.insert(0, p)
-
-    try:
-        import torch  # noqa: F401
-    except ImportError:
-        return None, "torch not installed — skipping conduit probe"
-
-    spec = importlib.util.spec_from_file_location("toe_conduit", conduit_path)
-    if spec is None or spec.loader is None:
-        return None, "Could not load conduit module spec"
-
-    module = importlib.util.module_from_spec(spec)
-    try:
-        spec.loader.exec_module(module)
-    except Exception as exc:  # noqa: BLE001
-        return None, f"conduit import failed: {exc}"
-
-    return module, None
+from _common import E, PI, TOE_ROOT, load_toe_conduit, save_report
 
 
 def probe() -> dict:
-    module, err = try_import_conduit()
+    module, err = load_toe_conduit()
     if module is None:
         return {
             "status": "skipped",

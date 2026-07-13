@@ -25,7 +25,7 @@ The ~4% gap |κ_sim − κ_doc| ≈ 0.04 is **not a contradiction**. The model u
 
 ## 2. κ as a dissipation rate (the core physical picture)
 
-In the mean-field twist-PDE reduction ([`relaxation_survival.py`](../../toe/src/relaxation_survival.py)):
+In the mean-field twist-PDE reduction ([`flux_hopf_lib.simulation`](https://github.com/kinaar8340/flux_hopf_lib); formerly toe `relaxation_survival.py`):
 
 ```
 gauge restoring torque  −κ θ̄   ⟹   effective rate λ ≈ κ

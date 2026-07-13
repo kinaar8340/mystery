@@ -6,11 +6,24 @@
 |------|-----|------|
 | **mystery** | https://github.com/kinaar8340/mystery | φ, e, π emergent signature probes and synthesis |
 
+## Shared core (install this first)
+
+| Repo | URL | Role |
+|------|-----|------|
+| **flux_hopf_lib** | https://github.com/kinaar8340/flux_hopf_lib | Single source of truth: quaternions, Hopf, flux/gauge, λt survival, κ, conduit mixins |
+
+```bash
+# Local editable
+pip install -e ../flux_hopf_lib
+# Or from GitHub
+pip install "flux-hopf-lib @ git+https://github.com/kinaar8340/flux_hopf_lib.git@main"
+```
+
 ## Upstream simulation stacks
 
 | Repo | URL | Relevance to Mystery |
 |------|-----|----------------------|
-| **toe** | https://github.com/kinaar8340/toe | Gauged Hopf lattice, flux flywheels, κ, W_g, conduit PDE |
+| **toe** | https://github.com/kinaar8340/toe | Full RubikConeConduit (torch), flux flywheels, papers — still needed for conduit probes |
 | **hfb** | https://github.com/kinaar8340/hfb | Hopf fibration, flux bubbles, topological defects |
 | **vqc_proto** | https://github.com/kinaar8340/vqc_proto | Orbital Braille — helical OAM, quaternion codec |
 | **vqc_sims_public** | https://github.com/kinaar8340/vqc_sims_public | Parent VQC OAM simulation stack |

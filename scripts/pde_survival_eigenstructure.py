@@ -17,7 +17,6 @@ This script:
 
 from __future__ import annotations
 
-import importlib.util
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -25,10 +24,18 @@ from pathlib import Path
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _common import E, OUTPUT_DIR, PHI, PI, save_report
+from _common import (
+    E,
+    E_INV2,
+    OUTPUT_DIR,
+    PHI,
+    PI,
+    R_RESIDUAL,
+    save_report,
+    simulate_twist_pde_survival,
+)
 
-R = PHI**2 + E**2 - PI**2
-E_INV2 = float(np.exp(-2.0))
+R = R_RESIDUAL
 KAPPA_DOC = 0.85
 KAPPA_SIM = 0.89
 DELTA_OMEGA = 0.002
@@ -36,17 +43,6 @@ DT = 0.001
 D_DEFAULT = 0.05
 NX_DEFAULT = 20
 SEED = 42
-
-
-def load_relaxation_survival():
-    path = Path.home() / "Projects" / "toe" / "src" / "relaxation_survival.py"
-    spec = importlib.util.spec_from_file_location("relaxation_survival", path)
-    if spec is None or spec.loader is None:
-        raise RuntimeError(f"Cannot load {path}")
-    mod = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = mod
-    spec.loader.exec_module(mod)
-    return mod
 
 
 def laplacian_eigenvalue(nx: int, kx: int, ky: int, kz: int) -> float:
@@ -221,8 +217,6 @@ def main() -> int:
     M0_full = mean_cot_grad(theta)
     kappa_0 = kappa_null_zero_mode(theta0_mean)
 
-    rs = load_relaxation_survival()
-
     cot_state = build_spectral_cot_state(theta)
 
     models = {
@@ -238,10 +232,10 @@ def main() -> int:
     for name, fn in models.items():
         model_results[name] = find_best_kappa(fn, n_points=81)
 
-    # sparse full-PDE reference (5 spot checks + reuse sweep optimum)
+    # sparse full-PDE reference (flux_hopf_lib.simulation)
     pde_spot = {}
     for kappa in [kappa_0, KAPPA_DOC, 0.8909, KAPPA_SIM]:
-        r = rs.simulate_twist_pde_survival(
+        r = simulate_twist_pde_survival(
             kappa=float(kappa), seed=SEED, dt=DT, D=D_DEFAULT, nx=NX_DEFAULT
         )
         pde_spot[f"{kappa:.4f}"] = {

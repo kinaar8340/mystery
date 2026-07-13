@@ -1069,26 +1069,19 @@ def quick_mean_survival_at_lambda_t(
     seed: int = 42,
 ) -> float:
     """Lightweight PDE mean_survival at λt (for HF Space TUI / explorer)."""
-    toe_rs = Path.home() / "Projects" / "toe" / "src" / "relaxation_survival.py"
-    if toe_rs.is_file():
-        try:
-            import importlib.util
-            import sys
+    try:
+        from flux_hopf_lib.simulation import simulate_twist_pde_survival
 
-            spec = importlib.util.spec_from_file_location("relaxation_survival", toe_rs)
-            if spec and spec.loader:
-                mod = importlib.util.module_from_spec(spec)
-                sys.modules[spec.name] = mod
-                spec.loader.exec_module(mod)
-                result = mod.simulate_twist_pde_survival(
-                    normalize_to_lambda_t=lambda_t,
-                    kappa=kappa,
-                    dt=dt,
-                    seed=seed,
-                )
-                return float(result["survival"]["mean_survival"])
-        except Exception:
-            pass
+        result = simulate_twist_pde_survival(
+            normalize_to_lambda_t=lambda_t,
+            kappa=kappa,
+            dt=dt,
+            seed=seed,
+            nx=16,
+        )
+        return float(result["survival"]["mean_survival"])
+    except Exception:
+        pass
 
     rng = np.random.default_rng(seed)
     nx, nt = 20, steps_for_lambda_t(lambda_t, kappa, dt)

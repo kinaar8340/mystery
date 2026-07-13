@@ -27,7 +27,6 @@ auto-relaunches via ~/Projects/toe/venv/bin/python when available.
 from __future__ import annotations
 
 import argparse
-import importlib.util
 import json
 import os
 import subprocess
@@ -39,16 +38,22 @@ from typing import Any
 
 import numpy as np
 
+# Shared constants + survival from flux_hopf_lib (via mystery _common)
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _common import (  # noqa: E402
+    E,
+    PHI,
+    PI,
+    R_RESIDUAL,
+    load_toe_conduit,
+    simulate_twist_pde_survival,
+)
+
 MYSTERY_ROOT = Path(__file__).resolve().parent.parent
 TOE_ROOT = Path.home() / "Projects" / "toe"
 TOE_SRC = TOE_ROOT / "src"
 OUTPUT_DIR = MYSTERY_ROOT / "outputs"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-
-PHI = (1 + np.sqrt(5)) / 2
-E = np.e
-PI = np.pi
-R_RESIDUAL = PHI**2 + E**2 - PI**2
 GOLDEN_FRACTION = 360.0 * (1.0 - 1.0 / PHI) / 1000.0
 KAPPA_DOC = 0.85
 
@@ -111,10 +116,7 @@ def _ensure_toe_venv() -> None:
 
 
 def _load_toe_modules():
-    for p in (str(TOE_SRC), str(TOE_ROOT)):
-        if p not in sys.path:
-            sys.path.insert(0, p)
-
+    """Load torch/optuna + RubikConeConduit. Survival comes from flux_hopf_lib."""
     try:
         import torch
         import optuna
@@ -131,15 +133,15 @@ def _load_toe_modules():
             f"Run:\n{hint}"
         ) from exc
 
-    rs_path = TOE_SRC / "relaxation_survival.py"
-    spec = importlib.util.spec_from_file_location("relaxation_survival", rs_path)
-    rs_mod = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = rs_mod
-    spec.loader.exec_module(rs_mod)
+    # Survival/PDE API: flux_hopf_lib (shim module for call sites using rs_mod.*)
+    class _SurvivalShim:
+        simulate_twist_pde_survival = staticmethod(simulate_twist_pde_survival)
 
-    from conduit import RubikConeConduit  # noqa: PLC0415
+    conduit_mod, c_err = load_toe_conduit()
+    if conduit_mod is None:
+        raise ImportError(f"Cannot load toe RubikConeConduit: {c_err}")
 
-    return torch, optuna, rs_mod, RubikConeConduit
+    return torch, optuna, _SurvivalShim, conduit_mod.RubikConeConduit
 
 
 def unit_circle_packing_coverage(conduit, n_samples: int = 128) -> float:

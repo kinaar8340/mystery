@@ -71,7 +71,7 @@ In the mean-field reduction of the twist PDE, the global gauge restoring torque 
 mean_survival = 0.137606   (Δ 0.09% from R, 0.07% from golden/1000, 1.68% from e⁻²)
 ```
 
-This is a reproducible link between normalized dissipative dynamics and the φ-e-π residual — interpretive, not an exact identity. See `exponential_survival_probe.py`, `kappa_survival_sweep.py`, and toe `relaxation_survival.py`.
+This is a reproducible link between normalized dissipative dynamics and the φ-e-π residual — interpretive, not an exact identity. See `exponential_survival_probe.py`, `kappa_survival_sweep.py`, and **`flux_hopf_lib.simulation`** (canonical implementation; formerly toe `relaxation_survival.py`).
 
 **Hybrid score:** `compare_to_analogs()` now reports **0.6 × golden closeness + 0.4 × e⁻² closeness** to quantify the combined rotational-packing + dissipative-persistence reading.
 

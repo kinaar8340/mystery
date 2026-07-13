@@ -3,7 +3,6 @@
 
 from __future__ import annotations
 
-import importlib.util
 import sys
 from pathlib import Path
 
@@ -11,30 +10,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _common import OUTPUT_DIR, save_report
+from _common import OUTPUT_DIR, load_toe_conduit, save_report
 
-TOE_ROOT = Path.home() / "Projects" / "toe"
 TARGET_ANGLES = (30.0, 60.0, 90.0)
 
 
 def load_conduit_module():
-    conduit_path = TOE_ROOT / "src" / "conduit.py"
-    for p in (str(TOE_ROOT / "src"), str(TOE_ROOT)):
-        if p not in sys.path:
-            sys.path.insert(0, p)
-    try:
-        import torch  # noqa: F401
-    except ImportError:
-        return None, "torch not installed"
-    spec = importlib.util.spec_from_file_location("toe_conduit", conduit_path)
-    if spec is None or spec.loader is None:
-        return None, "bad module spec"
-    module = importlib.util.module_from_spec(spec)
-    try:
-        spec.loader.exec_module(module)
-    except Exception as exc:  # noqa: BLE001
-        return None, str(exc)
-    return module, None
+    return load_toe_conduit()
 
 
 def helix_angles_deg(conduit, n_samples: int = 256, pol_indices: tuple[int, ...] = (0, 1, 2, 3)) -> dict:

@@ -8,7 +8,7 @@ July 2026. Closes the survival-minimum item in [`kappa_sim_interpretation.md`](k
 
 ## 1. PDE and normalization
 
-The overdamped twist PDE ([`relaxation_survival.py`](../../toe/src/relaxation_survival.py), `pde_relaxation.py`) on \(T^3\) with periodic FD:
+The overdamped twist PDE ([`flux_hopf_lib.simulation`](https://github.com/kinaar8340/flux_hopf_lib), `pde_relaxation` demos) on \(T^3\) with periodic FD:
 
 \[
 \partial_t \theta = D\Delta\theta + \frac{D}{2}\cot\frac{\theta}{2}|\nabla\theta|^2 + \Delta\omega - \kappa\bar\theta - B(\theta),
@@ -203,7 +203,7 @@ This weakly modulates \(S(\kappa)\), **broadening** the Δ% vs R basin around 0.
 
 ## 7. Diffusion and grid sensitivity (D × nx)
 
-Uniform IC (seed 42), λt = 2, \(\Delta t = 0.001\), κ swept on **[0.80, 0.92]** with **121 points** via `relaxation_survival.simulate_twist_pde_survival`. Best κ minimizes |mean_survival − R|.
+Uniform IC (seed 42), λt = 2, \(\Delta t = 0.001\), κ swept on **[0.80, 0.92]** with **121 points** via `flux_hopf_lib.simulation.simulate_twist_pde_survival`. Best κ minimizes |mean_survival − R|.
 
 ### 7.1 Diffusion coefficient D (nx = 20)
 
@@ -308,4 +308,5 @@ Uniform optimum **κ\* ≈ 0.823** matches the nx = 32 κ-survival sweep (§7.2)
 - [`kappa_sim_interpretation.md`](kappa_sim_interpretation.md) — κ_doc / κ\* / κ_sim roles (Q#9)
 - [`skyrme_holonomy_derivation.md`](skyrme_holonomy_derivation.md) — static B(κ) null at κ\*
 - [`residual_scaling.md`](residual_scaling.md) — φ-e-π scaling context
-- `toe/src/relaxation_survival.py` — PDE + λt normalization
+- `flux_hopf_lib.simulation` — PDE + λt normalization (canonical)
+- `toe/src/relaxation_survival.py` — legacy copy; prefer flux_hopf_lib

@@ -1,3 +1,9 @@
+# Mystery analysis stack
 numpy>=1.24.0
 scipy>=1.10.0
 matplotlib>=3.7.0
+
+# Shared core (Hopf / flux / survival / κ) — single source of truth
+# Local editable install (recommended while iterating):
+#   pip install -e ../flux_hopf_lib
+flux-hopf-lib @ git+https://github.com/kinaar8340/flux_hopf_lib.git@main

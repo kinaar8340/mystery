@@ -7,64 +7,27 @@ fractions / residuals to e^{−2}, R = φ²+e²−π², and golden-angle analogs
 
 Mapping: mean-field gauge −κθ̄ ⇒ λ ≈ κ; at λt = 2 the universal memoryless
 survival fraction is exp(−2) ≈ 0.135335.
+
+PDE / survival: flux_hopf_lib.simulation
+Conduit (optional): toe RubikConeConduit
 """
 
 from __future__ import annotations
 
-import importlib.util
 import sys
 from pathlib import Path
 
-import numpy as np
-
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _common import E, OUTPUT_DIR, PHI, PI, save_report
-
-TOE_ROOT = Path.home() / "Projects" / "toe"
-TOE_SRC = TOE_ROOT / "src"
-
-R_RESIDUAL = PHI**2 + E**2 - PI**2
-E_INV2 = float(np.exp(-2.0))
-GOLDEN_ANGLE_FRACTION = 360.0 * (1.0 - 1.0 / PHI) / 1000.0
-
-
-def _import_relaxation_survival():
-    path = TOE_SRC / "relaxation_survival.py"
-    if not path.is_file():
-        return None, f"Missing {path}"
-    for p in (str(TOE_SRC), str(TOE_ROOT)):
-        if p not in sys.path:
-            sys.path.insert(0, p)
-    spec = importlib.util.spec_from_file_location("relaxation_survival", path)
-    if spec is None or spec.loader is None:
-        return None, "Could not load relaxation_survival spec"
-    mod = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = mod
-    try:
-        spec.loader.exec_module(mod)
-    except Exception as exc:  # noqa: BLE001
-        return None, str(exc)
-    return mod, None
-
-
-def _import_conduit():
-    path = TOE_SRC / "conduit.py"
-    if not path.is_file():
-        return None, f"Missing {path}"
-    try:
-        import torch  # noqa: F401
-    except ImportError:
-        return None, "torch not installed"
-    spec = importlib.util.spec_from_file_location("toe_conduit", path)
-    if spec is None or spec.loader is None:
-        return None, "Could not load conduit spec"
-    mod = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = mod
-    try:
-        spec.loader.exec_module(mod)
-    except Exception as exc:  # noqa: BLE001
-        return None, str(exc)
-    return mod, None
+from _common import (
+    E_INV2,
+    GOLDEN_ANGLE_FRACTION,
+    PHI,
+    PI,
+    R_RESIDUAL,
+    load_toe_conduit,
+    save_report,
+    simulate_twist_pde_survival,
+)
 
 
 def format_comparison_table(rows: list[dict]) -> str:
@@ -81,21 +44,21 @@ def format_comparison_table(rows: list[dict]) -> str:
 
 
 def main() -> int:
-    rs_mod, rs_err = _import_relaxation_survival()
-    if rs_mod is None:
-        print(f"PDE survival skipped: {rs_err}")
-        pde_result = {"status": "skipped", "reason": rs_err}
-    else:
-        pde_result = rs_mod.simulate_twist_pde_survival(
+    try:
+        pde_result = simulate_twist_pde_survival(
             normalize_to_lambda_t=2.0,
             kappa=0.85,
             dt=0.001,
             seed=42,
         )
         pde_result["status"] = "ok"
+        pde_result["source"] = "flux_hopf_lib.simulation"
+    except Exception as exc:  # noqa: BLE001
+        print(f"PDE survival skipped: {exc}")
+        pde_result = {"status": "skipped", "reason": str(exc)}
 
     conduit_result: dict
-    conduit_mod, c_err = _import_conduit()
+    conduit_mod, c_err = load_toe_conduit()
     if conduit_mod is None:
         conduit_result = {"status": "skipped", "reason": c_err}
     else:
@@ -123,15 +86,16 @@ def main() -> int:
         "kappa_doc": 0.85,
         "W_g_target": 350.0 / PI,
         "braiding_target": 0.8145,
+        "source": "flux_hopf_lib",
     }
 
     table_rows: list[dict] = []
     if pde_result.get("status") == "ok":
-        for key, comp in pde_result["analog_comparisons"].items():
+        for _key, comp in pde_result["analog_comparisons"].items():
             table_rows.append(comp)
 
     if conduit_result.get("status") == "ok":
-        for key, comp in conduit_result["analog_comparisons"].items():
+        for _key, comp in conduit_result.get("analog_comparisons", {}).items():
             table_rows.append(comp)
 
     result = {
@@ -149,32 +113,49 @@ def main() -> int:
     report_path = save_report("exponential_survival_probe", result)
 
     print("=== Exponential Survival Probe (λt = 2) ===")
-    print(f"References: R={R_RESIDUAL:.6f}  e^{{-2}}={E_INV2:.6f}  "
-          f"golden/1000={GOLDEN_ANGLE_FRACTION:.6f}")
+    print(
+        f"References: R={R_RESIDUAL:.6f}  e^{{-2}}={E_INV2:.6f}  "
+        f"golden/1000={GOLDEN_ANGLE_FRACTION:.6f}"
+    )
     print()
 
     if pde_result.get("status") == "ok":
         norm = pde_result["normalization"]
         surv = pde_result["survival"]
-        print(f"PDE: n_steps={norm['n_steps']}  t_phys={norm['t_physical']:.4f}  κ={norm['kappa']}")
-        print(f"     mean_survival={surv['mean_survival']:.6f}  "
-              f"std_survival={surv['std_survival']:.6f}  "
-              f"fluct_survival={surv['fluctuation_survival']:.6f}")
+        print(
+            f"PDE: n_steps={norm['n_steps']}  t_phys={norm['t_physical']:.4f}  "
+            f"κ={norm['kappa']}  [flux_hopf_lib]"
+        )
+        print(
+            f"     mean_survival={surv['mean_survival']:.6f}  "
+            f"std_survival={surv['std_survival']:.6f}  "
+            f"fluct_survival={surv['fluctuation_survival']:.6f}"
+        )
         best = pde_result["analog_comparisons"]["mean_survival"]
-        print(f"     mean_survival best match: {best['best_match']} "
-              f"(Δ {best['delta_pct_vs_best']:.2f}%)")
+        print(
+            f"     mean_survival best match: {best['best_match']} "
+            f"(Δ {best['delta_pct_vs_best']:.2f}%)"
+        )
         if "hybrid_score" in best:
-            print(f"     hybrid score: {best['hybrid_score']:.4f}  "
-                  f"(Δ% {best.get('hybrid_delta_pct', 0):.2f})")
+            print(
+                f"     hybrid score: {best['hybrid_score']:.4f}  "
+                f"(Δ% {best.get('hybrid_delta_pct', 0):.2f})"
+            )
 
     if conduit_result.get("status") == "ok":
         gt = conduit_result["gauged_twist"]
         print(f"Conduit: n_steps={gt['n_steps']}  λt={gt['lambda_t_achieved']:.4f}")
-        print(f"         identity_survival={gt['identity_survival']:.6f}  "
-              f"identity_residual={gt['identity_residual']:.6f}  "
-              f"twist_survival={gt.get('twist_survival', 0):.6f}")
-        print(f"         braiding_residual={conduit_result['braiding_residual']:.6f}  "
-              f"W_g rel.residual={conduit_result['wg_relative_residual']:.6f}")
+        print(
+            f"         identity_survival={gt['identity_survival']:.6f}  "
+            f"identity_residual={gt['identity_residual']:.6f}  "
+            f"twist_survival={gt.get('twist_survival', 0):.6f}"
+        )
+        print(
+            f"         braiding_residual={conduit_result['braiding_residual']:.6f}  "
+            f"W_g rel.residual={conduit_result['wg_relative_residual']:.6f}"
+        )
+    elif conduit_result.get("status") == "skipped":
+        print(f"Conduit skipped: {conduit_result.get('reason')}")
 
     if table_rows:
         print()

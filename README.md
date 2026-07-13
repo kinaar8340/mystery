@@ -125,13 +125,13 @@ In the TOE twist-PDE and conduit gauge dynamics, the mean-field restoring torque
 1. **λt = 2 normalization (implemented):** Run PDE and gauged-twist evolution with `normalize_to_lambda_t=2`; compare mean survival, fluctuation survival, and invariant residuals to e⁻², R, and golden-angle fraction.
    ```bash
    python scripts/exponential_survival_probe.py
-   python ../toe/scripts/pde_relaxation.py --normalize-to-lambda-t 2
+   python scripts/kappa_survival_sweep.py
    ```
 2. **Golden-angle twist increments (Stage 3):** Step helix / rigid-cube rotation by 137.5078° or fractional φ⁻²; measure angular histogram shift vs `conduit_angular_probe` baseline.
 3. **Combined analog sweep (Stage 4):** Vary `twist_rate`, IC structure, and normalization jointly; quantify which analog (or pair) best aligns W_g, κ, and braiding residuals.
 4. **Cross-link PDE ↔ conduit:** Correlate PDE mean_survival at λt = 2 with conduit `identity_residual` and `braiding_residual` from `run_survival_probe`.
 
-See [`notes/emergent_signatures.md`](notes/emergent_signatures.md) and toe [`relaxation_survival.py`](../toe/src/relaxation_survival.py) for implementation details.
+Implementation: shared math lives in **[flux_hopf_lib](https://github.com/kinaar8340/flux_hopf_lib)** (`flux_hopf_lib.simulation`). See [`notes/emergent_signatures.md`](notes/emergent_signatures.md) and [`references/local_paths.md`](references/local_paths.md).
 
 ### Holonomy-gap scaling (standout)
 
@@ -195,11 +195,17 @@ Sync only: `bash scripts/sync_hf_space.sh`
 
 ```bash
 git clone https://github.com/kinaar8340/mystery.git && cd mystery
+# Recommended: clone shared core alongside
+#   git clone https://github.com/kinaar8340/flux_hopf_lib.git ../flux_hopf_lib
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+# Local editable core (preferred while developing):
+#   .venv/bin/pip install -e ../flux_hopf_lib
 .venv/bin/python run_all.py
 ```
 
-**TOE-linked probes** (conduit, meta-optimizer) use `~/Projects/toe/venv` when present. Clone [toe](https://github.com/kinaar8340/toe) alongside for full stack:
+**Shared core:** survival, κ, twist PDE → [flux_hopf_lib](https://github.com/kinaar8340/flux_hopf_lib) (no more `sys.path` into toe for those).
+
+**TOE-linked probes** (full RubikConeConduit, meta-optimizer) still use `~/Projects/toe` when present:
 
 ```bash
 # Optional: full conduit + meta-optimizer probes

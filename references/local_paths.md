@@ -1,15 +1,34 @@
 # Local Reference Index
 
-Paths relative to `~/Projects/` when working locally. After cloning [mystery](https://github.com/kinaar8340/mystery), place sibling repos under the same parent directory (e.g. `~/Projects/toe`).
+Paths relative to `~/Projects/` when working locally. After cloning [mystery](https://github.com/kinaar8340/mystery), place sibling repos under the same parent directory (e.g. `~/Projects/toe`, `~/Projects/flux_hopf_lib`).
+
+## flux_hopf_lib — Shared core (preferred imports)
+
+| Import | Description |
+|--------|-------------|
+| `flux_hopf_lib.simulation` | λt survival, twist PDE, κ helpers (replaces toe `relaxation_survival.py`) |
+| `flux_hopf_lib.constants` | φ, e, π, R residual, κ defaults, W_g lock |
+| `flux_hopf_lib.quaternion` | Unit quaternions / rotors |
+| `flux_hopf_lib.hopf` | Hopf map, hopfions, linking |
+| `flux_hopf_lib.flux` | Flux lattice config, gauge steps, defects |
+| `flux_hopf_lib.conduit` | ConduitConfig, golden-angle / gauge mixins |
+
+```python
+from flux_hopf_lib.simulation import simulate_twist_pde_survival, compare_to_analogs
+# Mystery scripts also re-export via scripts/_common.py
+```
+
+Local path: `flux_hopf_lib/` — `pip install -e ../flux_hopf_lib`
 
 ## TOE — Gauged Hopf Lattice / Flux Flywheels
 
 | File | Description |
 |------|-------------|
-| `toe/src/conduit.py` | RubikConeConduit v10.8 — quaternion field, W_g=111.408 lock, κ≈0.85 |
+| `toe/src/conduit.py` | RubikConeConduit v10.8 — full torch model (still loaded for conduit probes) |
+| `toe/src/relaxation_survival.py` | **Legacy** — prefer `flux_hopf_lib.simulation` |
 | `toe/src/emeraldSunConduit.py` | Golden-ratio harmonic on topological clock |
 | `toe/scripts/meta_optimize_invariants.py` | Optuna/Ray search for emergent W_g, κ, braiding phase |
-| `toe/scripts/pde_relaxation.py` | 3-torus twist PDE: ∂θ/∂t with gauge −κθ̄ and burst at θ_crit |
+| `toe/scripts/pde_relaxation.py` | 3-torus twist PDE demo script (core math in flux_hopf_lib) |
 | `toe/scripts/two_gyro_lattice_demo.py` | Two-gyro lattice visualization |
 | `toe/scripts/run_reproduction.py` | One-command W_g / φ_b reproduction |
 | `toe/scripts/epoch_bake_sweep.py` | Parameter sweep with invariant locks |

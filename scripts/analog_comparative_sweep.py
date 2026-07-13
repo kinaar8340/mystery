@@ -9,7 +9,6 @@ Prioritizes synergy runs: golden-angle steps + normalize_to_lambda_t = 2 togethe
 
 from __future__ import annotations
 
-import importlib.util
 import itertools
 import sys
 from pathlib import Path
@@ -18,28 +17,25 @@ from typing import Any, Callable
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _common import E, OUTPUT_DIR, PHI, PI, save_report
+from _common import (
+    E_INV2,
+    GOLDEN_ANGLE_DEG,
+    GOLDEN_ANGLE_FRACTION,
+    OUTPUT_DIR,
+    PHI,
+    PI,
+    R_RESIDUAL,
+    compare_to_analogs,
+    evolve_gauged_twist_survival,
+    load_toe_conduit,
+    save_report,
+    simulate_twist_pde_survival,
+    steps_for_lambda_t,
+)
 
-TOE_SRC = Path.home() / "Projects" / "toe" / "src"
-R_RESIDUAL = PHI**2 + E**2 - PI**2
-E_INV2 = float(np.exp(-2.0))
-GOLDEN_ANGLE_DEG = 360.0 * (1.0 - 1.0 / PHI)
-GOLDEN_FRACTION = GOLDEN_ANGLE_DEG / 1000.0
+GOLDEN_FRACTION = GOLDEN_ANGLE_FRACTION
 BRAIDING_TARGET = 0.8145
 KAPPA = 0.85
-
-
-def _load_module(name: str, path: Path):
-    spec = importlib.util.spec_from_file_location(name, path)
-    if spec is None or spec.loader is None:
-        raise RuntimeError(f"Cannot load {path}")
-    mod = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = mod
-    for p in (str(path.parent), str(path.parent.parent)):
-        if p not in sys.path:
-            sys.path.insert(0, p)
-    spec.loader.exec_module(mod)
-    return mod
 
 
 def _ic_uniform(nx: int, seed: int) -> np.ndarray:
@@ -107,12 +103,11 @@ def simulate_pde_case(
     seed: int = 42,
     nx: int = 16,
 ) -> dict[str, Any]:
-    rs = _load_module("relaxation_survival", TOE_SRC / "relaxation_survival.py")
     theta0 = _ic_builders(kappa)[ic_type](nx, seed)
     theta0_mean = float(theta0.mean())
 
     if normalize_to_lambda_t is not None:
-        nt = rs.steps_for_lambda_t(normalize_to_lambda_t, kappa, dt)
+        nt = steps_for_lambda_t(normalize_to_lambda_t, kappa, dt)
     else:
         nt = 3000
 
@@ -132,7 +127,7 @@ def simulate_pde_case(
         theta = np.clip(theta, 0.01, 2 * PI - 0.01)
 
     mean_survival = float(theta.mean() / theta0_mean) if abs(theta0_mean) > 1e-12 else 0.0
-    comp = rs.compare_to_analogs(mean_survival, f"pde_{ic_type}")
+    comp = compare_to_analogs(mean_survival, f"pde_{ic_type}")
     return {
         "subsystem": "pde",
         "kappa": kappa,
@@ -186,7 +181,9 @@ def simulate_conduit_case(
     except ImportError:
         return {"subsystem": "conduit", "status": "skipped", "reason": "no torch"}
 
-    mod = _load_module("toe_conduit", TOE_SRC / "conduit.py")
+    mod, c_err = load_toe_conduit()
+    if mod is None:
+        return {"subsystem": "conduit", "status": "skipped", "reason": c_err}
     RubikConeConduit = mod.RubikConeConduit
     golden = step_mode == "golden"
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -208,13 +205,12 @@ def simulate_conduit_case(
     phases = unit_circle_phases(conduit, n_samples)
     coverage = packing_coverage(phases)
 
-    rs = _load_module("relaxation_survival", TOE_SRC / "relaxation_survival.py")
     n_steps = (
-        rs.steps_for_lambda_t(normalize_to_lambda_t, kappa, dt)
+        steps_for_lambda_t(normalize_to_lambda_t, kappa, dt)
         if normalize_to_lambda_t is not None
         else 0
     )
-    twist_result = rs.evolve_gauged_twist_survival(
+    twist_result = evolve_gauged_twist_survival(
         n_steps=0,
         kappa=kappa,
         normalize_to_lambda_t=normalize_to_lambda_t,
@@ -222,7 +218,7 @@ def simulate_conduit_case(
     )
 
     if normalize_to_lambda_t is not None:
-        pde_surv = rs.simulate_twist_pde_survival(
+        pde_surv = simulate_twist_pde_survival(
             normalize_to_lambda_t=normalize_to_lambda_t,
             kappa=kappa,
             dt=dt,
@@ -232,7 +228,7 @@ def simulate_conduit_case(
         comp = pde_surv["analog_comparisons"]["mean_survival"]
     else:
         mean_survival = float(twist_result.get("identity_survival", 1.0))
-        comp = rs.compare_to_analogs(
+        comp = compare_to_analogs(
             twist_result.get("identity_residual", 0.0), "conduit_identity_residual"
         )
 

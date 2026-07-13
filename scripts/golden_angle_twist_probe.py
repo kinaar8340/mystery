@@ -10,7 +10,6 @@ Includes S¹ unit-circle phase histogram (better diagnostic than pairwise 3D cho
 from __future__ import annotations
 
 import argparse
-import importlib.util
 import sys
 from pathlib import Path
 
@@ -18,33 +17,22 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _common import E, OUTPUT_DIR, PHI, PI, save_report
+from _common import (
+    E,
+    GOLDEN_ANGLE_DEG,
+    OUTPUT_DIR,
+    PHI,
+    PI,
+    R_RESIDUAL,
+    load_toe_conduit,
+    save_report,
+)
 
-TOE_SRC = Path.home() / "Projects" / "toe" / "src"
-GOLDEN_ANGLE_DEG = 360.0 * (1.0 - 1.0 / PHI)
 GOLDEN_ANGLE_RAD = float(np.radians(GOLDEN_ANGLE_DEG))
-R_RESIDUAL = PHI**2 + E**2 - PI**2
 
 
 def _import_conduit():
-    path = TOE_SRC / "conduit.py"
-    try:
-        import torch  # noqa: F401
-    except ImportError:
-        return None, "torch not installed"
-    spec = importlib.util.spec_from_file_location("toe_conduit", path)
-    if spec is None or spec.loader is None:
-        return None, "spec load failed"
-    mod = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = mod
-    for p in (str(TOE_SRC), str(TOE_SRC.parent)):
-        if p not in sys.path:
-            sys.path.insert(0, p)
-    try:
-        spec.loader.exec_module(mod)
-    except Exception as exc:  # noqa: BLE001
-        return None, str(exc)
-    return mod, None
+    return load_toe_conduit()
 
 
 def pairwise_angles(positions: np.ndarray) -> np.ndarray:
