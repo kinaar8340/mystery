@@ -26,7 +26,7 @@ rm -f "$DST/mystery_image.png"
 
 cat > "$DST/requirements.txt" <<'EOF'
 # Shared core — λt survival / κ / constants (canonical)
-flux-hopf-lib @ git+https://github.com/kinaar8340/flux_hopf_lib.git@main
+flux-hopf-lib @ git+https://github.com/kinaar8340/flux_hopf_lib.git@v0.1.0
 
 numpy>=1.24.0,<3.0.0
 scipy>=1.10.0
