@@ -16,7 +16,7 @@
 # Local editable
 pip install -e ../flux_hopf_lib
 # Or from GitHub
-pip install "flux-hopf-lib @ git+https://github.com/kinaar8340/flux_hopf_lib.git@v0.1.0"
+pip install "flux-hopf-lib==0.1.0"
 ```
 
 ## Upstream simulation stacks
