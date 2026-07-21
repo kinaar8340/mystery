@@ -54,8 +54,10 @@ While the broader physical implications remain speculative, the project offers a
 | `conduit_angular_probe` | **~8% / ~6% / ~4%** within 5° of 30°/60°/90° (not forced) |
 | `meta_optimize_phi_probe` | κ=**0.85**, φ_b≈**0.754**, W_g≈**111.89** — not e/π or φ⁻¹ |
 | `rodin_hopf_fiber_map` | Doubling cycle **1-2-4-8-7-5** mapped to S¹ phase increments |
+| `cardioid_golden_angle_probe` | Cardioid \(r=1+\cos\theta\) on golden / 9/π steps; cusp stats; scale @ **350/π** |
+| `cusp_resonance_probe` | Burst-threshold κ sweep + cusp FFT + accumulation coherence |
 
-Full table: [`docs/RESULTS.md`](docs/RESULTS.md) · Scaling note: [`notes/residual_scaling.md`](notes/residual_scaling.md)
+Full table: [`docs/RESULTS.md`](docs/RESULTS.md) · Scaling note: [`notes/residual_scaling.md`](notes/residual_scaling.md) · Cardioid: [`notes/CARDIOID_RESONANCE.md`](notes/CARDIOID_RESONANCE.md)
 
 ### Dual-role κ
 
@@ -237,6 +239,9 @@ cd ../mystery && .venv/bin/python run_all.py
 | `exponential_survival_probe.py` | λt = 2 normalization; survival vs e⁻², R, golden angle |
 | `kappa_survival_sweep.py` | κ ∈ [0.80, 0.90] mean_survival @ λt=2 |
 | `golden_angle_twist_probe.py` | Golden helix steps + S¹ phase histograms |
+| `cardioid_golden_angle_probe.py` | Cardioid envelope on golden / 9/π steps; cusp stats; 350/π scale |
+| `cusp_resonance_probe.py` | Burst-threshold κ sweep + cusp FFT + accumulation scale |
+| `cardioid_kappa_amp_sweep.py` | κ × A parameter sweeps (geometric + PDE helical early-time) |
 | `analog_comparative_sweep.py` | Grid: IC × twist_rate × λt × step_mode |
 | `analog_cross_analysis.py` | Stage 5 overlay figure (κ sweep + sweep scatter) |
 | `rodin_hopf_fiber_map.py` | Rodin mod-9 doubling → Hopf fiber phases |
@@ -265,6 +270,7 @@ Triangle angles: φ→31.0°, e→59.9°, π→89.1° — near 30-60-90, not exa
 | [`notes/synthesis.md`](notes/synthesis.md) | Original thought-experiment synthesis |
 | [`notes/open_questions.md`](notes/open_questions.md) | Resolved items + prioritized next moves |
 | [`notes/theta_crit_reconciliation.md`](notes/theta_crit_reconciliation.md) | Dual burst-threshold resolution |
+| [`notes/CARDIOID_RESONANCE.md`](notes/CARDIOID_RESONANCE.md) | Cardioid × golden-angle resonance lab (math / observational / interpretive layers) |
 | [`references/local_paths.md`](references/local_paths.md) | Local TOE/VQC/HFB file index |
 | [`references/github_repos.md`](references/github_repos.md) | Related kinaar8340 repositories |
 
@@ -280,13 +286,33 @@ Triangle angles: φ→31.0°, e→59.9°, π→89.1° — near 30-60-90, not exa
 
 ---
 
+## Resonance laboratory (cardioid × golden angle)
+
+The framework is a **resonance laboratory** on the gauged Hopf lattice: golden-angle stepping supplies Fibonacci-optimal \(S^1\) packing; a cardioid envelope \(r = 1 + \cos\theta\) adds a directional resonance layer whose **cusp** (\(\theta=\pi\), \(r=0\)) is a geometric high-sensitivity proxy for burst-threshold / alignment structure; \(350/\pi\) remains the accumulation / \(W_g\) scale.
+
+| Layer | Content |
+|-------|---------|
+| Mathematical | Cardioid envelope, cusp curvature, packing gap CV, irrational vs \(9/\pi\) steps |
+| Observational | Cusp density, vortex 3-6-9 labels, κ–burst sweeps, cusp FFT, coherence @ \(N\sim 350/\pi\) |
+| Interpretive | Optional only — see note (not used as score claims) |
+
+```bash
+.venv/bin/python scripts/cardioid_golden_angle_probe.py
+.venv/bin/python scripts/cusp_resonance_probe.py
+```
+
+Full framing: [`notes/CARDIOID_RESONANCE.md`](notes/CARDIOID_RESONANCE.md).
+
+---
+
 ## Prioritized next moves
 
-1. **λt = 2 + golden-angle sweeps** — `exponential_survival_probe.py` baseline; Stage 3–4 twist increments at 137.5°
-2. **Extend structured PDE** — longer runs, higher resolution; correlate FFT peaks with φ/e/π at scale
-3. **Derive residual bound** — formal Skyrme + holonomy reduction for B(κ) = π²(e/π−κ)
-4. **Falsify Rodin map** — match doubling-step ΔΘ to burst-reset events in lattice sims
-5. **Island-bake conduit** — 369 flags with `epoch_bake_sweep` configurations
+1. **Cardioid resonance probes** — run `cardioid_golden_angle_probe` + `cusp_resonance_probe`; check cusp coherence near \(350/\pi\)
+2. **λt = 2 + golden-angle sweeps** — `exponential_survival_probe.py` baseline; Stage 3–4 twist increments at 137.5°
+3. **Extend structured PDE** — optional cardioid term in twist PDE; correlate FFT peaks with φ/e/π at scale
+4. **Derive residual bound** — formal Skyrme + holonomy reduction for B(κ) = π²(e/π−κ)
+5. **Falsify Rodin map** — match doubling-step ΔΘ to burst-reset events in lattice sims
+6. **Island-bake conduit** — 369 flags with `epoch_bake_sweep` configurations
 
 ---
 

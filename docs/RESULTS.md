@@ -399,6 +399,37 @@ JSON (60 facts): `toe/outputs/magic_island/island_topology_grid_z129_20260707_01
 | Comparative sweep (fast) | hybrid scores **0.9989–0.9991** |
 | Golden S¹ probe | packing coverage ≈ **0.889**; phase histograms in `outputs/golden_phase_hist_*.png` |
 
+## Cardioid resonance laboratory (July 2026)
+
+Geometric probe layer: golden-angle / \(9/\pi\) stepping with cardioid envelope \(r=1+\cos\theta\). Framing: [`notes/CARDIOID_RESONANCE.md`](../notes/CARDIOID_RESONANCE.md).
+
+| Probe | Key result (N=512, κ_doc=0.85) |
+|-------|--------------------------------|
+| `cardioid_golden_angle_probe` | Cusp window ±0.25 rad: **40** points (ρ≈0.98 vs uniform); cardioid raises φ-e-π align support **0.50 → 0.72**; best scale coherence at **N≈2×350/π** |
+| `cusp_resonance_probe` | Burst fraction **0.074 → 0.199** with cardioid amp=0.5; radial collapse bulk/cusp **≈2.07** (high sensitivity); **best accumulation coherence at N=350/π** (×1.0) |
+| `pde_relaxation_probe --compare-cardioid` | **Uniform IC (negative control):** still dissipates; A=0.5 lowers ⟨θ⟩ **0.084→0.027**. No spontaneous structure. |
+| `… --ic helical --nt 50` | **Early structured:** cusp_frac **0.08** retained (both); cardioid raises σ **0.749→0.762**, vortex-369 **0.370→0.385** |
+| `… --ic helical --nt 400` | **Mid structured:** cusp emptied by damping; cardioid still elevates σ **0.055→0.071** and 369 **0.415→0.430**; align nearly flat |
+| `… --ic hopfion --nt 400` | Localized blob retains mild σ **0.023→0.024** under cardioid; cusp_frac≈0 after relaxation |
+
+Figures: `cardioid_three_way_star.png` (r-distribution inset), `cardioid_golden_angle_probe.png`, `cusp_resonance_probe.png`, `pde_cardioid_compare.png`, `pde_cardioid_compare_helical.png`, `pde_cardioid_compare_hopfion.png`.
+
+Metric formulas (explicit): `notes/CARDIOID_RESONANCE.md` §2.4 + JSON `metric_formulas`.  
+**align_support** rise is cardioid-*body* weighting; **radial_collapse** / **burst_fraction** capture the cusp singularity. Scale peaks differ by observable (N≈111 vs 223 × factors of \(350/\pi\)).
+
+### κ / A parameter sweeps (`cardioid_kappa_amp_sweep.py`)
+
+| Sweep | Headline |
+|-------|----------|
+| κ @ A=0.5 | κ_doc: burst **0.074→0.199** (Δ+0.125); κ_sim: **0.055→0.195** (Δ+0.141). Collapse≈2.07, align≈0.91 ≈ κ-flat |
+| A @ κ_doc | Δburst **peaks at A≈0.7–0.8** then drops at A=1 (over-collapse); A=0.5 is the documented rising-flank operating point |
+| PDE helical nt=50 | Δσ and Δ369 rise with A (0→+0.026 / +0.045 at A=1); cusp_frac retained ≈0.08–0.11 |
+| Best grid Δburst | κ≈0.92, A≈0.8 (geometric) |
+
+Figure: `docs/figures/cardioid_kappa_amp_sweep.png`. HF block: [`docs/CARDIOID_RESONANCE_HF.md`](CARDIOID_RESONANCE_HF.md).
+
+**Reading:** Angular density stays near-uniform for irrational rotations (expected). Cardioid is a **modulator**: damps uniform fields more efficiently; on helical structure it **preserves variance** and mildly lifts 3-6-9 fraction while cusp occupancy is a short-lived early-time feature under pure dissipation. Compatible with the resonance-lab framing — not an identity proof.
+
 ## Framing
 
 **Compatible emergent signature** — not an exact identity, not forced by invariants, not contradicted by simulation. κ_doc (0.85) and κ_sim (≈0.89) coexist as static documentation anchor vs dynamic simulation optimum (Q#9 closed); neither is claimed as a unique physical constant.

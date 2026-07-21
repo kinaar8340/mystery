@@ -104,12 +104,33 @@ Angles map to 3-6-9 tens-of-degrees: **3.10, 5.99, 8.91** — near but not on ax
 
 ---
 
+## 6. Cardioid resonance laboratory (upgrade)
+
+Golden-angle packing + cardioid envelope \(r = 1 + \cos\theta\) as a **directional resonance** layer. The cusp (\(\theta=\pi\), \(r\to 0\)) is a geometric high-sensitivity zone; metrics stay mathematical/observational (see [`CARDIOID_RESONANCE.md`](CARDIOID_RESONANCE.md)).
+
+| Probe | Role |
+|-------|------|
+| `cardioid_golden_angle_probe.py` | Side-by-side golden / cardioid-golden / cardioid-9/π; cusp density; 3-6-9 labels; φ-e-π alignment support; coherence vs \(N/(350/\pi)\) |
+| `cusp_resonance_probe.py` | Harmonic synthesis with cardioid amp; θ_crit burst mask; κ sweep; cusp FFT power ratio; scale accumulation |
+
+**Links:** golden-angle → efficient non-overlapping \(S^1\) paths; cardioid cusp → burst-threshold / alignment proxy; Hopf PDE + κ → dynamical substrate; \(W_g=350/\pi\) → accumulation scale.
+
+Reproduce:
+
+```bash
+.venv/bin/python scripts/cardioid_golden_angle_probe.py
+.venv/bin/python scripts/cusp_resonance_probe.py
+```
+
+---
+
 ## Recommended next moves (prioritized)
 
-1. **Structured PDE ICs** — seed flux flywheels; FFT peaks / correlation lengths near φ/e/π
-2. **Formal residual bound** — derive R ≈ π²(e/π−κ) in Skyrme + holonomy reduction (paper-worthy if clean)
-3. **Rodin cycle ↔ S³ fiber phase** — mod-9 doubling onto continuous Hopf fiber increments
-4. **Longer conduit runs** — 369 flags + island-bake configurations
+1. **Cardioid + cusp probes** — stabilize metrics at κ_doc / κ_sim; promote figures to `docs/figures/`
+2. **Structured PDE ICs** — optional cardioid term; FFT peaks / correlation lengths near φ/e/π
+3. **Formal residual bound** — derive R ≈ π²(e/π−κ) in Skyrme + holonomy reduction (paper-worthy if clean)
+4. **Rodin cycle ↔ S³ fiber phase** — mod-9 doubling onto continuous Hopf fiber increments
+5. **Longer conduit runs** — 369 flags + island-bake configurations
 
 ---
 

@@ -24,7 +24,48 @@ OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 TOE_ROOT = Path.home() / "Projects" / "toe"
 TOE_SRC = TOE_ROOT / "src"
-FLUX_HOPF_LIB_ROOT = Path.home() / "Projects" / "flux_hopf_lib"
+# Sibling monorepo layout (…/Projects/flux_hopf_lib) plus optional override
+FLUX_HOPF_LIB_ROOT = Path(
+    __import__("os").environ.get(
+        "FLUX_HOPF_LIB_ROOT",
+        str(Path.home() / "Projects" / "flux_hopf_lib"),
+    )
+)
+
+
+def _ensure_flux_hopf_lib() -> None:
+    """Make flux_hopf_lib importable even if the active venv lacks the package.
+
+    Prefer an installed / editable install. Fall back to sibling source tree
+    (``../flux_hopf_lib/src`` or ``$FLUX_HOPF_LIB_ROOT/src``).
+    """
+    try:
+        import flux_hopf_lib  # noqa: F401
+
+        return
+    except ModuleNotFoundError:
+        pass
+
+    candidates = [
+        FLUX_HOPF_LIB_ROOT / "src",
+        ROOT.parent / "flux_hopf_lib" / "src",
+        Path.home() / "Projects" / "flux_hopf_lib" / "src",
+    ]
+    for src in candidates:
+        if (src / "flux_hopf_lib" / "__init__.py").is_file():
+            p = str(src.resolve())
+            if p not in sys.path:
+                sys.path.insert(0, p)
+            break
+    else:
+        raise ModuleNotFoundError(
+            "flux_hopf_lib not found. Install the shared core, e.g.\n"
+            "  pip install -e ../flux_hopf_lib\n"
+            "or set FLUX_HOPF_LIB_ROOT to the flux_hopf_lib repo root."
+        )
+
+
+_ensure_flux_hopf_lib()
 
 # ---------------------------------------------------------------------------
 # Canonical constants + survival API (flux_hopf_lib)

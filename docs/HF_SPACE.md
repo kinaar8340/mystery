@@ -82,7 +82,13 @@ Cover image is served from GitHub raw (`mystery_image.png` at repo root) — HF 
 | **Gravity** (default) | Two-column unit-cell explorer — presets, TUI metrics, deformation animation |
 | **Presets** | Nine-slot preset grid with per-preset metrics and edit drawer |
 | **README** | In-app project summary |
-| **Figures** | Reference plots from the probe suite |
+| **Figures** | Reference plots from the probe suite (includes cardioid / cusp resonance) |
+
+**Cardioid Resonance** (repo + README section + Figures): golden-angle × cardioid
+cusp probes, κ/A sweeps, PDE helical compare. In-app HTML:
+`build_cardioid_resonance_html()` in `demo_core.py`. Markdown source:
+`docs/CARDIOID_RESONANCE_HF.md` · depth: `notes/CARDIOID_RESONANCE.md`.
+Live full suite is local via `run_all.py` (includes `cardioid_kappa_amp_sweep.py`).
 
 **Demo J — Brackish Heartbeat** (Gravity tab, demo row): interactive dashboard
 (gauged hour/minute/∫wind clock, wind-synced nested Platonic solids, live

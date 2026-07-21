@@ -420,6 +420,11 @@ FIGURE_URLS = (
     f"{GITHUB_URL}/raw/main/docs/figures/residual_kappa_sweep.png",
     f"{GITHUB_URL}/raw/main/docs/figures/vortex_369_clock.png",
     f"{GITHUB_URL}/raw/main/docs/figures/conduit_angular_histogram.png",
+    f"{GITHUB_URL}/raw/main/docs/figures/cardioid_three_way_star.png",
+    f"{GITHUB_URL}/raw/main/docs/figures/cardioid_golden_angle_probe.png",
+    f"{GITHUB_URL}/raw/main/docs/figures/cusp_resonance_probe.png",
+    f"{GITHUB_URL}/raw/main/docs/figures/cardioid_kappa_amp_sweep.png",
+    f"{GITHUB_URL}/raw/main/docs/figures/pde_cardioid_compare_helical.png",
 )
 
 W_G_TARGET = 350.0 / PI
@@ -428,6 +433,9 @@ GITHUB_SCRIPTS = {
     "pde": f"{GITHUB_URL}/blob/main/scripts/pde_relaxation_probe.py",
     "conduit": f"{GITHUB_URL}/blob/main/scripts/conduit_probe.py",
     "meta": f"{GITHUB_URL}/blob/main/scripts/meta_optimize_phi_probe.py",
+    "cardioid": f"{GITHUB_URL}/blob/main/scripts/cardioid_golden_angle_probe.py",
+    "cusp": f"{GITHUB_URL}/blob/main/scripts/cusp_resonance_probe.py",
+    "kappa_amp": f"{GITHUB_URL}/blob/main/scripts/cardioid_kappa_amp_sweep.py",
 }
 
 PHYSICAL_INTERPRETATION_INTRO_MD = """
@@ -495,6 +503,76 @@ PROBE_HOOKS_TABLE_MD = f"""
 | **PDE relaxation** | Seed Hopfion ICs with orthogonal deformation bias under \\(\\delta_z\\) | [pde_relaxation_probe.py]({GITHUB_SCRIPTS['pde']}) |
 | **Conduit** | Inject \\(R \\cdot B(\\kappa)\\) as holonomy source; monitor \\(W_g\\) drift | [conduit_probe.py]({GITHUB_SCRIPTS['conduit']}) |
 | **Meta-optimizer** | Add deformation energy \\(\\propto R\\); check \\(\\kappa \\to \\kappa^*\\) | [meta_optimize_phi_probe.py]({GITHUB_SCRIPTS['meta']}) |
+| **Cardioid resonance** | Golden-angle + cardioid envelope; cusp density & 350/π scale | [cardioid_golden_angle_probe.py]({GITHUB_SCRIPTS['cardioid']}) |
+| **Cusp / burst** | θ_crit κ sweep, cusp FFT, accumulation coherence | [cusp_resonance_probe.py]({GITHUB_SCRIPTS['cusp']}) |
+| **κ / A sweeps** | Burst, collapse, PDE helical Δσ vs gauge & envelope amp | [cardioid_kappa_amp_sweep.py]({GITHUB_SCRIPTS['kappa_amp']}) |
+"""
+
+# HF README / Docs tab — Cardioid Resonance section (tables from probe suite)
+CARDIOID_RESONANCE_MD = f"""
+## Cardioid Resonance
+
+Resonance-laboratory layer: **golden-angle packing** + **cardioid envelope**
+\\(r = 1 + \\cos\\theta\\) + cusp/burst diagnostics + scale \\(350/\\pi\\).
+
+Full write-up: [CARDIOID_RESONANCE.md]({GITHUB_URL}/blob/main/notes/CARDIOID_RESONANCE.md) ·
+HF summary: [CARDIOID_RESONANCE_HF.md]({GITHUB_URL}/blob/main/docs/CARDIOID_RESONANCE_HF.md)
+
+### Layers
+
+| Layer | Content |
+|-------|---------|
+| **Mathematical** | \\(r=1+\\cos\\theta\\); \\(\\theta_g=2\\pi/\\varphi^2\\); cusp at \\(\\theta=\\pi\\); \\(\\theta_\\mathrm{{crit}}=\\pi(1+\\kappa)\\) |
+| **Observational** | \\(\\rho\\), align_support, radial_collapse, burst_fraction, κ/A sweeps, PDE helical |
+| **Interpretive** | Optional — cusp as burst/alignment proxy only |
+
+**Separation:** `align_support` rises from **cardioid-body** weighting at φ-e-π angles;
+`radial_collapse` and `burst_fraction` capture the **cusp singularity**. Angular \\(\\rho\\approx 1\\).
+
+### Core geometry (N=512, κ=0.85)
+
+| System | Cusp pts | ρ | align | collapse |
+|--------|----------|---|-------|----------|
+| Golden (unit r) | 40 | ≈0.982 | **0.500** | 1.00 |
+| Golden + cardioid | 40 | ≈0.982 | **0.724** | ≫1 |
+| Burst raw → mod (A=0.5) | — | — | — | **0.074 → 0.199** |
+
+Scale peaks: geometric coherence @ \\(N\\approx 2\\times 350/\\pi\\); dynamical @ \\(N\\approx 350/\\pi\\).
+
+### κ anchors @ A = 0.5 (geometric)
+
+| κ | Role | burst raw | burst mod | Δ burst |
+|---|------|-----------|-----------|---------|
+| **0.85** | κ_doc | 0.074 | **0.199** | **+0.125** |
+| **≈0.89** | κ_sim | 0.055 | **0.195** | **+0.141** |
+
+Collapse ≈ 2.07 and align ≈ 0.91 are nearly κ-flat at fixed A.
+
+### A sweep @ κ_doc (geometric)
+
+| A | Δ burst | collapse | align |
+|---|---------|----------|-------|
+| 0.0 | 0 | 1.00 | 0.77 |
+| **0.5** | **+0.125** | **2.07** | **0.91** |
+| 0.7 | +0.13 | 3.46 | 0.96 |
+| 1.0 | +0.09 | ≫1 | 1.04 |
+
+**Optimal amplitude:** Geometric burst amplification peaks at A ≈ 0.7–0.8. Higher A increases collapse but can reduce net burst gain (over-focusing at the cusp). Documented **A = 0.5** is on the rising flank.
+
+### PDE helical (nt=50) — modulator
+
+| Setting | Δσ | Δ 369 | cusp_frac |
+|---------|-----|-------|-----------|
+| κ=0.85, A=0.5 | **+0.013** | **+0.015** | 0.08 |
+| κ=0.85, A: 0→1 | 0→**+0.026** | 0→**+0.045** | 0.08→0.11 |
+
+Uniform IC = negative control (damping only). Helical IC = positive modulator (variance + mild 3-6-9). Early-time cusp occupancy is transient (~gone by nt≈100); longer-term cardioid benefit appears in σ and 369.
+
+### Figures
+
+- [Three-way star]({GITHUB_URL}/blob/main/docs/figures/cardioid_three_way_star.png)
+- [κ/A sweeps]({GITHUB_URL}/blob/main/docs/figures/cardioid_kappa_amp_sweep.png)
+- [PDE helical compare]({GITHUB_URL}/blob/main/docs/figures/pde_cardioid_compare_helical.png)
 """
 
 EXPLORE_FURTHER_MD = f"""
@@ -512,6 +590,115 @@ _TOE_PDF_URL = (
 )
 
 
+def build_cardioid_resonance_html() -> str:
+    """HF README section: Cardioid Resonance tables + figure links."""
+    star = f"{GITHUB_URL}/raw/main/docs/figures/cardioid_three_way_star.png"
+    sweep = f"{GITHUB_URL}/raw/main/docs/figures/cardioid_kappa_amp_sweep.png"
+    helical = f"{GITHUB_URL}/raw/main/docs/figures/pde_cardioid_compare_helical.png"
+    note = f"{GITHUB_URL}/blob/main/notes/CARDIOID_RESONANCE.md"
+    hf_md = f"{GITHUB_URL}/blob/main/docs/CARDIOID_RESONANCE_HF.md"
+    return f"""
+<section class="myst-readme-section myst-cardioid-resonance" id="myst-cardioid-resonance">
+<h2>Cardioid Resonance</h2>
+<p>Resonance-laboratory layer on the gauged Hopf lattice: <strong>golden-angle packing</strong>
++ cardioid envelope <code>r = 1 + cos θ</code> + cusp/burst diagnostics + scale
+<code>350/π</code>. Math and observation stay explicit; interpretation is optional.</p>
+<p class="myst-readme-muted">Full note:
+<a href="{html.escape(note)}">notes/CARDIOID_RESONANCE.md</a> ·
+HF summary:
+<a href="{html.escape(hf_md)}">docs/CARDIOID_RESONANCE_HF.md</a></p>
+
+<h3>Layers</h3>
+<table class="myst-readme-table">
+<thead><tr><th>Layer</th><th>Content</th></tr></thead>
+<tbody>
+<tr><td><strong>Mathematical</strong></td>
+<td>r=1+cosθ · θ_g=2π/φ² · cusp at θ=π · θ_crit=π(1+κ)</td></tr>
+<tr><td><strong>Observational</strong></td>
+<td>ρ, align_support, radial_collapse, burst_fraction, κ/A sweeps, PDE helical</td></tr>
+<tr><td><strong>Interpretive</strong></td>
+<td>Optional — cusp as burst/alignment proxy only</td></tr>
+</tbody>
+</table>
+<p><strong>Separation:</strong> <code>align_support</code> rises from <em>cardioid-body</em>
+weighting at φ-e-π angles; <code>radial_collapse</code> and <code>burst_fraction</code>
+capture the <em>cusp singularity</em>. Angular ρ≈1 (no pile-up).</p>
+
+<h3>Core geometry (N=512, κ=0.85)</h3>
+<table class="myst-readme-table">
+<thead><tr><th>System</th><th>Cusp pts</th><th>ρ</th><th>align</th><th>Notes</th></tr></thead>
+<tbody>
+<tr><td>Golden (unit r)</td><td>40</td><td>≈0.982</td><td><strong>0.500</strong></td><td>equidistribution baseline</td></tr>
+<tr><td>Golden + cardioid</td><td>40</td><td>≈0.982</td><td><strong>0.724</strong></td><td>body weighting, not cusp pile-up</td></tr>
+<tr><td>Burst raw → mod (A=0.5)</td><td>—</td><td>—</td><td>—</td>
+<td><strong>0.074 → 0.199</strong> (Δ +0.125)</td></tr>
+</tbody>
+</table>
+<p class="myst-readme-muted">Scale peaks differ by observable: geometric coherence near
+N≈2×350/π; dynamical near N≈350/π.</p>
+
+<h3>κ anchors @ A = 0.5</h3>
+<table class="myst-readme-table">
+<thead><tr><th>κ</th><th>Role</th><th>burst raw</th><th>burst mod</th><th>Δ burst</th></tr></thead>
+<tbody>
+<tr><td><strong>0.85</strong></td><td>κ_doc</td><td>0.074</td><td><strong>0.199</strong></td>
+<td><strong>+0.125</strong></td></tr>
+<tr><td><strong>≈0.89</strong></td><td>κ_sim</td><td>0.055</td><td><strong>0.195</strong></td>
+<td><strong>+0.141</strong></td></tr>
+</tbody>
+</table>
+<p class="myst-readme-muted">Collapse ≈2.07 and align ≈0.91 are nearly κ-flat at fixed A
+(radial geometry); burst tracks θ_crit=π(1+κ).</p>
+
+<h3>A sweep @ κ_doc</h3>
+<table class="myst-readme-table">
+<thead><tr><th>A</th><th>Δ burst</th><th>collapse</th><th>align</th></tr></thead>
+<tbody>
+<tr><td>0.0</td><td>0</td><td>1.00</td><td>0.77</td></tr>
+<tr><td><strong>0.5</strong></td><td><strong>+0.125</strong></td><td><strong>2.07</strong></td>
+<td><strong>0.91</strong></td></tr>
+<tr><td>0.7</td><td>+0.13</td><td>3.46</td><td>0.96</td></tr>
+<tr><td>1.0</td><td>+0.09</td><td>≫1</td><td>1.04</td></tr>
+</tbody>
+</table>
+<p><strong>Optimal amplitude:</strong> Geometric burst amplification peaks at
+A&nbsp;≈&nbsp;0.7–0.8. Higher amplitudes increase radial collapse dramatically but can
+reduce net burst gain due to over-focusing at the cusp. Documented operating point
+<strong>A&nbsp;=&nbsp;0.5</strong> sits on the rising flank (solid Δburst without A→1
+over-collapse).</p>
+
+<h3>PDE helical (nt=50) — modulator</h3>
+<table class="myst-readme-table">
+<thead><tr><th>Setting</th><th>Δσ</th><th>Δ 369</th><th>cusp_frac</th></tr></thead>
+<tbody>
+<tr><td>κ=0.85, A=0.5</td><td><strong>+0.013</strong></td><td><strong>+0.015</strong></td>
+<td>0.08</td></tr>
+<tr><td>κ=0.85, A: 0→1</td><td>0 → <strong>+0.026</strong></td><td>0 → <strong>+0.045</strong></td>
+<td>0.08 → 0.11</td></tr>
+</tbody>
+</table>
+<p>Uniform IC = negative control (damping only). Helical IC = positive modulator
+(variance + mild 3-6-9). Reproduce:
+<code>python scripts/cardioid_kappa_amp_sweep.py</code></p>
+
+<div class="myst-readme-figure-grid">
+<figure class="myst-readme-figure">
+<img src="{html.escape(star)}" alt="Cardioid three-way star" loading="lazy" />
+<figcaption>Three-way star + r-distribution inset</figcaption>
+</figure>
+<figure class="myst-readme-figure">
+<img src="{html.escape(sweep)}" alt="Cardioid kappa amp sweep" loading="lazy" />
+<figcaption>κ / A sweeps (geometric + PDE)</figcaption>
+</figure>
+<figure class="myst-readme-figure">
+<img src="{html.escape(helical)}" alt="PDE cardioid helical compare" loading="lazy" />
+<figcaption>PDE helical cardioid compare</figcaption>
+</figure>
+</div>
+</section>
+"""
+
+
 def build_readme_full_page_html() -> str:
     """Single-scroll README view — black background, white text, embedded figures."""
     fig_labels = (
@@ -519,6 +706,11 @@ def build_readme_full_page_html() -> str:
         "Residual κ sweep",
         "3-6-9 vortex clock",
         "Conduit angular histogram",
+        "Cardioid three-way star",
+        "Cardioid × golden-angle resonance",
+        "Cusp resonance / burst-threshold",
+        "Cardioid κ / A sweeps",
+        "PDE cardioid helical compare",
     )
     figure_blocks = "\n".join(
         f'<figure class="myst-readme-figure">'
@@ -736,6 +928,10 @@ by any invariant, yet consistently reachable within the model&rsquo;s natural pa
 the abstract concepts of the gauged Hopf lattice tangible and to invite deeper exploration of the
 numerical harmony.</p>
 </section>
+
+<hr class="myst-readme-divider" />
+
+{build_cardioid_resonance_html()}
 
 <hr class="myst-readme-divider" />
 
@@ -4660,6 +4856,10 @@ PROBE_SCRIPTS: tuple[tuple[str, str], ...] = (
     ("residual_kappa_sweep.py", "B(κ) sweep; κ* null"),
     ("pde_relaxation_probe.py", "Meta-seeded PDE + FFT"),
     ("pde_structured_ic_probe.py", "Hopfion / two-gyro IC"),
+    ("golden_angle_twist_probe.py", "Golden helix + S¹ histograms"),
+    ("cardioid_golden_angle_probe.py", "Cardioid × golden / 9/π; cusp @ 350/π"),
+    ("cusp_resonance_probe.py", "Burst-threshold κ + cusp FFT"),
+    ("cardioid_kappa_amp_sweep.py", "κ / A sweeps (geometric + PDE helical)"),
     ("rodin_hopf_fiber_map.py", "Rodin doubling → Hopf S¹"),
     ("conduit_probe.py", "TOE conduit smoke (local toe venv)"),
     ("conduit_angular_probe.py", "30°/60°/90° angular histogram"),
@@ -4675,7 +4875,7 @@ TERM_KEY_ACTIONS: dict[int, tuple[str, str]] = {
     6: ("build", "Build stamp & deploy info"),
     7: ("help", "D-pad / keypad navigation"),
     8: ("scan", "Phosphor signal scan — CSS only, any key exits"),
-    9: ("probes", "11-script probe catalog"),
+    9: ("probes", "Probe catalog (scripts/)"),
     10: ("vortex369", "3-6-9 tens & vortex clock"),
     11: ("toe", "TOE parent linkage"),
     12: ("figures", "Reference figure index"),
@@ -4892,7 +5092,7 @@ def terminal_directory_help() -> str:
     return "\n".join(
         [
             "mystery/  (github.com/kinaar8340/mystery)",
-            "├── scripts/          11 probe scripts",
+            "├── scripts/          probe scripts (+ cardioid/cusp)",
             "├── notes/            emergent_signatures, synthesis, …",
             "├── docs/             RESULTS.md, figures/",
             "├── outputs/          JSON + PNG (gitignored)",
@@ -4919,7 +5119,7 @@ def terminal_probe_scope() -> str:
             "",
             "GITHUB REPO — full depth:",
             "  · notes/angle_derivation.md — step-by-step angles",
-            "  · 11 probes: PDE, conduit, meta-opt, Rodin map",
+            "  · probes: PDE, cardioid/cusp, conduit, meta-opt, Rodin map",
             "  · JSON reports → outputs/ (run_all.py)",
             "",
             "Early-stage project · Press 09 for catalog.",
@@ -4928,11 +5128,15 @@ def terminal_probe_scope() -> str:
 
 
 def terminal_probe_catalog() -> str:
-    lines = ["11 probes in scripts/ (run_all.py order):", ""]
+    lines = [f"{len(PROBE_SCRIPTS)} probes in scripts/ (catalog):", ""]
     for idx, (name, blurb) in enumerate(PROBE_SCRIPTS, start=1):
         lines.append(f"  {idx:02d}. {name}")
         lines.append(f"      {blurb}")
-    lines.extend(["", "TOE-linked: conduit_*, meta_optimize_* need toe venv."])
+    lines.extend([
+        "",
+        "Cardioid resonance: notes/CARDIOID_RESONANCE.md",
+        "TOE-linked: conduit_*, meta_optimize_* need toe venv.",
+    ])
     return "\n".join(lines)
 
 
@@ -4981,6 +5185,11 @@ def terminal_figures_index() -> str:
         "residual_kappa_sweep.png",
         "vortex_369_clock.png",
         "conduit_angular_histogram.png",
+        "cardioid_three_way_star.png",
+        "cardioid_golden_angle_probe.png",
+        "cusp_resonance_probe.png",
+        "cardioid_kappa_amp_sweep.png",
+        "pde_cardioid_compare_helical.png",
     )
     lines = ["docs/figures/ (Figures tab + GitHub raw):", ""]
     for idx, (url, name) in enumerate(zip(FIGURE_URLS, labels, strict=True), start=1):

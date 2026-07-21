@@ -469,7 +469,7 @@ def _optics_terminal_status() -> str:
                 f"R residual  : {R:+.6f}  (~1.39% Pythagorean error)",
                 f"κ*          : {k_star:.5f}  (0.16% from κ_doc)",
                 "Pipeline    : φ-e-π triangle → B(κ) scaling → figures",
-                "Full suite  : run_all.py (11 probes) — local only",
+                "Full suite  : run_all.py (probe suite) — local only",
                 f"TOE parent  : {TOE_URL}",
                 "",
                 "05 Results · 09 Probes · 08 Matrix · Run analysis below.",
