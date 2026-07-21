@@ -1,0 +1,431 @@
+{
+  "generated_utc": "2026-07-21T00:29:21.739096+00:00",
+  "constants": {
+    "golden_angle_deg": 137.50776405003788,
+    "golden_angle_rad": 2.3999632297286535,
+    "nine_over_pi_rad": 2.864788975654116,
+    "nine_over_pi_deg": 164.1403175005872,
+    "W_g": 111.40846016432674,
+    "W_G_LOCK": 111.408,
+    "R_residual": 0.13748568659118732,
+    "cusp_at": "\u03b8=\u03c0, r=0 for r=1+cos(\u03b8)"
+  },
+  "systems": {
+    "golden_cardioid": {
+      "step_name": "golden+cardioid",
+      "step_rad": 2.3999632297286535,
+      "step_deg": 137.50776405003788,
+      "n": 512,
+      "modulated": true,
+      "cusp_half_width_rad": 0.25,
+      "points_near_cusp": 40,
+      "cusp_fraction": 0.078125,
+      "expected_uniform_fraction": 0.07957747154594767,
+      "cusp_density_ratio": 0.9817477042468103,
+      "cusp_vortex_labels": {
+        "counts": {
+          "1": 4,
+          "2": 3,
+          "3": 4,
+          "4": 6,
+          "5": 7,
+          "6": 5,
+          "7": 4,
+          "8": 3,
+          "9": 4
+        },
+        "fraction_369": 0.325,
+        "dominant_digit": "5",
+        "n": 40
+      },
+      "all_vortex_labels": {
+        "counts": {
+          "1": 57,
+          "2": 57,
+          "3": 57,
+          "4": 57,
+          "5": 57,
+          "6": 57,
+          "7": 57,
+          "8": 57,
+          "9": 56
+        },
+        "fraction_369": 0.33203125,
+        "dominant_digit": "1",
+        "n": 512
+      },
+      "dominant_vortex_digits_cusp": "5",
+      "phi_e_pi_alignment": {
+        "triangle_angle_supports": {
+          "phi_angle_rad": 0.9201625876604274,
+          "e_angle_rad": 0.7458951092639242,
+          "pi_angle_rad": 0.5071728992927881
+        },
+        "mean_alignment_support": 0.7244101987390464,
+        "cusp_mean_radius": 0.010045872182017097,
+        "global_mean_abs_r_minus_1": 0.6364001963727051,
+        "residual_R": 0.13748568659118732,
+        "delta_support_vs_R": 0.5869245121478591,
+        "residual_proxy_abs": 0.5869245121478591,
+        "note": "Alignment support is a geometric diagnostic on the modulated point cloud; it does not prove R emerges from the cardioid."
+      },
+      "packing": {
+        "mean_gap_rad": 0.01227184630308513,
+        "std_gap_rad": 0.004022824507779627,
+        "min_gap_rad": 0.00745337384182676,
+        "max_gap_rad": 0.019513186048889963,
+        "gap_cv": 0.3278092316427141
+      },
+      "mean_radius": 1.0017145857019938,
+      "std_radius": 0.706938829347935,
+      "min_radius": 2.6524081288004098e-06
+    },
+    "golden_unit": {
+      "step_name": "golden (unit r)",
+      "step_rad": 2.3999632297286535,
+      "step_deg": 137.50776405003788,
+      "n": 512,
+      "modulated": false,
+      "cusp_half_width_rad": 0.25,
+      "points_near_cusp": 40,
+      "cusp_fraction": 0.078125,
+      "expected_uniform_fraction": 0.07957747154594767,
+      "cusp_density_ratio": 0.9817477042468103,
+      "cusp_vortex_labels": {
+        "counts": {
+          "1": 4,
+          "2": 3,
+          "3": 4,
+          "4": 6,
+          "5": 7,
+          "6": 5,
+          "7": 4,
+          "8": 3,
+          "9": 4
+        },
+        "fraction_369": 0.325,
+        "dominant_digit": "5",
+        "n": 40
+      },
+      "all_vortex_labels": {
+        "counts": {
+          "1": 57,
+          "2": 57,
+          "3": 57,
+          "4": 57,
+          "5": 57,
+          "6": 57,
+          "7": 57,
+          "8": 57,
+          "9": 56
+        },
+        "fraction_369": 0.33203125,
+        "dominant_digit": "1",
+        "n": 512
+      },
+      "dominant_vortex_digits_cusp": "5",
+      "phi_e_pi_alignment": {
+        "triangle_angle_supports": {
+          "phi_angle_rad": 0.5,
+          "e_angle_rad": 0.5,
+          "pi_angle_rad": 0.5
+        },
+        "mean_alignment_support": 0.5,
+        "cusp_mean_radius": 1.0,
+        "global_mean_abs_r_minus_1": 0.0,
+        "residual_R": 0.13748568659118732,
+        "delta_support_vs_R": 0.3625143134088127,
+        "residual_proxy_abs": 0.3625143134088127,
+        "note": "Alignment support is a geometric diagnostic on the modulated point cloud; it does not prove R emerges from the cardioid."
+      },
+      "packing": {
+        "mean_gap_rad": 0.01227184630308513,
+        "std_gap_rad": 0.004022824507779627,
+        "min_gap_rad": 0.00745337384182676,
+        "max_gap_rad": 0.019513186048889963,
+        "gap_cv": 0.3278092316427141
+      },
+      "mean_radius": 1.0,
+      "std_radius": 0.0,
+      "min_radius": 1.0
+    },
+    "nine_over_pi_cardioid": {
+      "step_name": "9/\u03c0+cardioid",
+      "step_rad": 2.864788975654116,
+      "step_deg": 164.1403175005872,
+      "n": 512,
+      "modulated": true,
+      "cusp_half_width_rad": 0.25,
+      "points_near_cusp": 42,
+      "cusp_fraction": 0.08203125,
+      "expected_uniform_fraction": 0.07957747154594767,
+      "cusp_density_ratio": 1.030835089459151,
+      "cusp_vortex_labels": {
+        "counts": {
+          "1": 4,
+          "2": 4,
+          "3": 6,
+          "4": 4,
+          "5": 4,
+          "6": 4,
+          "7": 6,
+          "8": 6,
+          "9": 4
+        },
+        "fraction_369": 0.3333333333333333,
+        "dominant_digit": "3",
+        "n": 42
+      },
+      "all_vortex_labels": {
+        "counts": {
+          "1": 57,
+          "2": 57,
+          "3": 57,
+          "4": 57,
+          "5": 57,
+          "6": 57,
+          "7": 57,
+          "8": 57,
+          "9": 56
+        },
+        "fraction_369": 0.33203125,
+        "dominant_digit": "1",
+        "n": 512
+      },
+      "dominant_vortex_digits_cusp": "3",
+      "phi_e_pi_alignment": {
+        "triangle_angle_supports": {
+          "phi_angle_rad": 0.9201366906325266,
+          "e_angle_rad": 0.7461365294819463,
+          "pi_angle_rad": 0.5082569996283037
+        },
+        "mean_alignment_support": 0.7248434065809256,
+        "cusp_mean_radius": 0.010680593520360009,
+        "global_mean_abs_r_minus_1": 0.6374645084311458,
+        "residual_R": 0.13748568659118732,
+        "delta_support_vs_R": 0.5873577199897383,
+        "residual_proxy_abs": 0.5873577199897383,
+        "note": "Alignment support is a geometric diagnostic on the modulated point cloud; it does not prove R emerges from the cardioid."
+      },
+      "packing": {
+        "mean_gap_rad": 0.01227184630308513,
+        "std_gap_rad": 0.0035070719492388282,
+        "min_gap_rad": 0.00516363920554852,
+        "max_gap_rad": 0.016034730559283616,
+        "gap_cv": 0.28578193226485993
+      },
+      "mean_radius": 1.0019401850985963,
+      "std_radius": 0.7079718845266612,
+      "min_radius": 3.332894379481921e-06
+    },
+    "control_2pi_17_cardioid": {
+      "step_name": "2\u03c0/17+cardioid",
+      "step_rad": 0.36959913571644626,
+      "step_deg": 21.176470588235293,
+      "n": 512,
+      "modulated": true,
+      "cusp_half_width_rad": 0.25,
+      "points_near_cusp": 60,
+      "cusp_fraction": 0.1171875,
+      "expected_uniform_fraction": 0.07957747154594767,
+      "cusp_density_ratio": 1.4726215563702154,
+      "cusp_vortex_labels": {
+        "counts": {
+          "1": 7,
+          "2": 6,
+          "3": 6,
+          "4": 6,
+          "5": 6,
+          "6": 6,
+          "7": 7,
+          "8": 8,
+          "9": 8
+        },
+        "fraction_369": 0.3333333333333333,
+        "dominant_digit": "8",
+        "n": 60
+      },
+      "all_vortex_labels": {
+        "counts": {
+          "1": 57,
+          "2": 57,
+          "3": 57,
+          "4": 57,
+          "5": 57,
+          "6": 57,
+          "7": 57,
+          "8": 57,
+          "9": 56
+        },
+        "fraction_369": 0.33203125,
+        "dominant_digit": "1",
+        "n": 512
+      },
+      "dominant_vortex_digits_cusp": "8",
+      "phi_e_pi_alignment": {
+        "triangle_angle_supports": {
+          "phi_angle_rad": 0.9205977162729205,
+          "e_angle_rad": 0.7442944732539316,
+          "pi_angle_rad": 0.509802418910557
+        },
+        "mean_alignment_support": 0.7248982028124696,
+        "cusp_mean_radius": 0.017026900316098444,
+        "global_mean_abs_r_minus_1": 0.6388105774476306,
+        "residual_R": 0.13748568659118732,
+        "delta_support_vs_R": 0.5874125162212823,
+        "residual_proxy_abs": 0.5874125162212823,
+        "note": "Alignment support is a geometric diagnostic on the modulated point cloud; it does not prove R emerges from the cardioid."
+      },
+      "packing": {
+        "mean_gap_rad": 0.01227184630308513,
+        "std_gap_rad": 0.06621982766194903,
+        "min_gap_rad": 0.0,
+        "max_gap_rad": 0.36959913571642744,
+        "gap_cv": 5.396077005943707
+      },
+      "mean_radius": 1.0037743598230553,
+      "std_radius": 0.708296551667202,
+      "min_radius": 0.017026900316095883
+    }
+  },
+  "comparison": {
+    "cusp_points_delta": 0,
+    "density_ratio_golden_mod": 0.9817477042468103,
+    "density_ratio_golden_raw": 0.9817477042468103,
+    "alignment_mod": 0.7244101987390464,
+    "alignment_raw": 0.5,
+    "alignment_nine_mod": 0.7248434065809256,
+    "gap_cv_golden": 0.3278092316427141,
+    "gap_cv_nine": 0.28578193226485993,
+    "gap_cv_control": 5.396077005943707,
+    "note": "Golden stepping keeps gap_cv low (efficient packing). Cardioid modulates radius only; angular density ratios stay near-uniform for irrational rotations \u2014 cusp sensitivity appears in r\u21920 and local label/alignment scores."
+  },
+  "scale_sweep_350_over_pi": [
+    {
+      "factor": 0.25,
+      "n": 28,
+      "n_over_W_g": 0.25132741228718347,
+      "cusp_density_ratio": 0.8975979010256551,
+      "points_near_cusp": 2,
+      "fraction_369_cusp": 0.5,
+      "gap_cv": 0.3298088227055498,
+      "alignment_support": 0.7173231682806692,
+      "cusp_coherence": 0.5062369975855566
+    },
+    {
+      "factor": 0.5,
+      "n": 56,
+      "n_over_W_g": 0.5026548245743669,
+      "cusp_density_ratio": 0.8975979010256551,
+      "points_near_cusp": 4,
+      "fraction_369_cusp": 0.5,
+      "gap_cv": 0.23293880393484706,
+      "alignment_support": 0.7239108333241658,
+      "cusp_coherence": 0.5460112242560382
+    },
+    {
+      "factor": 0.75,
+      "n": 84,
+      "n_over_W_g": 0.7539822368615503,
+      "cusp_density_ratio": 0.8975979010256551,
+      "points_near_cusp": 6,
+      "fraction_369_cusp": 0.5,
+      "gap_cv": 0.2797057697512062,
+      "alignment_support": 0.7227582653360498,
+      "cusp_coherence": 0.5260571935220086
+    },
+    {
+      "factor": 1.0,
+      "n": 111,
+      "n_over_W_g": 0.9963336701384773,
+      "cusp_density_ratio": 1.0188949146777708,
+      "points_near_cusp": 9,
+      "fraction_369_cusp": 0.3333333333333333,
+      "gap_cv": 0.3264035422360987,
+      "alignment_support": 0.7239999968618228,
+      "cusp_coherence": 0.5121090639630839
+    },
+    {
+      "factor": 1.5,
+      "n": 167,
+      "n_over_W_g": 1.4989884947128442,
+      "cusp_density_ratio": 0.9782204669860434,
+      "points_near_cusp": 13,
+      "fraction_369_cusp": 0.38461538461538464,
+      "gap_cv": 0.3075571034496805,
+      "alignment_support": 0.7241924178845411,
+      "cusp_coherence": 0.5179349737617964
+    },
+    {
+      "factor": 2.0,
+      "n": 223,
+      "n_over_W_g": 2.001643319287211,
+      "cusp_density_ratio": 1.0143258791859422,
+      "points_near_cusp": 18,
+      "fraction_369_cusp": 0.3888888888888889,
+      "gap_cv": 0.2680878525472572,
+      "alignment_support": 0.7243948559512129,
+      "cusp_coherence": 0.555476476051689
+    },
+    {
+      "factor": 3.0,
+      "n": 334,
+      "n_over_W_g": 2.9979769894256885,
+      "cusp_density_ratio": 1.0158443311008911,
+      "points_near_cusp": 27,
+      "fraction_369_cusp": 0.37037037037037035,
+      "gap_cv": 0.31462621733993734,
+      "alignment_support": 0.7245058180338345,
+      "cusp_coherence": 0.5294596113662486
+    },
+    {
+      "factor": 4.0,
+      "n": 446,
+      "n_over_W_g": 4.003286638574422,
+      "cusp_density_ratio": 0.9861501603196661,
+      "points_near_cusp": 35,
+      "fraction_369_cusp": 0.3142857142857143,
+      "gap_cv": 0.31423401243142385,
+      "alignment_support": 0.7246974247613935,
+      "cusp_coherence": 0.4930944776915569
+    },
+    {
+      "factor": 1.618033988749895,
+      "n": 180,
+      "n_over_W_g": 1.6156762218461793,
+      "cusp_density_ratio": 0.9773843811168245,
+      "points_near_cusp": 14,
+      "fraction_369_cusp": 0.35714285714285715,
+      "gap_cv": 0.32674796996006283,
+      "alignment_support": 0.7248681940387495,
+      "cusp_coherence": 0.49988779389487914
+    },
+    {
+      "factor": 3.141592653589793,
+      "n": 350,
+      "n_over_W_g": 3.141592653589793,
+      "cusp_density_ratio": 1.0053096491487339,
+      "points_near_cusp": 28,
+      "fraction_369_cusp": 0.35714285714285715,
+      "gap_cv": 0.2913318120058309,
+      "alignment_support": 0.7241577504350261,
+      "cusp_coherence": 0.5282719735060764
+    }
+  ],
+  "best_scale": {
+    "factor": 2.0,
+    "n": 223,
+    "n_over_W_g": 2.001643319287211,
+    "cusp_density_ratio": 1.0143258791859422,
+    "points_near_cusp": 18,
+    "fraction_369_cusp": 0.3888888888888889,
+    "gap_cv": 0.2680878525472572,
+    "alignment_support": 0.7243948559512129,
+    "cusp_coherence": 0.555476476051689
+  },
+  "plots": {
+    "main": "/home/kinaar/Projects/mystery/outputs/cardioid_golden_angle_probe.png",
+    "density": "/home/kinaar/Projects/mystery/outputs/cardioid_cusp_density.png"
+  },
+  "interpretation": "Mathematical: cardioid is a resonance envelope on irrational (golden) or 9/\u03c0 stepping; cusp has infinite curvature and maps to a high-sensitivity locus. Observational: cusp window metrics and 350/\u03c0 scale coherence are diagnostics. Interpretive claims (frequency alignment, efficient exit) are optional and documented separately in notes/CARDIOID_RESONANCE.md."
+}

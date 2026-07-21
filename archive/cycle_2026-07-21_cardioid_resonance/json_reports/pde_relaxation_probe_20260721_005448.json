@@ -1,0 +1,403 @@
+{
+  "generated_utc": "2026-07-21T00:54:48.270077+00:00",
+  "meta_seeds": {
+    "kappa": 0.85,
+    "wg_base": 351.5,
+    "w_g": 111.8859,
+    "braiding": 0.754
+  },
+  "ic": "hopfion",
+  "normalize_to_lambda_t": null,
+  "theta_crit_rad": 5.811946409141117,
+  "cardioid_amp": 0.5,
+  "cardioid_formula": "drive \u2190 (1 + A\u00b7cos(\u03b8)) \u00b7 (cot + \u03b4\u03c9 + gauge + burst); diffusion unmodulated",
+  "ic_stats": {
+    "mean": 0.20680572410263648,
+    "std": 0.07726138691730679
+  },
+  "baseline": {
+    "field_stats": {
+      "mean": 0.10619322936147109,
+      "std": 0.003557297931951796,
+      "min": 0.10060292695406657,
+      "max": 0.11831413639517896
+    },
+    "fft": {
+      "top_modes": [
+        {
+          "kx": 19,
+          "ky": 0,
+          "power_frac": 0.26401813046327677
+        },
+        {
+          "kx": 1,
+          "ky": 0,
+          "power_frac": 0.26401813046327677
+        },
+        {
+          "kx": 0,
+          "ky": 1,
+          "power_frac": 0.2192393799565087
+        },
+        {
+          "kx": 0,
+          "ky": 19,
+          "power_frac": 0.2192393799565087
+        },
+        {
+          "kx": 19,
+          "ky": 19,
+          "power_frac": 0.00835279614407914
+        },
+        {
+          "kx": 1,
+          "ky": 19,
+          "power_frac": 0.008352796144079138
+        },
+        {
+          "kx": 19,
+          "ky": 1,
+          "power_frac": 0.008352796144079138
+        },
+        {
+          "kx": 1,
+          "ky": 1,
+          "power_frac": 0.008352796144079133
+        }
+      ],
+      "total_power": 2.452599893187512
+    },
+    "correlation": {
+      "mean_k": 1.0139143162296769,
+      "correlation_length_grid_units": 19.72553270021044
+    },
+    "phi_e_pi_signature": {
+      "candidates": {
+        "xi_over_nx": 0.986276635010522,
+        "mean_k_over_pi": 0.3227389505991844,
+        "mean_k_over_phi": 0.6266335091100494,
+        "mean_k_over_e": 0.3729982320502986
+      },
+      "nearest_ranking": [
+        {
+          "ratio": "xi_over_nx",
+          "value": 0.986276635010522,
+          "nearest_transcendental": "one",
+          "delta_pct": 1.3723364989478015
+        },
+        {
+          "ratio": "mean_k_over_phi",
+          "value": 0.6266335091100494,
+          "nearest_transcendental": "one",
+          "delta_pct": 37.33664908899505
+        },
+        {
+          "ratio": "mean_k_over_e",
+          "value": 0.3729982320502986,
+          "nearest_transcendental": "one",
+          "delta_pct": 62.70017679497014
+        },
+        {
+          "ratio": "mean_k_over_pi",
+          "value": 0.3227389505991844,
+          "nearest_transcendental": "one",
+          "delta_pct": 67.72610494008156
+        }
+      ],
+      "degenerate_uniform_field": false,
+      "note": "Non-uniform structure present; ratios may be informative."
+    },
+    "lambda_t_survival": null,
+    "cusp_field": {
+      "cusp_site_fraction": 0.0,
+      "expected_uniform_fraction": 0.07957747154594767,
+      "cusp_density_ratio": 0.0,
+      "mean_theta_cusp": NaN,
+      "mean_theta_bulk": 0.10619322936147109,
+      "radial_collapse_proxy": NaN,
+      "n_cusp_sites": 0,
+      "vortex_369_all": {
+        "counts": {
+          "1": 8000,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0,
+          "8": 0,
+          "9": 0
+        },
+        "fraction_369": 0.0,
+        "n": 8000,
+        "formula": "dr = 1 + (floor(10\u00b7\u03b8)-1) mod 9;  frac_369 = mean(dr \u2208 {3,6,9})"
+      },
+      "vortex_369_cusp": {
+        "counts": {},
+        "fraction_369": 0.0,
+        "n": 0
+      }
+    },
+    "align_support": {
+      "align_support": 0.016950679504788752,
+      "per_angle": {
+        "phi": 0.016923371756127813,
+        "e": 0.01695021836960534,
+        "pi": 0.016978448388633098
+      },
+      "formula": "mean_\u03b1[(\u03a3 w \u03b8/(2\u03c0))/(\u03a3 w)], w=exp(\u2212\u00bd dist(\u03b8,\u03b1)\u00b2/\u03c3\u00b2)"
+    },
+    "vortex_369_fraction": 0.0,
+    "vortex_369_cusp_fraction": 0.0
+  },
+  "cardioid": {
+    "field_stats": {
+      "mean": 0.07659627212558089,
+      "std": 0.0036711942219571723,
+      "min": 0.0707897778314073,
+      "max": 0.08903709634803435
+    },
+    "fft": {
+      "top_modes": [
+        {
+          "kx": 19,
+          "ky": 0,
+          "power_frac": 0.2754617262956393
+        },
+        {
+          "kx": 1,
+          "ky": 0,
+          "power_frac": 0.2754617262956393
+        },
+        {
+          "kx": 0,
+          "ky": 1,
+          "power_frac": 0.2086109477940227
+        },
+        {
+          "kx": 0,
+          "ky": 19,
+          "power_frac": 0.2086109477940227
+        },
+        {
+          "kx": 1,
+          "ky": 19,
+          "power_frac": 0.007945979276227616
+        },
+        {
+          "kx": 19,
+          "ky": 1,
+          "power_frac": 0.007945979276227616
+        },
+        {
+          "kx": 1,
+          "ky": 1,
+          "power_frac": 0.007945979276227616
+        },
+        {
+          "kx": 19,
+          "ky": 19,
+          "power_frac": 0.007945979276227616
+        }
+      ],
+      "total_power": 2.5746772202487027
+    },
+    "correlation": {
+      "mean_k": 1.0132371768595825,
+      "correlation_length_grid_units": 19.73871513675387
+    },
+    "phi_e_pi_signature": {
+      "candidates": {
+        "xi_over_nx": 0.9869357568376935,
+        "mean_k_over_pi": 0.3225234104433591,
+        "mean_k_over_phi": 0.6262150139642104,
+        "mean_k_over_e": 0.37274912639723307
+      },
+      "nearest_ranking": [
+        {
+          "ratio": "xi_over_nx",
+          "value": 0.9869357568376935,
+          "nearest_transcendental": "one",
+          "delta_pct": 1.3064243162306477
+        },
+        {
+          "ratio": "mean_k_over_phi",
+          "value": 0.6262150139642104,
+          "nearest_transcendental": "one",
+          "delta_pct": 37.37849860357896
+        },
+        {
+          "ratio": "mean_k_over_e",
+          "value": 0.37274912639723307,
+          "nearest_transcendental": "one",
+          "delta_pct": 62.72508736027669
+        },
+        {
+          "ratio": "mean_k_over_pi",
+          "value": 0.3225234104433591,
+          "nearest_transcendental": "one",
+          "delta_pct": 67.7476589556641
+        }
+      ],
+      "degenerate_uniform_field": false,
+      "note": "Non-uniform structure present; ratios may be informative."
+    },
+    "lambda_t_survival": null,
+    "cusp_field": {
+      "cusp_site_fraction": 0.0,
+      "expected_uniform_fraction": 0.07957747154594767,
+      "cusp_density_ratio": 0.0,
+      "mean_theta_cusp": NaN,
+      "mean_theta_bulk": 0.07659627212558089,
+      "radial_collapse_proxy": NaN,
+      "n_cusp_sites": 0,
+      "vortex_369_all": {
+        "counts": {
+          "1": 8000,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0,
+          "8": 0,
+          "9": 0
+        },
+        "fraction_369": 0.0,
+        "n": 8000,
+        "formula": "dr = 1 + (floor(10\u00b7\u03b8)-1) mod 9;  frac_369 = mean(dr \u2208 {3,6,9})"
+      },
+      "vortex_369_cusp": {
+        "counts": {},
+        "fraction_369": 0.0,
+        "n": 0
+      }
+    },
+    "align_support": {
+      "align_support": 0.012245142534302145,
+      "per_angle": {
+        "phi": 0.012215964392285363,
+        "e": 0.012244646250543818,
+        "pi": 0.012274816960077251
+      },
+      "formula": "mean_\u03b1[(\u03a3 w \u03b8/(2\u03c0))/(\u03a3 w)], w=exp(\u2212\u00bd dist(\u03b8,\u03b1)\u00b2/\u03c3\u00b2)"
+    },
+    "vortex_369_fraction": 0.0,
+    "vortex_369_cusp_fraction": 0.0
+  },
+  "field_stats": {
+    "mean": 0.10619322936147109,
+    "std": 0.003557297931951796,
+    "min": 0.10060292695406657,
+    "max": 0.11831413639517896
+  },
+  "fft": {
+    "top_modes": [
+      {
+        "kx": 19,
+        "ky": 0,
+        "power_frac": 0.26401813046327677
+      },
+      {
+        "kx": 1,
+        "ky": 0,
+        "power_frac": 0.26401813046327677
+      },
+      {
+        "kx": 0,
+        "ky": 1,
+        "power_frac": 0.2192393799565087
+      },
+      {
+        "kx": 0,
+        "ky": 19,
+        "power_frac": 0.2192393799565087
+      },
+      {
+        "kx": 19,
+        "ky": 19,
+        "power_frac": 0.00835279614407914
+      },
+      {
+        "kx": 1,
+        "ky": 19,
+        "power_frac": 0.008352796144079138
+      },
+      {
+        "kx": 19,
+        "ky": 1,
+        "power_frac": 0.008352796144079138
+      },
+      {
+        "kx": 1,
+        "ky": 1,
+        "power_frac": 0.008352796144079133
+      }
+    ],
+    "total_power": 2.452599893187512
+  },
+  "correlation": {
+    "mean_k": 1.0139143162296769,
+    "correlation_length_grid_units": 19.72553270021044
+  },
+  "phi_e_pi_signature": {
+    "candidates": {
+      "xi_over_nx": 0.986276635010522,
+      "mean_k_over_pi": 0.3227389505991844,
+      "mean_k_over_phi": 0.6266335091100494,
+      "mean_k_over_e": 0.3729982320502986
+    },
+    "nearest_ranking": [
+      {
+        "ratio": "xi_over_nx",
+        "value": 0.986276635010522,
+        "nearest_transcendental": "one",
+        "delta_pct": 1.3723364989478015
+      },
+      {
+        "ratio": "mean_k_over_phi",
+        "value": 0.6266335091100494,
+        "nearest_transcendental": "one",
+        "delta_pct": 37.33664908899505
+      },
+      {
+        "ratio": "mean_k_over_e",
+        "value": 0.3729982320502986,
+        "nearest_transcendental": "one",
+        "delta_pct": 62.70017679497014
+      },
+      {
+        "ratio": "mean_k_over_pi",
+        "value": 0.3227389505991844,
+        "nearest_transcendental": "one",
+        "delta_pct": 67.72610494008156
+      }
+    ],
+    "degenerate_uniform_field": false,
+    "note": "Non-uniform structure present; ratios may be informative."
+  },
+  "lambda_t_survival": null,
+  "align_support": {
+    "align_support": 0.016950679504788752,
+    "per_angle": {
+      "phi": 0.016923371756127813,
+      "e": 0.01695021836960534,
+      "pi": 0.016978448388633098
+    },
+    "formula": "mean_\u03b1[(\u03a3 w \u03b8/(2\u03c0))/(\u03a3 w)], w=exp(\u2212\u00bd dist(\u03b8,\u03b1)\u00b2/\u03c3\u00b2)"
+  },
+  "vortex_369_fraction": 0.0,
+  "plot": "/home/kinaar/Projects/mystery/outputs/pde_relaxation_probe_hopfion.png",
+  "compare_plot": "/home/kinaar/Projects/mystery/outputs/pde_cardioid_compare_hopfion.png",
+  "interpretation": "Non-uniform structure present; ratios may be informative.",
+  "cardioid_delta": {
+    "mean_theta": -0.029596957235890203,
+    "std_theta": 0.0001138962900053761,
+    "cusp_frac_delta": 0.0,
+    "cusp_rho_delta": 0.0,
+    "align_support_delta": -0.0047055369704866075,
+    "vortex_369_delta": 0.0,
+    "vortex_369_cusp_delta": 0.0,
+    "R_residual": 0.13748568659118732
+  }
+}

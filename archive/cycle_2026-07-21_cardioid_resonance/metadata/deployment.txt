@@ -1,0 +1,27 @@
+Cycle: Cardioid Resonance Layer
+Date: 2026-07-21
+Archived_UTC: 2026-07-21T01:19:46Z
+GitHub SHA (archive commit): 3d4cdab0c4af9e87e78b2f8464e6d9613fd83b10
+HF SHA: fe87388983ebdebb1f7304cdb6b7f843c17828ad
+HF Space: https://huggingface.co/spaces/kinaar111/mystery
+GitHub repo: https://github.com/kinaar8340/mystery
+
+Note: scripts/ and docs/ in this archive are snapshots of the local working tree
+at archive time (Cardioid Resonance layer). They may be ahead of GitHub HEAD
+until committed and pushed. JSON reports and figures are the 2026-07-21 run suite.
+
+Key achievements:
+- Cardioid modulation on golden-angle & 9/π stepping
+- Explicit metrics (align_support, radial_collapse, burst_fraction, cusp_coherence)
+- PDE envelope coupling (modulator, not generator)
+- Structured IC tests (helical best responder)
+- κ/A parameter sweeps
+- Optimal amplitude note (A ≈ 0.7–0.8)
+- HF Space documentation section (CARDIOID_RESONANCE_HF + demo_core HTML)
+
+Reproduce:
+  .venv/bin/python scripts/cardioid_golden_angle_probe.py
+  .venv/bin/python scripts/cusp_resonance_probe.py
+  .venv/bin/python scripts/cardioid_kappa_amp_sweep.py
+  .venv/bin/python scripts/pde_relaxation_probe.py --compare-cardioid --ic helical --nt 50
+  bash scripts/archive_cycle_cardioid_resonance.sh

@@ -1,0 +1,554 @@
+{
+  "generated_utc": "2026-07-21T00:47:16.949809+00:00",
+  "step": "golden",
+  "step_rad": 2.3999632297286535,
+  "n": 512,
+  "kappa": 0.85,
+  "theta_crit": 5.811946409141117,
+  "cardioid_amp": 0.5,
+  "W_g": 111.40846016432674,
+  "R_residual": 0.13748568659118732,
+  "golden_fraction": 0.13750776405003787,
+  "raw": {
+    "theta_crit": 5.811946409141117,
+    "kappa": 0.85,
+    "cardioid_amp": 0.0,
+    "n_burst": 38,
+    "burst_fraction": 0.07421875,
+    "burst_fraction_formula": "mean( holonomy_k > \u03b8_crit ), holonomy=(a\u00b7\u03b8) mod 2\u03c0(1+\u03ba)",
+    "mean_amp": 1.0,
+    "std_amp": 0.0,
+    "mean_signal": -0.00042024799729869643,
+    "std_signal": 0.7078493200212809
+  },
+  "modulated": {
+    "theta_crit": 5.811946409141117,
+    "kappa": 0.85,
+    "cardioid_amp": 0.5,
+    "n_burst": 102,
+    "burst_fraction": 0.19921875,
+    "burst_fraction_formula": "mean( holonomy_k > \u03b8_crit ), holonomy=(a\u00b7\u03b8) mod 2\u03c0(1+\u03ba)",
+    "mean_amp": 1.000857292850997,
+    "std_amp": 0.35346941467396753,
+    "mean_signal": -0.0015706878325543656,
+    "std_signal": 0.7318282082802767
+  },
+  "gradient_raw": {
+    "mean_amp_cusp": 1.0,
+    "mean_amp_bulk": 1.0,
+    "radial_collapse_ratio_bulk_over_cusp": 0.9999999999989999,
+    "radial_collapse_formula": "mean(a|bulk) / mean(a|cusp)",
+    "mean_curvature_cusp": 0.9999999999984999,
+    "mean_curvature_bulk": 0.9999999999985003,
+    "curvature_ratio_cusp_over_bulk": 0.9999999999999996,
+    "curvature_formula": "|r\u00b2+2(r')\u00b2\u2212r r''| / (r\u00b2+(r')\u00b2)^{3/2}",
+    "mean_grad_cusp": 0.0,
+    "mean_grad_bulk": 0.0,
+    "grad_ratio_cusp_over_bulk": NaN,
+    "cusp_is_high_sensitivity": false,
+    "cusp_is_high_gradient": false,
+    "phi_e_pi_signal_support": 0.7762670605657722,
+    "delta_support_vs_R": 0.6387813739745849,
+    "points_near_cusp": 40,
+    "mean_abs_signal_cusp": 0.12999591597615395,
+    "mean_abs_signal_bulk": 0.6806483224232953,
+    "note": "Cardioid cusp: r'\u21920 but curvature \u2192 \u221e as r\u21920. Prefer radial_collapse_ratio and curvature_ratio over first-derivative grad_ratio."
+  },
+  "gradient_modulated": {
+    "mean_amp_cusp": 0.5050229360910086,
+    "mean_amp_bulk": 1.0428771535933687,
+    "radial_collapse_ratio_bulk_over_cusp": 2.0650094858332735,
+    "radial_collapse_formula": "mean(a|bulk) / mean(a|cusp)",
+    "mean_curvature_cusp": 0.4444664597442044,
+    "mean_curvature_bulk": 0.9605725654972547,
+    "curvature_ratio_cusp_over_bulk": 0.46270992500615477,
+    "curvature_formula": "|r\u00b2+2(r')\u00b2\u2212r r''| / (r\u00b2+(r')\u00b2)^{3/2}",
+    "mean_grad_cusp": 0.06119374006099393,
+    "mean_grad_bulk": 0.3400800808653526,
+    "grad_ratio_cusp_over_bulk": 0.17993920698114124,
+    "cusp_is_high_sensitivity": true,
+    "cusp_is_high_gradient": true,
+    "phi_e_pi_signal_support": 0.9130594293362941,
+    "delta_support_vs_R": 0.7755737427451068,
+    "points_near_cusp": 40,
+    "mean_abs_signal_cusp": 0.06598223637292973,
+    "mean_abs_signal_bulk": 0.687295368828958,
+    "note": "Cardioid cusp: r'\u21920 but curvature \u2192 \u221e as r\u21920. Prefer radial_collapse_ratio and curvature_ratio over first-derivative grad_ratio."
+  },
+  "fft": {
+    "global": {
+      "unmodulated": {
+        "top_modes": [
+          {
+            "freq": 0.3828125,
+            "power_frac": 0.5169788886357858
+          },
+          {
+            "freq": 0.380859375,
+            "power_frac": 0.3008537020498143
+          },
+          {
+            "freq": 0.384765625,
+            "power_frac": 0.04607911362442078
+          },
+          {
+            "freq": 0.37890625,
+            "power_frac": 0.039596323990953274
+          },
+          {
+            "freq": 0.38671875,
+            "power_frac": 0.01713649086377904
+          }
+        ],
+        "mean_freq": 0.3817560183214825,
+        "total_power": 65677.23351949362
+      },
+      "cardioid": {
+        "top_modes": [
+          {
+            "freq": 0.3828125,
+            "power_frac": 0.4855812725048833
+          },
+          {
+            "freq": 0.380859375,
+            "power_frac": 0.28141305542332745
+          },
+          {
+            "freq": 0.236328125,
+            "power_frac": 0.05806689915753171
+          },
+          {
+            "freq": 0.384765625,
+            "power_frac": 0.0438569102009743
+          },
+          {
+            "freq": 0.37890625,
+            "power_frac": 0.0367062067365791
+          }
+        ],
+        "mean_freq": 0.3728144428668088,
+        "total_power": 70202.42854439144
+      }
+    },
+    "cusp_window": {
+      "unmodulated": {
+        "mean_freq": 0.1942288394155854,
+        "total_power": 40.8688103703822
+      },
+      "cardioid": {
+        "mean_freq": 0.1914281349237484,
+        "total_power": 11.106176402478104
+      }
+    },
+    "power_ratio_mod_over_raw": 1.0689005121318744,
+    "cusp_power_ratio_mod_over_raw": 0.2717518885875505
+  },
+  "kappa_sweep": [
+    {
+      "kappa": 0.75,
+      "theta_crit": 5.497787143782138,
+      "burst_frac_raw": 0.125,
+      "burst_frac_mod": 0.2109375,
+      "burst_delta": 0.0859375,
+      "grad_ratio_mod": 0.18589578367280052,
+      "curvature_ratio_mod": 0.4423195904142578,
+      "radial_collapse_mod": 2.067296390253422,
+      "alignment_mod": 0.9077740336895538,
+      "alignment_raw": 0.7728567253697017
+    },
+    {
+      "kappa": 0.76,
+      "theta_crit": 5.529203070318036,
+      "burst_frac_raw": 0.1171875,
+      "burst_frac_mod": 0.2109375,
+      "burst_delta": 0.09375,
+      "grad_ratio_mod": 0.18589578367280052,
+      "curvature_ratio_mod": 0.4423195904142578,
+      "radial_collapse_mod": 2.067296390253422,
+      "alignment_mod": 0.9077740336895538,
+      "alignment_raw": 0.7728567253697017
+    },
+    {
+      "kappa": 0.77,
+      "theta_crit": 5.5606189968539335,
+      "burst_frac_raw": 0.11328125,
+      "burst_frac_mod": 0.20703125,
+      "burst_delta": 0.09375,
+      "grad_ratio_mod": 0.18589578367280052,
+      "curvature_ratio_mod": 0.4423195904142578,
+      "radial_collapse_mod": 2.067296390253422,
+      "alignment_mod": 0.9077740336895538,
+      "alignment_raw": 0.7728567253697017
+    },
+    {
+      "kappa": 0.78,
+      "theta_crit": 5.592034923389832,
+      "burst_frac_raw": 0.109375,
+      "burst_frac_mod": 0.20703125,
+      "burst_delta": 0.09765625,
+      "grad_ratio_mod": 0.18589578367280052,
+      "curvature_ratio_mod": 0.4423195904142578,
+      "radial_collapse_mod": 2.067296390253422,
+      "alignment_mod": 0.9077740336895538,
+      "alignment_raw": 0.7728567253697017
+    },
+    {
+      "kappa": 0.79,
+      "theta_crit": 5.62345084992573,
+      "burst_frac_raw": 0.10546875,
+      "burst_frac_mod": 0.20703125,
+      "burst_delta": 0.1015625,
+      "grad_ratio_mod": 0.18589578367280052,
+      "curvature_ratio_mod": 0.4423195904142578,
+      "radial_collapse_mod": 2.067296390253422,
+      "alignment_mod": 0.9077740336895538,
+      "alignment_raw": 0.7728567253697017
+    },
+    {
+      "kappa": 0.8,
+      "theta_crit": 5.654866776461628,
+      "burst_frac_raw": 0.09765625,
+      "burst_frac_mod": 0.20703125,
+      "burst_delta": 0.109375,
+      "grad_ratio_mod": 0.18589578367280052,
+      "curvature_ratio_mod": 0.4423195904142578,
+      "radial_collapse_mod": 2.067296390253422,
+      "alignment_mod": 0.9077740336895538,
+      "alignment_raw": 0.7728567253697017
+    },
+    {
+      "kappa": 0.8099999999999999,
+      "theta_crit": 5.686282702997525,
+      "burst_frac_raw": 0.09375,
+      "burst_frac_mod": 0.203125,
+      "burst_delta": 0.109375,
+      "grad_ratio_mod": 0.18589578367280052,
+      "curvature_ratio_mod": 0.4423195904142578,
+      "radial_collapse_mod": 2.067296390253422,
+      "alignment_mod": 0.9077740336895538,
+      "alignment_raw": 0.7728567253697017
+    },
+    {
+      "kappa": 0.82,
+      "theta_crit": 5.717698629533423,
+      "burst_frac_raw": 0.0859375,
+      "burst_frac_mod": 0.203125,
+      "burst_delta": 0.1171875,
+      "grad_ratio_mod": 0.18589578367280052,
+      "curvature_ratio_mod": 0.4423195904142578,
+      "radial_collapse_mod": 2.067296390253422,
+      "alignment_mod": 0.9077740336895538,
+      "alignment_raw": 0.7728567253697017
+    },
+    {
+      "kappa": 0.83,
+      "theta_crit": 5.749114556069322,
+      "burst_frac_raw": 0.08203125,
+      "burst_frac_mod": 0.19921875,
+      "burst_delta": 0.1171875,
+      "grad_ratio_mod": 0.18589578367280052,
+      "curvature_ratio_mod": 0.4423195904142578,
+      "radial_collapse_mod": 2.067296390253422,
+      "alignment_mod": 0.9077740336895538,
+      "alignment_raw": 0.7728567253697017
+    },
+    {
+      "kappa": 0.84,
+      "theta_crit": 5.780530482605219,
+      "burst_frac_raw": 0.078125,
+      "burst_frac_mod": 0.19921875,
+      "burst_delta": 0.12109375,
+      "grad_ratio_mod": 0.18589578367280052,
+      "curvature_ratio_mod": 0.4423195904142578,
+      "radial_collapse_mod": 2.067296390253422,
+      "alignment_mod": 0.9077740336895538,
+      "alignment_raw": 0.7728567253697017
+    },
+    {
+      "kappa": 0.85,
+      "theta_crit": 5.811946409141117,
+      "burst_frac_raw": 0.07421875,
+      "burst_frac_mod": 0.19921875,
+      "burst_delta": 0.125,
+      "grad_ratio_mod": 0.18589578367280052,
+      "curvature_ratio_mod": 0.4423195904142578,
+      "radial_collapse_mod": 2.067296390253422,
+      "alignment_mod": 0.9077740336895538,
+      "alignment_raw": 0.7728567253697017
+    },
+    {
+      "kappa": 0.86,
+      "theta_crit": 5.843362335677015,
+      "burst_frac_raw": 0.0703125,
+      "burst_frac_mod": 0.1953125,
+      "burst_delta": 0.125,
+      "grad_ratio_mod": 0.18589578367280052,
+      "curvature_ratio_mod": 0.4423195904142578,
+      "radial_collapse_mod": 2.067296390253422,
+      "alignment_mod": 0.9077740336895538,
+      "alignment_raw": 0.7728567253697017
+    },
+    {
+      "kappa": 0.87,
+      "theta_crit": 5.874778262212914,
+      "burst_frac_raw": 0.0625,
+      "burst_frac_mod": 0.1953125,
+      "burst_delta": 0.1328125,
+      "grad_ratio_mod": 0.18589578367280052,
+      "curvature_ratio_mod": 0.4423195904142578,
+      "radial_collapse_mod": 2.067296390253422,
+      "alignment_mod": 0.9077740336895538,
+      "alignment_raw": 0.7728567253697017
+    },
+    {
+      "kappa": 0.88,
+      "theta_crit": 5.9061941887488105,
+      "burst_frac_raw": 0.05859375,
+      "burst_frac_mod": 0.1953125,
+      "burst_delta": 0.13671875,
+      "grad_ratio_mod": 0.18589578367280052,
+      "curvature_ratio_mod": 0.4423195904142578,
+      "radial_collapse_mod": 2.067296390253422,
+      "alignment_mod": 0.9077740336895538,
+      "alignment_raw": 0.7728567253697017
+    },
+    {
+      "kappa": 0.89,
+      "theta_crit": 5.937610115284709,
+      "burst_frac_raw": 0.0546875,
+      "burst_frac_mod": 0.1953125,
+      "burst_delta": 0.140625,
+      "grad_ratio_mod": 0.18589578367280052,
+      "curvature_ratio_mod": 0.4423195904142578,
+      "radial_collapse_mod": 2.067296390253422,
+      "alignment_mod": 0.9077740336895538,
+      "alignment_raw": 0.7728567253697017
+    },
+    {
+      "kappa": 0.8999999999999999,
+      "theta_crit": 5.969026041820607,
+      "burst_frac_raw": 0.05078125,
+      "burst_frac_mod": 0.19140625,
+      "burst_delta": 0.140625,
+      "grad_ratio_mod": 0.18589578367280052,
+      "curvature_ratio_mod": 0.4423195904142578,
+      "radial_collapse_mod": 2.067296390253422,
+      "alignment_mod": 0.9077740336895538,
+      "alignment_raw": 0.7728567253697017
+    },
+    {
+      "kappa": 0.9099999999999999,
+      "theta_crit": 6.000441968356505,
+      "burst_frac_raw": 0.046875,
+      "burst_frac_mod": 0.19140625,
+      "burst_delta": 0.14453125,
+      "grad_ratio_mod": 0.18589578367280052,
+      "curvature_ratio_mod": 0.4423195904142578,
+      "radial_collapse_mod": 2.067296390253422,
+      "alignment_mod": 0.9077740336895538,
+      "alignment_raw": 0.7728567253697017
+    },
+    {
+      "kappa": 0.9199999999999999,
+      "theta_crit": 6.031857894892402,
+      "burst_frac_raw": 0.04296875,
+      "burst_frac_mod": 0.1875,
+      "burst_delta": 0.14453125,
+      "grad_ratio_mod": 0.18589578367280052,
+      "curvature_ratio_mod": 0.4423195904142578,
+      "radial_collapse_mod": 2.067296390253422,
+      "alignment_mod": 0.9077740336895538,
+      "alignment_raw": 0.7728567253697017
+    },
+    {
+      "kappa": 0.9299999999999999,
+      "theta_crit": 6.0632738214283,
+      "burst_frac_raw": 0.03515625,
+      "burst_frac_mod": 0.1875,
+      "burst_delta": 0.15234375,
+      "grad_ratio_mod": 0.18589578367280052,
+      "curvature_ratio_mod": 0.4423195904142578,
+      "radial_collapse_mod": 2.067296390253422,
+      "alignment_mod": 0.9077740336895538,
+      "alignment_raw": 0.7728567253697017
+    },
+    {
+      "kappa": 0.94,
+      "theta_crit": 6.094689747964199,
+      "burst_frac_raw": 0.02734375,
+      "burst_frac_mod": 0.1875,
+      "burst_delta": 0.16015625,
+      "grad_ratio_mod": 0.18589578367280052,
+      "curvature_ratio_mod": 0.4423195904142578,
+      "radial_collapse_mod": 2.067296390253422,
+      "alignment_mod": 0.9077740336895538,
+      "alignment_raw": 0.7728567253697017
+    },
+    {
+      "kappa": 0.95,
+      "theta_crit": 6.126105674500097,
+      "burst_frac_raw": 0.0234375,
+      "burst_frac_mod": 0.1875,
+      "burst_delta": 0.1640625,
+      "grad_ratio_mod": 0.18589578367280052,
+      "curvature_ratio_mod": 0.4423195904142578,
+      "radial_collapse_mod": 2.067296390253422,
+      "alignment_mod": 0.9077740336895538,
+      "alignment_raw": 0.7728567253697017
+    }
+  ],
+  "scale_sweep_350_over_pi": [
+    {
+      "factor": 0.25,
+      "n": 28,
+      "n_over_W_g": 0.25132741228718347,
+      "burst_fraction": 0.17857142857142858,
+      "grad_ratio": 0.2309830125652389,
+      "curvature_ratio": 0.3184911966093643,
+      "radial_collapse_ratio": 2.0782342528182456,
+      "alignment_support": 0.8993909142903721,
+      "cusp_power_ratio": 0.0,
+      "cusp_coherence": 0.44275685651230956
+    },
+    {
+      "factor": 0.5,
+      "n": 56,
+      "n_over_W_g": 0.5026548245743669,
+      "burst_fraction": 0.19642857142857142,
+      "grad_ratio": 0.1808082139393983,
+      "curvature_ratio": 0.45052583482886627,
+      "radial_collapse_ratio": 2.081179878289102,
+      "alignment_support": 0.9161503192095823,
+      "cusp_power_ratio": 0.2659035163723529,
+      "cusp_coherence": 0.6306988288566053
+    },
+    {
+      "factor": 1.0,
+      "n": 111,
+      "n_over_W_g": 0.9963336701384773,
+      "burst_fraction": 0.1981981981981982,
+      "grad_ratio": 0.1851199932003239,
+      "curvature_ratio": 0.5096187752097872,
+      "radial_collapse_ratio": 2.077082120202973,
+      "alignment_support": 0.9076609016938297,
+      "cusp_power_ratio": 0.2682155334203981,
+      "cusp_coherence": 0.7164922439215832
+    },
+    {
+      "factor": 1.5,
+      "n": 167,
+      "n_over_W_g": 1.4989884947128442,
+      "burst_fraction": 0.19760479041916168,
+      "grad_ratio": 0.17542483464262645,
+      "curvature_ratio": 0.5033263783959626,
+      "radial_collapse_ratio": 2.0656754308734135,
+      "alignment_support": 0.9102158674472279,
+      "cusp_power_ratio": 0.2683264493436155,
+      "cusp_coherence": 0.7023970217934736
+    },
+    {
+      "factor": 2.0,
+      "n": 223,
+      "n_over_W_g": 2.001643319287211,
+      "burst_fraction": 0.19730941704035873,
+      "grad_ratio": 0.18389232345691314,
+      "curvature_ratio": 0.39922833767052607,
+      "radial_collapse_ratio": 2.0671412119146653,
+      "alignment_support": 0.9082847966461771,
+      "cusp_power_ratio": 0.27043492619010917,
+      "cusp_coherence": 0.5579928180333834
+    },
+    {
+      "factor": 1.618033988749895,
+      "n": 180,
+      "n_over_W_g": 1.6156762218461793,
+      "burst_fraction": 0.2,
+      "grad_ratio": 0.1861174326680494,
+      "curvature_ratio": 0.4876133485820288,
+      "radial_collapse_ratio": 2.063235773592726,
+      "alignment_support": 0.9134166570469434,
+      "cusp_power_ratio": 0.2700180311860437,
+      "cusp_coherence": 0.6797975740358402
+    },
+    {
+      "factor": 3.0,
+      "n": 334,
+      "n_over_W_g": 2.9979769894256885,
+      "burst_fraction": 0.20059880239520958,
+      "grad_ratio": 0.1869394457865275,
+      "curvature_ratio": 0.4411055321836148,
+      "radial_collapse_ratio": 2.0674846304814753,
+      "alignment_support": 0.9086949292833136,
+      "cusp_power_ratio": 0.2697402860113897,
+      "cusp_coherence": 0.6181769824904352
+    },
+    {
+      "factor": 3.141592653589793,
+      "n": 350,
+      "n_over_W_g": 3.141592653589793,
+      "burst_fraction": 0.2,
+      "grad_ratio": 0.1847397822093465,
+      "curvature_ratio": 0.43196445211605855,
+      "radial_collapse_ratio": 2.065877176150638,
+      "alignment_support": 0.9103519101402316,
+      "cusp_power_ratio": 0.26961226690459833,
+      "cusp_coherence": 0.604028994865868
+    },
+    {
+      "factor": 4.0,
+      "n": 446,
+      "n_over_W_g": 4.003286638574422,
+      "burst_fraction": 0.19955156950672645,
+      "grad_ratio": 0.18505589150874954,
+      "curvature_ratio": 0.4727990586303569,
+      "radial_collapse_ratio": 2.0650128924413997,
+      "alignment_support": 0.9118011093390409,
+      "cusp_power_ratio": 0.2717307484912084,
+      "cusp_coherence": 0.6600661573527792
+    }
+  ],
+  "best_scale": {
+    "factor": 1.0,
+    "n": 111,
+    "n_over_W_g": 0.9963336701384773,
+    "burst_fraction": 0.1981981981981982,
+    "grad_ratio": 0.1851199932003239,
+    "curvature_ratio": 0.5096187752097872,
+    "radial_collapse_ratio": 2.077082120202973,
+    "alignment_support": 0.9076609016938297,
+    "cusp_power_ratio": 0.2682155334203981,
+    "cusp_coherence": 0.7164922439215832
+  },
+  "best_kappa_for_alignment": {
+    "kappa": 0.75,
+    "theta_crit": 5.497787143782138,
+    "burst_frac_raw": 0.125,
+    "burst_frac_mod": 0.2109375,
+    "burst_delta": 0.0859375,
+    "grad_ratio_mod": 0.18589578367280052,
+    "curvature_ratio_mod": 0.4423195904142578,
+    "radial_collapse_mod": 2.067296390253422,
+    "alignment_mod": 0.9077740336895538,
+    "alignment_raw": 0.7728567253697017
+  },
+  "plot": "/home/kinaar/Projects/mystery/outputs/cusp_resonance_probe.png",
+  "summary": {
+    "cusp_high_sensitivity": true,
+    "radial_collapse_ratio": 2.0650094858332735,
+    "curvature_ratio": 0.46270992500615477,
+    "grad_ratio": 0.17993920698114124,
+    "burst_frac_delta": 0.125,
+    "fft_cusp_power_ratio": 0.2717518885875505,
+    "best_n_over_Wg": 0.9963336701384773,
+    "best_coherence": 0.7164922439215832
+  },
+  "metric_formulas": {
+    "theta_crit": "\u03c0(1+\u03ba)",
+    "amplitude": "a_k = 1 + A\u00b7cos(\u03b8_k)",
+    "burst_fraction": "mean(holonomy_k > \u03b8_crit), holonomy=(a\u00b7\u03b8) mod 2\u03c0(1+\u03ba)",
+    "radial_collapse": "mean(a|bulk) / mean(a|cusp)",
+    "curvature_ratio": "mean(\u03ba_curve|cusp) / mean(\u03ba_curve|bulk)",
+    "cusp_coherence": "curvature_ratio \u00b7 radial_collapse \u00b7 (1+burst_frac) \u00b7 1/(1+|align\u2212R|)"
+  },
+  "interpretation": "Cardioid modulation collapses radius at \u03b8\u2248\u03c0 (cusp) with elevated polar curvature. Burst fraction vs \u03ba and cusp FFT power quantify threshold sensitivity. N near 350/\u03c0 is a candidate accumulation scale for coherence \u2014 empirical diagnostic, not a derived identity."
+}

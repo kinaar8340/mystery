@@ -1,0 +1,454 @@
+{
+  "generated_utc": "2026-07-21T00:55:49.696760+00:00",
+  "meta_seeds": {
+    "kappa": 0.85,
+    "wg_base": 351.5,
+    "w_g": 111.8859,
+    "braiding": 0.754
+  },
+  "ic": "helical",
+  "normalize_to_lambda_t": null,
+  "theta_crit_rad": 5.811946409141117,
+  "cardioid_amp": 0.5,
+  "cardioid_formula": "drive \u2190 (1 + A\u00b7cos(\u03b8)) \u00b7 (cot + \u03b4\u03c9 + gauge + burst); diffusion unmodulated",
+  "ic_stats": {
+    "mean": 1.821803472860268,
+    "std": 1.3452473231757958,
+    "cusp_field": {
+      "cusp_site_fraction": 0.08,
+      "expected_uniform_fraction": 0.07957747154594767,
+      "cusp_density_ratio": 1.0053096491487339,
+      "mean_theta_cusp": 3.164011876054741,
+      "mean_theta_bulk": 1.7050896986694442,
+      "radial_collapse_proxy": 0.538901168978863,
+      "n_cusp_sites": 640,
+      "vortex_369_all": {
+        "counts": {
+          "1": 2360,
+          "2": 880,
+          "3": 320,
+          "4": 880,
+          "5": 640,
+          "6": 1000,
+          "7": 720,
+          "8": 800,
+          "9": 400
+        },
+        "fraction_369": 0.215,
+        "n": 8000,
+        "formula": "dr = 1 + (floor(10\u00b7\u03b8)-1) mod 9;  frac_369 = mean(dr \u2208 {3,6,9})"
+      },
+      "vortex_369_cusp": {
+        "counts": {
+          "1": 0,
+          "2": 80,
+          "3": 80,
+          "4": 320,
+          "5": 0,
+          "6": 160,
+          "7": 0,
+          "8": 0,
+          "9": 0
+        },
+        "fraction_369": 0.375,
+        "n": 640,
+        "formula": "dr = 1 + (floor(10\u00b7\u03b8)-1) mod 9;  frac_369 = mean(dr \u2208 {3,6,9})"
+      }
+    },
+    "align_support": {
+      "align_support": 0.16373961285050795,
+      "per_angle": {
+        "phi": 0.07430713568468196,
+        "e": 0.17153188472063197,
+        "pi": 0.24537981814620993
+      },
+      "formula": "mean_\u03b1[(\u03a3 w \u03b8/(2\u03c0))/(\u03a3 w)], w=exp(\u2212\u00bd dist(\u03b8,\u03b1)\u00b2/\u03c3\u00b2)"
+    }
+  },
+  "nt": 400,
+  "baseline": {
+    "field_stats": {
+      "mean": 1.3176582574165734,
+      "std": 0.05477457392712428,
+      "min": 1.2244102408193254,
+      "max": 1.4131206246613206
+    },
+    "fft": {
+      "top_modes": [
+        {
+          "kx": 0,
+          "ky": 2,
+          "power_frac": 0.4999999993356144
+        },
+        {
+          "kx": 0,
+          "ky": 18,
+          "power_frac": 0.49999999933561423
+        },
+        {
+          "kx": 0,
+          "ky": 16,
+          "power_frac": 6.643856422835545e-10
+        },
+        {
+          "kx": 0,
+          "ky": 4,
+          "power_frac": 6.643856422835545e-10
+        },
+        {
+          "kx": 0,
+          "ky": 6,
+          "power_frac": 2.4470621664203614e-18
+        },
+        {
+          "kx": 0,
+          "ky": 14,
+          "power_frac": 2.4470618840826076e-18
+        },
+        {
+          "kx": 0,
+          "ky": 12,
+          "power_frac": 1.0076701088476852e-23
+        },
+        {
+          "kx": 0,
+          "ky": 8,
+          "power_frac": 1.0076701088476852e-23
+        }
+      ],
+      "total_power": 57.72470356744739
+    },
+    "correlation": {
+      "mean_k": 2.000000002657542,
+      "correlation_length_grid_units": 9.99999998671229
+    },
+    "phi_e_pi_signature": {
+      "candidates": {
+        "xi_over_nx": 0.49999999933561445,
+        "mean_k_over_pi": 0.6366197732135033,
+        "mean_k_over_phi": 1.236067979142241,
+        "mean_k_over_e": 0.7357588833205398
+      },
+      "nearest_ranking": [
+        {
+          "ratio": "mean_k_over_phi",
+          "value": 1.236067979142241,
+          "nearest_transcendental": "one",
+          "delta_pct": 23.60679791422411
+        },
+        {
+          "ratio": "mean_k_over_e",
+          "value": 0.7357588833205398,
+          "nearest_transcendental": "one",
+          "delta_pct": 26.424111667946015
+        },
+        {
+          "ratio": "mean_k_over_pi",
+          "value": 0.6366197732135033,
+          "nearest_transcendental": "one",
+          "delta_pct": 36.33802267864967
+        },
+        {
+          "ratio": "xi_over_nx",
+          "value": 0.49999999933561445,
+          "nearest_transcendental": "one",
+          "delta_pct": 50.00000006643855
+        }
+      ],
+      "degenerate_uniform_field": false,
+      "note": "Non-uniform structure present; ratios may be informative."
+    },
+    "lambda_t_survival": null,
+    "cusp_field": {
+      "cusp_site_fraction": 0.0,
+      "expected_uniform_fraction": 0.07957747154594767,
+      "cusp_density_ratio": 0.0,
+      "mean_theta_cusp": NaN,
+      "mean_theta_bulk": 1.3176582574165734,
+      "radial_collapse_proxy": NaN,
+      "n_cusp_sites": 0,
+      "vortex_369_all": {
+        "counts": {
+          "1": 0,
+          "2": 0,
+          "3": 3320,
+          "4": 4360,
+          "5": 320,
+          "6": 0,
+          "7": 0,
+          "8": 0,
+          "9": 0
+        },
+        "fraction_369": 0.415,
+        "n": 8000,
+        "formula": "dr = 1 + (floor(10\u00b7\u03b8)-1) mod 9;  frac_369 = mean(dr \u2208 {3,6,9})"
+      },
+      "vortex_369_cusp": {
+        "counts": {},
+        "fraction_369": 0.0,
+        "n": 0
+      }
+    },
+    "align_support": {
+      "align_support": 0.20706346271605913,
+      "per_angle": {
+        "phi": 0.20215445182209857,
+        "e": 0.20662651515985758,
+        "pi": 0.21240942116622122
+      },
+      "formula": "mean_\u03b1[(\u03a3 w \u03b8/(2\u03c0))/(\u03a3 w)], w=exp(\u2212\u00bd dist(\u03b8,\u03b1)\u00b2/\u03c3\u00b2)"
+    },
+    "vortex_369_fraction": 0.415,
+    "vortex_369_cusp_fraction": 0.0
+  },
+  "cardioid": {
+    "field_stats": {
+      "mean": 1.3214147916237824,
+      "std": 0.07073819197722654,
+      "min": 1.200511894386837,
+      "max": 1.4437860655840682
+    },
+    "fft": {
+      "top_modes": [
+        {
+          "kx": 0,
+          "ky": 2,
+          "power_frac": 0.4999999998491493
+        },
+        {
+          "kx": 0,
+          "ky": 18,
+          "power_frac": 0.4999999998491491
+        },
+        {
+          "kx": 0,
+          "ky": 4,
+          "power_frac": 1.5084777028157806e-10
+        },
+        {
+          "kx": 0,
+          "ky": 16,
+          "power_frac": 1.5084777028157806e-10
+        },
+        {
+          "kx": 0,
+          "ky": 6,
+          "power_frac": 2.955223653025636e-15
+        },
+        {
+          "kx": 0,
+          "ky": 14,
+          "power_frac": 2.9552236526865925e-15
+        },
+        {
+          "kx": 0,
+          "ky": 8,
+          "power_frac": 1.415443618248111e-22
+        },
+        {
+          "kx": 0,
+          "ky": 12,
+          "power_frac": 1.415443618248111e-22
+        }
+      ],
+      "total_power": 95.05095082010632
+    },
+    "correlation": {
+      "mean_k": 2.0000000006034147,
+      "correlation_length_grid_units": 9.999999996982927
+    },
+    "phi_e_pi_signature": {
+      "candidates": {
+        "xi_over_nx": 0.49999999984914634,
+        "mean_k_over_pi": 0.6366197725596542,
+        "mean_k_over_phi": 1.2360679778727204,
+        "mean_k_over_e": 0.7357588825648685
+      },
+      "nearest_ranking": [
+        {
+          "ratio": "mean_k_over_phi",
+          "value": 1.2360679778727204,
+          "nearest_transcendental": "one",
+          "delta_pct": 23.606797787272036
+        },
+        {
+          "ratio": "mean_k_over_e",
+          "value": 0.7357588825648685,
+          "nearest_transcendental": "one",
+          "delta_pct": 26.424111743513144
+        },
+        {
+          "ratio": "mean_k_over_pi",
+          "value": 0.6366197725596542,
+          "nearest_transcendental": "one",
+          "delta_pct": 36.33802274403458
+        },
+        {
+          "ratio": "xi_over_nx",
+          "value": 0.49999999984914634,
+          "nearest_transcendental": "one",
+          "delta_pct": 50.00000001508537
+        }
+      ],
+      "degenerate_uniform_field": false,
+      "note": "Non-uniform structure present; ratios may be informative."
+    },
+    "lambda_t_survival": null,
+    "cusp_field": {
+      "cusp_site_fraction": 0.0,
+      "expected_uniform_fraction": 0.07957747154594767,
+      "cusp_density_ratio": 0.0,
+      "mean_theta_cusp": NaN,
+      "mean_theta_bulk": 1.3214147916237824,
+      "radial_collapse_proxy": NaN,
+      "n_cusp_sites": 0,
+      "vortex_369_all": {
+        "counts": {
+          "1": 0,
+          "2": 0,
+          "3": 3440,
+          "4": 3080,
+          "5": 1480,
+          "6": 0,
+          "7": 0,
+          "8": 0,
+          "9": 0
+        },
+        "fraction_369": 0.43,
+        "n": 8000,
+        "formula": "dr = 1 + (floor(10\u00b7\u03b8)-1) mod 9;  frac_369 = mean(dr \u2208 {3,6,9})"
+      },
+      "vortex_369_cusp": {
+        "counts": {},
+        "fraction_369": 0.0,
+        "n": 0
+      }
+    },
+    "align_support": {
+      "align_support": 0.20626627493470573,
+      "per_angle": {
+        "phi": 0.19892273237384933,
+        "e": 0.20526907685080864,
+        "pi": 0.2146070155794592
+      },
+      "formula": "mean_\u03b1[(\u03a3 w \u03b8/(2\u03c0))/(\u03a3 w)], w=exp(\u2212\u00bd dist(\u03b8,\u03b1)\u00b2/\u03c3\u00b2)"
+    },
+    "vortex_369_fraction": 0.43,
+    "vortex_369_cusp_fraction": 0.0
+  },
+  "field_stats": {
+    "mean": 1.3176582574165734,
+    "std": 0.05477457392712428,
+    "min": 1.2244102408193254,
+    "max": 1.4131206246613206
+  },
+  "fft": {
+    "top_modes": [
+      {
+        "kx": 0,
+        "ky": 2,
+        "power_frac": 0.4999999993356144
+      },
+      {
+        "kx": 0,
+        "ky": 18,
+        "power_frac": 0.49999999933561423
+      },
+      {
+        "kx": 0,
+        "ky": 16,
+        "power_frac": 6.643856422835545e-10
+      },
+      {
+        "kx": 0,
+        "ky": 4,
+        "power_frac": 6.643856422835545e-10
+      },
+      {
+        "kx": 0,
+        "ky": 6,
+        "power_frac": 2.4470621664203614e-18
+      },
+      {
+        "kx": 0,
+        "ky": 14,
+        "power_frac": 2.4470618840826076e-18
+      },
+      {
+        "kx": 0,
+        "ky": 12,
+        "power_frac": 1.0076701088476852e-23
+      },
+      {
+        "kx": 0,
+        "ky": 8,
+        "power_frac": 1.0076701088476852e-23
+      }
+    ],
+    "total_power": 57.72470356744739
+  },
+  "correlation": {
+    "mean_k": 2.000000002657542,
+    "correlation_length_grid_units": 9.99999998671229
+  },
+  "phi_e_pi_signature": {
+    "candidates": {
+      "xi_over_nx": 0.49999999933561445,
+      "mean_k_over_pi": 0.6366197732135033,
+      "mean_k_over_phi": 1.236067979142241,
+      "mean_k_over_e": 0.7357588833205398
+    },
+    "nearest_ranking": [
+      {
+        "ratio": "mean_k_over_phi",
+        "value": 1.236067979142241,
+        "nearest_transcendental": "one",
+        "delta_pct": 23.60679791422411
+      },
+      {
+        "ratio": "mean_k_over_e",
+        "value": 0.7357588833205398,
+        "nearest_transcendental": "one",
+        "delta_pct": 26.424111667946015
+      },
+      {
+        "ratio": "mean_k_over_pi",
+        "value": 0.6366197732135033,
+        "nearest_transcendental": "one",
+        "delta_pct": 36.33802267864967
+      },
+      {
+        "ratio": "xi_over_nx",
+        "value": 0.49999999933561445,
+        "nearest_transcendental": "one",
+        "delta_pct": 50.00000006643855
+      }
+    ],
+    "degenerate_uniform_field": false,
+    "note": "Non-uniform structure present; ratios may be informative."
+  },
+  "lambda_t_survival": null,
+  "align_support": {
+    "align_support": 0.20706346271605913,
+    "per_angle": {
+      "phi": 0.20215445182209857,
+      "e": 0.20662651515985758,
+      "pi": 0.21240942116622122
+    },
+    "formula": "mean_\u03b1[(\u03a3 w \u03b8/(2\u03c0))/(\u03a3 w)], w=exp(\u2212\u00bd dist(\u03b8,\u03b1)\u00b2/\u03c3\u00b2)"
+  },
+  "vortex_369_fraction": 0.415,
+  "plot": "/home/kinaar/Projects/mystery/outputs/pde_relaxation_probe_helical.png",
+  "compare_plot": "/home/kinaar/Projects/mystery/outputs/pde_cardioid_compare_helical.png",
+  "interpretation": "Non-uniform structure present; ratios may be informative.",
+  "cardioid_delta": {
+    "mean_theta": 0.0037565342072090058,
+    "std_theta": 0.01596361805010226,
+    "cusp_frac_delta": 0.0,
+    "cusp_rho_delta": 0.0,
+    "align_support_delta": -0.0007971877813534034,
+    "vortex_369_delta": 0.015000000000000013,
+    "vortex_369_cusp_delta": 0.0,
+    "R_residual": 0.13748568659118732
+  }
+}

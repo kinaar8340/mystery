@@ -1,0 +1,319 @@
+{
+  "generated_utc": "2026-07-21T00:47:20.694098+00:00",
+  "meta_seeds": {
+    "kappa": 0.85,
+    "wg_base": 351.5,
+    "w_g": 111.8859,
+    "braiding": 0.754
+  },
+  "normalize_to_lambda_t": null,
+  "theta_crit_rad": 5.811946409141117,
+  "cardioid_amp": 0.5,
+  "cardioid_formula": "drive \u2190 (1 + A\u00b7cos(\u03b8)) \u00b7 (cot + \u03b4\u03c9 + gauge + burst); diffusion unmodulated",
+  "baseline": {
+    "field_stats": {
+      "mean": 0.08371179816692986,
+      "std": 4.198031672050531e-05,
+      "min": 0.0836143953309814,
+      "max": 0.08380879530277638
+    },
+    "fft": {
+      "top_modes": [
+        {
+          "kx": 0,
+          "ky": 19,
+          "power_frac": 0.3414437332729141
+        },
+        {
+          "kx": 0,
+          "ky": 1,
+          "power_frac": 0.3414437332729141
+        },
+        {
+          "kx": 19,
+          "ky": 0,
+          "power_frac": 0.15855295008498566
+        },
+        {
+          "kx": 1,
+          "ky": 0,
+          "power_frac": 0.15855295008498566
+        },
+        {
+          "kx": 1,
+          "ky": 1,
+          "power_frac": 2.379694438698292e-06
+        },
+        {
+          "kx": 19,
+          "ky": 19,
+          "power_frac": 2.379694438698274e-06
+        },
+        {
+          "kx": 1,
+          "ky": 19,
+          "power_frac": 9.369453220425041e-07
+        },
+        {
+          "kx": 19,
+          "ky": 1,
+          "power_frac": 9.369453220425034e-07
+        }
+      ],
+      "total_power": 0.0002473781803014629
+    },
+    "correlation": {
+      "mean_k": 1.0000027475990207,
+      "correlation_length_grid_units": 19.99994504817057
+    },
+    "phi_e_pi_signature": {
+      "candidates": {
+        "xi_over_nx": 0.9999972524085285,
+        "mean_k_over_pi": 0.31831076077172227,
+        "mean_k_over_phi": 0.6180356868594771,
+        "mean_k_over_e": 0.36788045195663466
+      },
+      "nearest_ranking": [
+        {
+          "ratio": "xi_over_nx",
+          "value": 0.9999972524085285,
+          "nearest_transcendental": "one",
+          "delta_pct": 0.00027475914714525373
+        },
+        {
+          "ratio": "mean_k_over_phi",
+          "value": 0.6180356868594771,
+          "nearest_transcendental": "one",
+          "delta_pct": 38.19643131405229
+        },
+        {
+          "ratio": "mean_k_over_e",
+          "value": 0.36788045195663466,
+          "nearest_transcendental": "one",
+          "delta_pct": 63.211954804336536
+        },
+        {
+          "ratio": "mean_k_over_pi",
+          "value": 0.31831076077172227,
+          "nearest_transcendental": "one",
+          "delta_pct": 68.16892392282777
+        }
+      ],
+      "degenerate_uniform_field": false,
+      "note": "Non-uniform structure present; ratios may be informative."
+    },
+    "lambda_t_survival": null,
+    "cusp_field": {
+      "cusp_site_fraction": 0.0,
+      "expected_uniform_fraction": 0.07957747154594767,
+      "cusp_density_ratio": 0.0,
+      "mean_theta_cusp": NaN,
+      "mean_theta_bulk": 0.08371179816692986,
+      "n_cusp_sites": 0
+    }
+  },
+  "cardioid": {
+    "field_stats": {
+      "mean": 0.02737813766928339,
+      "std": 4.989592957078323e-05,
+      "min": 0.02726269540977728,
+      "max": 0.027493124798360035
+    },
+    "fft": {
+      "top_modes": [
+        {
+          "kx": 0,
+          "ky": 19,
+          "power_frac": 0.34475353929710584
+        },
+        {
+          "kx": 0,
+          "ky": 1,
+          "power_frac": 0.3447535392971058
+        },
+        {
+          "kx": 19,
+          "ky": 0,
+          "power_frac": 0.15524311848397868
+        },
+        {
+          "kx": 1,
+          "ky": 0,
+          "power_frac": 0.15524311848397868
+        },
+        {
+          "kx": 1,
+          "ky": 1,
+          "power_frac": 2.395259208854659e-06
+        },
+        {
+          "kx": 19,
+          "ky": 19,
+          "power_frac": 2.3952592088546414e-06
+        },
+        {
+          "kx": 1,
+          "ky": 19,
+          "power_frac": 9.469028513985224e-07
+        },
+        {
+          "kx": 19,
+          "ky": 1,
+          "power_frac": 9.469028513985217e-07
+        }
+      ],
+      "total_power": 0.00035073026274743367
+    },
+    "correlation": {
+      "mean_k": 1.0000027688514426,
+      "correlation_length_grid_units": 19.999944623124478
+    },
+    "phi_e_pi_signature": {
+      "candidates": {
+        "xi_over_nx": 0.9999972311562239,
+        "mean_k_over_pi": 0.3183107675365782,
+        "mean_k_over_phi": 0.6180356999941962,
+        "mean_k_over_e": 0.3678804597749637
+      },
+      "nearest_ranking": [
+        {
+          "ratio": "xi_over_nx",
+          "value": 0.9999972311562239,
+          "nearest_transcendental": "one",
+          "delta_pct": 0.000276884377614639
+        },
+        {
+          "ratio": "mean_k_over_phi",
+          "value": 0.6180356999941962,
+          "nearest_transcendental": "one",
+          "delta_pct": 38.196430000580385
+        },
+        {
+          "ratio": "mean_k_over_e",
+          "value": 0.3678804597749637,
+          "nearest_transcendental": "one",
+          "delta_pct": 63.21195402250363
+        },
+        {
+          "ratio": "mean_k_over_pi",
+          "value": 0.3183107675365782,
+          "nearest_transcendental": "one",
+          "delta_pct": 68.16892324634219
+        }
+      ],
+      "degenerate_uniform_field": false,
+      "note": "Non-uniform structure present; ratios may be informative."
+    },
+    "lambda_t_survival": null,
+    "cusp_field": {
+      "cusp_site_fraction": 0.0,
+      "expected_uniform_fraction": 0.07957747154594767,
+      "cusp_density_ratio": 0.0,
+      "mean_theta_cusp": NaN,
+      "mean_theta_bulk": 0.02737813766928339,
+      "n_cusp_sites": 0
+    }
+  },
+  "field_stats": {
+    "mean": 0.08371179816692986,
+    "std": 4.198031672050531e-05,
+    "min": 0.0836143953309814,
+    "max": 0.08380879530277638
+  },
+  "fft": {
+    "top_modes": [
+      {
+        "kx": 0,
+        "ky": 19,
+        "power_frac": 0.3414437332729141
+      },
+      {
+        "kx": 0,
+        "ky": 1,
+        "power_frac": 0.3414437332729141
+      },
+      {
+        "kx": 19,
+        "ky": 0,
+        "power_frac": 0.15855295008498566
+      },
+      {
+        "kx": 1,
+        "ky": 0,
+        "power_frac": 0.15855295008498566
+      },
+      {
+        "kx": 1,
+        "ky": 1,
+        "power_frac": 2.379694438698292e-06
+      },
+      {
+        "kx": 19,
+        "ky": 19,
+        "power_frac": 2.379694438698274e-06
+      },
+      {
+        "kx": 1,
+        "ky": 19,
+        "power_frac": 9.369453220425041e-07
+      },
+      {
+        "kx": 19,
+        "ky": 1,
+        "power_frac": 9.369453220425034e-07
+      }
+    ],
+    "total_power": 0.0002473781803014629
+  },
+  "correlation": {
+    "mean_k": 1.0000027475990207,
+    "correlation_length_grid_units": 19.99994504817057
+  },
+  "phi_e_pi_signature": {
+    "candidates": {
+      "xi_over_nx": 0.9999972524085285,
+      "mean_k_over_pi": 0.31831076077172227,
+      "mean_k_over_phi": 0.6180356868594771,
+      "mean_k_over_e": 0.36788045195663466
+    },
+    "nearest_ranking": [
+      {
+        "ratio": "xi_over_nx",
+        "value": 0.9999972524085285,
+        "nearest_transcendental": "one",
+        "delta_pct": 0.00027475914714525373
+      },
+      {
+        "ratio": "mean_k_over_phi",
+        "value": 0.6180356868594771,
+        "nearest_transcendental": "one",
+        "delta_pct": 38.19643131405229
+      },
+      {
+        "ratio": "mean_k_over_e",
+        "value": 0.36788045195663466,
+        "nearest_transcendental": "one",
+        "delta_pct": 63.211954804336536
+      },
+      {
+        "ratio": "mean_k_over_pi",
+        "value": 0.31831076077172227,
+        "nearest_transcendental": "one",
+        "delta_pct": 68.16892392282777
+      }
+    ],
+    "degenerate_uniform_field": false,
+    "note": "Non-uniform structure present; ratios may be informative."
+  },
+  "lambda_t_survival": null,
+  "plot": "/home/kinaar/Projects/mystery/outputs/pde_relaxation_probe.png",
+  "compare_plot": "/home/kinaar/Projects/mystery/outputs/pde_cardioid_compare.png",
+  "interpretation": "Non-uniform structure present; ratios may be informative.",
+  "cardioid_delta": {
+    "mean_theta": -0.05633366049764647,
+    "std_theta": 7.915612850277919e-06,
+    "cusp_frac_delta": 0.0,
+    "cusp_rho_delta": 0.0,
+    "R_residual": 0.13748568659118732
+  }
+}
