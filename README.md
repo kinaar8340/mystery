@@ -319,3 +319,5 @@ Full framing: [`notes/CARDIOID_RESONANCE.md`](notes/CARDIOID_RESONANCE.md).
 ## License
 
 Research notebook and analysis scripts: **CC-BY-NC-SA-4.0**. Upstream TOE/VQC/HFB code retains its respective licenses.
+
+X: [@kinaar8340](https://x.com/kinaar8340)
