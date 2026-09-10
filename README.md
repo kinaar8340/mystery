@@ -4,10 +4,12 @@
 
 # Mystery — φ, e, π Emergent Signature
 
+Satellite behind the portal — an **Observation / probe**, not a peer demo. Not a QGA result.
+
 [![Repository](https://img.shields.io/badge/GitHub-mystery-blue)](https://github.com/kinaar8340/mystery)
 [![Parent TOE](https://img.shields.io/badge/TOE-kinaar8340%2Ftoe-lightgrey)](https://github.com/kinaar8340/toe)
 
-Quantified research notebook exploring the near-Pythagorean triangle formed by φ, e, and π — and how that numerical harmony relates to vortex-math 3-6-9 positional geometry and the gauged Hopf lattice TOE.
+Quantified research notebook exploring the near-Pythagorean triangle formed by φ, e, and π — and how that numerical harmony relates to vortex-math 3-6-9 positional geometry and the gauged Hopf lattice model.
 
 **Status:** Compatible emergent signature — not an exact identity, not forced by invariants, not contradicted by simulation.
 
